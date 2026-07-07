@@ -2,11 +2,10 @@ import { expect, test } from "@playwright/test";
 import { mkdtemp, mkdir, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
-import { fileURLToPath } from "node:url";
 import { spawn, type ChildProcessWithoutNullStreams } from "node:child_process";
 import net from "node:net";
 
-const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../..");
+const repoRoot = process.cwd();
 const adminToken = "playwright-export-token";
 
 type ManagedProcess = {
@@ -48,7 +47,7 @@ function spawnProcess(
     env: { ...process.env, ...env },
     stdio: ["ignore", "pipe", "pipe"],
   });
-  const managed = { name, process: child, logs: [] };
+  const managed: ManagedProcess = { name, process: child, logs: [] };
   const capture = (chunk: Buffer) => {
     managed.logs.push(chunk.toString("utf8"));
     if (managed.logs.length > 80) managed.logs.shift();
