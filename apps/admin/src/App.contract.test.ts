@@ -7,6 +7,10 @@ import { describe, expect, it } from "vitest";
 const currentDir = dirname(fileURLToPath(import.meta.url));
 const appSource = readFileSync(join(currentDir, "App.tsx"), "utf8");
 const styles = readFileSync(join(currentDir, "styles.css"), "utf8");
+const columnsSource = appSource.slice(
+  appSource.indexOf("const columns"),
+  appSource.indexOf("return ("),
+);
 
 describe("admin gallery list contract", () => {
   it("exposes title, brand, model, and topic filters", () => {
@@ -16,20 +20,46 @@ describe("admin gallery list contract", () => {
     expect(appSource).toContain('aria-label="按专题筛选"');
   });
 
-  it("keeps capture date independent, sortable, and free of update-date text", () => {
-    expect(appSource).toContain('title: "拍摄日期"');
-    expect(appSource).toContain("sorter: (left, right) =>");
+  it("replaces file-info and EXIF summary columns with model and lens columns", () => {
+    expect(columnsSource).toContain('title: "型号"');
+    expect(columnsSource).toContain('title: "镜头"');
+    expect(columnsSource).not.toContain('title: "文件信息"');
+    expect(columnsSource).not.toContain('title: "EXIF"');
+    expect(columnsSource).not.toContain("imageSummary(");
+    expect(columnsSource).not.toContain("formatFileSize(");
+    expect(columnsSource).not.toMatch(/mimeType|未知格式|未知大小/);
+    expect(columnsSource).not.toMatch(/aperture|shutter|iso|ISO|光圈|快门/);
+  });
+
+  it("keeps capture date independent, sortable, centered, and free of update-date text", () => {
+    expect(columnsSource).toContain('title: "拍摄日期"');
+    expect(columnsSource).toContain("sorter: (left, right) =>");
+    expect(columnsSource).toContain('align: "center"');
     expect(appSource).not.toContain("更新：");
   });
 
-  it("removes the vertical table cap and centers dense table cells", () => {
+  it("keeps pagination, preview, and add/edit/upload modal affordances", () => {
     expect(appSource).toContain("scroll={{ x: 1260 }}");
     expect(appSource).not.toContain("y: 560");
+    expect(appSource).toContain("pagination={{");
+    expect(appSource).toContain("setPreviewPhoto(photo)");
+    expect(appSource).toContain("isEditorOpen");
+    expect(appSource).toContain("isUploadOpen");
+  });
+
+  it("centers dense table cells and keeps accessible monochrome gallery styling hooks", () => {
     expect(styles).toMatch(
       /\.photos-table \.arco-table-th,[\s\S]*?text-align:\s*center;/,
     );
     expect(styles).toMatch(
       /\.photos-table \.arco-table-cell\s*\{[\s\S]*?justify-content:\s*center;/,
     );
+    expect(styles).toContain(
+      ".toolbar :where(.arco-input-inner-wrapper, .arco-select-view):focus-within",
+    );
+    expect(styles).toContain(".photo-cell__thumb:focus-visible");
+    expect(styles).toContain("@media (max-width: 920px)");
+    expect(styles).not.toContain("rgba(22, 93, 255");
+    expect(styles).not.toContain("rgba(20, 201, 201");
   });
 });
