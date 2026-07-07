@@ -49,17 +49,23 @@ type ServerPhoto = PhotoRecord & {
   thumbnailUrl?: string;
   takenAt?: string;
   topicIds?: string[];
-  exif?: PhotoExif & {
-    cameraBrand?: string;
-    cameraModel?: string;
-    lensModel?: string;
-    shutterSpeed?: string;
-    focalLengthMm?: number;
-  };
+  exif?: ServerExif;
 };
 
 type ServerPhotoEnvelope = ServerPhoto | { photo: ServerPhoto };
 type ServerExportEnvelope = ExportResult | { export: ExportResult };
+type ServerExif = PhotoExif & {
+  cameraBrand?: string;
+  cameraModel?: string;
+  lensModel?: string;
+  shutterSpeed?: string;
+  focalLengthMm?: number;
+};
+type ServerUploadResult = Omit<UploadResult, "exif" | "photo"> & {
+  exif?: ServerExif;
+  photo?: ServerPhoto;
+  photos?: ServerPhoto[];
+};
 
 const isAbsoluteUrl = (value: string): boolean =>
   /^[a-z][a-z\d+.-]*:/i.test(value) || value.startsWith("//");
@@ -139,19 +145,22 @@ export const normalizePhotoForAdmin = (
     topicId: source.topicId ?? source.topicIds?.[0],
     imageUrl: imageUrl ?? "",
     thumbnailUrl,
-    exif: source.exif
-      ? {
-          ...source.exif,
-          cameraMake: source.exif.cameraMake ?? source.exif.cameraBrand,
-          lens: source.exif.lens ?? source.exif.lensModel,
-          shutter: source.exif.shutter ?? source.exif.shutterSpeed,
-          focalLength:
-            source.exif.focalLength ??
-            (source.exif.focalLengthMm
-              ? `${source.exif.focalLengthMm}mm`
-              : undefined),
-        }
-      : undefined,
+    exif: normalizeExifForAdmin(source.exif),
+  };
+};
+
+const normalizeExifForAdmin = (exif?: ServerExif): PhotoExif | undefined => {
+  if (!exif) return undefined;
+  return {
+    ...exif,
+    cameraMake: exif.cameraMake ?? exif.cameraBrand,
+    lens: exif.lens ?? exif.lensModel,
+    shutter: exif.shutter ?? exif.shutterSpeed,
+    focalLength:
+      exif.focalLength ??
+      (typeof exif.focalLengthMm === "number"
+        ? `${exif.focalLengthMm}mm`
+        : undefined),
   };
 };
 
@@ -253,16 +262,13 @@ export const createApiClient = (
     if (preview.topicId.trim()) body.append("topicId", preview.topicId.trim());
     body.append("exif", JSON.stringify(preview.exif));
 
-    const result = await requestJson<UploadResult & { photos?: ServerPhoto[] }>(
-      baseUrl,
-      "/uploads",
-      {
-        method: "POST",
-        body,
-      },
-    );
+    const result = await requestJson<ServerUploadResult>(baseUrl, "/uploads", {
+      method: "POST",
+      body,
+    });
     return {
       ...result,
+      exif: normalizeExifForAdmin(result.exif),
       photo: result.photo
         ? normalizePhotoForAdmin(result.photo)
         : result.photos?.[0]
