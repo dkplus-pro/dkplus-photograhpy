@@ -25,7 +25,11 @@ describe("admin gallery list contract", () => {
   it("removes the vertical table cap and centers dense table cells", () => {
     expect(appSource).toContain("scroll={{ x: 1260 }}");
     expect(appSource).not.toContain("y: 560");
-    expect(styles).toMatch(/\.photos-table \.arco-table-th,[\s\S]*?text-align:\s*center;/);
-    expect(styles).toMatch(/\.photos-table \.arco-table-cell\s*\{[\s\S]*?justify-content:\s*center;/);
+    expect(styles).toMatch(
+      /\.photos-table \.arco-table-th,[\s\S]*?text-align:\s*center;/,
+    );
+    expect(styles).toMatch(
+      /\.photos-table \.arco-table-cell\s*\{[\s\S]*?justify-content:\s*center;/,
+    );
   });
 });

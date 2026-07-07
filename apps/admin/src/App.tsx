@@ -115,8 +115,11 @@ const captureDateTime = (photo: PhotoRecord): number => {
 };
 
 const uniqueSorted = (values: Array<string | undefined>): string[] =>
-  [...new Set(values.map((value) => value?.trim()).filter(Boolean) as string[])]
-    .sort((left, right) => left.localeCompare(right, "zh-CN"));
+  [
+    ...new Set(
+      values.map((value) => value?.trim()).filter(Boolean) as string[],
+    ),
+  ].sort((left, right) => left.localeCompare(right, "zh-CN"));
 
 function App() {
   const [photos, setPhotos] = useState<PhotoRecord[]>([]);
@@ -245,7 +248,8 @@ function App() {
         .join(" ")
         .toLowerCase();
       const matchesTitle =
-        !normalizedTitle || searchableTitle.includes(normalizedTitle);
+        !normalizedTitle ||
+        photoTitle(photo).toLowerCase().includes(normalizedTitle);
       return matchesTopic && matchesBrand && matchesModel && matchesTitle;
     });
   }, [brandFilter, modelFilter, photos, titleFilter, topicFilter]);

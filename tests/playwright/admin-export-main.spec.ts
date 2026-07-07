@@ -470,7 +470,10 @@ test("Main dev loads gallery data from /api and grid remains compact", async ({
     page.getByRole("button", { name: /查看图片：API 底部样片 00/ }),
   ).toBeVisible();
 
-  await page.getByRole("button", { name: /查看图片：/ }).first().click();
+  await page
+    .getByRole("button", { name: /查看图片：/ })
+    .first()
+    .click();
   const navCenterDelta = await page
     .locator(".modal__nav--prev")
     .evaluate((element) => {
