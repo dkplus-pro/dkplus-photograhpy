@@ -15,16 +15,17 @@ const getColumns = (width: number): number => {
 
 export const useVirtualRows = <T>(
   items: T[],
-  rowHeight = 300,
+  rowHeight?: number,
   gap = 10,
-  overscan = 5,
+  overscan = 4,
 ) => {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const [viewport, setViewport] = useState({
     width: window.innerWidth,
     height: window.innerHeight,
     scrollY: window.scrollY,
-    topOffset: 0,
+    containerTop: 0,
+    containerWidth: window.innerWidth,
   });
 
   useEffect(() => {
@@ -32,14 +33,13 @@ export const useVirtualRows = <T>(
     const update = () => {
       cancelAnimationFrame(frame);
       frame = requestAnimationFrame(() => {
-        const topOffset = containerRef.current
-          ? containerRef.current.getBoundingClientRect().top + window.scrollY
-          : 0;
+        const rect = containerRef.current?.getBoundingClientRect();
         setViewport({
           width: window.innerWidth,
           height: window.innerHeight,
           scrollY: window.scrollY,
-          topOffset,
+          containerTop: rect ? rect.top + window.scrollY : 0,
+          containerWidth: rect?.width || window.innerWidth,
         });
       });
     };
@@ -81,26 +81,38 @@ export const useVirtualRows = <T>(
   }, []);
 
   return useMemo(() => {
-    const columns = getColumns(container.width || viewport.width);
+    const columns = getColumns(viewport.containerWidth || viewport.width);
     const rows: T[][] = [];
     for (let index = 0; index < items.length; index += columns) {
       rows.push(items.slice(index, index + columns));
-    const stride = rowHeight + gap;
+    }
+
+    const measuredRowHeight = Math.max(
+      180,
+      (viewport.containerWidth - gap * Math.max(0, columns - 1)) / columns,
+    );
+    const resolvedRowHeight = rowHeight ?? measuredRowHeight;
+    const stride = resolvedRowHeight + gap;
+    const totalHeight = rows.length
+      ? rows.length * resolvedRowHeight + (rows.length - 1) * gap
+      : 0;
     const start = Math.max(
       0,
-      Math.floor((viewport.scrollY - viewport.topOffset) / stride) - overscan,
+      Math.floor((viewport.scrollY - viewport.containerTop) / stride) -
+        overscan,
     );
     const end = Math.min(
       rows.length,
       Math.ceil(
-        (viewport.scrollY + viewport.height - viewport.topOffset) / stride,
+        (viewport.scrollY + viewport.height - viewport.containerTop + gap) /
+          stride,
       ) + overscan,
     );
     return {
       containerRef,
       columns,
       containerRef,
-      totalHeight: rows.length * stride,
+      totalHeight,
       rows: rows.slice(start, end).map((row, offset) => ({
         index: start + offset,
         items: row,

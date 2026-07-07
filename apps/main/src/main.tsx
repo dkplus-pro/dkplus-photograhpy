@@ -15,7 +15,9 @@ const apiBaseUrl = (import.meta.env.VITE_API_BASE_URL ?? "/api").replace(
   /\/$/,
   "",
 );
-const dataUrl = import.meta.env.DEV ? `${apiBaseUrl}/photos` : staticDataUrl;
+const galleryDataUrl = import.meta.env.DEV
+  ? `${apiBaseUrl}/gallery`
+  : staticDataUrl;
 
 const useGallery = () => {
   const [data, setData] = useState<GalleryPayload | null>(null);
@@ -23,13 +25,7 @@ const useGallery = () => {
 
   useEffect(() => {
     let active = true;
-    const headers = new Headers({ Accept: "application/json" });
-    const devToken = import.meta.env.DEV
-      ? import.meta.env.VITE_ADMIN_TOKEN?.trim()
-      : "";
-    if (devToken) headers.set("Authorization", `Bearer ${devToken}`);
-
-    fetch(dataUrl, { headers })
+    fetch(galleryDataUrl)
       .then((response) => {
         if (!response.ok) throw new Error(`数据加载失败：${response.status}`);
         return response.json() as Promise<unknown>;
@@ -97,10 +93,7 @@ const VirtualPhotoGrid = ({
   style: GridStyle;
   onOpen: (photo: ResolvedPhoto) => void;
 }) => {
-  const { columns, containerRef, rows, totalHeight } = useVirtualRows(
-    photos,
-    300,
-  );
+  const { columns, containerRef, rows, totalHeight } = useVirtualRows(photos);
   return (
     <div
       ref={containerRef}

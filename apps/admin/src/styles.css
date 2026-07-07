@@ -122,10 +122,8 @@ textarea {
 
 .toolbar {
   display: grid;
-  grid-template-columns:
-    minmax(180px, 1.2fr) repeat(3, minmax(150px, 220px))
-    auto;
-  gap: 12px;
+  grid-template-columns: minmax(220px, 1.1fr) minmax(140px, 0.75fr) minmax(140px, 0.75fr) minmax(150px, 0.8fr) auto;
+  gap: 10px;
   align-items: center;
 }
 
@@ -141,11 +139,10 @@ textarea {
 
 .photo-cell {
   display: grid;
-  grid-template-columns: 64px minmax(0, 1fr);
-  justify-content: center;
-  gap: 10px;
+  grid-template-columns: 56px minmax(0, 1fr);
+  gap: 8px;
   align-items: center;
-  text-align: center;
+  text-align: left;
   min-width: 0;
   text-align: left;
 }
@@ -340,20 +337,10 @@ textarea {
 
 .photos-table .arco-table-th,
 .photos-table .arco-table-td {
-  padding-top: 7px;
-  padding-bottom: 7px;
+  padding-top: 6px;
+  padding-bottom: 6px;
   text-align: center;
   vertical-align: middle;
-}
-
-.photos-table .arco-table-cell {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.photos-table .arco-empty {
-  padding: 28px 0;
 }
 
 .image-preview-modal .arco-modal {
@@ -371,6 +358,23 @@ textarea {
   object-fit: contain;
   border-radius: 10px;
   background: #111827;
+}
+
+.photos-table .arco-table-td {
+  vertical-align: middle;
+}
+
+.photos-table .arco-table-empty-row .arco-table-td {
+  padding: 32px 16px;
+}
+
+.toolbar :where(.arco-input-inner-wrapper, .arco-select-view):focus-within {
+  outline: 3px solid rgba(22, 93, 255, 0.24);
+  outline-offset: 2px;
+}
+
+.toolbar-actions {
+  justify-content: flex-end;
 }
 
 @media (max-width: 920px) {

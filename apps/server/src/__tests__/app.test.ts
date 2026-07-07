@@ -165,8 +165,8 @@ test("existing JSON seeds an empty database and is rewritten only by explicit ex
           description: "来自静态 JSON 的种子数据",
           slug: "seed-topic",
           sortOrder: 1,
-          createdAt: "2026-06-30T00:00:00.000Z",
-          updatedAt: "2026-07-02T00:00:00.000Z",
+          createdAt: "2026-06-01T00:00:00.000Z",
+          updatedAt: "2026-06-02T00:00:00.000Z",
         },
       ],
       photos: [
@@ -181,9 +181,6 @@ test("existing JSON seeds an empty database and is rewritten only by explicit ex
           takenAt: "2026-07-01T08:00:00.000Z",
           createdAt: "2026-07-01T08:00:00.000Z",
           updatedAt: "2026-07-02T08:00:00.000Z",
-          imageUrl: "seed/original.jpg",
-          thumbnailUrl: "seed/thumb.jpg",
-          image: { url: "seed/original.jpg", key: "internal/seed.jpg" },
           asset: {
             original: "seed/original.jpg",
             thumbnail: "seed/thumb.jpg",
@@ -234,36 +231,40 @@ test("existing JSON seeds an empty database and is rewritten only by explicit ex
     const artifact = JSON.parse(await readFile(config.exportFile, "utf8")) as {
       generatedAt: string;
       topics: Array<Record<string, unknown>>;
-      photos: Array<
-        Record<string, unknown> & {
+      photos: Array<Record<string, unknown> & {
         id: string;
         topicIds: string[];
         asset: { original: string };
         }
       >;
     };
-    assertClientExportShape(artifact);
+    assert.deepEqual(Object.keys(artifact).sort(), [
+      "generatedAt",
+      "photos",
+      "topics",
+    ]);
     assert.ok(artifact.generatedAt);
     assert.deepEqual(Object.keys(artifact).sort(), ["generatedAt", "photos", "topics"]);
     assert.equal(artifact.topics.length, 1);
-    assertNoClientInternals(artifact);
+    assert.equal("createdAt" in artifact.topics[0], false);
+    assert.equal("updatedAt" in artifact.topics[0], false);
     assert.deepEqual(
       artifact.photos.find((photo) => photo.id === "seed-photo")?.topicIds,
       ["seed-topic"],
     );
-    assert.equal(
-      artifact.photos.find((photo) => photo.id === "seed-photo")?.asset
-        .original,
-      "seed/original.jpg",
-    );
-    const seedExport = artifact.photos.find(
-      (photo) => photo.id === "seed-photo",
-    );
-    assert.ok(seedExport);
-    assert.equal("createdAt" in seedExport, false);
-    assert.equal("updatedAt" in seedExport, false);
-    assert.equal("image" in seedExport, false);
-    assert.equal("tags" in seedExport, false);
+    const seedPhoto = artifact.photos.find((photo) => photo.id === "seed-photo");
+    assert.equal(seedPhoto?.asset.original, "seed/original.jpg");
+    assert.equal("createdAt" in (seedPhoto ?? {}), false);
+    assert.equal("updatedAt" in (seedPhoto ?? {}), false);
+    assert.equal("image" in (seedPhoto ?? {}), false);
+    assert.deepEqual(Object.keys(seedPhoto ?? {}).sort(), [
+      "asset",
+      "description",
+      "id",
+      "takenAt",
+      "title",
+      "topicIds",
+    ]);
     assert.ok(artifact.photos.some((photo) => photo.id !== "seed-photo"));
   } finally {
     await rm(root, { recursive: true, force: true });

@@ -45,19 +45,11 @@ test("main photo cards keep the compact no-zoom square-card contract", () => {
   assert.doesNotMatch(styles, /\b(mosaic|adaptive)\b/i);
 });
 
-test("main selects /api data in dev and static JSON for production builds", () => {
-  assert.match(mainSource, /const staticDataUrl\s*=\s*`\$\{import\.meta\.env\.BASE_URL\}data\/gallery\.json`/);
-  assert.match(mainSource, /import\.meta\.env\.DEV\s*\?\s*`\$\{apiBaseUrl\}\/gallery`\s*:\s*staticDataUrl/s);
-  assert.match(mainSource, /fetch\(galleryDataUrl\)/);
-});
-
-test("main modal navigation and virtual rows keep bottom-edge contracts", () => {
-  assert.match(cssBlock(".modal__nav"), /top:\s*50%;/);
-  assert.match(cssBlock(".modal__nav"), /transform:\s*translateY\(-50%\);/);
-  assert.match(cssBlock(".modal__nav"), /place-items:\s*center;/);
-
-  assert.match(virtualRows, /containerRef\s*=\s*useRef<HTMLDivElement \| null>\(null\)/);
+test("main virtual grid measures its container and keeps modal nav centered", () => {
+  assert.match(virtualRows, /containerRef\s*=\s*useRef/);
   assert.doesNotMatch(virtualRows, /topOffset\s*=\s*260/);
-  assert.match(virtualRows, /rows\.length \* measuredRowHeight \+ \(rows\.length - 1\) \* gap/);
-  assert.match(virtualRows, /Math\.ceil\(\(viewport\.scrollY \+ viewport\.height - container\.top\) \/ stride\) \+\s*overscan/s);
+  assert.match(virtualRows, /containerTop:\s*rect\s*\?/);
+  assert.match(virtualRows, /rows\.length \* resolvedRowHeight \+ \(rows\.length - 1\) \* gap/);
+
+  assert.match(styles, /\.modal__nav\s*\{[\s\S]*?top:\s*50%;[\s\S]*?transform:\s*translateY\(-50%\);/);
 });

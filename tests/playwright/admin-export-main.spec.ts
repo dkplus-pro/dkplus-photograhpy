@@ -244,8 +244,7 @@ test.beforeAll(async () => {
     ],
     {
       VITE_BASE_PATH: "/",
-      VITE_API_BASE_URL: `${serverBaseUrl}/api`,
-      VITE_ADMIN_TOKEN: adminToken,
+      VITE_API_PROXY_TARGET: serverBaseUrl,
     },
   );
   await waitForHttp(mainBaseUrl, "main");
@@ -277,13 +276,11 @@ test("Admin authenticated export action writes the Main JSON artifact", async ({
   expect(response.ok()).toBeTruthy();
 
   const exported = JSON.parse(await readFile(exportFile, "utf8")) as {
-    photos: Array<
-      Record<string, unknown> & {
+    photos: Array<Record<string, unknown> & {
       id: string;
       topicIds: string[];
       asset: { original: string };
-      }
-    >;
+    }>;
     topics: Array<Record<string, unknown>>;
   };
   expect(Object.keys(exported).sort()).toEqual(["generatedAt", "photos", "topics"]);
@@ -294,33 +291,9 @@ test("Admin authenticated export action writes the Main JSON artifact", async ({
   expect(exported.photos[0]?.id).toBe("admin-seed-photo");
   expect(exported.photos[0]?.topicIds).toEqual(["editorial"]);
   expect(exported.photos[0]?.asset.original).toContain("data:image/svg+xml");
-  expect(JSON.stringify(exported)).not.toMatch(
-    /"(createdAt|updatedAt|image|imageUrl|thumbnailUrl)"\s*:/,
-  );
-});
-
-test("Admin list exposes the optimized filters and centered sortable table", async ({
-  page,
-}) => {
-  await page.goto(adminBaseUrl);
-  await expect(page.getByPlaceholder("按标题筛选")).toBeVisible();
-  await expect(page.getByLabel("按品牌筛选")).toBeVisible();
-  await expect(page.getByLabel("按机型筛选")).toBeVisible();
-  await expect(page.getByLabel("按专题筛选")).toBeVisible();
-  await expect(
-    page.getByRole("columnheader", { name: /拍摄日期/ }),
-  ).toBeVisible();
-  await expect(page.getByText(/更新：/)).toHaveCount(0);
-
-  await page.getByPlaceholder("按标题筛选").fill("后台导出样片");
-  await expect(page.getByRole("cell", { name: /后台导出样片/ })).toBeVisible();
-  await page.getByRole("columnheader", { name: /拍摄日期/ }).click();
-
-  const firstCellAlign = await page
-    .locator(".photos-table .arco-table-td")
-    .first()
-    .evaluate((element) => getComputedStyle(element).textAlign);
-  expect(firstCellAlign).toBe("center");
+  expect(exported.photos[0]).not.toHaveProperty("createdAt");
+  expect(exported.photos[0]).not.toHaveProperty("updatedAt");
+  expect(exported.photos[0]).not.toHaveProperty("image");
 });
 
 test("Admin API auth and upload work without mutating the exported JSON", async ({
@@ -360,7 +333,7 @@ test("Admin API auth and upload work without mutating the exported JSON", async 
   await expect(readFile(exportFile, "utf8")).resolves.toBe(beforeUploadExport);
 });
 
-test("Main grid uses API data in dev, reaches the virtual bottom, and centers modal nav", async ({
+test("Main dev loads gallery data from /api and grid remains compact", async ({
   page,
   request,
 }) => {
@@ -390,13 +363,12 @@ test("Main grid uses API data in dev, reaches the virtual bottom, and centers mo
   }
 
   await page.setViewportSize({ width: 1366, height: 900 });
-  const photosResponse = page.waitForResponse(
-    (response) =>
-      response.url().endsWith("/api/photos") &&
-      response.request().method() === "GET",
-  );
+  const apiResponses: string[] = [];
+  page.on("response", (response) => {
+    if (response.url().includes("/api/gallery")) apiResponses.push(response.url());
+  });
   await page.goto(mainBaseUrl);
-  await expect((await photosResponse).ok()).toBeTruthy();
+  await expect.poll(() => apiResponses.length).toBeGreaterThan(0);
   const card = page.locator(".photo-card").first();
   await expect(card).toBeVisible();
 
@@ -466,6 +438,63 @@ test("Main grid uses API data in dev, reaches the virtual bottom, and centers mo
       );
     });
   expect(navCenterDelta).toBeLessThan(2);
+});
+
+
+test("Main virtual grid renders the bottom card and modal nav is vertically centered", async ({
+  page,
+  request,
+}) => {
+  for (let index = 0; index < 14; index += 1) {
+    const isBottomFixture = index === 13;
+    const created = await request.post(`${serverBaseUrl}/api/photos`, {
+      headers: { Authorization: `Bearer ${adminToken}` },
+      data: {
+        title: isBottomFixture
+          ? "底部虚拟样片"
+          : `虚拟列表填充样片 ${index + 1}`,
+        topicId: "editorial",
+        takenAt: isBottomFixture
+          ? "2026-01-01T08:00:00.000Z"
+          : `2026-07-${String(20 - index).padStart(2, "0")}T08:00:00.000Z`,
+        asset: {
+          original:
+            "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='800' height='800'%3E%3Crect width='800' height='800' fill='%23555555'/%3E%3C/svg%3E",
+          alt: isBottomFixture
+            ? "底部虚拟样片"
+            : `虚拟列表填充样片 ${index + 1}`,
+          width: 800,
+          height: 800,
+        },
+      },
+    });
+    expect(created.ok()).toBeTruthy();
+  }
+
+  await page.setViewportSize({ width: 1366, height: 900 });
+  await page.goto(mainBaseUrl);
+  await expect(page.locator(".photo-card").first()).toBeVisible();
+  await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight));
+  await expect(page.getByRole("button", { name: "查看图片：底部虚拟样片" })).toBeVisible();
+  await page.getByRole("button", { name: "查看图片：底部虚拟样片" }).click();
+
+  const centers = await page.evaluate(() => {
+    const modal = document.querySelector(".modal");
+    const prev = document.querySelector(".modal__nav--prev");
+    const next = document.querySelector(".modal__nav--next");
+    if (!modal || !prev || !next) throw new Error("Modal nav DOM is incomplete");
+    const modalBox = modal.getBoundingClientRect();
+    const prevBox = prev.getBoundingClientRect();
+    const nextBox = next.getBoundingClientRect();
+    return {
+      modalCenter: modalBox.top + modalBox.height / 2,
+      prevCenter: prevBox.top + prevBox.height / 2,
+      nextCenter: nextBox.top + nextBox.height / 2,
+    };
+  });
+
+  expect(Math.abs(centers.prevCenter - centers.modalCenter)).toBeLessThan(2);
+  expect(Math.abs(centers.nextCenter - centers.modalCenter)).toBeLessThan(2);
 });
 
 

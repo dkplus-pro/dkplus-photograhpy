@@ -34,39 +34,50 @@ const assertArray = (value, label) => {
   return value;
 };
 
-const definedEntries = (value) =>
-  Object.fromEntries(Object.entries(value).filter(([, entry]) => entry !== undefined));
+const compactObject = (entries, { keepEmptyArrays = false } = {}) =>
+  Object.fromEntries(
+    entries.filter(([, value]) => {
+      if (value === undefined || value === null || value === '') return false;
+      if (Array.isArray(value) && value.length === 0 && !keepEmptyArrays) {
+        return false;
+      }
+      if (
+        value &&
+        typeof value === 'object' &&
+        !Array.isArray(value) &&
+        Object.keys(value).length === 0
+      ) {
+        return false;
+      }
+      return true;
+    })
+  );
 
-const normalizeTopic = (topic) =>
-  definedEntries({
-    id: topic.id,
-    title: topic.title,
-    description: topic.description,
-    slug: topic.slug,
-    coverPhotoId: topic.coverPhotoId,
-    sortOrder: topic.sortOrder
-  });
+const compactAsset = (asset) =>
+  compactObject([
+    ['original', asset.original],
+    ['thumbnail', asset.thumbnail],
+    ['preview', asset.preview],
+    ['alt', asset.alt],
+    ['width', asset.width],
+    ['height', asset.height]
+  ]);
 
-const normalizeAsset = (photo) => {
-  const source = photo.asset ?? {};
-  const original = source.original ?? photo.image?.url ?? photo.imageUrl ?? photo.urls?.original;
-  if (!original) return undefined;
-  return definedEntries({
-    original,
-    thumbnail: source.thumbnail ?? photo.thumbnailUrl ?? photo.urls?.thumbnail ?? photo.image?.url ?? original,
-    preview:
-      source.preview ??
-      source.thumbnail ??
-      photo.thumbnailUrl ??
-      photo.urls?.preview ??
-      photo.urls?.thumbnail ??
-      photo.image?.url ??
-      original,
-    alt: source.alt ?? photo.title,
-    width: source.width ?? photo.exif?.width,
-    height: source.height ?? photo.exif?.height
-  });
+const compactExif = (exif) => {
+  if (!exif || typeof exif !== 'object' || Array.isArray(exif)) return undefined;
+  const compact = compactObject(Object.entries(exif));
+  return Object.keys(compact).length ? compact : undefined;
 };
+
+const compactTopic = (topic) =>
+  compactObject([
+    ['id', topic.id],
+    ['title', topic.title],
+    ['description', topic.description],
+    ['slug', topic.slug],
+    ['coverPhotoId', topic.coverPhotoId],
+    ['sortOrder', topic.sortOrder]
+  ]);
 
 export function normalizeGalleryData(input) {
   const topics = assertArray(input.topics ?? [], 'topics').map(normalizeTopic);
@@ -82,23 +93,28 @@ export function normalizeGalleryData(input) {
         ? [photo.topicId]
         : [];
     const takenAt = photo.takenAt ?? photo.exif?.capturedAt ?? photo.createdAt ?? new Date().toISOString();
-    return definedEntries({
-      id: photo.id,
-      title: photo.title,
-      description: photo.description,
-      topicIds,
-      takenAt,
-      location: photo.location,
-      asset,
-      exif: photo.exif,
-      urls: {
-        original: resolveAssetUrl(asset.original),
-        thumbnail: resolveAssetUrl(asset.thumbnail ?? asset.original),
-        preview: resolveAssetUrl(asset.preview ?? asset.thumbnail ?? asset.original)
-      }
-    });
+    return compactObject(
+      [
+        ['id', photo.id],
+        ['title', photo.title],
+        ['description', photo.description],
+        ['topicIds', topicIds],
+        ['takenAt', takenAt],
+        ['location', photo.location],
+        ['asset', compactAsset(asset)],
+        ['urls', {
+          original: resolveAssetUrl(asset.original),
+          thumbnail: resolveAssetUrl(asset.thumbnail ?? asset.original),
+          preview: resolveAssetUrl(asset.preview ?? asset.thumbnail ?? asset.original)
+        }],
+        ['exif', compactExif(photo.exif)]
+      ],
+      { keepEmptyArrays: true }
+    );
   });
 
+  const topics = assertArray(input.topics ?? [], 'topics').map(compactTopic);
+  const topicIds = new Set(topics.map((topic) => topic.id));
   for (const photo of photos) {
     for (const topicId of photo.topicIds) {
       if (!knownTopicIds.has(topicId)) throw new Error(`Photo ${photo.id} references unknown topic ${topicId}`);
