@@ -227,7 +227,7 @@ export function createPhotosRouter(
           ?.split(",")
           .map((tag) => tag.trim())
           .filter(Boolean),
-        takenAt: field(form.takenAt) ?? exif.capturedAt,
+        takenAt: field(form.takenAt) ?? exif?.capturedAt,
         image: stored.image,
         exif,
       };
