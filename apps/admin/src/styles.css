@@ -10,8 +10,18 @@
   --panel: rgba(255, 255, 255, 0.94);
   --panel-solid: #fffdf8;
   --wash: #ebe7df;
-  --focus: #1b63ff;
+  --hover-wash: #e8e1d4;
+  --focus: #332f29;
+  --focus-ring: rgba(20, 20, 20, 0.32);
   --danger: #a32121;
+  --color-primary-1: #f7f3ea;
+  --color-primary-2: #eee8dc;
+  --color-primary-3: #d9d1c2;
+  --color-primary-4: #8c8376;
+  --color-primary-5: var(--ink-soft);
+  --color-primary-6: var(--ink);
+  --color-primary-7: #050505;
+  --color-link-6: var(--ink);
   color: var(--ink);
   background: var(--paper);
   font-family:
@@ -84,7 +94,7 @@ textarea {
 }
 
 .toast-message--info {
-  border-left-color: var(--focus);
+  border-left-color: var(--ink-soft);
 }
 
 .admin-header {
@@ -166,8 +176,8 @@ textarea {
 
 .toolbar-card:focus-within,
 .table-card:focus-within {
-  border-color: rgba(27, 99, 255, 0.72);
-  box-shadow: 0 18px 48px rgba(27, 99, 255, 0.16);
+  border-color: rgba(20, 20, 20, 0.5);
+  box-shadow: 0 18px 48px rgba(20, 20, 20, 0.14);
 }
 
 .table-card {
@@ -452,7 +462,7 @@ textarea {
 }
 
 .photos-table .arco-table-tr:hover .arco-table-td {
-  background: #fff6d9;
+  background: var(--hover-wash);
 }
 
 .photos-table .arco-table-cell {
@@ -518,7 +528,7 @@ textarea {
 
 .toolbar :where(.arco-input-inner-wrapper, .arco-select-view):focus-within,
 :where(.arco-btn, .arco-checkbox, .arco-select-view, .arco-input-inner-wrapper):focus-visible {
-  outline: 3px solid rgba(27, 99, 255, 0.28);
+  outline: 3px solid var(--focus-ring);
   outline-offset: 2px;
 }
 
@@ -544,6 +554,80 @@ textarea {
 .arco-btn-outline:not(.arco-btn-disabled) {
   border-color: var(--line-strong);
   color: var(--ink);
+}
+
+.admin-shell
+  :where(
+    .arco-btn:not(.arco-btn-disabled):not(.arco-btn-primary):hover,
+    .arco-btn:not(.arco-btn-disabled):not(.arco-btn-primary):focus-visible,
+    .arco-btn-outline:not(.arco-btn-disabled):hover,
+    .arco-btn-outline:not(.arco-btn-disabled):focus-visible
+  ) {
+  border-color: var(--ink);
+  background: var(--wash);
+  color: var(--ink);
+}
+
+.admin-shell :where(.arco-btn-status-danger:not(.arco-btn-disabled):hover) {
+  border-color: #7f1717;
+  background: #7f1717;
+  color: #fffdf8;
+}
+
+.admin-shell :where(.arco-checkbox-checked .arco-checkbox-mask) {
+  border-color: var(--ink);
+  background: var(--ink);
+}
+
+.admin-shell
+  :where(
+    .arco-input-inner-wrapper-focus,
+    .arco-input-inner-wrapper:focus-within,
+    .arco-select-view-focused,
+    .arco-select-view:focus-within,
+    .arco-textarea:focus
+  ) {
+  border-color: var(--ink);
+  box-shadow: 0 0 0 2px var(--focus-ring);
+}
+
+.admin-shell :where(.arco-alert-info) {
+  border-color: var(--line);
+  background: var(--panel-solid);
+  color: var(--ink-soft);
+}
+
+.admin-shell :where(.arco-alert-info .arco-alert-icon) {
+  color: var(--ink-soft);
+}
+
+.admin-shell :where(.arco-spin-icon, .arco-icon-hover:hover) {
+  color: var(--ink);
+}
+
+.table-card .arco-tag {
+  border-color: var(--ink);
+  background: var(--ink);
+  color: #fffdf8;
+}
+
+:where(.arco-select-popup) .arco-select-option:hover,
+:where(.arco-select-popup) .arco-select-option-hover,
+:where(.arco-select-popup) .arco-select-option-active {
+  background: var(--hover-wash);
+  color: var(--ink);
+}
+
+:where(.arco-select-popup) .arco-select-option-selected {
+  background: var(--ink);
+  color: #fffdf8;
+}
+
+:where(.arco-pagination-item):hover,
+:where(.arco-pagination-item-active) {
+  border-color: var(--ink);
+  background: var(--ink);
+  color: #fffdf8;
 }
 
 .arco-tag {

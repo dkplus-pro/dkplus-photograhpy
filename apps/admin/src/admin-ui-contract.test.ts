@@ -59,15 +59,27 @@ describe("admin list UI contract", () => {
     );
   });
 
-  it("keeps dense accessible gallery styling without decorative blue gradients", () => {
+  it("keeps dense accessible gallery styling with unified neutral hover and focus tones", () => {
     expect(styles).toMatch(
       /\.photos-table \.arco-table-th,[\s\S]*?\.photos-table \.arco-table-td\s*\{[\s\S]*?padding-top:\s*6px;[\s\S]*?text-align:\s*center;[\s\S]*?vertical-align:\s*middle;/,
     );
+    expect(styles).toContain("--hover-wash: #e8e1d4;");
+    expect(styles).toContain("--focus: #332f29;");
+    expect(styles).toContain("--focus-ring: rgba(20, 20, 20, 0.32);");
+    expect(styles).toContain("--color-primary-6: var(--ink);");
     expect(styles).toContain(
       ".toolbar :where(.arco-input-inner-wrapper, .arco-select-view):focus-within",
     );
+    expect(styles).toContain("outline: 3px solid var(--focus-ring);");
     expect(styles).toContain(".photo-cell__thumb:hover img");
+    expect(styles).toMatch(
+      /\.photos-table \.arco-table-tr:hover \.arco-table-td\s*\{[\s\S]*?background:\s*var\(--hover-wash\);/,
+    );
+    expect(styles).toContain(".admin-shell :where(.arco-alert-info)");
+    expect(styles).toContain(":where(.arco-select-popup) .arco-select-option:hover");
     expect(styles).toContain("@media (max-width: 920px)");
+    expect(styles).not.toContain("#1b63ff");
+    expect(styles).not.toMatch(/rgba?\(\s*27,\s*99,\s*255/);
     expect(styles).not.toMatch(/linear-gradient\(135deg,\s*rgba\(22, 93, 255/);
     expect(styles).not.toMatch(/radial-gradient\([\s\S]*rgba\(20, 201, 201/);
   });
