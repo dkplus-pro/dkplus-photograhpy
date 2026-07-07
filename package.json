@@ -1,0 +1,27 @@
+{
+  "name": "dkplus-photography",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Static photography gallery and admin tooling for DKPlus Photography.",
+  "license": "UNLICENSED",
+  "packageManager": "pnpm@10.31.0",
+  "engines": {
+    "node": ">=20.19.0",
+    "pnpm": ">=10.0.0"
+  },
+  "scripts": {
+    "dev": "turbo run dev --parallel",
+    "build": "turbo run build",
+    "lint": "turbo run lint",
+    "typecheck": "turbo run typecheck",
+    "test": "turbo run test",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "clean": "turbo run clean && rm -rf node_modules .turbo dist coverage"
+  },
+  "devDependencies": {
+    "prettier": "3.9.4",
+    "turbo": "2.10.4",
+    "typescript": "6.0.3"
+  }
+}
