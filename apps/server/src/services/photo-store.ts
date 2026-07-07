@@ -285,10 +285,25 @@ function toClientPhoto(photo: PhotoRecord): Record<string, unknown> {
     tags: photo.tags ?? [],
     asset,
     exif: photo.exif,
-    createdAt: photo.createdAt,
-    updatedAt: photo.updatedAt,
   };
 }
+
+function toClientTopic(topic: TopicRecord): Record<string, unknown> {
+  return {
+    id: topic.id,
+    title: topic.title,
+    description: topic.description,
+    slug: topic.slug,
+    coverPhotoId: topic.coverPhotoId,
+    sortOrder: topic.sortOrder,
+  };
+}
+
+type ClientGalleryPayload = {
+  generatedAt: string;
+  topics: Record<string, unknown>[];
+  photos: Record<string, unknown>[];
+};
 
 export class PhotoStore {
   private readonly db: Database.Database;
@@ -395,14 +410,7 @@ export class PhotoStore {
 
   async exportToJson(): Promise<GalleryExportResult> {
     const generatedAt = new Date().toISOString();
-    const photos = (await this.list()).map(toClientPhoto);
-    const topics = this.listTopics();
-    const payload = {
-      generatedAt,
-      updatedAt: generatedAt,
-      topics,
-      photos,
-    };
+    const payload = await this.clientGalleryPayload(generatedAt);
     await fs.mkdir(path.dirname(this.options.exportFile), { recursive: true });
     const tempFile = `${this.options.exportFile}.${process.pid}.${Date.now()}.tmp`;
     await fs.writeFile(
@@ -414,8 +422,18 @@ export class PhotoStore {
     return {
       exportFile: this.options.exportFile,
       generatedAt,
-      photoCount: photos.length,
-      topicCount: topics.length,
+      photoCount: payload.photos.length,
+      topicCount: payload.topics.length,
+    };
+  }
+
+  async clientGalleryPayload(
+    generatedAt = new Date().toISOString(),
+  ): Promise<ClientGalleryPayload> {
+    return {
+      generatedAt,
+      topics: this.listTopics().map(toClientTopic),
+      photos: (await this.list()).map(toClientPhoto),
     };
   }
 
