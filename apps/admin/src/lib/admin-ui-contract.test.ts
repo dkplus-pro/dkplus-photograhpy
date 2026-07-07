@@ -7,6 +7,10 @@ import { describe, expect, it } from "vitest";
 const dirname = path.dirname(fileURLToPath(import.meta.url));
 const appSource = readFileSync(path.join(dirname, "../App.tsx"), "utf8");
 const styles = readFileSync(path.join(dirname, "../styles.css"), "utf8");
+const columnsSource = appSource.slice(
+  appSource.indexOf("const columns"),
+  appSource.indexOf("return ("),
+);
 
 describe("admin gallery list contract", () => {
   it("uses explicit title, brand, model, and topic filters", () => {
@@ -20,15 +24,27 @@ describe("admin gallery list contract", () => {
     expect(appSource).toContain("全部专题");
   });
 
+  it("documents the optimized list columns in source", () => {
+    expect(columnsSource).toContain('title: "图片"');
+    expect(columnsSource).toContain('title: "专题"');
+    expect(columnsSource).toContain('title: "型号"');
+    expect(columnsSource).toContain('title: "镜头"');
+    expect(columnsSource).toContain('title: "拍摄日期"');
+    expect(columnsSource).not.toContain('title: "文件信息"');
+    expect(columnsSource).not.toContain('title: "EXIF"');
+    expect(columnsSource).not.toMatch(/imageSummary|formatFileSize|mimeType|未知格式|未知大小/);
+    expect(columnsSource).not.toMatch(/aperture|shutter|iso|ISO|光圈|快门/);
+  });
+
   it("keeps shooting date sortable and removes update-date table copy", () => {
-    expect(appSource).toContain('title: "拍摄日期"');
-    expect(appSource).toContain("sorter: (left, right)");
+    expect(columnsSource).toContain('title: "拍摄日期"');
+    expect(columnsSource).toContain("sorter: (left, right)");
     expect(appSource).not.toContain("更新：");
     expect(appSource).not.toMatch(/scroll=\{\{\s*x:\s*\d+,\s*y:/);
     expect(appSource).toMatch(/scroll=\{\{\s*x:\s*1260\s*\}\}/);
   });
 
-  it("centers dense table content and exposes focus/empty feedback", () => {
+  it("centers dense table content and exposes accessible gallery feedback", () => {
     expect(styles).toMatch(
       /\.photos-table \.arco-table-th,[\s\S]*?text-align:\s*center;/,
     );
@@ -39,5 +55,8 @@ describe("admin gallery list contract", () => {
     expect(styles).toContain(
       ".toolbar :where(.arco-input-inner-wrapper, .arco-select-view):focus-within",
     );
+    expect(styles).toContain(".photo-cell__thumb:hover img");
+    expect(styles).not.toContain("rgba(22, 93, 255");
+    expect(styles).not.toContain("rgba(20, 201, 201");
   });
 });

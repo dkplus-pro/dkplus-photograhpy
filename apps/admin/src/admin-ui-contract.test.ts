@@ -6,6 +6,10 @@ import { describe, expect, it } from "vitest";
 const dirname = path.dirname(fileURLToPath(import.meta.url));
 const appSource = readFileSync(path.join(dirname, "App.tsx"), "utf8");
 const styles = readFileSync(path.join(dirname, "styles.css"), "utf8");
+const columnsSource = appSource.slice(
+  appSource.indexOf("const columns"),
+  appSource.indexOf("return ("),
+);
 
 describe("admin list UI contract", () => {
   it("keeps explicit title, brand, model, and topic filters", () => {
@@ -17,25 +21,50 @@ describe("admin list UI contract", () => {
     expect(appSource).toContain("cameraModels");
   });
 
-  it("removes list height locking and update-date display", () => {
-    expect(appSource).toContain('title: "拍摄日期"');
-    expect(appSource).toContain(
+  it("uses split camera-model and lens columns without file-info or exposure copy", () => {
+    expect(columnsSource).toContain('title: "型号"');
+    expect(columnsSource).toContain('title: "镜头"');
+    expect(columnsSource).not.toContain('title: "文件信息"');
+    expect(columnsSource).not.toContain('title: "EXIF"');
+    expect(columnsSource).not.toContain("imageSummary(");
+    expect(columnsSource).not.toContain("formatFileSize(");
+    expect(columnsSource).not.toMatch(/mimeType|未知格式|未知大小/);
+    expect(columnsSource).not.toMatch(/aperture|shutter|iso|ISO|光圈|快门/);
+  });
+
+  it("keeps shooting date independent, sortable, centered, and paginated", () => {
+    expect(columnsSource).toContain('title: "拍摄日期"');
+    expect(columnsSource).toContain(
       "sorter: (left, right) => takenAtTime(left) - takenAtTime(right)",
     );
+    expect(columnsSource).toContain('align: "center"');
     expect(appSource).not.toContain("更新：");
     expect(appSource).not.toContain("y: 560");
     expect(appSource).toContain("scroll={{ x: 1260 }}");
+    expect(appSource).toContain("pagination={{");
+    expect(appSource).toContain("pageSize: 12");
   });
 
-  it("centers dense table content and preserves focus/empty feedback", () => {
-    expect(styles).toMatch(
-      /\.photos-table \.arco-table-th,[\s\S]*?\.photos-table \.arco-table-td\s*\{[\s\S]*?padding-top:\s*6px;[\s\S]*?text-align:\s*center;[\s\S]*?vertical-align:\s*middle;/,
-    );
+  it("preserves preview, add/edit/upload modals, and empty feedback", () => {
+    expect(appSource).toContain("setPreviewPhoto(photo)");
+    expect(appSource).toContain('title={editingId ? "编辑图片记录" : "新增图片记录"}');
+    expect(appSource).toContain('visible={isUploadOpen}');
+    expect(appSource).toContain('title={previewPhoto ? photoTitle(previewPhoto) : "图片预览"}');
     expect(appSource).toContain(
       "暂无匹配图片，可调整标题、品牌、机型或专题筛选",
+    );
+  });
+
+  it("keeps dense accessible gallery styling without decorative blue gradients", () => {
+    expect(styles).toMatch(
+      /\.photos-table \.arco-table-th,[\s\S]*?\.photos-table \.arco-table-td\s*\{[\s\S]*?padding-top:\s*6px;[\s\S]*?text-align:\s*center;[\s\S]*?vertical-align:\s*middle;/,
     );
     expect(styles).toContain(
       ".toolbar :where(.arco-input-inner-wrapper, .arco-select-view):focus-within",
     );
+    expect(styles).toContain(".photo-cell__thumb:hover img");
+    expect(styles).toContain("@media (max-width: 920px)");
+    expect(styles).not.toContain("rgba(22, 93, 255");
+    expect(styles).not.toContain("rgba(20, 201, 201");
   });
 });
