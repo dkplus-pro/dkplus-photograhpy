@@ -724,7 +724,7 @@ function App() {
                   </Button>
                 </div>
               }
-              scroll={{ x: 1080 }}
+              scroll={{ x: 1260 }}
               rowSelection={{
                 type: "checkbox",
                 checkAll: true,
