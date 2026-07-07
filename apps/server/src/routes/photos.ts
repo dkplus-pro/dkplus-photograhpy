@@ -129,8 +129,11 @@ function parseClientExif(value: unknown): ExifMetadata | undefined {
 function mergeExif(
   serverExif: ExifMetadata,
   clientExif: ExifMetadata | undefined,
-): ExifMetadata {
-  return clientExif ? { ...serverExif, ...clientExif } : serverExif;
+): ExifMetadata | undefined {
+  const merged = clientExif ? { ...serverExif, ...clientExif } : serverExif;
+  return Object.values(merged).some((entry) => entry !== undefined)
+    ? merged
+    : undefined;
 }
 
 export function createPhotosRouter(
