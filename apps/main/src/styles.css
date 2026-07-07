@@ -177,29 +177,32 @@ img {
 .photo-card__meta {
   position: absolute;
   inset: auto 0 0;
-  display: block;
-  padding: 72px 18px 18px;
+  display: grid;
+  min-height: 42%;
+  align-items: end;
+  padding: 64px 16px 16px;
   border-radius: 0;
   background: linear-gradient(
-    to top,
-    rgba(9, 9, 11, 0.82) 0%,
-    rgba(9, 9, 11, 0.46) 48%,
-    rgba(9, 9, 11, 0) 100%
+    0deg,
+    rgba(9, 9, 11, 0.74) 0%,
+    rgba(9, 9, 11, 0.42) 46%,
+    transparent 100%
   );
   opacity: 0;
   pointer-events: none;
-  transform: translateY(10px);
+  transform: translateY(12px);
   transition:
     opacity 180ms ease,
-    transform 220ms ease;
+    transform 180ms ease;
 }
-.photo-card:is(:hover, :focus-visible) .photo-card__meta {
+.photo-card:hover .photo-card__meta,
+.photo-card:focus .photo-card__meta {
   opacity: 1;
   transform: translateY(0);
 }
 .photo-card__meta strong {
   font-size: 1rem;
-  line-height: 1.25;
+  text-shadow: 0 1px 12px rgba(0, 0, 0, 0.36);
 }
 .topic-grid {
   display: grid;
