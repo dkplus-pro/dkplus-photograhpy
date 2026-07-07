@@ -74,7 +74,8 @@ test("modal navigation is vertically centered in the image pane", () => {
     cssBlock(".modal__panel"),
     /height:\s*min\(820px,\s*calc\(100dvh - clamp\(24px, 6vw, 72px\)\)\);/,
   );
-  assert.match(cssBlock(".modal__image-wrap"), /align-items:\s*center;/);
+  assert.match(cssBlock(".modal__image-wrap"), /place-items:\s*center;/);
+  assert.match(cssBlock(".modal__image-wrap"), /overflow:\s*hidden;/);
   assert.match(
     cssBlock(".modal__image-wrap"),
     /min-height:\s*min\(420px, 100%\);/,
@@ -84,4 +85,21 @@ test("modal navigation is vertically centered in the image pane", () => {
     styles,
     /\.modal__nav\s*\{[\s\S]*?top:\s*50%;[\s\S]*?transform:\s*translateY\(-50%\);/,
   );
+});
+
+test("modal image uses max-bounded containment for all aspect ratios", () => {
+  const imageBlock = cssBlock(".modal__image-wrap img");
+
+  assert.match(imageBlock, /width:\s*auto;/);
+  assert.match(imageBlock, /height:\s*auto;/);
+  assert.match(imageBlock, /max-width:\s*100%;/);
+  assert.match(
+    imageBlock,
+    /max-height:\s*min\(820px,\s*calc\(100dvh - clamp\(24px, 6vw, 72px\)\)\);/,
+  );
+  assert.match(imageBlock, /object-fit:\s*contain;/);
+  assert.match(imageBlock, /object-position:\s*center;/);
+  assert.doesNotMatch(imageBlock, /^\s*width:\s*100%;/m);
+  assert.doesNotMatch(imageBlock, /^\s*height:\s*100%;/m);
+  assert.doesNotMatch(imageBlock, /object-fit:\s*cover;/);
 });

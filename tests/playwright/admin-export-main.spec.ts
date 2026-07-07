@@ -721,13 +721,15 @@ test("Main modal navigation buttons are vertically centered and switch photos", 
 
     const navMetrics = await page.evaluate(() => {
       const imageWrap = document.querySelector(".modal__image-wrap");
+      const image = document.querySelector(".modal__image-wrap img");
       const panel = document.querySelector(".modal__panel");
       const prev = document.querySelector(".modal__nav--prev");
       const next = document.querySelector(".modal__nav--next");
-      if (!imageWrap || !panel || !prev || !next) {
+      if (!imageWrap || !image || !panel || !prev || !next) {
         throw new Error("Modal navigation DOM was not found");
       }
       const imageBox = imageWrap.getBoundingClientRect();
+      const renderedImageBox = image.getBoundingClientRect();
       const panelBox = panel.getBoundingClientRect();
       const prevBox = prev.getBoundingClientRect();
       const nextBox = next.getBoundingClientRect();
@@ -738,6 +740,11 @@ test("Main modal navigation buttons are vertically centered and switch photos", 
         prevCenterY: prevBox.top + prevBox.height / 2,
         nextCenterY: nextBox.top + nextBox.height / 2,
         imageHeight: imageBox.height,
+        renderedImageWidth: renderedImageBox.width,
+        renderedImageHeight: renderedImageBox.height,
+        wrapWidth: imageBox.width,
+        naturalWidth: image.naturalWidth,
+        naturalHeight: image.naturalHeight,
         panelHeight: panelBox.height,
         prevTransform: prevStyles.transform,
         nextTransform: nextStyles.transform,
@@ -752,6 +759,17 @@ test("Main modal navigation buttons are vertically centered and switch photos", 
     expect(
       Math.abs(navMetrics.imageHeight - navMetrics.panelHeight),
     ).toBeLessThan(2);
+    expect(navMetrics.renderedImageWidth).toBeLessThanOrEqual(
+      navMetrics.wrapWidth + 1,
+    );
+    expect(navMetrics.renderedImageHeight).toBeLessThanOrEqual(
+      navMetrics.imageHeight + 1,
+    );
+    expect(navMetrics.renderedImageWidth).toBeGreaterThan(0);
+    expect(navMetrics.renderedImageHeight).toBeGreaterThan(0);
+    expect(
+      navMetrics.renderedImageWidth / navMetrics.renderedImageHeight,
+    ).toBeCloseTo(navMetrics.naturalWidth / navMetrics.naturalHeight, 2);
     expect(navMetrics.imageHeight).toBeGreaterThan(600);
     expect(navMetrics.prevTransform).not.toBe("none");
     expect(navMetrics.nextTransform).not.toBe("none");
