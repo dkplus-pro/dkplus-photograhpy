@@ -243,7 +243,7 @@ test.beforeAll(async () => {
       HOST: "127.0.0.1",
       PORT: String(serverPort),
       ADMIN_TOKEN: adminToken,
-      CORS_ORIGINS: adminBaseUrl,
+      CORS_ORIGINS: `${adminBaseUrl},${mainBaseUrl}`,
       DATABASE_FILE: databaseFile,
       GALLERY_EXPORT_FILE: exportFile,
       UPLOAD_DIR: uploadDir,
