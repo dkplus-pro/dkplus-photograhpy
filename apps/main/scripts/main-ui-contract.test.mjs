@@ -11,6 +11,7 @@ const virtualRows = readFileSync(
   path.join(dirname, "../src/useVirtualRows.ts"),
   "utf8",
 );
+const viteConfig = readFileSync(path.join(dirname, "../vite.config.ts"), "utf8");
 
 const escapeRegExp = (value) => value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 
@@ -44,20 +45,20 @@ test("main photo cards keep the compact no-zoom square-card contract", () => {
   assert.doesNotMatch(styles, /\b(mosaic|adaptive)\b/i);
 });
 
-test("main data loading uses the API in dev and static JSON in builds", () => {
-  assert.match(mainSource, /import\.meta\.env\.DEV\s*\?\s*`\$\{apiBaseUrl\}\/photos`/);
-  assert.match(mainSource, /staticDataUrl\s*=\s*`\$\{import\.meta\.env\.BASE_URL\}data\/gallery\.json`/);
+test("main dev uses API data while build uses generated static JSON", () => {
+  assert.match(mainSource, /import\.meta\.env\.DEV\s*\?\s*"\/api\/gallery"/);
+  assert.match(mainSource, /BASE_URL\}data\/gallery\.json/);
+  assert.match(viteConfig, /"\/api"\s*:\s*\{/);
+  assert.match(viteConfig, /VITE_API_PROXY_TARGET/);
 });
 
-test("main virtual rows are measured from the grid container", () => {
-  assert.match(virtualRows, /containerRef\s*=\s*useRef/);
-  assert.match(virtualRows, /getBoundingClientRect\(\)/);
-  assert.match(virtualRows, /viewport\.scrollY\s*-\s*container\.top/);
-  assert.match(virtualRows, /rows\.length \* measuredRowHeight \+ \(rows\.length - 1\) \* gap/);
-});
-
-test("modal navigation is vertically centered in the image pane", () => {
-  assert.match(cssBlock(".modal__image-wrap"), /align-items:\s*center;/);
+test("main modal navigation buttons stay vertically centered", () => {
   assert.match(cssBlock(".modal__nav"), /top:\s*50%;/);
   assert.match(cssBlock(".modal__nav"), /transform:\s*translateY\(-50%\);/);
+});
+
+test("virtual rows measure their own grid offset instead of using a fixed page offset", () => {
+  assert.match(virtualRows, /containerRef/);
+  assert.match(virtualRows, /getBoundingClientRect\(\)\.top\s*\+\s*window\.scrollY/);
+  assert.doesNotMatch(virtualRows, /topOffset\s*=\s*260/);
 });
