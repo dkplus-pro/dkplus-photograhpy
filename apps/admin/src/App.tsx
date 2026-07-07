@@ -532,6 +532,7 @@ function App() {
     {
       title: "型号",
       dataIndex: "exif",
+      key: "cameraModel",
       width: 150,
       align: "center",
       render: (_value, photo) => photo.exif?.cameraModel || "未知型号",
@@ -539,6 +540,7 @@ function App() {
     {
       title: "镜头",
       dataIndex: "exif",
+      key: "lens",
       width: 180,
       align: "center",
       render: (_value, photo) => photo.exif?.lens || "暂无镜头信息",
