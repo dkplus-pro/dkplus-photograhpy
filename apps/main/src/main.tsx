@@ -15,9 +15,7 @@ const apiBaseUrl = (import.meta.env.VITE_API_BASE_URL ?? "/api").replace(
   /\/$/,
   "",
 );
-const galleryDataUrl = import.meta.env.DEV
-  ? `${apiBaseUrl}/gallery`
-  : staticDataUrl;
+const dataUrl = import.meta.env.DEV ? `${apiBaseUrl}/photos` : staticDataUrl;
 
 const useGallery = () => {
   const [data, setData] = useState<GalleryPayload | null>(null);
@@ -25,10 +23,16 @@ const useGallery = () => {
 
   useEffect(() => {
     let active = true;
-    fetch(galleryDataUrl)
+    const headers = new Headers({ Accept: "application/json" });
+    const devToken = import.meta.env.DEV
+      ? import.meta.env.VITE_ADMIN_TOKEN?.trim()
+      : "";
+    if (devToken) headers.set("Authorization", `Bearer ${devToken}`);
+
+    fetch(dataUrl, { headers })
       .then((response) => {
         if (!response.ok) throw new Error(`数据加载失败：${response.status}`);
-        return response.json() as Promise<GalleryPayload>;
+        return response.json() as Promise<unknown>;
       })
       .then((payload) => active && setData(normalizePayload(payload)))
       .catch(
@@ -49,6 +53,13 @@ const formatDate = (value: string) =>
     dateStyle: "medium",
     timeZone: "UTC",
   }).format(new Date(value));
+
+const formatAperture = (value?: number | string) => {
+  if (!value) return undefined;
+  return typeof value === "string" && value.startsWith("f/")
+    ? value
+    : `f/${value}`;
+};
 
 const PhotoCard = ({
   photo,
@@ -86,7 +97,11 @@ const VirtualPhotoGrid = ({
   style: GridStyle;
   onOpen: (photo: ResolvedPhoto) => void;
 }) => {
-  const { columns, containerRef, rows, totalHeight } = useVirtualRows(photos);
+  const { columns, containerRef, rows, totalHeight } = useVirtualRows(
+    photos,
+    300,
+    8,
+  );
   return (
     <div
       ref={containerRef}
@@ -228,13 +243,15 @@ const PhotoModal = ({
         .filter(Boolean)
         .join(" "),
     ],
-    ["镜头", active.exif?.lensModel],
+    ["镜头", active.exif?.lensModel ?? active.exif?.lens],
     ["ISO", active.exif?.iso],
-    ["光圈", active.exif?.aperture ? `f/${active.exif.aperture}` : undefined],
-    ["快门", active.exif?.shutterSpeed],
+    ["光圈", formatAperture(active.exif?.aperture)],
+    ["快门", active.exif?.shutterSpeed ?? active.exif?.shutter],
     [
       "焦距",
-      active.exif?.focalLengthMm ? `${active.exif.focalLengthMm}mm` : undefined,
+      active.exif?.focalLengthMm
+        ? `${active.exif.focalLengthMm}mm`
+        : active.exif?.focalLength,
     ],
     ["地点", active.location],
     ["日期", formatDate(active.takenAt)],
