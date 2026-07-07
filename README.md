@@ -40,7 +40,6 @@ The root scripts delegate to Turbo so each workspace can provide its own `build`
 - Commit only example files such as `.env.example` or `.env.local.example`.
 - The server package owns Tencent COS credentials and upload configuration examples.
 
-
 ## Gallery refinement notes
 
 The current gallery/admin refinement contract and review checklist live in [`docs/gallery-refinement-review.md`](docs/gallery-refinement-review.md). It records the square-corner public gallery requirement, Chinese Arco-based admin target, compact modal/table management flow, `/api/uploads` 404 root-cause evidence, and verification checklist.
