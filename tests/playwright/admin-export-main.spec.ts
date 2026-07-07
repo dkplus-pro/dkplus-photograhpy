@@ -7,6 +7,7 @@ import net from "node:net";
 
 const repoRoot = process.cwd();
 const adminToken = "playwright-export-token";
+const seedPhotoCount = 40;
 
 test.describe.configure({ mode: "serial" });
 
@@ -83,53 +84,98 @@ async function waitForHttp(url: string, name: string): Promise<void> {
   );
 }
 
+
+const forbiddenClientKeys = [
+  "createdAt",
+  "updatedAt",
+  "image",
+  "imageUrl",
+  "thumbnailUrl",
+  "topicId",
+  "topicTitle",
+  "tags",
+];
+
+function expectNoClientInternals(value: unknown, path = "$" ): void {
+  if (Array.isArray(value)) {
+    value.forEach((entry, index) =>
+      expectNoClientInternals(entry, `${path}[${index}]`),
+    );
+    return;
+  }
+  if (!value || typeof value !== "object") return;
+  const record = value as Record<string, unknown>;
+  for (const key of forbiddenClientKeys) {
+    expect(record, `${path} exposes ${key}`).not.toHaveProperty(key);
+  }
+  for (const [key, entry] of Object.entries(record)) {
+    expectNoClientInternals(entry, `${path}.${key}`);
+  }
+}
+
 async function writeSeedGallery(filePath: string): Promise<void> {
   await mkdir(path.dirname(filePath), { recursive: true });
+  const svg =
+    "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='800' height='800'%3E%3Crect width='800' height='800' fill='%23222222'/%3E%3C/svg%3E";
   await writeFile(
     filePath,
     `${JSON.stringify(
       {
         generatedAt: "2026-07-07T00:00:00.000Z",
+        updatedAt: "2026-07-07T01:00:00.000Z",
         topics: [
           {
             id: "editorial",
             title: "编辑精选",
             description: "Playwright seed topic",
+            slug: "editorial",
             sortOrder: 1,
+            createdAt: "2026-07-01T00:00:00.000Z",
+            updatedAt: "2026-07-02T00:00:00.000Z",
           },
         ],
-        photos: [
-          {
-            id: "admin-seed-photo",
-            title: "后台导出样片",
+        photos: Array.from({ length: seedPhotoCount }, (_, index) => {
+          const title = index === 0 ? "后台导出样片" : `后台导出样片 ${index + 1}`;
+          const takenAt = new Date(
+            Date.UTC(2026, 6, 7, 8, 0, 0) - index * 24 * 60 * 60 * 1000,
+          ).toISOString();
+          return {
+            id: index === 0 ? "admin-seed-photo" : `admin-seed-photo-${index}`,
+            title,
             description: "Seeded from JSON into SQLite",
+            topicId: "editorial",
+            topicTitle: "编辑精选",
             topicIds: ["editorial"],
-            takenAt: "2026-07-07T08:00:00.000Z",
+            tags: ["playwright-seed"],
+            takenAt,
+            createdAt: takenAt,
+            updatedAt: "2026-07-07T09:00:00.000Z",
+            imageUrl: svg,
+            thumbnailUrl: svg,
+            image: {
+              url: svg,
+              key: `internal/seed-${index}.svg`,
+              storage: "remote",
+            },
             asset: {
-              original:
-                "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='800' height='800'%3E%3Crect width='800' height='800' fill='%23222222'/%3E%3C/svg%3E",
-              thumbnail:
-                "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='480' height='480'%3E%3Crect width='480' height='480' fill='%23333333'/%3E%3C/svg%3E",
-              preview:
-                "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='640' height='640'%3E%3Crect width='640' height='640' fill='%23444444'/%3E%3C/svg%3E",
-              alt: "后台导出样片",
+              original: svg,
+              thumbnail: svg,
+              preview: svg,
+              alt: title,
               width: 800,
               height: 800,
             },
             exif: {
-              cameraBrand: "Leica",
-              cameraModel: "Q3",
-              lens: "28mm f/1.7",
-              aperture: "f/4",
-              shutterSpeed: "1/250s",
-              iso: 200,
+              cameraBrand: index % 2 ? "Fujifilm" : "Sony",
+              cameraModel: index % 2 ? "X-H2" : "A7R V",
             },
-          },
-        ],
+          };
+        }),
       },
       null,
       2,
-    )}\n`,
+    )}
+`,
     "utf8",
   );
 }
@@ -145,7 +191,7 @@ async function writeMainGallery(): Promise<void> {
       {
         generatedAt: "2026-07-07T00:00:00.000Z",
         topics: [],
-        photos: Array.from({ length: 6 }, (_, index) => ({
+        photos: Array.from({ length: seedPhotoCount }, (_, index) => ({
           id: `main-card-${index}`,
           title: `紧凑样片 ${index + 1}`,
           description: "No hover zoom smoke fixture",
@@ -276,24 +322,24 @@ test("Admin authenticated export action writes the Main JSON artifact", async ({
   expect(response.ok()).toBeTruthy();
 
   const exported = JSON.parse(await readFile(exportFile, "utf8")) as {
-    photos: Array<Record<string, unknown> & {
+    generatedAt: string;
+    photos: Array<{
       id: string;
       topicIds: string[];
       asset: { original: string };
+      [key: string]: unknown;
     }>;
     topics: Array<Record<string, unknown>>;
+    [key: string]: unknown;
   };
   expect(Object.keys(exported).sort()).toEqual(["generatedAt", "photos", "topics"]);
   expect(exported.topics).toHaveLength(1);
-  expect(exported.topics[0]).not.toHaveProperty("createdAt");
-  expect(exported.topics[0]).not.toHaveProperty("updatedAt");
-  expect(exported.photos).toHaveLength(1);
+  expect(exported.photos).toHaveLength(seedPhotoCount);
   expect(exported.photos[0]?.id).toBe("admin-seed-photo");
   expect(exported.photos[0]?.topicIds).toEqual(["editorial"]);
   expect(exported.photos[0]?.asset.original).toContain("data:image/svg+xml");
-  expect(exported.photos[0]).not.toHaveProperty("createdAt");
-  expect(exported.photos[0]).not.toHaveProperty("updatedAt");
-  expect(exported.photos[0]).not.toHaveProperty("image");
+  expect(Object.keys(exported).sort()).toEqual(["generatedAt", "photos", "topics"]);
+  expectNoClientInternals(exported);
 });
 
 test("Admin API auth and upload work without mutating the exported JSON", async ({
@@ -328,7 +374,7 @@ test("Admin API auth and upload work without mutating the exported JSON", async 
   });
   expect(listed.ok()).toBeTruthy();
   const listBody = (await listed.json()) as { photos?: unknown[] };
-  expect(listBody.photos?.length).toBe(2);
+  expect(listBody.photos?.length).toBe(seedPhotoCount + 1);
 
   await expect(readFile(exportFile, "utf8")).resolves.toBe(beforeUploadExport);
 });
@@ -552,4 +598,50 @@ test("Main virtual grid renders the bottom card and modal nav is vertically cent
 
   expect(Math.abs(centers.prevCenter - centers.modalCenter)).toBeLessThan(2);
   expect(Math.abs(centers.nextCenter - centers.modalCenter)).toBeLessThan(2);
+});
+
+
+test("Main dev loads gallery through /api and virtualizes to the bottom row", async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 1280, height: 720 });
+  const [galleryResponse] = await Promise.all([
+    page.waitForResponse((response) => response.url().endsWith("/api/gallery")),
+    page.goto(mainBaseUrl),
+  ]);
+  expect(galleryResponse.ok()).toBeTruthy();
+
+  await expect(
+    page.getByRole("button", { name: "查看图片：后台导出样片" }),
+  ).toBeVisible();
+  await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight));
+  await expect(
+    page.getByRole("button", { name: `查看图片：后台导出样片 ${seedPhotoCount}` }),
+  ).toBeVisible();
+});
+
+test("Main modal navigation buttons are vertically centered and switch photos", async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 1280, height: 720 });
+  await page.goto(mainBaseUrl);
+  await page.getByRole("button", { name: "查看图片：后台导出样片" }).click();
+  const dialog = page.getByRole("dialog", { name: "后台导出样片" });
+  await expect(dialog).toBeVisible();
+
+  const previousButton = page.getByRole("button", { name: "上一张" });
+  const navMetrics = await previousButton.evaluate((element) => {
+    const rect = element.getBoundingClientRect();
+    const styles = getComputedStyle(element);
+    return {
+      centerY: rect.top + rect.height / 2,
+      viewportCenterY: window.innerHeight / 2,
+      transform: styles.transform,
+    };
+  });
+  expect(Math.abs(navMetrics.centerY - navMetrics.viewportCenterY)).toBeLessThan(2);
+  expect(navMetrics.transform).not.toBe("none");
+
+  await page.getByRole("button", { name: "下一张" }).click();
+  await expect(page.getByRole("dialog", { name: "后台导出样片 2" })).toBeVisible();
 });

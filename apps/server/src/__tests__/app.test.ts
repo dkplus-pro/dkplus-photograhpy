@@ -43,7 +43,7 @@ const forbiddenClientKeys = [
   "tags",
 ];
 
-function assertNoClientInternals(value: unknown, path = "$": void) {
+function assertNoClientInternals(value: unknown, path = "$" ): void {
   if (Array.isArray(value)) {
     value.forEach((entry, index) =>
       assertNoClientInternals(entry, `${path}[${index}]`),
@@ -53,7 +53,11 @@ function assertNoClientInternals(value: unknown, path = "$": void) {
   if (!value || typeof value !== "object") return;
   const record = value as Record<string, unknown>;
   for (const key of forbiddenClientKeys) {
-    assert.equal(Object.hasOwn(record, key), false, `${path} exposes ${key}`);
+    assert.equal(
+      Object.prototype.hasOwnProperty.call(record, key),
+      false,
+      `${path} exposes ${key}`,
+    );
   }
   for (const [key, entry] of Object.entries(record)) {
     assertNoClientInternals(entry, `${path}.${key}`);
