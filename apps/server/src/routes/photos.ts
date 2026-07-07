@@ -67,10 +67,13 @@ function exifNumber(value: unknown): number | undefined {
 }
 
 function focalLength(value: unknown): string | undefined {
-  const stringValue = exifString(value);
-  if (stringValue) {
-    return stringValue;
+  if (typeof value === "number" && Number.isFinite(value)) {
+    return `${Number(value.toFixed(1))}mm`;
   }
+  return exifString(value);
+}
+
+function focalLengthMm(value: unknown): string | undefined {
   const numberValue = exifNumber(value);
   return numberValue === undefined
     ? undefined
@@ -95,7 +98,7 @@ function normalizeClientExif(value: unknown): ExifMetadata | undefined {
     shutterSpeed:
       exifString(value.shutterSpeed) ?? exifString(value.shutter),
     focalLength:
-      focalLength(value.focalLength) ?? focalLength(value.focalLengthMm),
+      focalLength(value.focalLength) ?? focalLengthMm(value.focalLengthMm),
     width: exifNumber(value.width),
     height: exifNumber(value.height),
     capturedAt: exifString(value.capturedAt),
