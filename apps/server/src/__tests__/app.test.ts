@@ -32,12 +32,32 @@ async function assertExportFileMissing(filePath: string): Promise<void> {
   });
 }
 
-function assertClientExportShape(value: unknown): void {
-  const serialized = JSON.stringify(value);
-  assert.doesNotMatch(
-    serialized,
-    /"(createdAt|updatedAt|image|imageUrl|thumbnailUrl)"\s*:/,
-  );
+const forbiddenClientKeys = [
+  "createdAt",
+  "updatedAt",
+  "image",
+  "imageUrl",
+  "thumbnailUrl",
+  "topicId",
+  "topicTitle",
+  "tags",
+];
+
+function assertNoClientInternals(value: unknown, path = "$": void) {
+  if (Array.isArray(value)) {
+    value.forEach((entry, index) =>
+      assertNoClientInternals(entry, `${path}[${index}]`),
+    );
+    return;
+  }
+  if (!value || typeof value !== "object") return;
+  const record = value as Record<string, unknown>;
+  for (const key of forbiddenClientKeys) {
+    assert.equal(Object.hasOwn(record, key), false, `${path} exposes ${key}`);
+  }
+  for (const [key, entry] of Object.entries(record)) {
+    assertNoClientInternals(entry, `${path}.${key}`);
+  }
 }
 
 test("health is public and admin API requires bearer token", async () => {
@@ -145,7 +165,7 @@ test("existing JSON seeds an empty database and is rewritten only by explicit ex
           description: "来自静态 JSON 的种子数据",
           slug: "seed-topic",
           sortOrder: 1,
-          createdAt: "2026-07-01T00:00:00.000Z",
+          createdAt: "2026-06-30T00:00:00.000Z",
           updatedAt: "2026-07-02T00:00:00.000Z",
         },
       ],
@@ -154,12 +174,16 @@ test("existing JSON seeds an empty database and is rewritten only by explicit ex
           id: "seed-photo",
           title: "种子照片",
           description: "用于初始化 SQLite",
+          topicId: "seed-topic",
+          topicTitle: "种子专题",
           topicIds: ["seed-topic"],
+          tags: ["seed-only"],
           takenAt: "2026-07-01T08:00:00.000Z",
-          tags: ["seed-tag"],
-          createdAt: "2026-07-01T00:00:00.000Z",
-          updatedAt: "2026-07-02T00:00:00.000Z",
-          image: { url: "seed/raw-admin-image.jpg" },
+          createdAt: "2026-07-01T08:00:00.000Z",
+          updatedAt: "2026-07-02T08:00:00.000Z",
+          imageUrl: "seed/original.jpg",
+          thumbnailUrl: "seed/thumb.jpg",
+          image: { url: "seed/original.jpg", key: "internal/seed.jpg" },
           asset: {
             original: "seed/original.jpg",
             thumbnail: "seed/thumb.jpg",
@@ -192,6 +216,15 @@ test("existing JSON seeds an empty database and is rewritten only by explicit ex
 
     assert.equal(await readFile(config.exportFile, "utf8"), seedJson);
 
+    const devGallery = await request(app).get("/api/gallery").expect(200);
+    assert.deepEqual(Object.keys(devGallery.body).sort(), [
+      "generatedAt",
+      "photos",
+      "topics",
+    ]);
+    assert.equal(devGallery.body.photos.length, 2);
+    assertNoClientInternals(devGallery.body);
+
     const exported = await authed(request(app).post("/api/export/client"))
       .send({})
       .expect(200);
@@ -211,11 +244,9 @@ test("existing JSON seeds an empty database and is rewritten only by explicit ex
     };
     assertClientExportShape(artifact);
     assert.ok(artifact.generatedAt);
-    assert.equal("updatedAt" in artifact, false);
+    assert.deepEqual(Object.keys(artifact).sort(), ["generatedAt", "photos", "topics"]);
     assert.equal(artifact.topics.length, 1);
-    assert.equal("createdAt" in artifact.topics[0], false);
-    assert.equal("updatedAt" in artifact.topics[0], false);
-    assert.equal("slug" in artifact.topics[0], false);
+    assertNoClientInternals(artifact);
     assert.deepEqual(
       artifact.photos.find((photo) => photo.id === "seed-photo")?.topicIds,
       ["seed-topic"],
