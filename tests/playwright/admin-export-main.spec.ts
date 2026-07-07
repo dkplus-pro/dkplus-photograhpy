@@ -360,16 +360,43 @@ test("Admin API auth and upload work without mutating the exported JSON", async 
   await expect(readFile(exportFile, "utf8")).resolves.toBe(beforeUploadExport);
 });
 
-test("Main dev loads gallery data from /api and grid remains compact", async ({
+test("Main grid uses API data in dev, reaches the virtual bottom, and centers modal nav", async ({
   page,
+  request,
 }) => {
+  const svg =
+    "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='800' height='800'%3E%3Crect width='800' height='800' fill='%23222222'/%3E%3C/svg%3E";
+  for (let index = 0; index < 14; index += 1) {
+    const response = await request.post(`${serverBaseUrl}/api/photos`, {
+      headers: { Authorization: `Bearer ${adminToken}` },
+      data: {
+        id: `main-api-card-${index}`,
+        title: `API 底部样片 ${String(index).padStart(2, "0")}`,
+        description: "Virtual bottom smoke fixture",
+        topicId: "editorial",
+        takenAt: `2026-06-${String(index + 1).padStart(2, "0")}T08:00:00.000Z`,
+        image: { url: svg, storage: "remote" },
+        asset: {
+          original: svg,
+          thumbnail: svg,
+          preview: svg,
+          alt: `API 底部样片 ${String(index).padStart(2, "0")}`,
+          width: 800,
+          height: 800,
+        },
+      },
+    });
+    expect(response.ok()).toBeTruthy();
+  }
+
   await page.setViewportSize({ width: 1366, height: 900 });
-  const apiResponses: string[] = [];
-  page.on("response", (response) => {
-    if (response.url().includes("/api/gallery")) apiResponses.push(response.url());
-  });
+  const photosResponse = page.waitForResponse(
+    (response) =>
+      response.url().endsWith("/api/photos") &&
+      response.request().method() === "GET",
+  );
   await page.goto(mainBaseUrl);
-  await expect.poll(() => apiResponses.length).toBeGreaterThan(0);
+  await expect((await photosResponse).ok()).toBeTruthy();
   const card = page.locator(".photo-card").first();
   await expect(card).toBeVisible();
 
@@ -419,6 +446,26 @@ test("Main dev loads gallery data from /api and grid remains compact", async ({
   expect(after.aspectRatio).toContain("1");
   expect(Number.parseFloat(before.metaOpacity)).toBeLessThan(0.05);
   expect(Number.parseFloat(after.metaOpacity)).toBeGreaterThan(0.95);
+
+  await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight));
+  await expect(
+    page.getByRole("button", { name: /查看图片：API 底部样片 00/ }),
+  ).toBeVisible();
+
+  await page.getByRole("button", { name: /查看图片：/ }).first().click();
+  const navCenterDelta = await page
+    .locator(".modal__nav--prev")
+    .evaluate((element) => {
+      const button = element.getBoundingClientRect();
+      const wrap = element
+        .closest(".modal__image-wrap")
+        ?.getBoundingClientRect();
+      if (!wrap) throw new Error("Modal image pane was not found");
+      return Math.abs(
+        button.top + button.height / 2 - (wrap.top + wrap.height / 2),
+      );
+    });
+  expect(navCenterDelta).toBeLessThan(2);
 });
 
 
