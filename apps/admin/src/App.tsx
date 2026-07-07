@@ -839,6 +839,7 @@ function App() {
         </Card>
 
         <Modal
+          className="editor-modal"
           title={editingId ? "编辑图片记录" : "新增图片记录"}
           visible={isEditorOpen}
           onCancel={resetEditor}
@@ -849,121 +850,157 @@ function App() {
           maskClosable={false}
           unmountOnExit
         >
-          <div className="editor-form">
-            <div className="span-2">
-              <Alert
-                type="info"
-                content={
-                  editingId
-                    ? "如需替换图片，请选择新的本地图片；不选择文件时仅保存文字与专题。"
-                    : "新增图片需要先选择本地图片，保存时会上传到 /api/uploads。"
-                }
-              />
-            </div>
-            <label>
-              <span>标题（可选）</span>
-              <Input
-                value={payload.title || ""}
-                onChange={(value) => setPayload({ ...payload, title: value })}
-                placeholder="例如：雨后街角"
-              />
-            </label>
-            <label>
-              <span>专题（可选）</span>
-              <Select
-                allowClear
-                showSearch
-                value={payload.topicId || undefined}
-                placeholder="选择已有专题，或先在下方新增"
-                onChange={(value) =>
-                  selectTopic(typeof value === "string" ? value : "")
-                }
-                options={topics.map(([id, title]) => ({
-                  label: `${title} (${id})`,
-                  value: id,
-                }))}
-              />
-              <div className="topic-create-row" aria-label="新增专题">
-                <Input
-                  value={topicDraft.title}
-                  onChange={(value) =>
-                    setTopicDraft((current) => ({ ...current, title: value }))
-                  }
-                  placeholder="专题名称，如：编辑精选"
+          <div className="editor-shell" aria-label="图片编辑器">
+            <header className="editor-hero">
+              <p className="editor-hero__kicker">Editorial upload desk</p>
+              <h2>{editingId ? "校订图片与专题信息" : "创建一条新的图片记录"}</h2>
+              <p>
+                左侧确认图片与 EXIF 状态，右侧补充标题、专题和描述；保存时继续沿用现有上传与持久化流程。
+              </p>
+            </header>
+
+            <Alert
+              type="info"
+              content={
+                editingId
+                  ? "如需替换图片，请选择新的本地图片；不选择文件时仅保存文字与专题。"
+                  : "新增图片需要先选择本地图片，保存时会上传到 /api/uploads。"
+              }
+            />
+
+            <div className="editor-form" role="group" aria-label="图片资料表单">
+              <section className="editor-upload-card" aria-label="图片上传与预览">
+                <div className="editor-upload-card__header">
+                  <div>
+                    <span className="editor-section-label">Step 01</span>
+                    <strong>上传 / 预览</strong>
+                    <span>
+                      {editorPreview
+                        ? editorPreview.file.name
+                        : editingId
+                          ? "当前图片；可选择新文件替换"
+                          : "请选择一张图片"}
+                    </span>
+                  </div>
+                  <Space wrap>
+                    <Button
+                      type={editorPreview || editingId ? "outline" : "primary"}
+                      onClick={() => editorFileInputRef.current?.click()}
+                    >
+                      {editorPreview || editingId ? "更换图片" : "选择图片"}
+                    </Button>
+                    {editorPreview && (
+                      <Button onClick={() => replaceEditorPreview(null)}>
+                        清除新文件
+                      </Button>
+                    )}
+                  </Space>
+                </div>
+                <p className="editor-helper">
+                  {editingId
+                    ? "保持原图或选择新文件替换；替换后会重新读取本地 EXIF。"
+                    : "新增记录必须选择本地图片，系统会先生成预览并读取 EXIF。"}
+                </p>
+                <input
+                  ref={editorFileInputRef}
+                  className="hidden-file-input"
+                  type="file"
+                  accept="image/*"
+                  onChange={(event) => {
+                    void stageEditorFile(event.currentTarget.files);
+                    event.currentTarget.value = "";
+                  }}
                 />
-                <Input
-                  value={topicDraft.id}
-                  onChange={(value) =>
-                    setTopicDraft((current) => ({ ...current, id: value }))
-                  }
-                  placeholder="专题 ID（可选，自动生成）"
-                />
-                <Button type="outline" onClick={createTopicFromDraft}>
-                  创建专题
-                </Button>
-              </div>
-            </label>
-            <div className="span-2 editor-upload-card">
-              <div className="editor-upload-card__header">
-                <div>
-                  <strong>本地图片</strong>
+                <div className="editor-image-preview">
+                  {editorImageUrl ? (
+                    <img
+                      src={editorImageUrl}
+                      alt={editorPreview ? "本地图片预览" : "当前图片预览"}
+                    />
+                  ) : (
+                    <Empty description="尚未选择本地图片" />
+                  )}
+                </div>
+                <div className="editor-exif-status" aria-live="polite">
+                  <span className="editor-exif-status__label">EXIF 状态</span>
                   <span>
                     {editorPreview
-                      ? editorPreview.file.name
+                      ? exifLine(editorPreview.exif)
                       : editingId
-                        ? "当前图片；可选择新文件替换"
-                        : "请选择一张图片"}
+                        ? "沿用当前图片数据；选择新文件后会刷新 EXIF。"
+                        : "等待选择本地图片后读取。"}
                   </span>
                 </div>
-                <Space wrap>
-                  <Button
-                    type={editorPreview || editingId ? "outline" : "primary"}
-                    onClick={() => editorFileInputRef.current?.click()}
-                  >
-                    {editorPreview || editingId ? "更换图片" : "选择图片"}
-                  </Button>
-                  {editorPreview && (
-                    <Button onClick={() => replaceEditorPreview(null)}>
-                      清除新文件
-                    </Button>
-                  )}
-                </Space>
-              </div>
-              <input
-                ref={editorFileInputRef}
-                className="hidden-file-input"
-                type="file"
-                accept="image/*"
-                onChange={(event) => {
-                  void stageEditorFile(event.currentTarget.files);
-                  event.currentTarget.value = "";
-                }}
-              />
-              <div className="editor-image-preview">
-                {editorImageUrl ? (
-                  <img
-                    src={editorImageUrl}
-                    alt={editorPreview ? "本地图片预览" : "当前图片预览"}
+              </section>
+
+              <section className="editor-metadata-card" aria-label="图片元数据">
+                <div className="editor-metadata-card__heading">
+                  <span className="editor-section-label">Step 02</span>
+                  <strong>元数据</strong>
+                  <p>用清晰标题、专题和说明帮助前台图库检索与分组。</p>
+                </div>
+
+                <label>
+                  <span>标题（可选）</span>
+                  <Input
+                    value={payload.title || ""}
+                    onChange={(value) => setPayload({ ...payload, title: value })}
+                    placeholder="例如：雨后街角"
                   />
-                ) : (
-                  <Empty description="尚未选择本地图片" />
-                )}
-              </div>
-              {editorPreview && (
-                <p className="status-line">{exifLine(editorPreview.exif)}</p>
-              )}
+                  <small>留空时会使用文件名或记录 ID 作为后台识别文本。</small>
+                </label>
+
+                <label>
+                  <span>专题（可选）</span>
+                  <Select
+                    allowClear
+                    showSearch
+                    value={payload.topicId || undefined}
+                    placeholder="选择已有专题，或先在下方新增"
+                    onChange={(value) =>
+                      selectTopic(typeof value === "string" ? value : "")
+                    }
+                    options={topics.map(([id, title]) => ({
+                      label: `${title} (${id})`,
+                      value: id,
+                    }))}
+                  />
+                  <small>专题会同步写入主专题字段，并保留既有 topicIds 兼容。</small>
+                  <div className="topic-create-row" aria-label="新增专题">
+                    <Input
+                      value={topicDraft.title}
+                      onChange={(value) =>
+                        setTopicDraft((current) => ({ ...current, title: value }))
+                      }
+                      placeholder="专题名称，如：编辑精选"
+                    />
+                    <Input
+                      value={topicDraft.id}
+                      onChange={(value) =>
+                        setTopicDraft((current) => ({ ...current, id: value }))
+                      }
+                      placeholder="专题 ID（可选，自动生成）"
+                    />
+                    <Button type="outline" onClick={createTopicFromDraft}>
+                      创建专题
+                    </Button>
+                  </div>
+                </label>
+
+                <label>
+                  <span>描述（可选）</span>
+                  <TextArea
+                    value={payload.description || ""}
+                    onChange={(value) =>
+                      setPayload({ ...payload, description: value })
+                    }
+                    placeholder="简短说明这张图片的内容"
+                    autoSize={{ minRows: 4, maxRows: 6 }}
+                  />
+                  <small>建议记录场景、项目或发布备注，便于后续编辑。</small>
+                </label>
+              </section>
             </div>
-            <label className="span-2">
-              <span>描述（可选）</span>
-              <TextArea
-                value={payload.description || ""}
-                onChange={(value) =>
-                  setPayload({ ...payload, description: value })
-                }
-                placeholder="简短说明这张图片的内容"
-                autoSize={{ minRows: 3, maxRows: 5 }}
-              />
-            </label>
           </div>
         </Modal>
 
