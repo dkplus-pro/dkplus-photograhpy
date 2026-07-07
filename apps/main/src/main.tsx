@@ -10,9 +10,14 @@ import type { GalleryPayload, GridStyle, ResolvedPhoto, TabKey } from "./types";
 import { useVirtualRows } from "./useVirtualRows";
 import "./styles.css";
 
-const dataUrl = import.meta.env.DEV
-  ? "/api/gallery"
-  : `${import.meta.env.BASE_URL}data/gallery.json`;
+const staticDataUrl = `${import.meta.env.BASE_URL}data/gallery.json`;
+const apiBaseUrl = (import.meta.env.VITE_API_BASE_URL ?? "/api").replace(
+  /\/$/,
+  "",
+);
+const galleryDataUrl = import.meta.env.DEV
+  ? `${apiBaseUrl}/gallery`
+  : staticDataUrl;
 
 const useGallery = () => {
   const [data, setData] = useState<GalleryPayload | null>(null);
@@ -20,7 +25,7 @@ const useGallery = () => {
 
   useEffect(() => {
     let active = true;
-    fetch(dataUrl)
+    fetch(galleryDataUrl)
       .then((response) => {
         if (!response.ok) throw new Error(`数据加载失败：${response.status}`);
         return response.json() as Promise<GalleryPayload>;
@@ -81,9 +86,10 @@ const VirtualPhotoGrid = ({
   style: GridStyle;
   onOpen: (photo: ResolvedPhoto) => void;
 }) => {
-  const { columns, rows, totalHeight } = useVirtualRows(photos, 300);
+  const { columns, containerRef, rows, totalHeight } = useVirtualRows(photos);
   return (
     <div
+      ref={containerRef}
       className={`virtual-grid ${style}`}
       style={{ minHeight: totalHeight }}
       aria-label="虚拟化图片列表"
@@ -252,20 +258,6 @@ const PhotoModal = ({
             src={active.urls.preview}
             alt={active.asset.alt ?? active.title}
           />
-          <button
-            className="modal__nav modal__nav--prev"
-            onClick={() => selectOffset(-1)}
-            aria-label="上一张"
-          >
-            ‹
-          </button>
-          <button
-            className="modal__nav modal__nav--next"
-            onClick={() => selectOffset(1)}
-            aria-label="下一张"
-          >
-            ›
-          </button>
         </div>
         <aside className="modal__info">
           <button className="modal__close" onClick={onClose} aria-label="关闭">
@@ -286,6 +278,20 @@ const PhotoModal = ({
           </dl>
         </aside>
       </article>
+      <button
+        className="modal__nav modal__nav--prev"
+        onClick={() => selectOffset(-1)}
+        aria-label="上一张"
+      >
+        ‹
+      </button>
+      <button
+        className="modal__nav modal__nav--next"
+        onClick={() => selectOffset(1)}
+        aria-label="下一张"
+      >
+        ›
+      </button>
     </div>
   );
 };

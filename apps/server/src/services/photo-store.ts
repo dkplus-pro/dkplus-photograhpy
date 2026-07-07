@@ -35,6 +35,12 @@ export type GalleryExportResult = {
   topicCount: number;
 };
 
+type ClientGalleryPayload = {
+  generatedAt: string;
+  topics: Record<string, unknown>[];
+  photos: Record<string, unknown>[];
+};
+
 function emptyGallery(): GalleryData {
   return { photos: [], topics: [], updatedAt: new Date(0).toISOString() };
 }
@@ -259,6 +265,50 @@ function parsePhotoRow(row: PhotoRow | undefined, id: string): PhotoRecord {
   return normalizePhotoRecord(JSON.parse(row.data));
 }
 
+function compactObject(
+  entries: [string, unknown][],
+  options: { keepEmptyArrays?: boolean } = {},
+): Record<string, unknown> {
+  const result: Record<string, unknown> = {};
+  for (const [key, value] of entries) {
+    if (value === undefined || value === null || value === "") continue;
+    if (Array.isArray(value) && value.length === 0 && !options.keepEmptyArrays) {
+      continue;
+    }
+    if (isRecord(value) && Object.keys(value).length === 0) continue;
+    result[key] = value;
+  }
+  return result;
+}
+
+function compactAsset(asset: PhotoAsset): Record<string, unknown> {
+  return compactObject([
+    ["original", asset.original],
+    ["thumbnail", asset.thumbnail],
+    ["preview", asset.preview],
+    ["alt", asset.alt],
+    ["width", asset.width],
+    ["height", asset.height],
+  ]);
+}
+
+function compactExif(exif: PhotoRecord["exif"]): Record<string, unknown> | undefined {
+  if (!exif) return undefined;
+  const compact = compactObject(Object.entries(exif));
+  return Object.keys(compact).length ? compact : undefined;
+}
+
+function toClientTopic(topic: TopicRecord): Record<string, unknown> {
+  return compactObject([
+    ["id", topic.id],
+    ["title", topic.title],
+    ["description", topic.description],
+    ["slug", topic.slug],
+    ["coverPhotoId", topic.coverPhotoId],
+    ["sortOrder", topic.sortOrder],
+  ]);
+}
+
 function toClientPhoto(photo: PhotoRecord): Record<string, unknown> {
   const topicIds = photo.topicIds?.length
     ? photo.topicIds
@@ -275,17 +325,19 @@ function toClientPhoto(photo: PhotoRecord): Record<string, unknown> {
       typeof photo.exif?.height === "number" ? photo.exif.height : undefined,
   };
 
-  return {
-    id: photo.id,
-    title: photo.title,
-    description: photo.description,
-    topicIds,
-    takenAt: photo.takenAt ?? photo.exif?.capturedAt ?? photo.createdAt,
-    location: photo.location,
-    tags: photo.tags ?? [],
-    asset,
-    exif: photo.exif,
-  };
+  return compactObject(
+    [
+      ["id", photo.id],
+      ["title", photo.title],
+      ["description", photo.description],
+      ["topicIds", topicIds],
+      ["takenAt", photo.takenAt ?? photo.exif?.capturedAt ?? photo.createdAt],
+      ["location", photo.location],
+      ["asset", compactAsset(asset)],
+      ["exif", compactExif(photo.exif)],
+    ],
+    { keepEmptyArrays: true },
+  );
 }
 
 function toClientTopic(topic: TopicRecord): Record<string, unknown> {
@@ -408,9 +460,20 @@ export class PhotoStore {
     return { deleted, missing };
   }
 
+  async clientGalleryPayload(
+    generatedAt = new Date().toISOString(),
+  ): Promise<ClientGalleryPayload> {
+    return {
+      generatedAt,
+      topics: this.listTopics().map(toClientTopic),
+      photos: (await this.list()).map(toClientPhoto),
+    };
+  }
+
   async exportToJson(): Promise<GalleryExportResult> {
     const generatedAt = new Date().toISOString();
     const payload = await this.clientGalleryPayload(generatedAt);
+    const { photos, topics } = payload;
     await fs.mkdir(path.dirname(this.options.exportFile), { recursive: true });
     const tempFile = `${this.options.exportFile}.${process.pid}.${Date.now()}.tmp`;
     await fs.writeFile(

@@ -34,57 +34,50 @@ const assertArray = (value, label) => {
   return value;
 };
 
-const compact = (value) =>
+const compactObject = (entries, { keepEmptyArrays = false } = {}) =>
   Object.fromEntries(
-    Object.entries(value).filter(([, entry]) => entry !== undefined),
+    entries.filter(([, value]) => {
+      if (value === undefined || value === null || value === '') return false;
+      if (Array.isArray(value) && value.length === 0 && !keepEmptyArrays) {
+        return false;
+      }
+      if (
+        value &&
+        typeof value === 'object' &&
+        !Array.isArray(value) &&
+        Object.keys(value).length === 0
+      ) {
+        return false;
+      }
+      return true;
+    })
   );
 
-const normalizeExif = (value) => {
-  if (!value || typeof value !== 'object' || Array.isArray(value)) return undefined;
-  const normalized = compact({
-    cameraBrand: value.cameraBrand ?? value.cameraMake,
-    cameraModel: value.cameraModel,
-    lensModel: value.lensModel ?? value.lens,
-    iso: value.iso,
-    aperture: value.aperture,
-    shutterSpeed: value.shutterSpeed ?? value.shutter,
-    focalLengthMm: value.focalLengthMm,
-    focalLength: value.focalLength,
-    width: value.width,
-    height: value.height,
-    capturedAt: value.capturedAt
-  });
-  return Object.keys(normalized).length ? normalized : undefined;
+const compactAsset = (asset) =>
+  compactObject([
+    ['original', asset.original],
+    ['thumbnail', asset.thumbnail],
+    ['preview', asset.preview],
+    ['alt', asset.alt],
+    ['width', asset.width],
+    ['height', asset.height]
+  ]);
+
+const compactExif = (exif) => {
+  if (!exif || typeof exif !== 'object' || Array.isArray(exif)) return undefined;
+  const compact = compactObject(Object.entries(exif));
+  return Object.keys(compact).length ? compact : undefined;
 };
 
-const normalizeAsset = (photo) => {
-  const source = photo.asset ?? {};
-  const imageUrl = photo.image?.url ?? photo.imageUrl;
-  const original = source.original ?? imageUrl;
-  if (!original) return undefined;
-  return compact({
-    original,
-    thumbnail: source.thumbnail ?? photo.thumbnailUrl ?? imageUrl,
-    preview: source.preview ?? source.thumbnail ?? photo.thumbnailUrl ?? imageUrl,
-    alt: source.alt ?? photo.title,
-    width: source.width ?? photo.exif?.width,
-    height: source.height ?? photo.exif?.height
-  });
-};
-
-const normalizeTopic = (topic, index) => {
-  if (!topic?.id || !topic?.title) {
-    throw new Error(`topics[${index}] requires id and title`);
-  }
-  return compact({
-    id: topic.id,
-    title: topic.title,
-    description: topic.description,
-    slug: topic.slug,
-    coverPhotoId: topic.coverPhotoId,
-    sortOrder: topic.sortOrder
-  });
-};
+const compactTopic = (topic) =>
+  compactObject([
+    ['id', topic.id],
+    ['title', topic.title],
+    ['description', topic.description],
+    ['slug', topic.slug],
+    ['coverPhotoId', topic.coverPhotoId],
+    ['sortOrder', topic.sortOrder]
+  ]);
 
 export function normalizeGalleryData(input) {
   const topics = assertArray(input.topics ?? [], 'topics').map(normalizeTopic);
@@ -100,24 +93,28 @@ export function normalizeGalleryData(input) {
         ? [photo.topicId]
         : [];
     const takenAt = photo.takenAt ?? photo.exif?.capturedAt ?? photo.createdAt ?? new Date().toISOString();
-    return compact({
-      id: photo.id,
-      title: photo.title,
-      description: photo.description,
-      topicIds,
-      takenAt,
-      location: photo.location,
-      tags: Array.isArray(photo.tags) && photo.tags.length ? photo.tags : undefined,
-      asset,
-      urls: {
-        original: resolveAssetUrl(asset.original),
-        thumbnail: resolveAssetUrl(asset.thumbnail ?? asset.original),
-        preview: resolveAssetUrl(asset.preview ?? asset.thumbnail ?? asset.original)
-      },
-      exif: normalizeExif(photo.exif)
-    });
+    return compactObject(
+      [
+        ['id', photo.id],
+        ['title', photo.title],
+        ['description', photo.description],
+        ['topicIds', topicIds],
+        ['takenAt', takenAt],
+        ['location', photo.location],
+        ['asset', compactAsset(asset)],
+        ['urls', {
+          original: resolveAssetUrl(asset.original),
+          thumbnail: resolveAssetUrl(asset.thumbnail ?? asset.original),
+          preview: resolveAssetUrl(asset.preview ?? asset.thumbnail ?? asset.original)
+        }],
+        ['exif', compactExif(photo.exif)]
+      ],
+      { keepEmptyArrays: true }
+    );
   });
 
+  const topics = assertArray(input.topics ?? [], 'topics').map(compactTopic);
+  const topicIds = new Set(topics.map((topic) => topic.id));
   for (const photo of photos) {
     for (const topicId of photo.topicIds) {
       if (!topicIds.has(topicId)) throw new Error(`Photo ${photo.id} references unknown topic ${topicId}`);

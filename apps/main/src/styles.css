@@ -128,7 +128,7 @@ img {
   position: absolute;
   inset-inline: 0;
   display: grid;
-  gap: 12px;
+  gap: 10px;
   will-change: transform;
 }
 .photo-card {
@@ -324,14 +324,18 @@ img {
   position: absolute;
   top: 50%;
   transform: translateY(-50%);
-  background: rgba(255, 255, 255, 0.82);
+  z-index: 3;
+  display: grid;
+  place-items: center;
+  background: rgba(255, 255, 255, 0.88);
+  box-shadow: 0 12px 32px rgba(9, 9, 11, 0.2);
   font-size: 2rem;
 }
 .modal__nav--prev {
-  left: 18px;
+  left: clamp(16px, 3vw, 42px);
 }
 .modal__nav--next {
-  right: 18px;
+  right: clamp(16px, 3vw, 42px);
 }
 .modal h2 {
   margin: 0 0 14px;

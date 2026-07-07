@@ -88,6 +88,19 @@ export function createApp(config: ServerConfig = loadConfig()): Koa {
   app.use(cors({ origin: corsOrigin(config), credentials: true }));
   app.use(bodyParser({ jsonLimit: "2mb" }));
   app.use(createLocalUploadsMiddleware(config));
+
+  app.use(async (ctx, next) => {
+    if (ctx.method === "GET" && ctx.path === "/api/gallery") {
+      if (config.env === "production") {
+        await next();
+        return;
+      }
+      ctx.body = await store.clientGalleryPayload();
+      return;
+    }
+    await next();
+  });
+
   app.use(createAuthMiddleware(config));
 
   app.use(async (ctx, next) => {
