@@ -103,6 +103,21 @@ const emptyPayload: PhotoPayload = {
 
 const randomId = () => `${Date.now().toString(36)}-${crypto.randomUUID()}`;
 
+const allFilterValue = "all";
+
+const captureDateValue = (photo: PhotoRecord): string | undefined =>
+  photo.takenAt ?? photo.exif?.capturedAt ?? photo.createdAt;
+
+const captureDateTime = (photo: PhotoRecord): number => {
+  const value = captureDateValue(photo);
+  const timestamp = value ? Date.parse(value) : Number.NaN;
+  return Number.isFinite(timestamp) ? timestamp : 0;
+};
+
+const uniqueSorted = (values: Array<string | undefined>): string[] =>
+  [...new Set(values.map((value) => value?.trim()).filter(Boolean) as string[])]
+    .sort((left, right) => left.localeCompare(right, "zh-CN"));
+
 function App() {
   const [photos, setPhotos] = useState<PhotoRecord[]>([]);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(() => new Set());
@@ -118,12 +133,10 @@ function App() {
   const editorFileInputRef = useRef<HTMLInputElement>(null);
   const quickFileInputRef = useRef<HTMLInputElement>(null);
   const topicFileInputRef = useRef<HTMLInputElement>(null);
-  const [titleFilter, setTitleFilter] = useState("");
-  const [brandFilter, setBrandFilter] = useState("all");
-  const [modelFilter, setModelFilter] = useState("all");
-  const [topicFilter, setTopicFilter] = useState("all");
-  const [brandFilter, setBrandFilter] = useState("all");
-  const [modelFilter, setModelFilter] = useState("all");
+  const [titleQuery, setTitleQuery] = useState("");
+  const [brandFilter, setBrandFilter] = useState(allFilterValue);
+  const [modelFilter, setModelFilter] = useState(allFilterValue);
+  const [topicFilter, setTopicFilter] = useState(allFilterValue);
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
@@ -197,35 +210,17 @@ function App() {
     return [...map.entries()].sort((a, b) => a[1].localeCompare(b[1], "zh-CN"));
   }, [photos]);
 
-  const brands = useMemo(
-    () =>
-      [
-        ...new Set(
-          photos
-            .map((photo) => photo.exif?.cameraMake?.trim())
-            .filter((value): value is string => Boolean(value)),
-        ),
-      ].sort((a, b) => a.localeCompare(b, "zh-CN")),
+  const cameraBrands = useMemo(
+    () => uniqueSorted(photos.map((photo) => photo.exif?.cameraMake)),
     [photos],
   );
-
-  const models = useMemo(
-    () =>
-      [
-        ...new Set(
-          photos
-            .map((photo) => photo.exif?.cameraModel?.trim())
-            .filter((value): value is string => Boolean(value)),
-        ),
-      ].sort((a, b) => a.localeCompare(b, "zh-CN")),
+  const cameraModels = useMemo(
+    () => uniqueSorted(photos.map((photo) => photo.exif?.cameraModel)),
     [photos],
   );
-
-  const photoTakenAt = (photo: PhotoRecord) =>
-    photo.takenAt ?? photo.exif?.capturedAt ?? photo.createdAt;
 
   const filteredPhotos = useMemo(() => {
-    const normalizedTitle = titleFilter.trim().toLowerCase();
+    const normalizedTitle = titleQuery.trim().toLowerCase();
     return photos.filter((photo) => {
       const topicIds = [photo.topicId, ...(photo.topicIds ?? [])].filter(
         Boolean,
@@ -233,11 +228,13 @@ function App() {
       const brand = photo.exif?.cameraMake?.trim() || "";
       const model = photo.exif?.cameraModel?.trim() || "";
       const matchesTopic =
-        topicFilter === "all" || topicIds.includes(topicFilter);
+        topicFilter === allFilterValue || topicIds.includes(topicFilter);
       const matchesBrand =
-        brandFilter === "all" || photo.exif?.cameraMake === brandFilter;
+        brandFilter === allFilterValue ||
+        photo.exif?.cameraMake === brandFilter;
       const matchesModel =
-        modelFilter === "all" || photo.exif?.cameraModel === modelFilter;
+        modelFilter === allFilterValue ||
+        photo.exif?.cameraModel === modelFilter;
       const matchesTitle =
         !normalizedTitle ||
         photoTitle(photo).toLowerCase().includes(normalizedTitle);
@@ -248,7 +245,7 @@ function App() {
         matchesTitle
       );
     });
-  }, [brandFilter, modelFilter, photos, titleFilter, topicFilter]);
+  }, [brandFilter, modelFilter, photos, titleQuery, topicFilter]);
 
   const selectedCount = selectedIds.size;
   const stagedSummary = useMemo(() => summarizeUpload(previews), [previews]);
@@ -560,7 +557,7 @@ function App() {
     {
       title: "EXIF",
       dataIndex: "exif",
-      width: 220,
+      width: 240,
       align: "center",
       render: (_value, photo) => (
         <div className="rich-lines">
@@ -573,23 +570,8 @@ function App() {
       dataIndex: "takenAt",
       width: 150,
       align: "center",
-      sorter: (left, right) =>
-        new Date(photoTakenAt(left) ?? 0).getTime() -
-        new Date(photoTakenAt(right) ?? 0).getTime(),
-      render: (_value, photo) => (
-        <div className="rich-lines">
-          <strong>{formatDate(photoTakenAt(photo))}</strong>
-        </div>
-      ),
-    },
-    {
-      title: "拍摄日期",
-      dataIndex: "takenAt",
-      width: 150,
-      align: "center",
-      sorter: (left, right) => takenAtTime(left) - takenAtTime(right),
-      defaultSortOrder: "descend",
-      render: (_value, photo) => formatDate(takenAtValue(photo)),
+      sorter: (left, right) => captureDateTime(left) - captureDateTime(right),
+      render: (_value, photo) => formatDate(captureDateValue(photo)),
     },
     {
       title: "操作",
@@ -671,9 +653,34 @@ function App() {
           <div className="toolbar">
             <Input
               allowClear
-              value={titleFilter}
-              onChange={setTitleFilter}
+              value={titleQuery}
+              onChange={setTitleQuery}
               placeholder="按标题筛选"
+              aria-label="按标题筛选"
+            />
+            <Select
+              value={brandFilter}
+              onChange={(value) => setBrandFilter(String(value))}
+              aria-label="按品牌筛选"
+              options={[
+                { label: "全部品牌", value: allFilterValue },
+                ...cameraBrands.map((brand) => ({
+                  label: brand,
+                  value: brand,
+                })),
+              ]}
+            />
+            <Select
+              value={modelFilter}
+              onChange={(value) => setModelFilter(String(value))}
+              aria-label="按机型筛选"
+              options={[
+                { label: "全部机型", value: allFilterValue },
+                ...cameraModels.map((model) => ({
+                  label: model,
+                  value: model,
+                })),
+              ]}
             />
             <Select
               value={brandFilter}
@@ -713,8 +720,9 @@ function App() {
               aria-label="按专题筛选"
               value={topicFilter}
               onChange={(value) => setTopicFilter(String(value))}
+              aria-label="按专题筛选"
               options={[
-                { label: "全部专题", value: "all" },
+                { label: "全部专题", value: allFilterValue },
                 ...topics.map(([id, title]) => ({ label: title, value: id })),
               ]}
             />
@@ -756,8 +764,22 @@ function App() {
               stripe
               columns={columns}
               data={filteredPhotos}
-              noDataElement={<Empty description="暂无匹配图片" />}
-              scroll={{ x: 1180 }}
+              noDataElement={
+                <Empty description="暂无匹配图片">
+                  <Button
+                    size="mini"
+                    onClick={() => {
+                      setTitleQuery("");
+                      setBrandFilter(allFilterValue);
+                      setModelFilter(allFilterValue);
+                      setTopicFilter(allFilterValue);
+                    }}
+                  >
+                    清除筛选
+                  </Button>
+                </Empty>
+              }
+              scroll={{ x: 1260 }}
               rowSelection={{
                 type: "checkbox",
                 checkAll: true,
