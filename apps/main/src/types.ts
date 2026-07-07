@@ -52,8 +52,6 @@ export interface ResolvedPhoto {
 
 export interface GalleryPayload {
   generatedAt: string;
-  sourceGeneratedAt?: string;
-  cdnBaseUrl?: string;
   topics: Topic[];
   photos: ResolvedPhoto[];
 }
