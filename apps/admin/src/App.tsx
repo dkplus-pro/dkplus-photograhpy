@@ -6,7 +6,6 @@ import {
   ConfigProvider,
   Empty,
   Input,
-  Message,
   Modal,
   Select,
   Space,
@@ -29,7 +28,12 @@ import {
   photoTitle,
   summarizeUpload,
 } from "./lib/format";
-import type { PhotoPayload, PhotoRecord, UploadPreview } from "./types";
+import type {
+  PhotoPayload,
+  PhotoRecord,
+  ToastMessage,
+  UploadPreview,
+} from "./types";
 
 const api = createApiClient();
 const TextArea = Input.TextArea;
@@ -121,6 +125,7 @@ function App() {
   const [isExporting, setIsExporting] = useState(false);
   const [isEditorOpen, setIsEditorOpen] = useState(false);
   const [isUploadOpen, setIsUploadOpen] = useState(false);
+  const [messages, setMessages] = useState<ToastMessage[]>([]);
   const [confirmAction, setConfirmAction] = useState<{
     title: string;
     body: string;
@@ -128,7 +133,13 @@ function App() {
   } | null>(null);
 
   const pushMessage = (tone: "success" | "error" | "info", text: string) => {
-    Message[tone](text);
+    const message: ToastMessage = { id: randomId(), tone, text };
+    setMessages((current) => [message, ...current].slice(0, 3));
+    window.setTimeout(() => {
+      setMessages((current) =>
+        current.filter((item) => item.id !== message.id),
+      );
+    }, 5000);
   };
 
   const refresh = async () => {
@@ -550,6 +561,18 @@ function App() {
   return (
     <ConfigProvider locale={zhCN}>
       <main className="admin-shell">
+        {messages.length > 0 && (
+          <div className="toast-stack" role="status" aria-live="polite">
+            {messages.map((message) => (
+              <div
+                className={`toast-message toast-message--${message.tone}`}
+                key={message.id}
+              >
+                {message.text}
+              </div>
+            ))}
+          </div>
+        )}
         <header className="admin-header" aria-labelledby="page-title">
           <div>
             <p className="eyebrow">DKPlus 图库后台</p>
