@@ -47,6 +47,22 @@ describe("admin gallery list contract", () => {
     expect(appSource).toContain("isUploadOpen");
   });
 
+  it("documents the redesigned two-pane editor modal contract", () => {
+    expect(appSource).toContain('className="editor-modal"');
+    expect(appSource).toContain('className="editor-shell"');
+    expect(appSource).toContain('aria-label="图片上传与预览"');
+    expect(appSource).toContain('aria-label="图片元数据"');
+    expect(appSource).toContain("EXIF 状态");
+    expect(appSource).toContain("等待选择本地图片后读取。");
+    expect(appSource).toContain("保存时继续沿用现有上传与持久化流程");
+    expect(styles).toContain(".editor-upload-card");
+    expect(styles).toContain(".editor-metadata-card");
+    expect(styles).toContain(".editor-exif-status");
+    expect(styles).toMatch(
+      /\.editor-form\s*\{[\s\S]*?grid-template-columns:\s*minmax\(280px,\s*0\.92fr\)\s*minmax\(340px,\s*1\.08fr\);/,
+    );
+  });
+
   it("centers dense table cells and keeps unified neutral hover and focus tones", () => {
     expect(styles).toMatch(
       /\.photos-table \.arco-table-th,[\s\S]*?text-align:\s*center;/,
@@ -67,7 +83,9 @@ describe("admin gallery list contract", () => {
       /\.photos-table \.arco-table-tr:hover \.arco-table-td\s*\{[\s\S]*?background:\s*var\(--hover-wash\);/,
     );
     expect(styles).toContain(".admin-shell :where(.arco-alert-info)");
-    expect(styles).toContain(":where(.arco-select-popup) .arco-select-option:hover");
+    expect(styles).toContain(
+      ":where(.arco-select-popup) .arco-select-option:hover",
+    );
     expect(styles).toContain("@media (max-width: 920px)");
     expect(styles).not.toContain("#1b63ff");
     expect(styles).not.toMatch(/rgba?\(\s*27,\s*99,\s*255/);

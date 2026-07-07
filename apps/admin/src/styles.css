@@ -48,7 +48,11 @@ body {
     linear-gradient(180deg, rgba(20, 20, 20, 0.04) 1px, transparent 1px),
     radial-gradient(circle at 12% 8%, rgba(20, 20, 20, 0.11), transparent 28%),
     linear-gradient(135deg, #fbfaf6 0%, var(--paper) 42%, #e7e2d8 100%);
-  background-size: 52px 52px, 52px 52px, auto, auto;
+  background-size:
+    52px 52px,
+    52px 52px,
+    auto,
+    auto;
 }
 
 button,
@@ -336,7 +340,9 @@ textarea {
   background:
     linear-gradient(90deg, rgba(20, 20, 20, 0.05) 1px, transparent 1px),
     linear-gradient(180deg, #fffdf8, #f2eee5);
-  background-size: 28px 28px, auto;
+  background-size:
+    28px 28px,
+    auto;
 }
 
 .editor-hero::after {
@@ -430,7 +436,11 @@ textarea {
   position: sticky;
   top: 16px;
   background:
-    linear-gradient(180deg, rgba(255, 253, 248, 0.98), rgba(235, 231, 223, 0.92)),
+    linear-gradient(
+      180deg,
+      rgba(255, 253, 248, 0.98),
+      rgba(235, 231, 223, 0.92)
+    ),
     repeating-linear-gradient(
       135deg,
       rgba(20, 20, 20, 0.04) 0 1px,
@@ -487,7 +497,12 @@ textarea {
   border: 1px dashed rgba(20, 20, 20, 0.42);
   border-radius: 0;
   background:
-    linear-gradient(45deg, rgba(20, 20, 20, 0.05) 25%, transparent 25% 75%, rgba(20, 20, 20, 0.05) 75%),
+    linear-gradient(
+      45deg,
+      rgba(20, 20, 20, 0.05) 25%,
+      transparent 25% 75%,
+      rgba(20, 20, 20, 0.05) 75%
+    ),
     var(--panel-solid);
   background-size: 18px 18px;
 }
@@ -672,7 +687,12 @@ textarea {
 }
 
 .toolbar :where(.arco-input-inner-wrapper, .arco-select-view):focus-within,
-:where(.arco-btn, .arco-checkbox, .arco-select-view, .arco-input-inner-wrapper):focus-visible {
+:where(
+  .arco-btn,
+  .arco-checkbox,
+  .arco-select-view,
+  .arco-input-inner-wrapper
+):focus-visible {
   outline: 3px solid var(--focus-ring);
   outline-offset: 2px;
 }

@@ -46,6 +46,24 @@ describe("admin gallery list contract", () => {
     expect(appSource).toMatch(/scroll=\{\{\s*x:\s*1260\s*\}\}/);
   });
 
+  it("keeps the redesigned editor modal as upload preview plus metadata panes", () => {
+    expect(appSource).toContain('className="editor-modal"');
+    expect(appSource).toContain('className="editor-upload-card"');
+    expect(appSource).toContain('className="editor-metadata-card"');
+    expect(appSource).toContain('aria-label="图片资料表单"');
+    expect(appSource).toContain('aria-label="图片上传与预览"');
+    expect(appSource).toContain('aria-label="图片元数据"');
+    expect(appSource).toContain("EXIF 状态");
+    expect(appSource).toContain("选择新文件后会刷新 EXIF");
+    expect(appSource).toContain("专题会同步写入主专题字段");
+    expect(styles).toContain(".editor-modal .arco-modal");
+    expect(styles).toContain(".editor-hero");
+    expect(styles).toContain(".editor-exif-status");
+    expect(styles).toMatch(
+      /\.editor-form\s*\{[\s\S]*?grid-template-columns:\s*minmax\(280px,\s*0\.92fr\)\s*minmax\(340px,\s*1\.08fr\);/,
+    );
+  });
+
   it("centers dense table content and keeps unified neutral hover and focus tones", () => {
     expect(styles).toMatch(
       /\.photos-table \.arco-table-th,[\s\S]*?text-align:\s*center;/,
@@ -67,7 +85,9 @@ describe("admin gallery list contract", () => {
       /\.photos-table \.arco-table-tr:hover \.arco-table-td\s*\{[\s\S]*?background:\s*var\(--hover-wash\);/,
     );
     expect(styles).toContain(".admin-shell :where(.arco-alert-info)");
-    expect(styles).toContain(":where(.arco-select-popup) .arco-select-option:hover");
+    expect(styles).toContain(
+      ":where(.arco-select-popup) .arco-select-option:hover",
+    );
     expect(styles).not.toContain("#1b63ff");
     expect(styles).not.toMatch(/rgba?\(\s*27,\s*99,\s*255/);
     expect(styles).not.toMatch(/linear-gradient\(135deg,\s*rgba\(22, 93, 255/);

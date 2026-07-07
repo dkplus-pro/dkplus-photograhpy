@@ -98,7 +98,9 @@ describe("admin list UI contract", () => {
       /\.photos-table \.arco-table-tr:hover \.arco-table-td\s*\{[\s\S]*?background:\s*var\(--hover-wash\);/,
     );
     expect(styles).toContain(".admin-shell :where(.arco-alert-info)");
-    expect(styles).toContain(":where(.arco-select-popup) .arco-select-option:hover");
+    expect(styles).toContain(
+      ":where(.arco-select-popup) .arco-select-option:hover",
+    );
     expect(styles).toContain("@media (max-width: 920px)");
     expect(styles).not.toContain("#1b63ff");
     expect(styles).not.toMatch(/rgba?\(\s*27,\s*99,\s*255/);

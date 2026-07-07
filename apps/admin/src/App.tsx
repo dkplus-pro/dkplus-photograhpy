@@ -853,9 +853,12 @@ function App() {
           <div className="editor-shell" aria-label="图片编辑器">
             <header className="editor-hero">
               <p className="editor-hero__kicker">Editorial upload desk</p>
-              <h2>{editingId ? "校订图片与专题信息" : "创建一条新的图片记录"}</h2>
+              <h2>
+                {editingId ? "校订图片与专题信息" : "创建一条新的图片记录"}
+              </h2>
               <p>
-                左侧确认图片与 EXIF 状态，右侧补充标题、专题和描述；保存时继续沿用现有上传与持久化流程。
+                左侧确认图片与 EXIF
+                状态，右侧补充标题、专题和描述；保存时继续沿用现有上传与持久化流程。
               </p>
             </header>
 
@@ -869,7 +872,10 @@ function App() {
             />
 
             <div className="editor-form" role="group" aria-label="图片资料表单">
-              <section className="editor-upload-card" aria-label="图片上传与预览">
+              <section
+                className="editor-upload-card"
+                aria-label="图片上传与预览"
+              >
                 <div className="editor-upload-card__header">
                   <div>
                     <span className="editor-section-label">Step 01</span>
@@ -944,7 +950,9 @@ function App() {
                   <span>标题（可选）</span>
                   <Input
                     value={payload.title || ""}
-                    onChange={(value) => setPayload({ ...payload, title: value })}
+                    onChange={(value) =>
+                      setPayload({ ...payload, title: value })
+                    }
                     placeholder="例如：雨后街角"
                   />
                   <small>留空时会使用文件名或记录 ID 作为后台识别文本。</small>
@@ -965,12 +973,17 @@ function App() {
                       value: id,
                     }))}
                   />
-                  <small>专题会同步写入主专题字段，并保留既有 topicIds 兼容。</small>
+                  <small>
+                    专题会同步写入主专题字段，并保留既有 topicIds 兼容。
+                  </small>
                   <div className="topic-create-row" aria-label="新增专题">
                     <Input
                       value={topicDraft.title}
                       onChange={(value) =>
-                        setTopicDraft((current) => ({ ...current, title: value }))
+                        setTopicDraft((current) => ({
+                          ...current,
+                          title: value,
+                        }))
                       }
                       placeholder="专题名称，如：编辑精选"
                     />
