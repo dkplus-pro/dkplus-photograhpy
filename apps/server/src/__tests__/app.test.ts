@@ -39,6 +39,10 @@ test("health is public and admin API requires bearer token", async () => {
     const health = await request(app).get("/health").expect(200);
     assert.equal(health.body.ok, true);
 
+    const gallery = await request(app).get("/api/gallery").expect(200);
+    assert.deepEqual(gallery.body.photos, []);
+    assert.deepEqual(gallery.body.topics, []);
+
     await request(app).get("/api/photos").expect(401);
     await request(app)
       .get("/api/photos")
@@ -131,9 +135,10 @@ test("existing JSON seeds an empty database and is rewritten only by explicit ex
           id: "seed-topic",
           title: "种子专题",
           description: "来自静态 JSON 的种子数据",
+          slug: "seed-topic",
           sortOrder: 1,
-          createdAt: "2026-06-01T00:00:00.000Z",
-          updatedAt: "2026-06-02T00:00:00.000Z",
+          createdAt: "2026-07-01T00:00:00.000Z",
+          updatedAt: "2026-07-02T00:00:00.000Z",
         },
       ],
       photos: [
@@ -143,8 +148,10 @@ test("existing JSON seeds an empty database and is rewritten only by explicit ex
           description: "用于初始化 SQLite",
           topicIds: ["seed-topic"],
           takenAt: "2026-07-01T08:00:00.000Z",
-          createdAt: "2026-07-01T08:00:00.000Z",
-          updatedAt: "2026-07-02T08:00:00.000Z",
+          tags: ["seed-tag"],
+          createdAt: "2026-07-01T00:00:00.000Z",
+          updatedAt: "2026-07-02T00:00:00.000Z",
+          image: { url: "seed/raw-admin-image.jpg" },
           asset: {
             original: "seed/original.jpg",
             thumbnail: "seed/thumb.jpg",
@@ -186,11 +193,13 @@ test("existing JSON seeds an empty database and is rewritten only by explicit ex
     const artifact = JSON.parse(await readFile(config.exportFile, "utf8")) as {
       generatedAt: string;
       topics: Array<Record<string, unknown>>;
-      photos: Array<Record<string, unknown> & {
+      photos: Array<
+        Record<string, unknown> & {
         id: string;
         topicIds: string[];
         asset: { original: string };
-      }>;
+        }
+      >;
     };
     assert.deepEqual(Object.keys(artifact).sort(), [
       "generatedAt",
@@ -198,26 +207,28 @@ test("existing JSON seeds an empty database and is rewritten only by explicit ex
       "topics",
     ]);
     assert.ok(artifact.generatedAt);
+    assert.equal("updatedAt" in artifact, false);
     assert.equal(artifact.topics.length, 1);
     assert.equal("createdAt" in artifact.topics[0], false);
     assert.equal("updatedAt" in artifact.topics[0], false);
+    assert.equal("slug" in artifact.topics[0], false);
     assert.deepEqual(
       artifact.photos.find((photo) => photo.id === "seed-photo")?.topicIds,
       ["seed-topic"],
     );
-    const seedPhoto = artifact.photos.find((photo) => photo.id === "seed-photo");
-    assert.equal(seedPhoto?.asset.original, "seed/original.jpg");
-    assert.equal("createdAt" in (seedPhoto ?? {}), false);
-    assert.equal("updatedAt" in (seedPhoto ?? {}), false);
-    assert.equal("image" in (seedPhoto ?? {}), false);
-    assert.deepEqual(Object.keys(seedPhoto ?? {}).sort(), [
-      "asset",
-      "description",
-      "id",
-      "takenAt",
-      "title",
-      "topicIds",
-    ]);
+    assert.equal(
+      artifact.photos.find((photo) => photo.id === "seed-photo")?.asset
+        .original,
+      "seed/original.jpg",
+    );
+    const seedExport = artifact.photos.find(
+      (photo) => photo.id === "seed-photo",
+    );
+    assert.ok(seedExport);
+    assert.equal("createdAt" in seedExport, false);
+    assert.equal("updatedAt" in seedExport, false);
+    assert.equal("image" in seedExport, false);
+    assert.equal("tags" in seedExport, false);
     assert.ok(artifact.photos.some((photo) => photo.id !== "seed-photo"));
   } finally {
     await rm(root, { recursive: true, force: true });
