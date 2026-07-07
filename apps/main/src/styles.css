@@ -284,6 +284,7 @@ img {
 .modal__panel {
   position: relative;
   width: min(1180px, 100%);
+  height: min(820px, calc(100dvh - 32px));
   max-height: min(820px, calc(100dvh - 32px));
   display: grid;
   grid-template-columns: minmax(0, 1.45fr) minmax(320px, 0.55fr);
@@ -403,6 +404,7 @@ dd {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
   .modal__panel {
+    height: auto;
     grid-template-columns: 1fr;
     overflow: auto;
   }
