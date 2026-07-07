@@ -238,11 +238,14 @@ textarea {
 
 .photo-cell__thumb {
   cursor: zoom-in;
+  outline: 0 solid transparent;
+  outline-offset: 2px;
 }
 
+.photo-cell__thumb:focus,
 .photo-cell__thumb:focus-visible {
-  outline: 3px solid var(--focus);
-  outline-offset: 2px;
+  outline-color: var(--focus);
+  outline-width: 3px;
 }
 
 .photo-cell img,
@@ -257,6 +260,7 @@ textarea {
 }
 
 .photo-cell__thumb:hover img,
+.photo-cell__thumb:focus img,
 .photo-cell__thumb:focus-visible img {
   filter: saturate(1) contrast(1.12);
   transform: scale(1.05);

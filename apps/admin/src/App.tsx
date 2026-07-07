@@ -307,6 +307,36 @@ function App() {
     pushMessage("success", `已新增专题“${title}”，并设为当前专题。`);
   };
 
+  const withTopicTitle = (
+    photo: PhotoRecord,
+    topicId?: string,
+    topicTitle?: string,
+  ): PhotoRecord => {
+    const normalizedTopicId =
+      topicId?.trim() || photo.topicId || photo.topicIds?.[0] || "";
+
+    if (!normalizedTopicId) return photo;
+
+    const normalizedTopicTitle =
+      topicTitle?.trim() ||
+      topics.find(([id]) => id === normalizedTopicId)?.[1] ||
+      photo.topicTitle ||
+      normalizedTopicId;
+    const topicIds = photo.topicIds?.includes(normalizedTopicId)
+      ? photo.topicIds
+      : [normalizedTopicId, ...(photo.topicIds ?? [])];
+
+    return {
+      ...photo,
+      topicId: normalizedTopicId,
+      topicTitle: normalizedTopicTitle,
+      topicIds,
+    };
+  };
+
+  const withSelectedTopic = (photo: PhotoRecord): PhotoRecord =>
+    withTopicTitle(photo, payload.topicId, payload.topicTitle);
+
   const resetEditor = () => {
     setEditingId(null);
     setPayload(emptyPayload);
