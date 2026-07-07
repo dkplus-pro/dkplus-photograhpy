@@ -419,6 +419,7 @@ test("multipart upload can replace an existing SQLite photo image", async () => 
         description: "Before replacement",
         topicId: "street",
         image: { url: "https://cdn.example/original.jpg", storage: "remote" },
+        exif: { cameraBrand: "Leica", cameraModel: "Q3" },
       })
       .expect(201);
 
@@ -438,10 +439,15 @@ test("multipart upload can replace an existing SQLite photo image", async () => 
     assert.equal(response.body.photo.title, "Replaced frame");
     assert.equal(response.body.photo.image.storage, "local");
     assert.ok(response.body.photo.image.key.endsWith("replacement.jpg"));
+    assert.deepEqual(response.body.photo.exif, {
+      cameraBrand: "Leica",
+      cameraModel: "Q3",
+    });
 
     const listed = await authed(request(app).get("/api/photos")).expect(200);
     assert.equal(listed.body.photos.length, 1);
     assert.ok(listed.body.photos[0].image.key.endsWith("replacement.jpg"));
+    assert.deepEqual(listed.body.photos[0].exif, response.body.photo.exif);
     await assertExportFileMissing(config.exportFile);
   } finally {
     await rm(root, { recursive: true, force: true });
