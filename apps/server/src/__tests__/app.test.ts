@@ -32,6 +32,14 @@ async function assertExportFileMissing(filePath: string): Promise<void> {
   });
 }
 
+function assertClientExportShape(value: unknown): void {
+  const serialized = JSON.stringify(value);
+  assert.doesNotMatch(
+    serialized,
+    /"(createdAt|updatedAt|image|imageUrl|thumbnailUrl)"\s*:/,
+  );
+}
+
 test("health is public and admin API requires bearer token", async () => {
   const { config, root } = await makeConfig();
   try {
@@ -201,11 +209,7 @@ test("existing JSON seeds an empty database and is rewritten only by explicit ex
         }
       >;
     };
-    assert.deepEqual(Object.keys(artifact).sort(), [
-      "generatedAt",
-      "photos",
-      "topics",
-    ]);
+    assertClientExportShape(artifact);
     assert.ok(artifact.generatedAt);
     assert.equal("updatedAt" in artifact, false);
     assert.equal(artifact.topics.length, 1);
