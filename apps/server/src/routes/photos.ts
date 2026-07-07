@@ -127,6 +127,7 @@ export function createPhotosRouter(
       };
       if (photoId) {
         const photo = await store.update(photoId, input);
+        ctx.status = 200;
         ctx.body = { photo };
         return;
       }

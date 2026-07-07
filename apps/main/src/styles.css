@@ -170,12 +170,6 @@ img {
   transform: scale(1.035);
   filter: saturate(1.04);
 }
-.photo-card.masonry:nth-child(3n + 1) {
-  min-height: 340px;
-}
-.photo-card.masonry:nth-child(3n + 2) {
-  min-height: 300px;
-}
 .photo-card.square {
   aspect-ratio: 1;
   min-height: 0;

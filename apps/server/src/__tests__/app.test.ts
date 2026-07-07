@@ -126,6 +126,46 @@ test("multipart upload stores local file, extracts safe EXIF fallback, and creat
   }
 });
 
+test("multipart upload can replace an existing photo image", async () => {
+  const { config, root } = await makeConfig();
+  try {
+    const app = createApp(config).callback();
+    const created = await authed(request(app).post("/api/photos"))
+      .send({
+        title: "Original frame",
+        description: "Before replacement",
+        topicId: "street",
+        image: { url: "https://cdn.example/original.jpg", storage: "remote" },
+      })
+      .expect(201);
+
+    const id = created.body.photo.id as string;
+    const response = await request(app)
+      .post("/api/uploads")
+      .set("Authorization", "Bearer test-token")
+      .field("photoId", id)
+      .field("title", "Replaced frame")
+      .attach("file", Buffer.from([0xff, 0xd8, 0xff, 0xd9]), {
+        filename: "replacement.jpg",
+        contentType: "image/jpeg",
+      })
+      .expect(200);
+
+    assert.equal(response.body.photo.id, id);
+    assert.equal(response.body.photo.title, "Replaced frame");
+    assert.equal(response.body.photo.image.storage, "local");
+    assert.ok(response.body.photo.image.key.endsWith("replacement.jpg"));
+
+    const stored = JSON.parse(await readFile(config.dataFile, "utf8")) as {
+      photos: Array<{ image: { key: string } }>;
+    };
+    assert.equal(stored.photos.length, 1);
+    assert.ok(stored.photos[0].image.key.endsWith("replacement.jpg"));
+  } finally {
+    await rm(root, { recursive: true, force: true });
+  }
+});
+
 test("local upload files are served from /uploads without admin auth", async () => {
   const { config, root } = await makeConfig();
   config.publicBaseUrl = undefined;

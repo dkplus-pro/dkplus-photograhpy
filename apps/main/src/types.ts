@@ -55,4 +55,4 @@ export interface GalleryPayload {
 }
 
 export type TabKey = "latest" | "topics" | "timeline";
-export type GridStyle = "masonry" | "square";
+export type GridStyle = "square";

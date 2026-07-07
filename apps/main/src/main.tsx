@@ -80,10 +80,7 @@ const VirtualPhotoGrid = ({
   style: GridStyle;
   onOpen: (photo: ResolvedPhoto) => void;
 }) => {
-  const { columns, rows, totalHeight } = useVirtualRows(
-    photos,
-    style === "square" ? 300 : 360,
-  );
+  const { columns, rows, totalHeight } = useVirtualRows(photos, 300);
   return (
     <div
       className={`virtual-grid ${style}`}
