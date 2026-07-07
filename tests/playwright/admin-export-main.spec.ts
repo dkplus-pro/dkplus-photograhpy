@@ -16,6 +16,7 @@ type ManagedProcess = {
 
 let root = "";
 let exportFile = "";
+let serverBaseUrl = "";
 let adminBaseUrl = "";
 let mainBaseUrl = "";
 const processes: ManagedProcess[] = [];
@@ -173,7 +174,7 @@ test.beforeAll(async () => {
   const serverPort = await freePort();
   const adminPort = await freePort();
   const mainPort = await freePort();
-  const serverBaseUrl = `http://127.0.0.1:${serverPort}`;
+  serverBaseUrl = `http://127.0.0.1:${serverPort}`;
   adminBaseUrl = `http://127.0.0.1:${adminPort}`;
   mainBaseUrl = `http://127.0.0.1:${mainPort}`;
 
@@ -191,6 +192,7 @@ test.beforeAll(async () => {
       GALLERY_EXPORT_FILE: exportFile,
       UPLOAD_DIR: uploadDir,
       PUBLIC_BASE_URL: `${serverBaseUrl}/uploads`,
+      COS_ENABLED: "false",
     },
   );
   await waitForHttp(`${serverBaseUrl}/health`, "server");
@@ -275,6 +277,43 @@ test("Admin authenticated export action writes the Main JSON artifact", async ({
   expect(exported.photos[0]?.id).toBe("admin-seed-photo");
   expect(exported.photos[0]?.topicIds).toEqual(["editorial"]);
   expect(exported.photos[0]?.asset.original).toContain("data:image/svg+xml");
+});
+
+test("Admin API auth and upload work without mutating the exported JSON", async ({
+  request,
+}) => {
+  const beforeUploadExport = await readFile(exportFile, "utf8");
+
+  const unauthorized = await request.get(`${serverBaseUrl}/api/photos`);
+  expect(unauthorized.status()).toBe(401);
+
+  const uploaded = await request.post(`${serverBaseUrl}/api/uploads`, {
+    headers: { Authorization: `Bearer ${adminToken}` },
+    multipart: {
+      title: "Playwright 上传样片",
+      description: "Upload smoke keeps SQLite as source of truth",
+      file: {
+        name: "playwright-upload.jpg",
+        mimeType: "image/jpeg",
+        buffer: Buffer.from([0xff, 0xd8, 0xff, 0xd9]),
+      },
+    },
+  });
+  expect(uploaded.status()).toBe(201);
+  const uploadBody = (await uploaded.json()) as {
+    photos?: Array<{ id: string; image?: { storage?: string; url?: string } }>;
+  };
+  expect(uploadBody.photos).toHaveLength(1);
+  expect(uploadBody.photos?.[0]?.image?.storage).toBe("local");
+
+  const listed = await request.get(`${serverBaseUrl}/api/photos`, {
+    headers: { Authorization: `Bearer ${adminToken}` },
+  });
+  expect(listed.ok()).toBeTruthy();
+  const listBody = (await listed.json()) as { photos?: unknown[] };
+  expect(listBody.photos?.length).toBe(2);
+
+  await expect(readFile(exportFile, "utf8")).resolves.toBe(beforeUploadExport);
 });
 
 test("Main grid remains compact and does not transform cards or images on hover", async ({
