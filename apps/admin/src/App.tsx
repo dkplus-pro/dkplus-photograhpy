@@ -307,6 +307,27 @@ function App() {
     pushMessage("success", `已新增专题“${title}”，并设为当前专题。`);
   };
 
+  const withTopicTitle = (
+    photo: PhotoRecord,
+    topicId?: string,
+    topicTitle?: string,
+  ): PhotoRecord => {
+    const cleanTopicId = topicId?.trim();
+    const cleanTopicTitle = topicTitle?.trim();
+
+    if (!cleanTopicId || !cleanTopicTitle) return photo;
+
+    return {
+      ...photo,
+      topicId: photo.topicId || cleanTopicId,
+      topicIds: photo.topicIds?.length ? photo.topicIds : [cleanTopicId],
+      topicTitle: photo.topicTitle || cleanTopicTitle,
+    };
+  };
+
+  const withSelectedTopic = (photo: PhotoRecord): PhotoRecord =>
+    withTopicTitle(photo, payload.topicId, payload.topicTitle);
+
   const resetEditor = () => {
     setEditingId(null);
     setPayload(emptyPayload);
@@ -365,8 +386,11 @@ function App() {
             ).photo
           : await api.updatePhoto(editingId, cleanPayload);
         if (!updated) throw new Error("图片更新后没有返回记录。");
+        const updatedWithTopic = withSelectedTopic(updated);
         setPhotos((current) =>
-          current.map((photo) => (photo.id === editingId ? updated : photo)),
+          current.map((photo) =>
+            photo.id === editingId ? updatedWithTopic : photo,
+          ),
         );
         pushMessage("success", "图片记录已更新");
       } else if (editorPreview) {
@@ -378,7 +402,7 @@ function App() {
         });
         const created = result.photo;
         if (!created) throw new Error("上传后没有返回图片记录。");
-        setPhotos((current) => [created, ...current]);
+        setPhotos((current) => [withSelectedTopic(created), ...current]);
         pushMessage("success", "图片记录已创建");
       }
       resetEditor();
@@ -453,7 +477,13 @@ function App() {
       const uploaded: PhotoRecord[] = [];
       for (const preview of previews) {
         const result = await api.uploadPhoto(preview);
-        if (result.photo) uploaded.push(result.photo);
+        const previewTopicTitle =
+          topics.find(([id]) => id === preview.topicId)?.[1] || "";
+        if (result.photo) {
+          uploaded.push(
+            withTopicTitle(result.photo, preview.topicId, previewTopicTitle),
+          );
+        }
       }
       if (uploaded.length) setPhotos((current) => [...uploaded, ...current]);
       pushMessage("success", `已上传 ${previews.length} 个文件`);
