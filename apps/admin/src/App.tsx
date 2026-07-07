@@ -109,7 +109,11 @@ function App() {
   const [payload, setPayload] = useState<PhotoPayload>(emptyPayload);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [previews, setPreviews] = useState<UploadPreview[]>([]);
+  const [editorPreview, setEditorPreview] = useState<UploadPreview | null>(null);
+  const [previewPhoto, setPreviewPhoto] = useState<PhotoRecord | null>(null);
   const previewsRef = useRef<UploadPreview[]>([]);
+  const editorPreviewRef = useRef<UploadPreview | null>(null);
+  const editorFileInputRef = useRef<HTMLInputElement>(null);
   const quickFileInputRef = useRef<HTMLInputElement>(null);
   const topicFileInputRef = useRef<HTMLInputElement>(null);
   const [query, setQuery] = useState("");
@@ -156,6 +160,9 @@ function App() {
     () => () => {
       for (const preview of previewsRef.current) {
         URL.revokeObjectURL(preview.previewUrl);
+      }
+      if (editorPreviewRef.current) {
+        URL.revokeObjectURL(editorPreviewRef.current.previewUrl);
       }
     },
     [],
@@ -207,20 +214,37 @@ function App() {
 
   const selectedCount = selectedIds.size;
   const stagedSummary = useMemo(() => summarizeUpload(previews), [previews]);
-  const publishedCount = photos.filter(
-    (photo) => (photo.status ?? "published") === "published",
-  ).length;
-  const draftCount = photos.filter((photo) => photo.status === "draft").length;
+  const visibleCount = filteredPhotos.length;
+  const topicCount = topics.length;
+  const editingPhoto = useMemo(
+    () => photos.find((photo) => photo.id === editingId) ?? null,
+    [editingId, photos],
+  );
+  const editorImageUrl =
+    editorPreview?.previewUrl ||
+    editingPhoto?.thumbnailUrl ||
+    editingPhoto?.imageUrl ||
+    "";
+
+  const replaceEditorPreview = (nextPreview: UploadPreview | null) => {
+    if (editorPreviewRef.current) {
+      URL.revokeObjectURL(editorPreviewRef.current.previewUrl);
+    }
+    editorPreviewRef.current = nextPreview;
+    setEditorPreview(nextPreview);
+  };
 
   const resetEditor = () => {
     setEditingId(null);
     setPayload(emptyPayload);
+    replaceEditorPreview(null);
     setIsEditorOpen(false);
   };
 
   const openCreateEditor = () => {
     setEditingId(null);
     setPayload(emptyPayload);
+    replaceEditorPreview(null);
     setIsEditorOpen(true);
   };
 
@@ -231,10 +255,9 @@ function App() {
       description: photo.description || "",
       topicId: photo.topicId || photo.topicIds?.[0] || "",
       topicTitle: photo.topicTitle || "",
-      status: photo.status || "published",
-      imageUrl: photo.imageUrl || photo.image?.url || "",
       exif: photo.exif,
     });
+    replaceEditorPreview(null);
     setIsEditorOpen(true);
   };
 
@@ -247,30 +270,43 @@ function App() {
         description: payload.description?.trim(),
         topicId: payload.topicId?.trim(),
         topicTitle: payload.topicTitle?.trim(),
-        imageUrl: payload.imageUrl?.trim(),
       };
 
-      if (!editingId && !cleanPayload.imageUrl) {
-        pushMessage("error", "请填写图片 URL，或通过上传功能创建图片。");
+      if (!editingId && !editorPreview) {
+        pushMessage("error", "请选择一张本地图片后再创建记录。");
         return;
       }
 
       if (editingId) {
-        const updated = await api.updatePhoto(editingId, cleanPayload);
+        const updated = editorPreview
+          ? (
+              await api.uploadPhoto(
+                {
+                  ...editorPreview,
+                  title: cleanPayload.title || editorPreview.title,
+                  description: cleanPayload.description || "",
+                  topicId: cleanPayload.topicId || "",
+                },
+                editingId,
+              )
+            ).photo
+          : await api.updatePhoto(editingId, cleanPayload);
+        if (!updated) throw new Error("图片更新后没有返回记录。");
         setPhotos((current) =>
           current.map((photo) =>
-            photo.id === editingId
-              ? { ...updated, status: cleanPayload.status ?? updated.status }
-              : photo,
+            photo.id === editingId ? updated : photo,
           ),
         );
         pushMessage("success", "图片记录已更新");
-      } else {
-        const created = await api.createPhoto(cleanPayload);
-        setPhotos((current) => [
-          { ...created, status: cleanPayload.status ?? created.status },
-          ...current,
-        ]);
+      } else if (editorPreview) {
+        const result = await api.uploadPhoto({
+          ...editorPreview,
+          title: cleanPayload.title || editorPreview.title,
+          description: cleanPayload.description || "",
+          topicId: cleanPayload.topicId || "",
+        });
+        if (!result.photo) throw new Error("上传后没有返回图片记录。");
+        setPhotos((current) => [result.photo!, ...current]);
         pushMessage("success", "图片记录已创建");
       }
       resetEditor();
@@ -282,6 +318,24 @@ function App() {
     } finally {
       setIsSaving(false);
     }
+  };
+
+  const stageEditorFile = async (files: FileList | null) => {
+    const file = files?.[0];
+    if (!file) return;
+    const preview: UploadPreview = {
+      id: randomId(),
+      file,
+      previewUrl: URL.createObjectURL(file),
+      title:
+        payload.title?.trim() ||
+        file.name.replace(/\.[^.]+$/, "").replace(/[-_]+/g, " "),
+      topicId: payload.topicId?.trim() || "",
+      description: payload.description?.trim() || "",
+      exif: await extractExif(file),
+    };
+    replaceEditorPreview(preview);
+    pushMessage("info", "已选择本地图片并读取 EXIF 预览");
   };
 
   const stageFiles = async (
@@ -388,15 +442,22 @@ function App() {
     {
       title: "图片",
       dataIndex: "title",
-      width: 300,
+      width: 320,
       render: (_value, photo) => (
         <div className="photo-cell">
           {photo.thumbnailUrl || photo.imageUrl ? (
-            <img
-              src={photo.thumbnailUrl || photo.imageUrl}
-              alt={photoTitle(photo)}
-              loading="lazy"
-            />
+            <button
+              className="photo-cell__thumb"
+              type="button"
+              onClick={() => setPreviewPhoto(photo)}
+              aria-label={`放大预览：${photoTitle(photo)}`}
+            >
+              <img
+                src={photo.thumbnailUrl || photo.imageUrl}
+                alt={photoTitle(photo)}
+                loading="lazy"
+              />
+            </button>
           ) : (
             <span className="photo-cell__empty">无图</span>
           )}
@@ -410,25 +471,16 @@ function App() {
       ),
     },
     {
-      title: "状态",
-      dataIndex: "status",
-      width: 96,
-      render: (_value, photo) => {
-        const status = photo.status || "published";
-        return <Tag color={statusColor[status]}>{statusLabel[status]}</Tag>;
-      },
-    },
-    {
       title: "专题",
       dataIndex: "topicTitle",
-      width: 150,
+      width: 140,
       render: (_value, photo) =>
         photo.topicTitle || photo.topicId || photo.topicIds?.[0] || "未分组",
     },
     {
       title: "文件信息",
       dataIndex: "image",
-      width: 260,
+      width: 240,
       render: (_value, photo) => (
         <div className="rich-lines">
           <strong>{imageSummary(photo)}</strong>
@@ -442,7 +494,7 @@ function App() {
     {
       title: "EXIF / 时间",
       dataIndex: "exif",
-      width: 280,
+      width: 260,
       render: (_value, photo) => (
         <div className="rich-lines">
           <strong>{exifLine(photo.exif)}</strong>
@@ -459,7 +511,7 @@ function App() {
     {
       title: "操作",
       key: "actions",
-      width: 168,
+      width: 150,
       align: "right",
       render: (_value, photo) => (
         <Space size="mini">
@@ -503,10 +555,10 @@ function App() {
             <Statistic title="图片记录" value={photos.length} />
           </Card>
           <Card bordered={false}>
-            <Statistic title="已发布" value={publishedCount} />
+            <Statistic title="筛选结果" value={visibleCount} />
           </Card>
           <Card bordered={false}>
-            <Statistic title="草稿" value={draftCount} />
+            <Statistic title="专题数量" value={topicCount} />
           </Card>
           <Card bordered={false}>
             <Statistic title="已选择" value={selectedCount} />
