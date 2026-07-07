@@ -21,7 +21,7 @@ export type ServerConfig = {
   port: number;
   adminToken?: string;
   corsOrigins: string[];
-  dataFile: string;
+  databaseFile: string;
   exportFile: string;
   uploadDir: string;
   publicBaseUrl?: string;
@@ -50,12 +50,6 @@ function optional(value: string | undefined): string | undefined {
 }
 
 export function loadConfig(): ServerConfig {
-  const exportFile = path.resolve(
-    process.cwd(),
-    process.env.GALLERY_EXPORT_FILE ??
-      process.env.DATA_FILE ??
-      "../../data/photos.json",
-  );
   const databaseFile = path.resolve(
     process.cwd(),
     process.env.SQLITE_DATABASE_FILE ??
@@ -64,13 +58,8 @@ export function loadConfig(): ServerConfig {
   );
   const exportFile = path.resolve(
     process.cwd(),
-    process.env.EXPORT_FILE ??
-      process.env.DATA_FILE ??
-      "../../data/photos.json",
-  );
-  const exportFile = path.resolve(
-    process.cwd(),
-    process.env.EXPORT_FILE ??
+    process.env.GALLERY_EXPORT_FILE ??
+      process.env.EXPORT_FILE ??
       process.env.DATA_FILE ??
       "../../data/photos.json",
   );
@@ -85,7 +74,7 @@ export function loadConfig(): ServerConfig {
     port: parsePort(process.env.PORT),
     adminToken: optional(process.env.ADMIN_TOKEN),
     corsOrigins: parseList(process.env.CORS_ORIGINS),
-    dataFile,
+    databaseFile,
     exportFile,
     uploadDir,
     publicBaseUrl: optional(process.env.PUBLIC_BASE_URL),

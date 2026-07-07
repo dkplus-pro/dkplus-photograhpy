@@ -81,9 +81,7 @@ export function createApp(config: ServerConfig = loadConfig()): Koa {
     exportFile: config.exportFile,
   });
   const uploads = new UploadService(config);
-  const router = createPhotosRouter(store, uploads, {
-    exportFile: config.exportFile,
-  });
+  const router = createPhotosRouter(store, uploads);
 
   app.proxy = true;
   app.use(errorHandler);

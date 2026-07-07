@@ -44,7 +44,6 @@ function field(value: unknown): string | undefined {
 export function createPhotosRouter(
   store: PhotoStore,
   uploads: UploadService,
-  options: { exportFile: string },
 ): Router {
   const router = new Router({ prefix: "/api" });
 
@@ -90,16 +89,8 @@ export function createPhotosRouter(
     ctx.body = result;
   });
 
-  router.post("/gallery/export", async (ctx) => {
-    const result = await store.exportToClient(options.exportFile);
-    ctx.body = {
-      export: {
-        exportedAt: result.exportedAt,
-        updatedAt: result.updatedAt,
-        photos: result.photoCount,
-        topics: result.topicCount,
-      },
-    };
+  router.post("/export/client", async (ctx) => {
+    ctx.body = { export: await store.exportToJson() };
   });
 
   router.post("/uploads", upload.any(), async (ctx) => {
