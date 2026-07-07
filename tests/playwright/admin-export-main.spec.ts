@@ -775,7 +775,7 @@ test("Main topics tab opens a virtual detail page with scoped modal navigation",
   await expect(page.locator(".modal h2")).toHaveText("编辑样片 B");
   await expect(page.locator(".modal .eyebrow")).toHaveText("2 / 3");
 
-  await page.getByRole("button", { name: "关闭" }).click();
+  await page.getByRole("button", { name: "关闭", exact: true }).click();
   await page.getByRole("button", { name: "返回专题列表" }).click();
   await expect(
     page.getByRole("button", { name: "查看专题：旅行专题" }),

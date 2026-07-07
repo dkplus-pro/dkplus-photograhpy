@@ -86,10 +86,7 @@ test("topics tab opens a secondary virtual topic detail page", () => {
     mainSource,
     /<VirtualPhotoGrid[\s\S]*?photos=\{photos\}[\s\S]*?style="square"/,
   );
-  assert.match(
-    mainSource,
-    /<TopicDetail[\s\S]*?photos=\{topicPhotos\}/,
-  );
+  assert.match(mainSource, /<TopicDetail[\s\S]*?photos=\{topicPhotos\}/);
   assert.match(
     mainSource,
     /data && tab === "topics" && selectedTopic[\s\S]*?\? topicPhotos[\s\S]*?: \(data\?\.photos \?\? \[\]\)/,
