@@ -16,7 +16,7 @@ const getColumns = (width: number): number => {
 export const useVirtualRows = <T>(
   items: T[],
   rowHeight: number,
-  gap = 20,
+  gap = 12,
   overscan = 4,
 ) => {
   const [viewport, setViewport] = useState({

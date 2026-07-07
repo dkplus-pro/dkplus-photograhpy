@@ -9,7 +9,7 @@
     "build": "pnpm run build:data && tsc -b && vite build",
     "typecheck": "tsc --noEmit",
     "lint": "tsc --noEmit --pretty false",
-    "test": "node --test scripts/build-gallery.test.mjs",
+    "test": "node --test scripts/*.test.mjs",
     "clean": "rm -rf dist public/data tsconfig.tsbuildinfo"
   },
   "dependencies": {
