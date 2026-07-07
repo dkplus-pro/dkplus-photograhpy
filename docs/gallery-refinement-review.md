@@ -27,17 +27,22 @@ This note records the code-review and documentation slice for the DKPlus gallery
 - Do not use a large hero/banner panel in the admin workspace. Use a compact page header and action toolbar instead.
 - Migrate form controls, actions, upload controls, table/list, pagination, dialogs, and notifications to `@arco-design/web-react` so interaction states and accessibility behavior are consistent.
 - Add/edit photo metadata through an Arco `Modal`; avoid a permanently expanded editor form in the main workspace.
-- Image management should be a compact paginated table/list with rich operational columns:
-  - thumbnail and title
+- Image management should be a compact paginated table/list with focused operational columns:
+  - thumbnail, title, and topic
   - explicit filters for title, camera brand, camera model, and topic
-  - topic/status/tags where available
-  - storage, mime type, file size, and URL/key hints
-  - EXIF summary such as camera, lens, ISO, shutter, aperture, focal length
+  - split EXIF columns for camera model (`型号`) and lens (`镜头`)
   - an independent sortable shooting/taken date column
   - row actions for edit/delete and batch actions for selected records
+- The list must not show a file-info column or list-level MIME, file size,
+  `imageSummary`, aperture, shutter, or ISO copy. Keep those details out of the
+  dense table surface; richer metadata may appear in upload/edit/preview contexts
+  only when appropriate.
 - The list should not impose a fixed vertical scroll height. Remove update-date
   copy from the table, center table content, keep density compact, and provide
-  clear empty, focus, loading, success, and error feedback.
+  clear empty, focus, loading, success, and error feedback. Use a restrained
+  black/white gallery-like visual system with accessible contrast, clear
+  focus/hover states, and responsive behavior rather than decorative color
+  gradients.
 
 ### Admin API and uploads (`apps/server`)
 
@@ -70,9 +75,11 @@ Use this checklist during integration review:
 - [ ] Admin no longer renders a large hero/banner panel.
 - [ ] Admin controls use `@arco-design/web-react` components rather than bespoke buttons/inputs/selects/dialogs.
 - [ ] Add/edit flows open in an Arco modal and reset state after save/cancel.
-- [ ] Image management is a compact paginated table/list with rich metadata and EXIF columns.
+- [ ] Image management is a compact paginated table/list with thumbnail/title/topic, split `型号` and `镜头` columns, and no `文件信息` column.
 - [ ] Admin filters include title, camera brand, camera model, and topic.
-- [ ] Admin table has no fixed vertical height, no update-date row, and a sortable shooting-date column.
+- [ ] Admin table omits MIME, file size, `imageSummary`, aperture, shutter, and ISO copy.
+- [ ] Admin table has no fixed vertical height, no update-date row, centered cells, pagination, and a sortable shooting-date column.
+- [ ] Admin styling uses a restrained black/white gallery-like system with accessible focus/hover states and responsive density.
 - [ ] `POST /api/uploads` reaches Koa in local development via proxy or explicit `VITE_API_BASE_URL`.
 - [ ] Local/COS upload URLs are usable by the admin UI after upload.
 - [ ] `apps/server/.env.local` is not tracked and no secret values are committed.

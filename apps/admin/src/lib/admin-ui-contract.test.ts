@@ -56,7 +56,7 @@ describe("admin gallery list contract", () => {
       ".toolbar :where(.arco-input-inner-wrapper, .arco-select-view):focus-within",
     );
     expect(styles).toContain(".photo-cell__thumb:hover img");
-    expect(styles).not.toContain("rgba(22, 93, 255");
-    expect(styles).not.toContain("rgba(20, 201, 201");
+    expect(styles).not.toMatch(/linear-gradient\(135deg,\s*rgba\(22, 93, 255/);
+    expect(styles).not.toMatch(/radial-gradient\([\s\S]*rgba\(20, 201, 201/);
   });
 });
