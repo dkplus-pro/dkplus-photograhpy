@@ -294,12 +294,33 @@ test("Admin authenticated export action writes the Main JSON artifact", async ({
   expect(exported.photos[0]?.id).toBe("admin-seed-photo");
   expect(exported.photos[0]?.topicIds).toEqual(["editorial"]);
   expect(exported.photos[0]?.asset.original).toContain("data:image/svg+xml");
-  expect("updatedAt" in exported).toBe(false);
-  expect("createdAt" in exported.topics[0]).toBe(false);
-  expect("updatedAt" in exported.topics[0]).toBe(false);
-  expect("createdAt" in exported.photos[0]).toBe(false);
-  expect("updatedAt" in exported.photos[0]).toBe(false);
-  expect("image" in exported.photos[0]).toBe(false);
+  expect(JSON.stringify(exported)).not.toMatch(
+    /"(createdAt|updatedAt|image|imageUrl|thumbnailUrl)"\s*:/,
+  );
+});
+
+test("Admin list exposes the optimized filters and centered sortable table", async ({
+  page,
+}) => {
+  await page.goto(adminBaseUrl);
+  await expect(page.getByPlaceholder("按标题筛选")).toBeVisible();
+  await expect(page.getByLabel("按品牌筛选")).toBeVisible();
+  await expect(page.getByLabel("按机型筛选")).toBeVisible();
+  await expect(page.getByLabel("按专题筛选")).toBeVisible();
+  await expect(
+    page.getByRole("columnheader", { name: /拍摄日期/ }),
+  ).toBeVisible();
+  await expect(page.getByText(/更新：/)).toHaveCount(0);
+
+  await page.getByPlaceholder("按标题筛选").fill("后台导出样片");
+  await expect(page.getByRole("cell", { name: /后台导出样片/ })).toBeVisible();
+  await page.getByRole("columnheader", { name: /拍摄日期/ }).click();
+
+  const firstCellAlign = await page
+    .locator(".photos-table .arco-table-td")
+    .first()
+    .evaluate((element) => getComputedStyle(element).textAlign);
+  expect(firstCellAlign).toBe("center");
 });
 
 test("Admin API auth and upload work without mutating the exported JSON", async ({
