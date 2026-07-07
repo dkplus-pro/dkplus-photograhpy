@@ -78,7 +78,9 @@ type ClientExportArtifact = {
   >;
 };
 
-async function readClientExport(filePath: string): Promise<ClientExportArtifact> {
+async function readClientExport(
+  filePath: string,
+): Promise<ClientExportArtifact> {
   return JSON.parse(await readFile(filePath, "utf8")) as ClientExportArtifact;
 }
 
@@ -333,7 +335,10 @@ test("multipart upload stores local file, creates SQLite photo, and auto-exports
     assert.equal(exported.photos.length, 1);
     assert.equal(exported.photos[0]?.id, response.body.photos[0].id);
     assert.equal(exported.photos[0]?.title, "Uploaded frame");
-    assert.equal(exported.photos[0]?.asset?.original, response.body.photos[0].image.url);
+    assert.equal(
+      exported.photos[0]?.asset?.original,
+      response.body.photos[0].image.url,
+    );
     assert.deepEqual(exported.photos[0]?.topicIds, []);
     assertNoClientInternals(exported);
   } finally {

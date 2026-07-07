@@ -42,7 +42,9 @@ type ClientExportArtifact = {
   photos: Array<PhotoBody & { image?: unknown; imageUrl?: unknown }>;
 };
 
-async function readClientExport(filePath: string): Promise<ClientExportArtifact> {
+async function readClientExport(
+  filePath: string,
+): Promise<ClientExportArtifact> {
   return JSON.parse(await readFile(filePath, "utf8")) as ClientExportArtifact;
 }
 
