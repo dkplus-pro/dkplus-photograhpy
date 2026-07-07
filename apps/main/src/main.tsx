@@ -66,7 +66,6 @@ const PhotoCard = ({
     />
     <span className="photo-card__meta">
       <strong>{photo.title}</strong>
-      <small>{formatDate(photo.takenAt)}</small>
     </span>
   </button>
 );

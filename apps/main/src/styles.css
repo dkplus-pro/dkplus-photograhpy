@@ -176,19 +176,30 @@ img {
 }
 .photo-card__meta {
   position: absolute;
-  inset: auto 14px 14px;
-  display: grid;
-  gap: 4px;
-  padding: 14px;
+  inset: auto 0 0;
+  display: block;
+  padding: 72px 18px 18px;
   border-radius: 0;
-  background: rgba(9, 9, 11, 0.58);
-  backdrop-filter: blur(14px);
+  background: linear-gradient(
+    to top,
+    rgba(9, 9, 11, 0.82) 0%,
+    rgba(9, 9, 11, 0.46) 48%,
+    rgba(9, 9, 11, 0) 100%
+  );
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(10px);
+  transition:
+    opacity 180ms ease,
+    transform 220ms ease;
+}
+.photo-card:is(:hover, :focus-visible) .photo-card__meta {
+  opacity: 1;
+  transform: translateY(0);
 }
 .photo-card__meta strong {
   font-size: 1rem;
-}
-.photo-card__meta small {
-  color: rgba(255, 255, 255, 0.75);
+  line-height: 1.25;
 }
 .topic-grid {
   display: grid;
