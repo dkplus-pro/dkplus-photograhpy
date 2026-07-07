@@ -14,7 +14,7 @@
     "build": "turbo run build",
     "lint": "turbo run lint",
     "typecheck": "turbo run typecheck",
-    "test": "turbo run test",
+    "test": "node --test tests/repo-hygiene.test.mjs && turbo run test",
     "format": "prettier --write \"**/*.{js,jsx,ts,tsx,json,jsonc,md,yml,yaml,css,scss,html}\"",
     "format:check": "prettier --check \"**/*.{js,jsx,ts,tsx,json,jsonc,md,yml,yaml,css,scss,html}\"",
     "clean": "turbo run clean && rm -rf node_modules .turbo dist coverage"
