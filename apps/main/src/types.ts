@@ -1,10 +1,14 @@
 export interface ExifData {
+  cameraMake?: string;
   cameraBrand?: string;
   cameraModel?: string;
+  lens?: string;
   lensModel?: string;
   iso?: number;
-  aperture?: number;
+  aperture?: number | string;
+  shutter?: string;
   shutterSpeed?: string;
+  focalLength?: string;
   focalLengthMm?: number;
   width?: number;
   height?: number;
