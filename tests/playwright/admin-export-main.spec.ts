@@ -615,11 +615,11 @@ test("Main dev loads gallery through /api and virtualizes to the bottom row", as
   expect(galleryResponse.ok()).toBeTruthy();
 
   await expect(
-    page.getByRole("button", { name: "查看图片：后台导出样片" }),
+    page.getByRole("button", { name: "查看图片：后台导出样片", exact: true }),
   ).toBeVisible();
   await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight));
   await expect(
-    page.getByRole("button", { name: `查看图片：后台导出样片 ${seedPhotoCount}` }),
+    page.getByRole("button", { name: `查看图片：后台导出样片 ${seedPhotoCount}`, exact: true }),
   ).toBeVisible();
 });
 
@@ -628,7 +628,7 @@ test("Main modal navigation buttons are vertically centered and switch photos", 
 }) => {
   await page.setViewportSize({ width: 1280, height: 720 });
   await page.goto(mainBaseUrl);
-  await page.getByRole("button", { name: "查看图片：后台导出样片" }).click();
+  await page.getByRole("button", { name: "查看图片：后台导出样片", exact: true }).click();
   const dialog = page.getByRole("dialog", { name: "后台导出样片" });
   await expect(dialog).toBeVisible();
 
