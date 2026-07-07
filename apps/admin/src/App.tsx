@@ -23,7 +23,6 @@ import { extractExif } from "./lib/exif";
 import {
   exifLine,
   formatDate,
-  formatFileSize,
   imageSummary,
   photoTitle,
   summarizeUpload,
@@ -531,31 +530,18 @@ function App() {
         photo.topicTitle || photo.topicId || photo.topicIds?.[0] || "未分组",
     },
     {
-      title: "文件信息",
-      dataIndex: "image",
-      width: 210,
+      title: "型号",
+      dataIndex: "exif",
+      width: 150,
       align: "center",
-      render: (_value, photo) => (
-        <div className="rich-lines">
-          <strong>{imageSummary(photo)}</strong>
-          <span>{photo.image?.mimeType || "未知格式"}</span>
-          <span>
-            {photo.image?.size ? formatFileSize(photo.image.size) : "未知大小"}
-          </span>
-        </div>
-      ),
+      render: (_value, photo) => photo.exif?.cameraModel || "未知型号",
     },
     {
-      title: "EXIF",
+      title: "镜头",
       dataIndex: "exif",
-      width: 210,
+      width: 180,
       align: "center",
-      render: (_value, photo) => (
-        <div className="rich-lines">
-          <strong>{exifLine(photo.exif)}</strong>
-          <span>{photo.exif?.lens || "暂无镜头信息"}</span>
-        </div>
-      ),
+      render: (_value, photo) => photo.exif?.lens || "暂无镜头信息",
     },
     {
       title: "拍摄日期",
@@ -738,7 +724,7 @@ function App() {
                   </Button>
                 </div>
               }
-              scroll={{ x: 1260 }}
+              scroll={{ x: 1080 }}
               rowSelection={{
                 type: "checkbox",
                 checkAll: true,
