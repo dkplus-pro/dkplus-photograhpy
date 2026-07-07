@@ -1,4 +1,4 @@
-import { mkdtemp, readFile, rm } from "node:fs/promises";
+import { mkdtemp, readFile, rm, stat, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import test from "node:test";
@@ -17,13 +17,19 @@ async function makeConfig(): Promise<{ config: ServerConfig; root: string }> {
       port: 0,
       adminToken: "test-token",
       corsOrigins: ["http://localhost:5174"],
-      dataFile: path.join(root, "photos.json"),
-      exportFile: path.join(root, "client", "photos.json"),
+      databaseFile: path.join(root, "gallery.sqlite"),
+      exportFile: path.join(root, "photos.json"),
       uploadDir: path.join(root, "uploads"),
       publicBaseUrl: "http://cdn.test/uploads",
       cos: { enabled: false, prefix: "photos" },
     },
   };
+}
+
+async function assertExportFileMissing(filePath: string): Promise<void> {
+  await assert.rejects(readFile(filePath, "utf8"), {
+    code: "ENOENT",
+  });
 }
 
 test("health is public and admin API requires bearer token", async () => {
@@ -47,7 +53,7 @@ function authed(testRequest: Test): Test {
   return testRequest.set("Authorization", "Bearer test-token");
 }
 
-test("photo CRUD and batch delete persist JSON records", async () => {
+test("photo CRUD and batch delete persist in SQLite without mutating JSON export", async () => {
   const { config, root } = await makeConfig();
   try {
     const app = createApp(config).callback();
@@ -85,52 +91,94 @@ test("photo CRUD and batch delete persist JSON records", async () => {
     assert.equal(deleted.body.deleted.length, 1);
     assert.deepEqual(deleted.body.missing, ["missing"]);
 
-    const stored = JSON.parse(await readFile(config.dataFile, "utf8")) as {
-      photos: unknown[];
-    };
-    assert.equal(stored.photos.length, 0);
+    const database = await stat(config.databaseFile);
+    assert.ok(database.size > 0);
+    await assertExportFileMissing(config.exportFile);
   } finally {
     await rm(root, { recursive: true, force: true });
   }
 });
 
-test("authenticated export writes the client JSON artifact on demand", async () => {
+test("existing JSON seeds an empty database and is rewritten only by explicit export", async () => {
   const { config, root } = await makeConfig();
+  const seedJson = `${JSON.stringify(
+    {
+      generatedAt: "2026-07-01T00:00:00.000Z",
+      topics: [
+        {
+          id: "seed-topic",
+          title: "种子专题",
+          description: "来自静态 JSON 的种子数据",
+          sortOrder: 1,
+        },
+      ],
+      photos: [
+        {
+          id: "seed-photo",
+          title: "种子照片",
+          description: "用于初始化 SQLite",
+          topicIds: ["seed-topic"],
+          takenAt: "2026-07-01T08:00:00.000Z",
+          asset: {
+            original: "seed/original.jpg",
+            thumbnail: "seed/thumb.jpg",
+            preview: "seed/preview.jpg",
+            alt: "种子照片",
+          },
+        },
+      ],
+    },
+    null,
+    2,
+  )}\n`;
   try {
+    await writeFile(config.exportFile, seedJson, "utf8");
     const app = createApp(config).callback();
+
+    const seeded = await authed(request(app).get("/api/photos")).expect(200);
+    assert.equal(seeded.body.photos.length, 1);
+    assert.equal(seeded.body.photos[0].id, "seed-photo");
+    assert.equal(seeded.body.photos[0].topicId, "seed-topic");
+    assert.equal(seeded.body.photos[0].image.url, "seed/original.jpg");
 
     await authed(request(app).post("/api/photos"))
       .send({
-        title: "Exported frame",
-        image: { url: "https://cdn.example/exported.jpg", storage: "remote" },
+        title: "SQLite only",
+        topicId: "seed-topic",
+        image: { url: "sqlite-only.jpg", storage: "remote" },
       })
       .expect(201);
 
-    await assert.rejects(readFile(config.exportFile, "utf8"), {
-      code: "ENOENT",
-    });
+    assert.equal(await readFile(config.exportFile, "utf8"), seedJson);
 
-    const response = await authed(
-      request(app).post("/api/gallery/export"),
-    ).expect(200);
+    const exported = await authed(request(app).post("/api/export/client"))
+      .send({})
+      .expect(200);
+    assert.equal(exported.body.export.photoCount, 2);
+    assert.equal(exported.body.export.topicCount, 1);
 
-    assert.equal(response.body.export.photos, 1);
-    assert.equal(response.body.export.topics, 0);
-    assert.match(response.body.export.exportedAt, /^\d{4}-\d{2}-\d{2}T/);
-
-    const exported = JSON.parse(await readFile(config.exportFile, "utf8")) as {
-      photos: Array<{ title: string }>;
+    const artifact = JSON.parse(await readFile(config.exportFile, "utf8")) as {
+      generatedAt: string;
       topics: unknown[];
+      photos: Array<{ id: string; topicIds: string[]; asset: { original: string } }>;
     };
-    assert.equal(exported.photos.length, 1);
-    assert.equal(exported.photos[0].title, "Exported frame");
-    assert.deepEqual(exported.topics, []);
+    assert.ok(artifact.generatedAt);
+    assert.equal(artifact.topics.length, 1);
+    assert.deepEqual(
+      artifact.photos.find((photo) => photo.id === "seed-photo")?.topicIds,
+      ["seed-topic"],
+    );
+    assert.equal(
+      artifact.photos.find((photo) => photo.id === "seed-photo")?.asset.original,
+      "seed/original.jpg",
+    );
+    assert.ok(artifact.photos.some((photo) => photo.id !== "seed-photo"));
   } finally {
     await rm(root, { recursive: true, force: true });
   }
 });
 
-test("multipart upload stores local file, extracts safe EXIF fallback, and creates photo", async () => {
+test("multipart upload stores local file, extracts safe EXIF fallback, and creates SQLite photo", async () => {
   const { config, root } = await makeConfig();
   try {
     const app = createApp(config).callback();
@@ -153,17 +201,16 @@ test("multipart upload stores local file, extracts safe EXIF fallback, and creat
       /^http:\/\/cdn\.test\/uploads\//,
     );
 
-    const stored = JSON.parse(await readFile(config.dataFile, "utf8")) as {
-      photos: Array<{ image: { key: string } }>;
-    };
-    assert.equal(stored.photos.length, 1);
-    assert.ok(stored.photos[0].image.key.endsWith("frame.jpg"));
+    const listed = await authed(request(app).get("/api/photos")).expect(200);
+    assert.equal(listed.body.photos.length, 1);
+    assert.ok(listed.body.photos[0].image.key.endsWith("frame.jpg"));
+    await assertExportFileMissing(config.exportFile);
   } finally {
     await rm(root, { recursive: true, force: true });
   }
 });
 
-test("multipart upload can replace an existing photo image", async () => {
+test("multipart upload can replace an existing SQLite photo image", async () => {
   const { config, root } = await makeConfig();
   try {
     const app = createApp(config).callback();
@@ -193,11 +240,10 @@ test("multipart upload can replace an existing photo image", async () => {
     assert.equal(response.body.photo.image.storage, "local");
     assert.ok(response.body.photo.image.key.endsWith("replacement.jpg"));
 
-    const stored = JSON.parse(await readFile(config.dataFile, "utf8")) as {
-      photos: Array<{ image: { key: string } }>;
-    };
-    assert.equal(stored.photos.length, 1);
-    assert.ok(stored.photos[0].image.key.endsWith("replacement.jpg"));
+    const listed = await authed(request(app).get("/api/photos")).expect(200);
+    assert.equal(listed.body.photos.length, 1);
+    assert.ok(listed.body.photos[0].image.key.endsWith("replacement.jpg"));
+    await assertExportFileMissing(config.exportFile);
   } finally {
     await rm(root, { recursive: true, force: true });
   }
