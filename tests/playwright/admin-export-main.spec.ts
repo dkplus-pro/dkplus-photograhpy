@@ -737,3 +737,49 @@ test("Main virtual grid renders the bottom card and modal nav is vertically cent
   expect(Math.abs(centers.prevCenter - centers.modalCenter)).toBeLessThan(2);
   expect(Math.abs(centers.nextCenter - centers.modalCenter)).toBeLessThan(2);
 });
+
+
+test("Main dev loads gallery through /api and virtualizes to the bottom row", async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 1280, height: 720 });
+  const [galleryResponse] = await Promise.all([
+    page.waitForResponse((response) => response.url().endsWith("/api/gallery")),
+    page.goto(mainBaseUrl),
+  ]);
+  expect(galleryResponse.ok()).toBeTruthy();
+
+  await expect(
+    page.getByRole("button", { name: "查看图片：后台导出样片" }),
+  ).toBeVisible();
+  await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight));
+  await expect(
+    page.getByRole("button", { name: `查看图片：后台导出样片 ${seedPhotoCount}` }),
+  ).toBeVisible();
+});
+
+test("Main modal navigation buttons are vertically centered and switch photos", async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 1280, height: 720 });
+  await page.goto(mainBaseUrl);
+  await page.getByRole("button", { name: "查看图片：后台导出样片" }).click();
+  const dialog = page.getByRole("dialog", { name: "后台导出样片" });
+  await expect(dialog).toBeVisible();
+
+  const previousButton = page.getByRole("button", { name: "上一张" });
+  const navMetrics = await previousButton.evaluate((element) => {
+    const rect = element.getBoundingClientRect();
+    const styles = getComputedStyle(element);
+    return {
+      centerY: rect.top + rect.height / 2,
+      viewportCenterY: window.innerHeight / 2,
+      transform: styles.transform,
+    };
+  });
+  expect(Math.abs(navMetrics.centerY - navMetrics.viewportCenterY)).toBeLessThan(2);
+  expect(navMetrics.transform).not.toBe("none");
+
+  await page.getByRole("button", { name: "下一张" }).click();
+  await expect(page.getByRole("dialog", { name: "后台导出样片 2" })).toBeVisible();
+});
