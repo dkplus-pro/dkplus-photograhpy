@@ -43,3 +43,4 @@ temp/
 apps/*/node_modules/
 apps/*/dist/
 packages/*/dist/
+.playwright-cli/

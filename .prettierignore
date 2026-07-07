@@ -21,3 +21,4 @@ design-system/
 uploads/
 tmp/
 temp/
+.playwright-cli/
