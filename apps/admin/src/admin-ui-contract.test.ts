@@ -33,10 +33,9 @@ describe("admin list UI contract", () => {
   });
 
   it("centers dense table content and preserves focus/empty feedback", () => {
-    const tableCells = cssBlock(".photos-table .arco-table-th,\\n.photos-table .arco-table-td");
-    expect(tableCells).toMatch(/padding-top:\s*6px;/);
-    expect(tableCells).toMatch(/text-align:\s*center;/);
-    expect(tableCells).toMatch(/vertical-align:\s*middle;/);
+    expect(styles).toMatch(
+      /\.photos-table \.arco-table-th,[\s\S]*?\.photos-table \.arco-table-td\s*\{[\s\S]*?padding-top:\s*6px;[\s\S]*?text-align:\s*center;[\s\S]*?vertical-align:\s*middle;/,
+    );
     expect(appSource).toContain("暂无匹配图片，可调整标题、品牌、机型或专题筛选");
     expect(styles).toContain(".toolbar :where(.arco-input-inner-wrapper, .arco-select-view):focus-within");
   });

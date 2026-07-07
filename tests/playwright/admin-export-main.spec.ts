@@ -387,13 +387,40 @@ test("Main dev loads gallery data from /api and grid remains compact", async ({
 
 test("Main virtual grid renders the bottom card and modal nav is vertically centered", async ({
   page,
+  request,
 }) => {
+  for (let index = 0; index < 14; index += 1) {
+    const isBottomFixture = index === 13;
+    const created = await request.post(`${serverBaseUrl}/api/photos`, {
+      headers: { Authorization: `Bearer ${adminToken}` },
+      data: {
+        title: isBottomFixture
+          ? "底部虚拟样片"
+          : `虚拟列表填充样片 ${index + 1}`,
+        topicId: "editorial",
+        takenAt: isBottomFixture
+          ? "2026-01-01T08:00:00.000Z"
+          : `2026-07-${String(20 - index).padStart(2, "0")}T08:00:00.000Z`,
+        asset: {
+          original:
+            "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='800' height='800'%3E%3Crect width='800' height='800' fill='%23555555'/%3E%3C/svg%3E",
+          alt: isBottomFixture
+            ? "底部虚拟样片"
+            : `虚拟列表填充样片 ${index + 1}`,
+          width: 800,
+          height: 800,
+        },
+      },
+    });
+    expect(created.ok()).toBeTruthy();
+  }
+
   await page.setViewportSize({ width: 1366, height: 900 });
   await page.goto(mainBaseUrl);
   await expect(page.locator(".photo-card").first()).toBeVisible();
   await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight));
-  await expect(page.getByRole("button", { name: "查看图片：后台导出样片" })).toBeVisible();
-  await page.getByRole("button", { name: "查看图片：后台导出样片" }).click();
+  await expect(page.getByRole("button", { name: "查看图片：底部虚拟样片" })).toBeVisible();
+  await page.getByRole("button", { name: "查看图片：底部虚拟样片" }).click();
 
   const centers = await page.evaluate(() => {
     const modal = document.querySelector(".modal");
