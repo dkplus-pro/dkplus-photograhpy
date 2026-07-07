@@ -172,7 +172,7 @@ const requestJson = async <T>(
       message =
         typeof body.error === "string"
           ? body.error
-          : body.error?.message ?? body.message ?? message;
+          : (body.error?.message ?? body.message ?? message);
     } catch {
       // Keep HTTP status fallback.
     }

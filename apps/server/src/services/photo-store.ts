@@ -68,7 +68,10 @@ function mergePhoto(input: PhotoInput, existing?: PhotoRecord): PhotoRecord {
   };
 }
 
-async function writeGalleryFile(filePath: string, data: GalleryData): Promise<void> {
+async function writeGalleryFile(
+  filePath: string,
+  data: GalleryData,
+): Promise<void> {
   await fs.mkdir(path.dirname(filePath), { recursive: true });
   const tempFile = `${filePath}.${process.pid}.${Date.now()}.tmp`;
   await fs.writeFile(tempFile, `${JSON.stringify(data, null, 2)}\n`, "utf8");

@@ -94,7 +94,9 @@ describe("admin API client auth headers", () => {
     });
     vi.stubGlobal("fetch", fetchMock);
 
-    const result = await createApiClient("http://api.test/api").exportToClient();
+    const result = await createApiClient(
+      "http://api.test/api",
+    ).exportToClient();
 
     expect(result.photos).toBe(2);
     expect(fetchMock).toHaveBeenCalledOnce();
@@ -105,5 +107,4 @@ describe("admin API client auth headers", () => {
     expect(headers.get("authorization")).toBe("Bearer test-token");
     expect(headers.get("content-type")).toBe("application/json");
   });
-
 });

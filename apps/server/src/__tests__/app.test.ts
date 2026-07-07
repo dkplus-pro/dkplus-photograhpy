@@ -110,8 +110,9 @@ test("authenticated export writes the client JSON artifact on demand", async () 
       code: "ENOENT",
     });
 
-    const response = await authed(request(app).post("/api/gallery/export"))
-      .expect(200);
+    const response = await authed(
+      request(app).post("/api/gallery/export"),
+    ).expect(200);
 
     assert.equal(response.body.export.photos, 1);
     assert.equal(response.body.export.topics, 0);
@@ -128,7 +129,6 @@ test("authenticated export writes the client JSON artifact on demand", async () 
     await rm(root, { recursive: true, force: true });
   }
 });
-
 
 test("multipart upload stores local file, extracts safe EXIF fallback, and creates photo", async () => {
   const { config, root } = await makeConfig();
