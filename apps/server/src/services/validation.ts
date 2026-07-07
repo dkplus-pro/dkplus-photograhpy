@@ -1,5 +1,5 @@
 import { AppError } from "../errors.js";
-import type { PhotoImage, PhotoInput } from "../types/gallery.js";
+import type { PhotoAsset, PhotoImage, PhotoInput } from "../types/gallery.js";
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
@@ -52,6 +52,25 @@ function readDate(value: unknown, field: string): string | undefined {
   return date.toISOString();
 }
 
+function readAsset(value: unknown): Partial<PhotoAsset> | undefined {
+  if (value === undefined || value === null) {
+    return undefined;
+  }
+  if (!isRecord(value)) {
+    throw new AppError(400, "VALIDATION_ERROR", "asset must be an object");
+  }
+  return {
+    original: readString(value.original, "asset.original"),
+    thumbnail: readString(value.thumbnail, "asset.thumbnail"),
+    preview: readString(value.preview, "asset.preview"),
+    alt: readString(value.alt, "asset.alt"),
+    width:
+      value.width === undefined ? undefined : Number(value.width),
+    height:
+      value.height === undefined ? undefined : Number(value.height),
+  };
+}
+
 function readImage(value: unknown): Partial<PhotoImage> | undefined {
   if (value === undefined || value === null) {
     return undefined;
@@ -102,7 +121,8 @@ export function validatePhotoInput(
   }
 
   const image = readImage(value.image);
-  if (options.requireImage && !image?.url) {
+  const asset = readAsset(value.asset);
+  if (options.requireImage && !image?.url && !asset?.original) {
     throw new AppError(400, "VALIDATION_ERROR", "image.url is required");
   }
 
@@ -111,9 +131,12 @@ export function validatePhotoInput(
     title: readString(value.title, "title"),
     description: readString(value.description, "description"),
     topicId: readString(value.topicId, "topicId"),
+    topicIds: readStringArray(value.topicIds, "topicIds"),
+    location: readString(value.location, "location"),
     tags: readStringArray(value.tags, "tags"),
     takenAt: readDate(value.takenAt, "takenAt"),
-    image,
+    image: image ?? (asset?.original ? { url: asset.original, storage: "remote" } : undefined),
+    asset,
     exif: isRecord(value.exif) ? { ...value.exif } : undefined,
   };
 }

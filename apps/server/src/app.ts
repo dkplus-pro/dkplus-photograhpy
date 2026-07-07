@@ -75,7 +75,11 @@ function createLocalUploadsMiddleware(config: ServerConfig): Koa.Middleware {
 
 export function createApp(config: ServerConfig = loadConfig()): Koa {
   const app = new Koa();
-  const store = new PhotoStore(config.dataFile);
+  const store = new PhotoStore({
+    databaseFile: config.databaseFile,
+    seedFile: config.exportFile,
+    exportFile: config.exportFile,
+  });
   const uploads = new UploadService(config);
   const router = createPhotosRouter(store, uploads, {
     exportFile: config.exportFile,

@@ -18,16 +18,28 @@ export type PhotoImage = {
   storage?: "local" | "cos" | "remote";
 };
 
+export type PhotoAsset = {
+  original: string;
+  thumbnail?: string;
+  preview?: string;
+  alt?: string;
+  width?: number;
+  height?: number;
+};
+
 export type PhotoRecord = {
   id: string;
   title: string;
   description?: string;
   topicId?: string;
+  topicIds?: string[];
+  location?: string;
   tags?: string[];
   takenAt?: string;
   createdAt: string;
   updatedAt: string;
   image: PhotoImage;
+  asset?: PhotoAsset;
   exif?: ExifMetadata;
 };
 
@@ -35,7 +47,11 @@ export type TopicRecord = {
   id: string;
   title: string;
   description?: string;
+  slug?: string;
   coverPhotoId?: string;
+  sortOrder?: number;
+  createdAt?: string;
+  updatedAt?: string;
 };
 
 export type GalleryData = {
@@ -49,8 +65,11 @@ export type PhotoInput = {
   title?: string;
   description?: string;
   topicId?: string;
+  topicIds?: string[];
+  location?: string;
   tags?: string[];
   takenAt?: string;
   image?: Partial<PhotoImage>;
+  asset?: Partial<PhotoAsset>;
   exif?: ExifMetadata;
 };
