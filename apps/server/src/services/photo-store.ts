@@ -54,6 +54,13 @@ export type GalleryExportResult = {
   topicCount: number;
 };
 
+export type GalleryExportResult = {
+  exportedAt: string;
+  updatedAt?: string;
+  photoCount: number;
+  topicCount: number;
+};
+
 function emptyGallery(): GalleryData {
   return { photos: [], topics: [], updatedAt: new Date(0).toISOString() };
 }
@@ -433,6 +440,24 @@ export class PhotoStore {
       generatedAt,
       photoCount: photos.length,
       topicCount: topics.length,
+    };
+  }
+
+  async exportToClient(exportFile: string): Promise<GalleryExportResult> {
+    await this.writeQueue;
+    const data = await this.read();
+    const exportedAt = new Date().toISOString();
+    const payload: GalleryData = {
+      photos: data.photos,
+      topics: data.topics,
+      updatedAt: data.updatedAt ?? exportedAt,
+    };
+    await writeGalleryFile(exportFile, payload);
+    return {
+      exportedAt,
+      updatedAt: payload.updatedAt,
+      photoCount: payload.photos.length,
+      topicCount: payload.topics.length,
     };
   }
 
