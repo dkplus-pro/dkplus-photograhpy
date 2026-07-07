@@ -64,6 +64,24 @@ function assertNoClientInternals(value: unknown, path = "$"): void {
   }
 }
 
+type ClientExportArtifact = {
+  generatedAt: string;
+  topics: Array<Record<string, unknown>>;
+  photos: Array<
+    Record<string, unknown> & {
+      id: string;
+      title?: string;
+      topicIds?: string[];
+      asset?: { original?: string };
+      exif?: Record<string, unknown>;
+    }
+  >;
+};
+
+async function readClientExport(filePath: string): Promise<ClientExportArtifact> {
+  return JSON.parse(await readFile(filePath, "utf8")) as ClientExportArtifact;
+}
+
 test("health is public and admin API requires bearer token", async () => {
   const { config, root } = await makeConfig();
   try {
@@ -282,7 +300,7 @@ test("existing JSON seeds an empty database and is rewritten only by explicit ex
   }
 });
 
-test("multipart upload stores local file, extracts safe EXIF fallback, and creates SQLite photo", async () => {
+test("multipart upload stores local file, creates SQLite photo, and auto-exports client JSON", async () => {
   const { config, root } = await makeConfig();
   try {
     const app = createApp(config).callback();
@@ -298,6 +316,8 @@ test("multipart upload stores local file, extracts safe EXIF fallback, and creat
       .expect(201);
 
     assert.equal(response.body.photos.length, 1);
+    assert.equal(response.body.export.photoCount, 1);
+    assert.equal(response.body.export.topicCount, 0);
     assert.equal(response.body.photos[0].title, "Uploaded frame");
     assert.equal(response.body.photos[0].image.storage, "local");
     assert.match(
@@ -308,7 +328,14 @@ test("multipart upload stores local file, extracts safe EXIF fallback, and creat
     const listed = await authed(request(app).get("/api/photos")).expect(200);
     assert.equal(listed.body.photos.length, 1);
     assert.ok(listed.body.photos[0].image.key.endsWith("frame.jpg"));
-    await assertExportFileMissing(config.exportFile);
+
+    const exported = await readClientExport(config.exportFile);
+    assert.equal(exported.photos.length, 1);
+    assert.equal(exported.photos[0]?.id, response.body.photos[0].id);
+    assert.equal(exported.photos[0]?.title, "Uploaded frame");
+    assert.equal(exported.photos[0]?.asset?.original, response.body.photos[0].image.url);
+    assert.deepEqual(exported.photos[0]?.topicIds, []);
+    assertNoClientInternals(exported);
   } finally {
     await rm(root, { recursive: true, force: true });
   }
@@ -344,6 +371,7 @@ test("multipart upload persists Admin EXIF JSON for create and replacement", asy
       .expect(201);
 
     const id = created.body.photos[0].id as string;
+    assert.equal(created.body.export.photoCount, 1);
     assert.deepEqual(created.body.photos[0].exif, {
       cameraBrand: "Nikon",
       cameraModel: "Z 8",
@@ -406,7 +434,14 @@ test("multipart upload persists Admin EXIF JSON for create and replacement", asy
     const listed = await authed(request(app).get("/api/photos")).expect(200);
     assert.equal(listed.body.photos.length, 1);
     assert.deepEqual(listed.body.photos[0].exif, replaced.body.photo.exif);
-    await assertExportFileMissing(config.exportFile);
+
+    assert.equal(replaced.body.export.photoCount, 1);
+    const exported = await readClientExport(config.exportFile);
+    const exportedPhoto = exported.photos.find((photo) => photo.id === id);
+    assert.ok(exportedPhoto, "auto-export includes replaced EXIF upload");
+    assert.equal(exportedPhoto.title, "EXIF replacement");
+    assert.deepEqual(exportedPhoto.exif, replaced.body.photo.exif);
+    assertNoClientInternals(exported);
   } finally {
     await rm(root, { recursive: true, force: true });
   }
@@ -439,6 +474,7 @@ test("multipart upload can replace an existing SQLite photo image", async () => 
       .expect(200);
 
     assert.equal(response.body.photo.id, id);
+    assert.equal(response.body.export.photoCount, 1);
     assert.equal(response.body.photo.title, "Replaced frame");
     assert.equal(response.body.photo.image.storage, "local");
     assert.ok(response.body.photo.image.key.endsWith("replacement.jpg"));
@@ -451,7 +487,13 @@ test("multipart upload can replace an existing SQLite photo image", async () => 
     assert.equal(listed.body.photos.length, 1);
     assert.ok(listed.body.photos[0].image.key.endsWith("replacement.jpg"));
     assert.deepEqual(listed.body.photos[0].exif, response.body.photo.exif);
-    await assertExportFileMissing(config.exportFile);
+
+    const exported = await readClientExport(config.exportFile);
+    const exportedPhoto = exported.photos.find((photo) => photo.id === id);
+    assert.ok(exportedPhoto, "auto-export includes replaced image");
+    assert.equal(exportedPhoto.title, "Replaced frame");
+    assert.equal(exportedPhoto.asset?.original, response.body.photo.image.url);
+    assertNoClientInternals(exported);
   } finally {
     await rm(root, { recursive: true, force: true });
   }
