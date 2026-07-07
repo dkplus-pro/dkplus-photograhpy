@@ -87,8 +87,7 @@ img {
   margin-bottom: 20px;
   backdrop-filter: blur(18px);
 }
-.tabs,
-.segmented {
+.tabs {
   display: inline-flex;
   gap: 8px;
   padding: 6px;
@@ -98,7 +97,6 @@ img {
   box-shadow: 0 10px 30px rgba(24, 24, 27, 0.06);
 }
 .tabs button,
-.segmented button,
 .state button {
   min-height: 44px;
   border: 0;
@@ -113,13 +111,11 @@ img {
     transform 180ms ease;
 }
 .tabs button:hover,
-.segmented button:hover,
 .state button:hover {
   transform: translateY(-1px);
   color: var(--foreground);
 }
 .tabs button.active,
-.segmented button.active,
 .state button {
   background: var(--primary);
   color: #fff;
@@ -196,7 +192,7 @@ img {
     transform 180ms ease;
 }
 .photo-card:hover .photo-card__meta,
-.photo-card:focus .photo-card__meta {
+.photo-card:focus-visible .photo-card__meta {
   opacity: 1;
   transform: translateY(0);
 }
@@ -399,8 +395,7 @@ dd {
     align-items: stretch;
     flex-direction: column;
   }
-  .tabs,
-  .segmented {
+  .tabs {
     width: 100%;
     overflow-x: auto;
   }
