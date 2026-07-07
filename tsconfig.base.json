@@ -22,6 +22,7 @@
     "paths": {
       "@dkplus/shared": ["packages/shared/src/index.ts"],
       "@dkplus/shared/*": ["packages/shared/src/*"]
-    }
+    },
+    "ignoreDeprecations": "6.0"
   }
 }

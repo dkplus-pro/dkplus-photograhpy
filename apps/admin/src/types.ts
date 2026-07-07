@@ -1,4 +1,4 @@
-export type PhotoStatus = 'draft' | 'published' | 'archived';
+export type PhotoStatus = "draft" | "published" | "archived";
 
 export interface PhotoExif {
   cameraMake?: string;
@@ -48,6 +48,6 @@ export interface UploadPreview {
 
 export interface ToastMessage {
   id: string;
-  tone: 'success' | 'error' | 'info';
+  tone: "success" | "error" | "info";
   text: string;
 }

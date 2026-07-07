@@ -1,0 +1,247 @@
+{
+  "generatedAt": "2026-07-07T00:00:00Z",
+  "topics": [
+    {
+      "id": "city-night",
+      "title": "城市夜行",
+      "description": "霓虹、雨夜与城市边缘的高反差瞬间。",
+      "slug": "city-night",
+      "coverPhotoId": "city-001",
+      "sortOrder": 1
+    },
+    {
+      "id": "mountain-light",
+      "title": "山野光线",
+      "description": "从晨雾到落日，记录自然光在地形上的流动。",
+      "slug": "mountain-light",
+      "coverPhotoId": "nature-001",
+      "sortOrder": 2
+    },
+    {
+      "id": "quiet-life",
+      "title": "静物与日常",
+      "description": "克制的色彩、细节和生活纹理。",
+      "slug": "quiet-life",
+      "coverPhotoId": "life-001",
+      "sortOrder": 3
+    },
+    {
+      "id": "portrait-study",
+      "title": "人像习作",
+      "description": "自然光人像、情绪和空间关系。",
+      "slug": "portrait-study",
+      "coverPhotoId": "portrait-001",
+      "sortOrder": 4
+    }
+  ],
+  "photos": [
+    {
+      "id": "city-001",
+      "title": "雨后路口",
+      "description": "雨水让路面变成镜面，车灯在蓝调时刻留下短暂轨迹。",
+      "topicIds": ["city-night"],
+      "takenAt": "2026-07-02T20:18:00Z",
+      "location": "Shanghai",
+      "tags": ["night", "street", "reflection"],
+      "asset": {
+        "original": "photo-1519501025264-65ba15a82390?auto=format&fit=crop&w=1800&q=82",
+        "thumbnail": "photo-1519501025264-65ba15a82390?auto=format&fit=crop&w=720&q=70",
+        "preview": "photo-1519501025264-65ba15a82390?auto=format&fit=crop&w=1200&q=78",
+        "alt": "雨夜城市路口与霓虹倒影",
+        "width": 1800,
+        "height": 1200
+      },
+      "exif": {
+        "cameraBrand": "Sony",
+        "cameraModel": "A7R V",
+        "lensModel": "FE 35mm F1.4 GM",
+        "iso": 640,
+        "aperture": 1.8,
+        "shutterSpeed": "1/160",
+        "focalLengthMm": 35
+      }
+    },
+    {
+      "id": "nature-001",
+      "title": "晨雾山脊",
+      "description": "太阳越过山脊前，雾气把远处层次压成柔和的灰蓝色。",
+      "topicIds": ["mountain-light"],
+      "takenAt": "2026-06-23T05:42:00Z",
+      "location": "Huangshan",
+      "tags": ["mountain", "mist", "sunrise"],
+      "asset": {
+        "original": "photo-1501785888041-af3ef285b470?auto=format&fit=crop&w=1800&q=82",
+        "thumbnail": "photo-1501785888041-af3ef285b470?auto=format&fit=crop&w=720&q=70",
+        "preview": "photo-1501785888041-af3ef285b470?auto=format&fit=crop&w=1200&q=78",
+        "alt": "晨雾中的山脊和日出光线",
+        "width": 1800,
+        "height": 1201
+      },
+      "exif": {
+        "cameraBrand": "Nikon",
+        "cameraModel": "Z8",
+        "lensModel": "NIKKOR Z 24-70mm f/2.8 S",
+        "iso": 100,
+        "aperture": 8,
+        "shutterSpeed": "1/60",
+        "focalLengthMm": 42
+      }
+    },
+    {
+      "id": "life-001",
+      "title": "窗边器皿",
+      "description": "午后斜光落在玻璃和陶瓷上，留下轻微的暖色边缘。",
+      "topicIds": ["quiet-life"],
+      "takenAt": "2026-06-05T14:12:00Z",
+      "location": "Studio",
+      "tags": ["still-life", "light", "minimal"],
+      "asset": {
+        "original": "photo-1494438639946-1ebd1d20bf85?auto=format&fit=crop&w=1800&q=82",
+        "thumbnail": "photo-1494438639946-1ebd1d20bf85?auto=format&fit=crop&w=720&q=70",
+        "preview": "photo-1494438639946-1ebd1d20bf85?auto=format&fit=crop&w=1200&q=78",
+        "alt": "窗边静物与柔和光线",
+        "width": 1800,
+        "height": 1350
+      },
+      "exif": {
+        "cameraBrand": "Fujifilm",
+        "cameraModel": "X-H2",
+        "lensModel": "XF 56mm F1.2 R WR",
+        "iso": 200,
+        "aperture": 2.8,
+        "shutterSpeed": "1/250",
+        "focalLengthMm": 56
+      }
+    },
+    {
+      "id": "portrait-001",
+      "title": "窗帘后的光",
+      "description": "用半透明窗帘打散直射光，让面部轮廓保持柔和。",
+      "topicIds": ["portrait-study"],
+      "takenAt": "2026-05-18T16:30:00Z",
+      "location": "Hangzhou",
+      "tags": ["portrait", "window-light", "soft"],
+      "asset": {
+        "original": "photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=1500&q=82",
+        "thumbnail": "photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=720&q=70",
+        "preview": "photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=1100&q=78",
+        "alt": "窗边自然光人像",
+        "width": 1500,
+        "height": 1875
+      },
+      "exif": {
+        "cameraBrand": "Canon",
+        "cameraModel": "EOS R5 Mark II",
+        "lensModel": "RF 85mm F1.2L USM",
+        "iso": 320,
+        "aperture": 2,
+        "shutterSpeed": "1/320",
+        "focalLengthMm": 85
+      }
+    },
+    {
+      "id": "city-002",
+      "title": "高架下",
+      "description": "高架桥把天空切开，行人从几何阴影里穿过。",
+      "topicIds": ["city-night"],
+      "takenAt": "2026-04-26T18:46:00Z",
+      "location": "Chongqing",
+      "tags": ["urban", "geometry", "dusk"],
+      "asset": {
+        "original": "photo-1493246507139-91e8fad9978e?auto=format&fit=crop&w=1800&q=82",
+        "thumbnail": "photo-1493246507139-91e8fad9978e?auto=format&fit=crop&w=720&q=70",
+        "preview": "photo-1493246507139-91e8fad9978e?auto=format&fit=crop&w=1200&q=78",
+        "alt": "城市高架桥下的几何阴影",
+        "width": 1800,
+        "height": 1200
+      },
+      "exif": {
+        "cameraBrand": "Leica",
+        "cameraModel": "Q3",
+        "lensModel": "Summilux 28mm f/1.7",
+        "iso": 400,
+        "aperture": 4,
+        "shutterSpeed": "1/500",
+        "focalLengthMm": 28
+      }
+    },
+    {
+      "id": "nature-002",
+      "title": "湖面风线",
+      "description": "风经过湖面留下细小纹理，远山像低饱和度的背景板。",
+      "topicIds": ["mountain-light"],
+      "takenAt": "2026-03-11T09:10:00Z",
+      "location": "Yunnan",
+      "tags": ["lake", "wind", "minimal"],
+      "asset": {
+        "original": "photo-1500530855697-b586d89ba3ee?auto=format&fit=crop&w=1800&q=82",
+        "thumbnail": "photo-1500530855697-b586d89ba3ee?auto=format&fit=crop&w=720&q=70",
+        "preview": "photo-1500530855697-b586d89ba3ee?auto=format&fit=crop&w=1200&q=78",
+        "alt": "湖面和远山的安静风景",
+        "width": 1800,
+        "height": 1200
+      },
+      "exif": {
+        "cameraBrand": "Sony",
+        "cameraModel": "A1 II",
+        "lensModel": "FE 70-200mm F2.8 GM OSS II",
+        "iso": 100,
+        "aperture": 5.6,
+        "shutterSpeed": "1/800",
+        "focalLengthMm": 135
+      }
+    },
+    {
+      "id": "life-002",
+      "title": "旧书页",
+      "description": "纸张纤维与手写批注，是时间可见的一部分。",
+      "topicIds": ["quiet-life"],
+      "takenAt": "2026-02-14T11:03:00Z",
+      "location": "Home",
+      "tags": ["book", "texture", "memory"],
+      "asset": {
+        "original": "photo-1516979187457-637abb4f9353?auto=format&fit=crop&w=1800&q=82",
+        "thumbnail": "photo-1516979187457-637abb4f9353?auto=format&fit=crop&w=720&q=70",
+        "preview": "photo-1516979187457-637abb4f9353?auto=format&fit=crop&w=1200&q=78",
+        "alt": "旧书和纸张纹理特写",
+        "width": 1800,
+        "height": 1200
+      },
+      "exif": {
+        "cameraBrand": "Fujifilm",
+        "cameraModel": "X100VI",
+        "lensModel": "23mm F2",
+        "iso": 500,
+        "aperture": 2.8,
+        "shutterSpeed": "1/125",
+        "focalLengthMm": 23
+      }
+    },
+    {
+      "id": "portrait-002",
+      "title": "侧脸练习",
+      "description": "使用暗背景突出轮廓，保留眼神方向上的留白。",
+      "topicIds": ["portrait-study"],
+      "takenAt": "2026-01-20T19:24:00Z",
+      "location": "Studio",
+      "tags": ["portrait", "low-key", "profile"],
+      "asset": {
+        "original": "photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=1500&q=82",
+        "thumbnail": "photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=720&q=70",
+        "preview": "photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=1100&q=78",
+        "alt": "暗背景侧脸人像",
+        "width": 1500,
+        "height": 1875
+      },
+      "exif": {
+        "cameraBrand": "Canon",
+        "cameraModel": "EOS R6 Mark II",
+        "lensModel": "RF 50mm F1.2L USM",
+        "iso": 250,
+        "aperture": 1.8,
+        "shutterSpeed": "1/250",
+        "focalLengthMm": 50
+      }
+    }
+  ]
+}

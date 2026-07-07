@@ -1,5 +1,5 @@
-declare module 'cos-nodejs-sdk-v5' {
-  import type { Readable } from 'node:stream';
+declare module "cos-nodejs-sdk-v5" {
+  import type { Readable } from "node:stream";
 
   type PutObjectParams = {
     Bucket: string;

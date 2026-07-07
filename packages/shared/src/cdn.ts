@@ -1,4 +1,4 @@
-import type { Photo, ResolvedPhoto, ResolvedPhotoUrls } from "./types";
+import type { Photo, ResolvedPhoto, ResolvedPhotoUrls } from "./types.js";
 
 export type CdnSearchParamValue = boolean | number | string | null | undefined;
 

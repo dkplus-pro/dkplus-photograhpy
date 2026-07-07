@@ -5,8 +5,11 @@ node_modules/
 dist/
 build/
 .turbo/
+.omx/
 .vite/
 coverage/
+apps/*/dist/
+packages/*/dist/
 apps/main/public/data/gallery.json
 
 # Reference design materials managed outside source formatting

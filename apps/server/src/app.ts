@@ -1,21 +1,23 @@
-import Koa from 'koa';
-import cors from '@koa/cors';
-import bodyParser from 'koa-bodyparser';
-import type { ServerConfig } from './config.js';
-import { loadConfig } from './config.js';
-import { createAuthMiddleware } from './middleware/auth.js';
-import { errorHandler } from './middleware/error-handler.js';
-import { PhotoStore } from './services/photo-store.js';
-import { UploadService } from './services/upload-service.js';
-import { createPhotosRouter } from './routes/photos.js';
+import Koa from "koa";
+import cors from "@koa/cors";
+import bodyParser from "koa-bodyparser";
+import type { ServerConfig } from "./config.js";
+import { loadConfig } from "./config.js";
+import { createAuthMiddleware } from "./middleware/auth.js";
+import { errorHandler } from "./middleware/error-handler.js";
+import { PhotoStore } from "./services/photo-store.js";
+import { UploadService } from "./services/upload-service.js";
+import { createPhotosRouter } from "./routes/photos.js";
 
 function corsOrigin(config: ServerConfig) {
   return (ctx: Koa.Context): string => {
     if (config.corsOrigins.length === 0) {
-      return '*';
+      return "*";
     }
-    const origin = ctx.get('origin');
-    return origin && config.corsOrigins.includes(origin) ? origin : config.corsOrigins[0];
+    const origin = ctx.get("origin");
+    return origin && config.corsOrigins.includes(origin)
+      ? origin
+      : config.corsOrigins[0];
   };
 }
 
@@ -28,17 +30,17 @@ export function createApp(config: ServerConfig = loadConfig()): Koa {
   app.proxy = true;
   app.use(errorHandler);
   app.use(cors({ origin: corsOrigin(config), credentials: true }));
-  app.use(bodyParser({ jsonLimit: '2mb' }));
+  app.use(bodyParser({ jsonLimit: "2mb" }));
   app.use(createAuthMiddleware(config));
 
   app.use(async (ctx, next) => {
-    if (ctx.path === '/health' || ctx.path === '/api/health') {
+    if (ctx.path === "/health" || ctx.path === "/api/health") {
       ctx.body = {
         ok: true,
-        service: '@dkplus/server',
+        service: "@dkplus/server",
         uptime: process.uptime(),
         authConfigured: Boolean(config.adminToken),
-        cosConfigured: config.cos.enabled
+        cosConfigured: config.cos.enabled,
       };
       return;
     }
@@ -48,8 +50,8 @@ export function createApp(config: ServerConfig = loadConfig()): Koa {
   app.use(router.routes());
   app.use(router.allowedMethods());
 
-  app.on('error', (error) => {
-    if (config.env !== 'test') {
+  app.on("error", (error) => {
+    if (config.env !== "test") {
       console.error(error);
     }
   });

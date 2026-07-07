@@ -1,8 +1,8 @@
-import path from 'node:path';
-import process from 'node:process';
-import dotenv from 'dotenv';
+import path from "node:path";
+import process from "node:process";
+import dotenv from "dotenv";
 
-const envLocalPath = path.resolve(process.cwd(), '.env.local');
+const envLocalPath = path.resolve(process.cwd(), ".env.local");
 dotenv.config({ path: envLocalPath, override: false });
 
 export type CosConfig = {
@@ -28,17 +28,17 @@ export type ServerConfig = {
 };
 
 function parsePort(value: string | undefined): number {
-  const parsed = Number.parseInt(value ?? '4010', 10);
+  const parsed = Number.parseInt(value ?? "4010", 10);
   return Number.isFinite(parsed) && parsed > 0 ? parsed : 4010;
 }
 
 function parseBoolean(value: string | undefined): boolean {
-  return ['1', 'true', 'yes', 'on'].includes((value ?? '').toLowerCase());
+  return ["1", "true", "yes", "on"].includes((value ?? "").toLowerCase());
 }
 
 function parseList(value: string | undefined): string[] {
-  return (value ?? '')
-    .split(',')
+  return (value ?? "")
+    .split(",")
     .map((item) => item.trim())
     .filter(Boolean);
 }
@@ -49,12 +49,18 @@ function optional(value: string | undefined): string | undefined {
 }
 
 export function loadConfig(): ServerConfig {
-  const dataFile = path.resolve(process.cwd(), process.env.DATA_FILE ?? '../../data/photos.json');
-  const uploadDir = path.resolve(process.cwd(), process.env.UPLOAD_DIR ?? './uploads');
+  const dataFile = path.resolve(
+    process.cwd(),
+    process.env.DATA_FILE ?? "../../data/photos.json",
+  );
+  const uploadDir = path.resolve(
+    process.cwd(),
+    process.env.UPLOAD_DIR ?? "./uploads",
+  );
 
   return {
-    env: process.env.NODE_ENV ?? 'development',
-    host: process.env.HOST ?? '0.0.0.0',
+    env: process.env.NODE_ENV ?? "development",
+    host: process.env.HOST ?? "0.0.0.0",
     port: parsePort(process.env.PORT),
     adminToken: optional(process.env.ADMIN_TOKEN),
     corsOrigins: parseList(process.env.CORS_ORIGINS),
@@ -67,8 +73,8 @@ export function loadConfig(): ServerConfig {
       secretKey: optional(process.env.COS_SECRET_KEY),
       bucket: optional(process.env.COS_BUCKET),
       region: optional(process.env.COS_REGION),
-      prefix: process.env.COS_PREFIX?.trim() || 'photos',
-      cdnBaseUrl: optional(process.env.COS_CDN_BASE_URL)
-    }
+      prefix: process.env.COS_PREFIX?.trim() || "photos",
+      cdnBaseUrl: optional(process.env.COS_CDN_BASE_URL),
+    },
   };
 }

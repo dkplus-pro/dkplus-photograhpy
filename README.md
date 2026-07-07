@@ -43,3 +43,5 @@ The root scripts delegate to Turbo so each workspace can provide its own `build`
 ## Data flow
 
 `data/photos.json` is the editable source of truth for gallery metadata. The public app build reads that file and writes a generated static artifact at `apps/main/public/data/gallery.json`, which is ignored by git.
+
+Set `GALLERY_CDN_BASE_URL` (or `VITE_CDN_BASE_URL`) and optional `GALLERY_ASSET_PREFIX` during `pnpm --filter @dkplus/main build` to rewrite relative image asset keys to CDN URLs in the generated static JSON.

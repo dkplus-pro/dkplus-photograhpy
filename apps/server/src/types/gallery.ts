@@ -15,7 +15,7 @@ export type PhotoImage = {
   fileName?: string;
   mimeType?: string;
   size?: number;
-  storage?: 'local' | 'cos' | 'remote';
+  storage?: "local" | "cos" | "remote";
 };
 
 export type PhotoRecord = {

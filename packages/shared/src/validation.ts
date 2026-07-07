@@ -7,7 +7,7 @@ import type {
   PhotoId,
   Topic,
   TopicId,
-} from "./types";
+} from "./types.js";
 
 export interface ValidationIssue {
   path: string;

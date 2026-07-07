@@ -1,4 +1,4 @@
-import type { Photo, TimelineMonthGroup } from "./types";
+import type { Photo, TimelineMonthGroup } from "./types.js";
 
 const assertDate = (value: string | Date): Date => {
   const date = value instanceof Date ? value : new Date(value);

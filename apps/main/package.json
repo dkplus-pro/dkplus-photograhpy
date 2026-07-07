@@ -1,0 +1,27 @@
+{
+  "name": "@dkplus/main",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "pnpm run build:data && vite --host 0.0.0.0",
+    "build:data": "node scripts/build-gallery.mjs",
+    "build": "pnpm run build:data && tsc -b && vite build",
+    "typecheck": "tsc --noEmit",
+    "lint": "tsc --noEmit --pretty false",
+    "test": "node --test scripts/build-gallery.test.mjs",
+    "clean": "rm -rf dist public/data tsconfig.tsbuildinfo"
+  },
+  "dependencies": {
+    "@vitejs/plugin-react": "^6.0.3",
+    "react": "^19.2.7",
+    "react-dom": "^19.2.7",
+    "vite": "^8.1.3"
+  },
+  "devDependencies": {
+    "@types/node": "^24.10.2",
+    "@types/react": "^19.2.17",
+    "@types/react-dom": "^19.2.3",
+    "typescript": "^6.0.3"
+  }
+}
