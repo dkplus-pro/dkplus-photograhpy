@@ -126,12 +126,12 @@ export const normalizePhotoForAdmin = (
 ): PhotoRecord => {
   const source = "photo" in input ? input.photo : input;
   const imageUrl = resolveDisplayUrl(
-    source.imageUrl ?? source.image?.url ?? source.asset?.original,
+    source.imageUrl || source.image?.url || source.asset?.original,
   );
   const thumbnailUrl = resolveDisplayUrl(
-    source.thumbnailUrl ??
-      source.asset?.thumbnail ??
-      source.image?.url ??
+    source.thumbnailUrl ||
+      source.asset?.thumbnail ||
+      source.image?.url ||
       source.asset?.original,
   );
   return {

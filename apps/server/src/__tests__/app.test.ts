@@ -205,7 +205,7 @@ test("existing JSON seeds an empty database and is rewritten only by explicit ex
     assert.equal(seeded.body.photos.length, 1);
     assert.equal(seeded.body.photos[0].id, "seed-photo");
     assert.equal(seeded.body.photos[0].topicId, "seed-topic");
-    assert.equal(seeded.body.photos[0].image.url, "seed/original.jpg");
+    assert.equal(seeded.body.photos[0].image.url, "seed/raw-admin-image.jpg");
 
     await authed(request(app).post("/api/photos"))
       .send({
