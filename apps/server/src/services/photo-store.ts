@@ -47,6 +47,13 @@ export type GalleryExportResult = {
   topicCount: number;
 };
 
+export type GalleryExportResult = {
+  exportedAt: string;
+  updatedAt?: string;
+  photoCount: number;
+  topicCount: number;
+};
+
 function emptyGallery(): GalleryData {
   return { photos: [], topics: [], updatedAt: new Date(0).toISOString() };
 }
@@ -254,13 +261,18 @@ function mergePhoto(input: PhotoInput, existing?: PhotoRecord): PhotoRecord {
   };
 }
 
-function sortTime(photo: PhotoRecord): string {
-  const raw = photo.takenAt ?? photo.createdAt;
-  const timestamp = raw ? Date.parse(raw) : Number.NaN;
-  return Number.isFinite(timestamp)
-    ? new Date(timestamp).toISOString()
-    : photo.createdAt;
+async function writeGalleryFile(
+  filePath: string,
+  data: GalleryData,
+): Promise<void> {
+  await fs.mkdir(path.dirname(filePath), { recursive: true });
+  const tempFile = `${filePath}.${process.pid}.${Date.now()}.tmp`;
+  await fs.writeFile(tempFile, `${JSON.stringify(data, null, 2)}\n`, "utf8");
+  await fs.rename(tempFile, filePath);
 }
+
+export class PhotoStore {
+  private writeQueue: Promise<void> = Promise.resolve();
 
 function parsePhotoRow(row: PhotoRow | undefined, id: string): PhotoRecord {
   if (!row) {
@@ -424,137 +436,38 @@ export class PhotoStore {
     };
   }
 
-  close(): void {
-    this.db.close();
+  async exportToClient(exportFile: string): Promise<GalleryExportResult> {
+    await this.writeQueue;
+    const data = await this.read();
+    const exportedAt = new Date().toISOString();
+    const payload: GalleryData = {
+      photos: data.photos,
+      topics: data.topics,
+      updatedAt: data.updatedAt ?? exportedAt,
+    };
+    await writeGalleryFile(exportFile, payload);
+    return {
+      exportedAt,
+      updatedAt: payload.updatedAt,
+      photoCount: payload.photos.length,
+      topicCount: payload.topics.length,
+    };
   }
 
-  private createSchema(): void {
-    this.db.exec(`
-      CREATE TABLE IF NOT EXISTS photos (
-        id TEXT PRIMARY KEY,
-        data TEXT NOT NULL,
-        sort_time TEXT NOT NULL,
-        created_at TEXT NOT NULL,
-        updated_at TEXT NOT NULL
-      );
-      CREATE TABLE IF NOT EXISTS topics (
-        id TEXT PRIMARY KEY,
-        data TEXT NOT NULL,
-        sort_order INTEGER
-      );
-      CREATE TABLE IF NOT EXISTS gallery_meta (
-        key TEXT PRIMARY KEY,
-        value TEXT NOT NULL
-      );
-    `);
-  }
-
-  private seedFromJsonIfEmpty(): void {
-    const count = this.db
-      .prepare<[], { count: number }>("SELECT COUNT(*) AS count FROM photos")
-      .get()?.count;
-    if (count || !existsSync(this.options.seedFile)) return;
-
-    let data: GalleryData;
-    try {
-      data = normalizeGallery(JSON.parse(readFileSync(this.options.seedFile, "utf8")));
-    } catch (error) {
-      if (error instanceof SyntaxError) {
-        throw new AppError(
-          500,
-          "DATA_FILE_INVALID_JSON",
-          `Seed data file contains invalid JSON: ${this.options.seedFile}`,
-        );
-      }
-      throw error;
-    }
-
-    const operation = this.db.transaction(() => {
-      for (const topic of data.topics) this.insertTopic(topic);
-      for (const photo of data.photos) this.insertPhoto(photo);
-      this.setMeta("updatedAt", data.updatedAt ?? new Date().toISOString());
+  private async mutate<T>(updater: (data: GalleryData) => T): Promise<T> {
+    let result: T;
+    const operation = this.writeQueue.then(async () => {
+      const data = await this.read();
+      result = updater(data);
+      data.updatedAt = new Date().toISOString();
+      await this.write(data);
     });
-    operation();
+    this.writeQueue = operation.catch(() => undefined);
+    await operation;
+    return result!;
   }
 
-  private listTopics(): TopicRecord[] {
-    return this.db
-      .prepare<[], TopicRow>(
-        `SELECT id, data
-         FROM topics
-         ORDER BY sort_order IS NULL, sort_order ASC, id ASC`,
-      )
-      .all()
-      .map((row) => normalizeTopicRecord(JSON.parse(row.data)));
-  }
-
-  private insertPhoto(photo: PhotoRecord): void {
-    this.db
-      .prepare<{
-        id: string;
-        data: string;
-        sortTime: string;
-        createdAt: string;
-        updatedAt: string;
-      }>(
-        `INSERT INTO photos (id, data, sort_time, created_at, updated_at)
-         VALUES (@id, @data, @sortTime, @createdAt, @updatedAt)
-         ON CONFLICT(id) DO UPDATE SET
-           data = excluded.data,
-           sort_time = excluded.sort_time,
-           created_at = excluded.created_at,
-           updated_at = excluded.updated_at`,
-      )
-      .run({
-        id: photo.id,
-        data: JSON.stringify(photo),
-        sortTime: sortTime(photo),
-        createdAt: photo.createdAt,
-        updatedAt: photo.updatedAt,
-      });
-  }
-
-  private insertTopic(topic: TopicRecord): void {
-    this.db
-      .prepare<{ id: string; data: string; sortOrder?: number }>(
-        `INSERT INTO topics (id, data, sort_order)
-         VALUES (@id, @data, @sortOrder)
-         ON CONFLICT(id) DO UPDATE SET
-           data = excluded.data,
-           sort_order = excluded.sort_order`,
-      )
-      .run({
-        id: topic.id,
-        data: JSON.stringify(topic),
-        sortOrder: topic.sortOrder,
-      });
-  }
-
-  private photoExists(id: string): boolean {
-    return Boolean(
-      this.db.prepare<[string]>("SELECT 1 FROM photos WHERE id = ?").get(id),
-    );
-  }
-
-  private touch(): void {
-    this.setMeta("updatedAt", new Date().toISOString());
-  }
-
-  private setMeta(key: string, value: string): void {
-    this.db
-      .prepare<[string, string]>(
-        `INSERT INTO gallery_meta (key, value)
-         VALUES (?, ?)
-         ON CONFLICT(key) DO UPDATE SET value = excluded.value`,
-      )
-      .run(key, value);
-  }
-
-  private readMeta(key: string): string | undefined {
-    return this.db
-      .prepare<[string], { value: string }>(
-        "SELECT value FROM gallery_meta WHERE key = ?",
-      )
-      .get(key)?.value;
+  private async write(data: GalleryData): Promise<void> {
+    await writeGalleryFile(this.filePath, data);
   }
 }

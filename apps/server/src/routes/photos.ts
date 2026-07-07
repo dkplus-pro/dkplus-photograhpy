@@ -90,8 +90,16 @@ export function createPhotosRouter(
     ctx.body = result;
   });
 
-  router.post("/export/client", async (ctx) => {
-    ctx.body = { export: await store.exportToJson() };
+  router.post("/gallery/export", async (ctx) => {
+    const result = await store.exportToClient(options.exportFile);
+    ctx.body = {
+      export: {
+        exportedAt: result.exportedAt,
+        updatedAt: result.updatedAt,
+        photos: result.photoCount,
+        topics: result.topicCount,
+      },
+    };
   });
 
   router.post("/uploads", upload.any(), async (ctx) => {
