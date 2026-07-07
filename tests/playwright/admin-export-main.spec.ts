@@ -440,7 +440,7 @@ test("Admin list exposes optimized metadata columns and gallery interactions", a
   expect(focusOutline).not.toBe("none");
 });
 
-test("Admin API auth and upload work without mutating the exported JSON", async ({
+test("Admin API auth and upload auto-export the Main client JSON", async ({
   request,
 }) => {
   const beforeUploadExport = await readFile(exportFile, "utf8");
@@ -462,9 +462,15 @@ test("Admin API auth and upload work without mutating the exported JSON", async 
   });
   expect(uploaded.status()).toBe(201);
   const uploadBody = (await uploaded.json()) as {
-    photos?: Array<{ id: string; image?: { storage?: string; url?: string } }>;
+    export?: { photoCount?: number; topicCount?: number };
+    photos?: Array<{
+      id: string;
+      title?: string;
+      image?: { storage?: string; url?: string };
+    }>;
   };
   expect(uploadBody.photos).toHaveLength(1);
+  expect(uploadBody.export?.photoCount).toBe(seedPhotoCount + 1);
   expect(uploadBody.photos?.[0]?.image?.storage).toBe("local");
 
   const listed = await request.get(`${serverBaseUrl}/api/photos`, {
@@ -474,7 +480,28 @@ test("Admin API auth and upload work without mutating the exported JSON", async 
   const listBody = (await listed.json()) as { photos?: unknown[] };
   expect(listBody.photos?.length).toBe(seedPhotoCount + 1);
 
-  await expect(readFile(exportFile, "utf8")).resolves.toBe(beforeUploadExport);
+  const afterUploadExport = await readFile(exportFile, "utf8");
+  expect(afterUploadExport).not.toBe(beforeUploadExport);
+  const exported = JSON.parse(afterUploadExport) as {
+    photos?: Array<{
+      id?: string;
+      title?: string;
+      image?: unknown;
+      imageUrl?: unknown;
+      asset?: { original?: string };
+      topicIds?: string[];
+    }>;
+  };
+  const exportedUpload = exported.photos?.find(
+    (photo) => photo.id === uploadBody.photos?.[0]?.id,
+  );
+  expect(exportedUpload?.title).toBe("Playwright 上传样片");
+  expect(exportedUpload?.asset?.original).toBe(
+    uploadBody.photos?.[0]?.image?.url,
+  );
+  expect(exportedUpload?.topicIds).toEqual([]);
+  expect(exportedUpload).not.toHaveProperty("image");
+  expect(exportedUpload).not.toHaveProperty("imageUrl");
 });
 
 test("Main dev loads gallery data from /api and grid remains compact", async ({
