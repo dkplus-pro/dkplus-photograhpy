@@ -15,8 +15,8 @@ const getColumns = (width: number): number => {
 
 export const useVirtualRows = <T>(
   items: T[],
-  rowHeight: number,
-  gap = 8,
+  rowHeight = 300,
+  gap = 10,
   overscan = 5,
 ) => {
   const containerRef = useRef<HTMLDivElement | null>(null);

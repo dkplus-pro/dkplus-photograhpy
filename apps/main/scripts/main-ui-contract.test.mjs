@@ -11,7 +11,7 @@ const virtualRows = readFileSync(
   path.join(dirname, "../src/useVirtualRows.ts"),
   "utf8",
 );
-const viteConfig = readFileSync(path.join(dirname, "../vite.config.ts"), "utf8");
+const mainSource = readFileSync(path.join(dirname, "../src/main.tsx"), "utf8");
 
 const escapeRegExp = (value) => value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 
@@ -24,8 +24,8 @@ const cssBlock = (selector) => {
 };
 
 test("main photo cards keep the compact no-zoom square-card contract", () => {
-  assert.match(cssBlock(".virtual-grid__row"), /gap:\s*8px;/);
-  assert.match(virtualRows, /gap\s*=\s*8,/);
+  assert.match(cssBlock(".virtual-grid__row"), /gap:\s*10px;/);
+  assert.match(virtualRows, /gap\s*=\s*10,/);
 
   assert.match(cssBlock(".photo-card"), /border-radius:\s*0;/);
   assert.match(cssBlock(".photo-card.square"), /aspect-ratio:\s*1;/);
@@ -45,20 +45,19 @@ test("main photo cards keep the compact no-zoom square-card contract", () => {
   assert.doesNotMatch(styles, /\b(mosaic|adaptive)\b/i);
 });
 
-test("main dev uses API data while build uses generated static JSON", () => {
-  assert.match(mainSource, /import\.meta\.env\.DEV\s*\?\s*"\/api\/gallery"/);
-  assert.match(mainSource, /BASE_URL\}data\/gallery\.json/);
-  assert.match(viteConfig, /"\/api"\s*:\s*\{/);
-  assert.match(viteConfig, /VITE_API_PROXY_TARGET/);
+test("main selects /api data in dev and static JSON for production builds", () => {
+  assert.match(mainSource, /const staticDataUrl\s*=\s*`\$\{import\.meta\.env\.BASE_URL\}data\/gallery\.json`/);
+  assert.match(mainSource, /import\.meta\.env\.DEV\s*\?\s*`\$\{apiBaseUrl\}\/gallery`\s*:\s*staticDataUrl/s);
+  assert.match(mainSource, /fetch\(galleryDataUrl\)/);
 });
 
-test("main modal navigation buttons stay vertically centered", () => {
+test("main modal navigation and virtual rows keep bottom-edge contracts", () => {
   assert.match(cssBlock(".modal__nav"), /top:\s*50%;/);
   assert.match(cssBlock(".modal__nav"), /transform:\s*translateY\(-50%\);/);
-});
+  assert.match(cssBlock(".modal__nav"), /place-items:\s*center;/);
 
-test("virtual rows measure their own grid offset instead of using a fixed page offset", () => {
-  assert.match(virtualRows, /containerRef/);
-  assert.match(virtualRows, /getBoundingClientRect\(\)\.top\s*\+\s*window\.scrollY/);
+  assert.match(virtualRows, /containerRef\s*=\s*useRef<HTMLDivElement \| null>\(null\)/);
   assert.doesNotMatch(virtualRows, /topOffset\s*=\s*260/);
+  assert.match(virtualRows, /rows\.length \* measuredRowHeight \+ \(rows\.length - 1\) \* gap/);
+  assert.match(virtualRows, /Math\.ceil\(\(viewport\.scrollY \+ viewport\.height - container\.top\) \/ stride\) \+\s*overscan/s);
 });
