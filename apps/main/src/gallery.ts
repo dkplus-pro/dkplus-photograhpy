@@ -181,8 +181,8 @@ const normalizeExif = (exif?: RawExif): ExifData | undefined => {
     cameraBrand: exif.cameraBrand ?? exif.cameraMake,
     lensModel: exif.lensModel ?? exif.lens,
     shutterSpeed: exif.shutterSpeed ?? exif.shutter,
-  });
-  return Object.keys(normalized).length ? (normalized as ExifData) : undefined;
+  }) as ExifData;
+  return Object.keys(normalized).length ? normalized : undefined;
 };
 
 const normalizeTopic = (topic: RawTopic): Topic | undefined => {
@@ -236,7 +236,7 @@ const normalizePhoto = (photo: RawPhoto, index: number): ResolvedPhoto => {
     alt: photo.asset?.alt ?? title,
     width: photo.asset?.width ?? photo.exif?.width,
     height: photo.asset?.height ?? photo.exif?.height,
-  });
+  }) as PhotoAsset;
   const topicIds = Array.isArray(photo.topicIds)
     ? photo.topicIds
     : photo.topicId
