@@ -116,6 +116,14 @@ async function writeSeedGallery(filePath: string): Promise<void> {
               width: 800,
               height: 800,
             },
+            exif: {
+              cameraBrand: "Leica",
+              cameraModel: "Q3",
+              lens: "28mm f/1.7",
+              aperture: "f/4",
+              shutterSpeed: "1/250s",
+              iso: 200,
+            },
           },
         ],
       },
@@ -236,7 +244,8 @@ test.beforeAll(async () => {
     ],
     {
       VITE_BASE_PATH: "/",
-      VITE_API_PROXY_TARGET: serverBaseUrl,
+      VITE_API_BASE_URL: `${serverBaseUrl}/api`,
+      VITE_ADMIN_TOKEN: adminToken,
     },
   );
   await waitForHttp(mainBaseUrl, "main");
