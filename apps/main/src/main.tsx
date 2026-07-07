@@ -295,7 +295,6 @@ const PhotoModal = ({
 const App = () => {
   const { data, error } = useGallery();
   const [tab, setTab] = useState<TabKey>("latest");
-  const [gridStyle, setGridStyle] = useState<GridStyle>("masonry");
   const [activePhoto, setActivePhoto] = useState<ResolvedPhoto | null>(null);
 
   if (error) {
@@ -346,28 +345,12 @@ const App = () => {
               </button>
             ))}
           </div>
-          {tab === "latest" && (
-            <div className="segmented" aria-label="瀑布流风格">
-              <button
-                className={gridStyle === "masonry" ? "active" : ""}
-                onClick={() => setGridStyle("masonry")}
-              >
-                自适应拼图
-              </button>
-              <button
-                className={gridStyle === "square" ? "active" : ""}
-                onClick={() => setGridStyle("square")}
-              >
-                正方形
-              </button>
-            </div>
-          )}
         </section>
 
         {tab === "latest" && (
           <VirtualPhotoGrid
             photos={data.photos}
-            style={gridStyle}
+            style="square"
             onOpen={setActivePhoto}
           />
         )}
