@@ -234,15 +234,17 @@ export function createPhotosRouter(
       };
       if (photoId) {
         const photo = await store.update(photoId, input);
+        const exported = await store.exportToJson();
         ctx.status = 200;
-        ctx.body = { photo };
+        ctx.body = { photo, export: exported };
         return;
       }
       created.push(await store.create(input));
     }
 
+    const exported = await store.exportToJson();
     ctx.status = 201;
-    ctx.body = { photos: created };
+    ctx.body = { photos: created, export: exported };
   });
 
   return router;
