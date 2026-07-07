@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-import { createApiClient } from "./api";
+import { createApiClient, normalizePhotoForAdmin } from "./api";
 import type { UploadPreview } from "../types";
 
 const photo = {
@@ -106,5 +106,38 @@ describe("admin API client auth headers", () => {
     const headers = new Headers(init?.headers);
     expect(headers.get("authorization")).toBe("Bearer export-token");
     expect(headers.get("content-type")).toBe("application/json");
+  });
+
+  it("normalizes server photo assets and EXIF aliases for admin filters", () => {
+    const normalized = normalizePhotoForAdmin({
+      id: "photo-server",
+      title: "Server frame",
+      topicIds: ["editorial"],
+      imageUrl: "",
+      asset: {
+        original: "photo-original.jpg",
+        thumbnail: "photo-thumb.jpg",
+      },
+      exif: {
+        cameraBrand: "Canon",
+        cameraModel: "R5",
+        lensModel: "RF 50mm",
+        shutterSpeed: "1/250",
+        focalLengthMm: 50,
+      },
+    });
+
+    expect(normalized.topicId).toBe("editorial");
+    expect(normalized.imageUrl).toBe(
+      "https://images.unsplash.com/photo-original.jpg",
+    );
+    expect(normalized.thumbnailUrl).toBe(
+      "https://images.unsplash.com/photo-thumb.jpg",
+    );
+    expect(normalized.exif?.cameraMake).toBe("Canon");
+    expect(normalized.exif?.cameraModel).toBe("R5");
+    expect(normalized.exif?.lens).toBe("RF 50mm");
+    expect(normalized.exif?.shutter).toBe("1/250");
+    expect(normalized.exif?.focalLength).toBe("50mm");
   });
 });
