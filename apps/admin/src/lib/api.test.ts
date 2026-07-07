@@ -18,7 +18,7 @@ function jsonResponse(body: unknown, status = 200): Response {
   } as Response;
 }
 
-function makePreview(): UploadPreview {
+function makePreview(exif: UploadPreview["exif"] = {}): UploadPreview {
   return {
     id: "preview-1",
     file: new File(["jpeg"], "frame.jpg", { type: "image/jpeg" }),
@@ -26,7 +26,7 @@ function makePreview(): UploadPreview {
     title: "Uploaded frame",
     topicId: "",
     description: "",
-    exif: {},
+    exif,
   };
 }
 
@@ -39,6 +39,11 @@ describe("admin API client auth headers", () => {
 
   it("sends the VITE_ADMIN_TOKEN bearer header for multipart uploads", async () => {
     vi.stubEnv("VITE_ADMIN_TOKEN", " test-token ");
+    const preview = makePreview({
+      cameraMake: "Canon",
+      cameraModel: "R5",
+      lens: "RF 50mm",
+    });
     const fetchMock = vi.fn(async (input: unknown, init?: RequestInit) => {
       void input;
       void init;
@@ -46,16 +51,59 @@ describe("admin API client auth headers", () => {
     });
     vi.stubGlobal("fetch", fetchMock);
 
-    await createApiClient("http://api.test/api").uploadPhoto(makePreview());
+    await createApiClient("http://api.test/api").uploadPhoto(preview);
 
     expect(fetchMock).toHaveBeenCalledOnce();
     const [url, init] = fetchMock.mock.calls[0] ?? [];
     expect(url).toBe("http://api.test/api/uploads");
     expect(init?.body).toBeInstanceOf(FormData);
+    const body = init?.body as FormData;
+    expect(body.get("title")).toBe("Uploaded frame");
+    expect(JSON.parse(String(body.get("exif")))).toEqual(preview.exif);
 
     const headers = new Headers(init?.headers);
     expect(headers.get("authorization")).toBe("Bearer test-token");
     expect(headers.get("content-type")).toBeNull();
+  });
+
+  it("normalizes EXIF aliases on uploaded photo responses", async () => {
+    const fetchMock = vi.fn(async (input: unknown, init?: RequestInit) => {
+      void input;
+      void init;
+      return jsonResponse(
+        {
+          exif: {
+            cameraBrand: "Nikon",
+            cameraModel: "Z 8",
+            lensModel: "Nikkor Z 50mm",
+            shutterSpeed: "1/160",
+          },
+          photos: [
+            {
+              ...photo,
+              exif: {
+                cameraBrand: "Canon",
+                cameraModel: "R5",
+                lensModel: "RF 50mm",
+              },
+            },
+          ],
+        },
+        201,
+      );
+    });
+    vi.stubGlobal("fetch", fetchMock);
+
+    const result = await createApiClient("http://api.test/api").uploadPhoto(
+      makePreview(),
+    );
+
+    expect(result.photo?.exif?.cameraMake).toBe("Canon");
+    expect(result.photo?.exif?.cameraModel).toBe("R5");
+    expect(result.photo?.exif?.lens).toBe("RF 50mm");
+    expect(result.exif?.cameraMake).toBe("Nikon");
+    expect(result.exif?.lens).toBe("Nikkor Z 50mm");
+    expect(result.exif?.shutter).toBe("1/160");
   });
 
   it("falls back to the local admin token storage key", async () => {
