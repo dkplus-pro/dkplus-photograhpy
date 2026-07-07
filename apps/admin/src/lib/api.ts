@@ -23,6 +23,8 @@ export interface ApiClient {
 const normalizeBaseUrl = (baseUrl: string): string =>
   baseUrl.replace(/\/$/, "");
 
+const ADMIN_TOKEN_STORAGE_KEY = "dkplus.adminToken";
+
 type ServerPhoto = PhotoRecord & {
   asset?: {
     original?: string;
@@ -70,6 +72,43 @@ const toServerPayload = (payload: PhotoPayload) => ({
   exif: payload.exif,
 });
 
+const readAdminToken = (): string | undefined => {
+  const envToken = import.meta.env.VITE_ADMIN_TOKEN?.trim();
+  if (envToken) return envToken;
+
+  if (typeof window === "undefined") return undefined;
+
+  try {
+    return (
+      window.localStorage.getItem(ADMIN_TOKEN_STORAGE_KEY)?.trim() || undefined
+    );
+  } catch {
+    return undefined;
+  }
+};
+
+const buildHeaders = (init?: RequestInit): Headers => {
+  const headers = new Headers();
+  headers.set("Accept", "application/json");
+
+  if (!(init?.body instanceof FormData)) {
+    headers.set("Content-Type", "application/json");
+  }
+
+  const adminToken = readAdminToken();
+  if (adminToken) {
+    headers.set("Authorization", `Bearer ${adminToken}`);
+  }
+
+  if (init?.headers) {
+    new Headers(init.headers).forEach((value, key) => {
+      headers.set(key, value);
+    });
+  }
+
+  return headers;
+};
+
 const normalizePhoto = (input: ServerPhotoEnvelope): PhotoRecord => {
   const source = "photo" in input ? input.photo : input;
   const imageUrl = resolveDisplayUrl(
@@ -109,13 +148,7 @@ const requestJson = async <T>(
 ): Promise<T> => {
   const response = await fetch(`${normalizeBaseUrl(baseUrl)}${path}`, {
     ...init,
-    headers: {
-      Accept: "application/json",
-      ...(init?.body instanceof FormData
-        ? {}
-        : { "Content-Type": "application/json" }),
-      ...init?.headers,
-    },
+    headers: buildHeaders(init),
   });
 
   if (!response.ok) {
