@@ -6,6 +6,8 @@ export type ExifMetadata = {
   aperture?: string;
   shutterSpeed?: string;
   focalLength?: string;
+  width?: number;
+  height?: number;
   capturedAt?: string;
 };
 
