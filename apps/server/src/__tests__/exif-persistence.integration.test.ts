@@ -38,10 +38,12 @@ function authed(testRequest: Test): Test {
   return testRequest.set("Authorization", "Bearer test-token");
 }
 
-async function assertExportFileMissing(filePath: string): Promise<void> {
-  await assert.rejects(readFile(filePath, "utf8"), {
-    code: "ENOENT",
-  });
+type ClientExportArtifact = {
+  photos: Array<PhotoBody & { image?: unknown; imageUrl?: unknown }>;
+};
+
+async function readClientExport(filePath: string): Promise<ClientExportArtifact> {
+  return JSON.parse(await readFile(filePath, "utf8")) as ClientExportArtifact;
 }
 
 function expectAdminExifPersisted(
@@ -60,7 +62,7 @@ function expectAdminExifPersisted(
   assert.equal(exif.shutterSpeed ?? exif.shutter, expected.shutterSpeed);
 }
 
-test("multipart Admin EXIF persists through upload, replacement, list, and explicit export", async () => {
+test("multipart Admin EXIF persists through upload, replacement, auto-export, and explicit export", async () => {
   const { config, root } = await makeConfig();
   try {
     const app = createApp(config).callback();
@@ -85,6 +87,7 @@ test("multipart Admin EXIF persists through upload, replacement, list, and expli
       .expect(201);
 
     const created = uploaded.body.photos[0] as PhotoBody;
+    assert.equal(uploaded.body.export.photoCount, 1);
     expectAdminExifPersisted(created.exif, {
       cameraBrand: "Nikon",
       cameraModel: "Z8",
@@ -104,7 +107,18 @@ test("multipart Admin EXIF persists through upload, replacement, list, and expli
       lens: "NIKKOR Z 24-70mm f/2.8 S",
       shutterSpeed: "1/200s",
     });
-    await assertExportFileMissing(config.exportFile);
+
+    const exportedAfterCreate = await readClientExport(config.exportFile);
+    const exportedCreate = exportedAfterCreate.photos.find(
+      (photo) => photo.id === created.id,
+    );
+    assert.ok(exportedCreate, "auto-export includes uploaded photo");
+    expectAdminExifPersisted(exportedCreate.exif, {
+      cameraBrand: "Nikon",
+      cameraModel: "Z8",
+      lens: "NIKKOR Z 24-70mm f/2.8 S",
+      shutterSpeed: "1/200s",
+    });
 
     const replacementExif = {
       cameraMake: "Sony",
@@ -128,6 +142,7 @@ test("multipart Admin EXIF persists through upload, replacement, list, and expli
       .expect(200);
 
     const replacement = replaced.body.photo as PhotoBody;
+    assert.equal(replaced.body.export.photoCount, 1);
     assert.equal(replacement.id, created.id);
     expectAdminExifPersisted(replacement.exif, {
       cameraBrand: "Sony",
@@ -148,12 +163,21 @@ test("multipart Admin EXIF persists through upload, replacement, list, and expli
       lens: "FE 35mm F1.4 GM",
       shutterSpeed: "1/500s",
     });
-    await assertExportFileMissing(config.exportFile);
+
+    const autoExported = await readClientExport(config.exportFile);
+    const autoExportedPhoto = autoExported.photos.find(
+      (photo) => photo.id === created.id,
+    );
+    assert.ok(autoExportedPhoto, "replacement auto-export includes photo");
+    expectAdminExifPersisted(autoExportedPhoto.exif, {
+      cameraBrand: "Sony",
+      cameraModel: "A7R V",
+      lens: "FE 35mm F1.4 GM",
+      shutterSpeed: "1/500s",
+    });
 
     await authed(request(app).post("/api/export/client")).send({}).expect(200);
-    const exported = JSON.parse(await readFile(config.exportFile, "utf8")) as {
-      photos: Array<PhotoBody & { image?: unknown; imageUrl?: unknown }>;
-    };
+    const exported = await readClientExport(config.exportFile);
     const exportedPhoto = exported.photos.find(
       (photo) => photo.id === created.id,
     );
