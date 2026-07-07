@@ -100,12 +100,21 @@ export function createPhotosRouter(
     }
 
     const form = body(ctx) as Record<string, unknown>;
+    const photoId = field(form.photoId);
+    if (photoId && incoming.length !== 1) {
+      throw new AppError(
+        400,
+        "UPLOAD_SINGLE_FILE_REQUIRED",
+        "Updating an existing photo requires exactly one image file",
+      );
+    }
+
     const created = [];
     for (const file of incoming) {
       const stored = await uploads.store(file);
       const exif = await extractExif(stored.buffer);
       const input: PhotoInput = {
-        title: field(form.title) ?? file.originalname,
+        title: photoId ? field(form.title) : field(form.title) ?? file.originalname,
         description: field(form.description),
         topicId: field(form.topicId),
         tags: field(form.tags)
@@ -116,6 +125,11 @@ export function createPhotosRouter(
         image: stored.image,
         exif,
       };
+      if (photoId) {
+        const photo = await store.update(photoId, input);
+        ctx.body = { photo };
+        return;
+      }
       created.push(await store.create(input));
     }
 

@@ -305,8 +305,9 @@ function App() {
           description: cleanPayload.description || "",
           topicId: cleanPayload.topicId || "",
         });
-        if (!result.photo) throw new Error("上传后没有返回图片记录。");
-        setPhotos((current) => [result.photo!, ...current]);
+        const created = result.photo;
+        if (!created) throw new Error("上传后没有返回图片记录。");
+        setPhotos((current) => [created, ...current]);
         pushMessage("success", "图片记录已创建");
       }
       resetEditor();
@@ -604,6 +605,7 @@ function App() {
         >
           <Spin loading={isLoading} style={{ width: "100%" }}>
             <Table<PhotoRecord>
+              className="photos-table"
               rowKey="id"
               size="mini"
               border={{ wrapper: true, cell: true }}
@@ -612,7 +614,7 @@ function App() {
               columns={columns}
               data={filteredPhotos}
               noDataElement={<Empty description="暂无匹配图片" />}
-              scroll={{ x: 1250 }}
+              scroll={{ x: 1110, y: 560 }}
               rowSelection={{
                 type: "checkbox",
                 checkAll: true,
@@ -645,6 +647,16 @@ function App() {
           unmountOnExit
         >
           <div className="editor-form">
+            <div className="span-2">
+              <Alert
+                type="info"
+                content={
+                  editingId
+                    ? "如需替换图片，请选择新的本地图片；不选择文件时仅保存文字与专题。"
+                    : "新增图片需要先选择本地图片，保存时会上传到 /api/uploads。"
+                }
+              />
+            </div>
             <label>
               <span>标题（可选）</span>
               <Input
@@ -654,46 +666,74 @@ function App() {
               />
             </label>
             <label>
-              <span>状态</span>
+              <span>专题（可选）</span>
               <Select
-                value={payload.status || "draft"}
-                onChange={(value) =>
-                  setPayload({ ...payload, status: value as PhotoStatus })
-                }
-                options={Object.entries(statusLabel).map(([value, label]) => ({
-                  label,
-                  value,
+                allowClear
+                showSearch
+                value={payload.topicId || undefined}
+                placeholder="选择已有专题，或留空"
+                onChange={(value) => {
+                  const topicId = typeof value === "string" ? value : "";
+                  const topicTitle =
+                    topics.find(([id]) => id === topicId)?.[1] || "";
+                  setPayload({ ...payload, topicId, topicTitle });
+                }}
+                options={topics.map(([id, title]) => ({
+                  label: `${title} (${id})`,
+                  value: id,
                 }))}
               />
             </label>
-            <label>
-              <span>专题 ID</span>
-              <Input
-                value={payload.topicId || ""}
-                onChange={(value) => setPayload({ ...payload, topicId: value })}
-                placeholder="street"
+            <div className="span-2 editor-upload-card">
+              <div className="editor-upload-card__header">
+                <div>
+                  <strong>本地图片</strong>
+                  <span>
+                    {editorPreview
+                      ? editorPreview.file.name
+                      : editingId
+                        ? "当前图片；可选择新文件替换"
+                        : "请选择一张图片"}
+                  </span>
+                </div>
+                <Space wrap>
+                  <Button
+                    type={editorPreview || editingId ? "outline" : "primary"}
+                    onClick={() => editorFileInputRef.current?.click()}
+                  >
+                    {editorPreview || editingId ? "更换图片" : "选择图片"}
+                  </Button>
+                  {editorPreview && (
+                    <Button onClick={() => replaceEditorPreview(null)}>
+                      清除新文件
+                    </Button>
+                  )}
+                </Space>
+              </div>
+              <input
+                ref={editorFileInputRef}
+                className="hidden-file-input"
+                type="file"
+                accept="image/*"
+                onChange={(event) => {
+                  void stageEditorFile(event.currentTarget.files);
+                  event.currentTarget.value = "";
+                }}
               />
-            </label>
-            <label>
-              <span>专题名称</span>
-              <Input
-                value={payload.topicTitle || ""}
-                onChange={(value) =>
-                  setPayload({ ...payload, topicTitle: value })
-                }
-                placeholder="街头"
-              />
-            </label>
-            <label className="span-2">
-              <span>图片 URL（新增时必填）</span>
-              <Input
-                value={payload.imageUrl || ""}
-                onChange={(value) =>
-                  setPayload({ ...payload, imageUrl: value })
-                }
-                placeholder="https://cdn.example.com/photo.jpg"
-              />
-            </label>
+              <div className="editor-image-preview">
+                {editorImageUrl ? (
+                  <img
+                    src={editorImageUrl}
+                    alt={editorPreview ? "本地图片预览" : "当前图片预览"}
+                  />
+                ) : (
+                  <Empty description="尚未选择本地图片" />
+                )}
+              </div>
+              {editorPreview && (
+                <p className="status-line">{exifLine(editorPreview.exif)}</p>
+              )}
+            </div>
             <label className="span-2">
               <span>描述（可选）</span>
               <TextArea
@@ -777,6 +817,33 @@ function App() {
               )}
             </div>
           </div>
+        </Modal>
+
+        <Modal
+          title={previewPhoto ? photoTitle(previewPhoto) : "图片预览"}
+          visible={Boolean(previewPhoto)}
+          onCancel={() => setPreviewPhoto(null)}
+          footer={null}
+          className="image-preview-modal"
+          unmountOnExit
+        >
+          {previewPhoto && (
+            <div className="image-preview-modal__body">
+              <img
+                src={
+                  previewPhoto.imageUrl ||
+                  previewPhoto.thumbnailUrl ||
+                  previewPhoto.image?.url
+                }
+                alt={photoTitle(previewPhoto)}
+              />
+              <div className="rich-lines">
+                <strong>{imageSummary(previewPhoto)}</strong>
+                <span>{previewPhoto.description || "暂无描述"}</span>
+                <span>{exifLine(previewPhoto.exif)}</span>
+              </div>
+            </div>
+          )}
         </Modal>
 
         <Modal

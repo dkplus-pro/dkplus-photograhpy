@@ -17,7 +17,10 @@ export interface ApiClient {
   updatePhoto: (id: string, payload: PhotoPayload) => Promise<PhotoRecord>;
   deletePhoto: (id: string) => Promise<void>;
   batchDelete: (ids: string[]) => Promise<void>;
-  uploadPhoto: (preview: UploadPreview) => Promise<UploadResult>;
+  uploadPhoto: (
+    preview: UploadPreview,
+    photoId?: string,
+  ) => Promise<UploadResult>;
 }
 
 const normalizeBaseUrl = (baseUrl: string): string =>
@@ -217,12 +220,15 @@ export const createApiClient = (
       body: JSON.stringify({ ids }),
     });
   },
-  async uploadPhoto(preview) {
+  async uploadPhoto(preview, photoId) {
     const body = new FormData();
     body.append("file", preview.file);
-    body.append("title", preview.title);
-    body.append("description", preview.description);
-    body.append("topicId", preview.topicId);
+    if (photoId) body.append("photoId", photoId);
+    if (preview.title.trim()) body.append("title", preview.title.trim());
+    if (preview.description.trim()) {
+      body.append("description", preview.description.trim());
+    }
+    if (preview.topicId.trim()) body.append("topicId", preview.topicId.trim());
     body.append("exif", JSON.stringify(preview.exif));
 
     const result = await requestJson<UploadResult & { photos?: ServerPhoto[] }>(
