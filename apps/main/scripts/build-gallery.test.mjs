@@ -27,15 +27,12 @@ test("normalizes gallery records and writes resolved CDN urls", () => {
   });
 
   assert.equal(gallery.photos.length, 1);
-  assert.match(
-    gallery.photos[0].urls.original,
-    /^https:\/\/images\.unsplash\.com\/photo-demo/,
-  );
-  assert.equal("createdAt" in gallery.photos[0], false);
-  assert.equal("updatedAt" in gallery.photos[0], false);
-  assert.equal("image" in gallery.photos[0], false);
-  assert.equal("createdAt" in gallery.topics[0], false);
-  assert.equal("updatedAt" in gallery.topics[0], false);
-  assert.equal("cdnBaseUrl" in gallery, false);
-  assert.equal("sourceGeneratedAt" in gallery, false);
+  assert.match(gallery.photos[0].urls.original, /^https:\/\/images\.unsplash\.com\/photo-demo/);
+  assert.deepEqual(Object.keys(gallery).sort(), ['generatedAt', 'photos', 'topics']);
+  assert.deepEqual(Object.keys(gallery.topics[0]).sort(), ['id', 'title']);
+  assert.equal('updatedAt' in gallery, false);
+  assert.equal('createdAt' in gallery.photos[0], false);
+  assert.equal('updatedAt' in gallery.photos[0], false);
+  assert.equal('image' in gallery.photos[0], false);
+  assert.equal('tags' in gallery.photos[0], false);
 });
