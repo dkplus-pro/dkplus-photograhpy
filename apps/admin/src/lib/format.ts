@@ -1,13 +1,12 @@
 import type { PhotoExif, PhotoRecord, UploadPreview } from "../types";
 
 export const formatDate = (value?: string): string => {
-  if (!value) return "No date";
+  if (!value) return "无日期";
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return value;
-  return new Intl.DateTimeFormat("en", {
-    month: "short",
-    day: "2-digit",
-    year: "numeric",
+  return new Intl.DateTimeFormat("zh-CN", {
+    dateStyle: "medium",
+    timeZone: "UTC",
   }).format(date);
 };
 
@@ -29,7 +28,7 @@ export const formatAperture = (value?: number | string): string | undefined => {
 };
 
 export const exifLine = (exif?: PhotoExif): string => {
-  if (!exif) return "EXIF pending";
+  if (!exif) return "暂无 EXIF";
   const camera = [exif.cameraMake, exif.cameraModel].filter(Boolean).join(" ");
   const details = [
     camera,
@@ -40,20 +39,18 @@ export const exifLine = (exif?: PhotoExif): string => {
   ]
     .filter(Boolean)
     .join(" · ");
-  return details || "EXIF pending";
+  return details || "暂无 EXIF";
 };
 
 export const photoTitle = (photo: PhotoRecord): string =>
-  photo.title?.trim() || `Untitled ${photo.id}`;
+  photo.title?.trim() || `未命名 ${photo.id}`;
 
 export const summarizeUpload = (previews: UploadPreview[]): string => {
-  if (previews.length === 0) return "No files staged";
+  if (previews.length === 0) return "未暂存文件";
   const topics = new Set(
     previews.map((preview) => preview.topicId).filter(Boolean),
   );
-  return `${previews.length} file${previews.length === 1 ? "" : "s"} staged${
-    topics.size
-      ? ` across ${topics.size} topic${topics.size === 1 ? "" : "s"}`
-      : ""
+  return `${previews.length} 个文件已暂存${
+    topics.size ? `，覆盖 ${topics.size} 个专题` : ""
   }`;
 };

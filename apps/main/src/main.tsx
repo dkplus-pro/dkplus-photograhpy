@@ -329,14 +329,6 @@ const App = () => {
             {data.photos.length} Photos · {data.topics.length} Topics
           </span>
         </nav>
-        <div className="hero__copy">
-          <p className="eyebrow">Content-first Gallery / Virtualized</p>
-          <h1>用光线、时间和地点整理每一次按下快门。</h1>
-          <p>
-            主站在构建时读取 JSON，写入 CDN
-            图片地址；前端以虚拟列表、懒加载和可访问弹窗展示最新作品、专题与时间轴。
-          </p>
-        </div>
       </header>
 
       <main id="gallery" className="shell">

@@ -24,6 +24,14 @@ const normalizeBaseUrl = (baseUrl: string): string =>
   baseUrl.replace(/\/$/, "");
 
 type ServerPhoto = PhotoRecord & {
+  asset?: {
+    original?: string;
+    thumbnail?: string;
+    preview?: string;
+    alt?: string;
+    width?: number;
+    height?: number;
+  };
   image?: { url?: string; key?: string; fileName?: string };
   thumbnailUrl?: string;
   takenAt?: string;
@@ -39,13 +47,45 @@ type ServerPhoto = PhotoRecord & {
 
 type ServerPhotoEnvelope = ServerPhoto | { photo: ServerPhoto };
 
+const isAbsoluteUrl = (value: string): boolean =>
+  /^[a-z][a-z\d+.-]*:/i.test(value) || value.startsWith("//");
+
+const resolveDisplayUrl = (value?: string): string | undefined => {
+  const raw = value?.trim();
+  if (!raw) return undefined;
+  if (isAbsoluteUrl(raw) || raw.startsWith("/")) return raw;
+  return `https://images.unsplash.com/${raw.replace(/^\/+/, "")}`;
+};
+
+const toServerPayload = (payload: PhotoPayload) => ({
+  title: payload.title,
+  description: payload.description,
+  topicId: payload.topicId,
+  image: payload.imageUrl
+    ? {
+        url: payload.imageUrl,
+        storage: "remote",
+      }
+    : undefined,
+  exif: payload.exif,
+});
+
 const normalizePhoto = (input: ServerPhotoEnvelope): PhotoRecord => {
   const source = "photo" in input ? input.photo : input;
+  const imageUrl = resolveDisplayUrl(
+    source.imageUrl ?? source.image?.url ?? source.asset?.original,
+  );
+  const thumbnailUrl = resolveDisplayUrl(
+    source.thumbnailUrl ??
+      source.asset?.thumbnail ??
+      source.image?.url ??
+      source.asset?.original,
+  );
   return {
     ...source,
     topicId: source.topicId ?? source.topicIds?.[0],
-    imageUrl: source.imageUrl ?? source.image?.url ?? "",
-    thumbnailUrl: source.thumbnailUrl ?? source.image?.url,
+    imageUrl: imageUrl ?? "",
+    thumbnailUrl,
     exif: source.exif
       ? {
           ...source.exif,
@@ -117,7 +157,7 @@ export const createApiClient = (
     return normalizePhoto(
       await requestJson<ServerPhotoEnvelope>(baseUrl, "/photos", {
         method: "POST",
-        body: JSON.stringify(payload),
+        body: JSON.stringify(toServerPayload(payload)),
       }),
     );
   },
@@ -128,7 +168,7 @@ export const createApiClient = (
         `/photos/${encodeURIComponent(id)}`,
         {
           method: "PATCH",
-          body: JSON.stringify(payload),
+          body: JSON.stringify(toServerPayload(payload)),
         },
       ),
     );

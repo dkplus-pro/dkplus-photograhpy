@@ -17,9 +17,13 @@ export interface PhotoRecord {
   description?: string;
   topicId?: string;
   topicTitle?: string;
+  topicIds?: string[];
+  tags?: string[];
+  location?: string;
   status?: PhotoStatus;
   imageUrl: string;
   thumbnailUrl?: string;
+  takenAt?: string;
   createdAt?: string;
   updatedAt?: string;
   exif?: PhotoExif;

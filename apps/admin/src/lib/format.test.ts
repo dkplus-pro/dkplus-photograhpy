@@ -42,7 +42,7 @@ describe("format helpers", () => {
       },
     ];
 
-    expect(summarizeUpload(previews)).toBe("2 files staged across 2 topics");
+    expect(summarizeUpload(previews)).toBe("2 个文件已暂存，覆盖 2 个专题");
   });
 
   it("builds a concise EXIF line", () => {

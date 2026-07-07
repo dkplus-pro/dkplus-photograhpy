@@ -47,7 +47,7 @@ img {
 }
 
 .hero {
-  padding: 24px clamp(16px, 5vw, 72px) 56px;
+  padding: 24px clamp(16px, 5vw, 72px) 28px;
 }
 .topbar {
   min-height: 56px;
@@ -63,10 +63,6 @@ img {
   font-weight: 700;
   text-decoration: none;
 }
-.hero__copy {
-  max-width: 980px;
-  padding: clamp(48px, 9vw, 110px) 0 22px;
-}
 .eyebrow {
   margin: 0 0 16px;
   color: var(--muted);
@@ -74,19 +70,6 @@ img {
   text-transform: uppercase;
   letter-spacing: 0.08em;
   font-size: 0.78rem;
-}
-.hero h1 {
-  margin: 0;
-  font-size: clamp(2.6rem, 8vw, 7.6rem);
-  line-height: 0.92;
-  letter-spacing: -0.08em;
-  max-width: 1120px;
-}
-.hero__copy > p:last-child {
-  max-width: 760px;
-  color: #3f3f46;
-  font-size: clamp(1rem, 2vw, 1.25rem);
-  line-height: 1.8;
 }
 .shell {
   width: min(1440px, calc(100% - clamp(32px, 7vw, 112px)));
@@ -161,7 +144,7 @@ img {
   text-align: left;
   background: #111;
   color: #fff;
-  border-radius: 28px;
+  border-radius: 0;
   min-height: 280px;
   cursor: pointer;
   box-shadow: var(--shadow);
@@ -203,7 +186,7 @@ img {
   display: grid;
   gap: 4px;
   padding: 14px;
-  border-radius: 18px;
+  border-radius: 0;
   background: rgba(9, 9, 11, 0.58);
   backdrop-filter: blur(14px);
 }
@@ -434,9 +417,6 @@ dd {
   }
   .topic-grid {
     grid-template-columns: 1fr;
-  }
-  .photo-card {
-    border-radius: 22px;
   }
 }
 @media (prefers-reduced-motion: reduce) {
