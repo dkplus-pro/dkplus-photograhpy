@@ -368,13 +368,19 @@ test("Admin list exposes optimized metadata columns and gallery interactions", a
   await expect(
     table.getByRole("columnheader", { name: /拍摄日期/ }),
   ).toBeVisible();
-  await expect(table.getByRole("columnheader", { name: /文件信息/ })).toHaveCount(
-    0,
-  );
+  await expect(
+    table.getByRole("columnheader", { name: /文件信息/ }),
+  ).toHaveCount(0);
   await expect(table.getByRole("columnheader", { name: /^EXIF$/ })).toHaveCount(
     0,
   );
   await expect(page.getByText(/更新：/)).toHaveCount(0);
+  await expect(
+    page.getByText(`显示 1-12，共 ${seedPhotoCount} 条`),
+  ).toBeVisible();
+  await page.locator(".arco-pagination-item").filter({ hasText: "2" }).click();
+  await expect(table.getByText("后台导出样片 13")).toBeVisible();
+  await page.locator(".arco-pagination-item").filter({ hasText: "1" }).click();
 
   await page.getByPlaceholder("按标题筛选").fill("后台导出样片");
   await expect(
@@ -395,11 +401,29 @@ test("Admin list exposes optimized metadata columns and gallery interactions", a
   expect(firstCellAlign).toBe("center");
 
   await table.locator(".photo-cell__thumb").first().click();
-  await expect(page.getByRole("dialog", { name: /后台导出样片/ })).toBeVisible();
+  await expect(
+    page.getByRole("dialog", { name: /后台导出样片/ }),
+  ).toBeVisible();
   await page.keyboard.press("Escape");
 
   await page.getByRole("button", { name: "新增图片" }).first().click();
-  await expect(page.getByRole("dialog", { name: "新增图片记录" })).toBeVisible();
+  await expect(
+    page.getByRole("dialog", { name: "新增图片记录" }),
+  ).toBeVisible();
+  await page.keyboard.press("Escape");
+
+  await table.getByRole("button", { name: "编辑" }).first().click();
+  await expect(
+    page.getByRole("dialog", { name: "编辑图片记录" }),
+  ).toBeVisible();
+  await page.keyboard.press("Escape");
+
+  await page.getByRole("button", { name: "上传图片" }).first().click();
+  const uploadDialog = page.getByRole("dialog", { name: "批量上传图片" });
+  await expect(uploadDialog).toBeVisible();
+  await expect(
+    uploadDialog.getByRole("button", { name: "开始上传" }),
+  ).toBeDisabled();
   await page.keyboard.press("Escape");
 
   const bodyBackgroundImage = await page.evaluate(
