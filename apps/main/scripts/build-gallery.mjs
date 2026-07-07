@@ -34,16 +34,63 @@ const assertArray = (value, label) => {
   return value;
 };
 
+const compact = (value) =>
+  Object.fromEntries(
+    Object.entries(value).filter(([, entry]) => entry !== undefined),
+  );
+
+const normalizeExif = (value) => {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return undefined;
+  const normalized = compact({
+    cameraBrand: value.cameraBrand ?? value.cameraMake,
+    cameraModel: value.cameraModel,
+    lensModel: value.lensModel ?? value.lens,
+    iso: value.iso,
+    aperture: value.aperture,
+    shutterSpeed: value.shutterSpeed ?? value.shutter,
+    focalLengthMm: value.focalLengthMm,
+    focalLength: value.focalLength,
+    width: value.width,
+    height: value.height,
+    capturedAt: value.capturedAt
+  });
+  return Object.keys(normalized).length ? normalized : undefined;
+};
+
+const normalizeAsset = (photo) => {
+  const source = photo.asset ?? {};
+  const imageUrl = photo.image?.url ?? photo.imageUrl;
+  const original = source.original ?? imageUrl;
+  if (!original) return undefined;
+  return compact({
+    original,
+    thumbnail: source.thumbnail ?? photo.thumbnailUrl ?? imageUrl,
+    preview: source.preview ?? source.thumbnail ?? photo.thumbnailUrl ?? imageUrl,
+    alt: source.alt ?? photo.title,
+    width: source.width ?? photo.exif?.width,
+    height: source.height ?? photo.exif?.height
+  });
+};
+
+const normalizeTopic = (topic, index) => {
+  if (!topic?.id || !topic?.title) {
+    throw new Error(`topics[${index}] requires id and title`);
+  }
+  return compact({
+    id: topic.id,
+    title: topic.title,
+    description: topic.description,
+    slug: topic.slug,
+    coverPhotoId: topic.coverPhotoId,
+    sortOrder: topic.sortOrder
+  });
+};
+
 export function normalizeGalleryData(input) {
+  const topics = assertArray(input.topics ?? [], 'topics').map(normalizeTopic);
+  const topicIds = new Set(topics.map((topic) => topic.id));
   const photos = assertArray(input.photos, 'photos').map((photo, index) => {
-    const asset = photo.asset ?? {
-      original: photo.image?.url,
-      thumbnail: photo.thumbnailUrl ?? photo.image?.url,
-      preview: photo.image?.url,
-      alt: photo.title,
-      width: photo.exif?.width,
-      height: photo.exif?.height
-    };
+    const asset = normalizeAsset(photo);
     if (!photo.id || !photo.title || !asset?.original) {
       throw new Error(`photos[${index}] requires id, title and asset.original/image.url`);
     }
@@ -52,24 +99,25 @@ export function normalizeGalleryData(input) {
       : photo.topicId
         ? [photo.topicId]
         : [];
-    const normalized = {
-      ...photo,
+    const takenAt = photo.takenAt ?? photo.exif?.capturedAt ?? photo.createdAt ?? new Date().toISOString();
+    return compact({
+      id: photo.id,
+      title: photo.title,
+      description: photo.description,
       topicIds,
-      takenAt: photo.takenAt ?? photo.exif?.capturedAt ?? photo.createdAt ?? new Date().toISOString(),
-      asset
-    };
-    return {
-      ...normalized,
+      takenAt,
+      location: photo.location,
+      tags: Array.isArray(photo.tags) && photo.tags.length ? photo.tags : undefined,
+      asset,
       urls: {
         original: resolveAssetUrl(asset.original),
         thumbnail: resolveAssetUrl(asset.thumbnail ?? asset.original),
         preview: resolveAssetUrl(asset.preview ?? asset.thumbnail ?? asset.original)
-      }
-    };
+      },
+      exif: normalizeExif(photo.exif)
+    });
   });
 
-  const topics = assertArray(input.topics ?? [], 'topics').map((topic) => ({ ...topic }));
-  const topicIds = new Set(topics.map((topic) => topic.id));
   for (const photo of photos) {
     for (const topicId of photo.topicIds) {
       if (!topicIds.has(topicId)) throw new Error(`Photo ${photo.id} references unknown topic ${topicId}`);
@@ -77,8 +125,6 @@ export function normalizeGalleryData(input) {
   }
   return {
     generatedAt: new Date().toISOString(),
-    sourceGeneratedAt: input.generatedAt ?? input.updatedAt,
-    cdnBaseUrl,
     topics,
     photos: photos.sort((a, b) => new Date(b.takenAt).getTime() - new Date(a.takenAt).getTime())
   };
