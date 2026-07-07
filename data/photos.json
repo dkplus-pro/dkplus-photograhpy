@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-07-07T00:00:00Z",
+  "generatedAt": "2026-07-07T17:22:04.846Z",
   "topics": [
     {
       "id": "city-night",
@@ -36,13 +36,38 @@
   ],
   "photos": [
     {
+      "id": "240142dd-a9b3-468b-af05-155409e85811",
+      "title": "PA280840",
+      "topicIds": [],
+      "takenAt": "2026-07-07T08:18:14.741Z",
+      "asset": {
+        "original": "https://devcdn.ai4love.cn/tmp/2026/07/1783412289556-4c961f97-1104-474e-be13-cac144325b98-pa280840.jpg",
+        "thumbnail": "https://devcdn.ai4love.cn/tmp/2026/07/1783412289556-4c961f97-1104-474e-be13-cac144325b98-pa280840.jpg",
+        "preview": "https://devcdn.ai4love.cn/tmp/2026/07/1783412289556-4c961f97-1104-474e-be13-cac144325b98-pa280840.jpg",
+        "alt": "PA280840"
+      }
+    },
+    {
+      "id": "80f94580-b46d-400a-9fb5-30cdec68b9e9",
+      "title": "PA210107",
+      "topicIds": [],
+      "takenAt": "2026-07-07T08:13:09.623Z",
+      "asset": {
+        "original": "https://devcdn.ai4love.cn/tmp/2026/07/1783411988275-3566da5c-0685-4ca2-b36b-39003b0b5730-pa210107.jpg",
+        "thumbnail": "https://devcdn.ai4love.cn/tmp/2026/07/1783411988275-3566da5c-0685-4ca2-b36b-39003b0b5730-pa210107.jpg",
+        "preview": "https://devcdn.ai4love.cn/tmp/2026/07/1783411988275-3566da5c-0685-4ca2-b36b-39003b0b5730-pa210107.jpg",
+        "alt": "PA210107"
+      }
+    },
+    {
       "id": "city-001",
       "title": "雨后路口",
       "description": "雨水让路面变成镜面，车灯在蓝调时刻留下短暂轨迹。",
-      "topicIds": ["city-night"],
+      "topicIds": [
+        "city-night"
+      ],
       "takenAt": "2026-07-02T20:18:00Z",
       "location": "Shanghai",
-      "tags": ["night", "street", "reflection"],
       "asset": {
         "original": "photo-1519501025264-65ba15a82390?auto=format&fit=crop&w=1800&q=82",
         "thumbnail": "photo-1519501025264-65ba15a82390?auto=format&fit=crop&w=720&q=70",
@@ -65,10 +90,11 @@
       "id": "nature-001",
       "title": "晨雾山脊",
       "description": "太阳越过山脊前，雾气把远处层次压成柔和的灰蓝色。",
-      "topicIds": ["mountain-light"],
+      "topicIds": [
+        "mountain-light"
+      ],
       "takenAt": "2026-06-23T05:42:00Z",
       "location": "Huangshan",
-      "tags": ["mountain", "mist", "sunrise"],
       "asset": {
         "original": "photo-1501785888041-af3ef285b470?auto=format&fit=crop&w=1800&q=82",
         "thumbnail": "photo-1501785888041-af3ef285b470?auto=format&fit=crop&w=720&q=70",
@@ -91,10 +117,11 @@
       "id": "life-001",
       "title": "窗边器皿",
       "description": "午后斜光落在玻璃和陶瓷上，留下轻微的暖色边缘。",
-      "topicIds": ["quiet-life"],
+      "topicIds": [
+        "quiet-life"
+      ],
       "takenAt": "2026-06-05T14:12:00Z",
       "location": "Studio",
-      "tags": ["still-life", "light", "minimal"],
       "asset": {
         "original": "photo-1494438639946-1ebd1d20bf85?auto=format&fit=crop&w=1800&q=82",
         "thumbnail": "photo-1494438639946-1ebd1d20bf85?auto=format&fit=crop&w=720&q=70",
@@ -117,10 +144,11 @@
       "id": "portrait-001",
       "title": "窗帘后的光",
       "description": "用半透明窗帘打散直射光，让面部轮廓保持柔和。",
-      "topicIds": ["portrait-study"],
+      "topicIds": [
+        "portrait-study"
+      ],
       "takenAt": "2026-05-18T16:30:00Z",
       "location": "Hangzhou",
-      "tags": ["portrait", "window-light", "soft"],
       "asset": {
         "original": "photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=1500&q=82",
         "thumbnail": "photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=720&q=70",
@@ -143,10 +171,11 @@
       "id": "city-002",
       "title": "高架下",
       "description": "高架桥把天空切开，行人从几何阴影里穿过。",
-      "topicIds": ["city-night"],
+      "topicIds": [
+        "city-night"
+      ],
       "takenAt": "2026-04-26T18:46:00Z",
       "location": "Chongqing",
-      "tags": ["urban", "geometry", "dusk"],
       "asset": {
         "original": "photo-1493246507139-91e8fad9978e?auto=format&fit=crop&w=1800&q=82",
         "thumbnail": "photo-1493246507139-91e8fad9978e?auto=format&fit=crop&w=720&q=70",
@@ -169,10 +198,11 @@
       "id": "nature-002",
       "title": "湖面风线",
       "description": "风经过湖面留下细小纹理，远山像低饱和度的背景板。",
-      "topicIds": ["mountain-light"],
+      "topicIds": [
+        "mountain-light"
+      ],
       "takenAt": "2026-03-11T09:10:00Z",
       "location": "Yunnan",
-      "tags": ["lake", "wind", "minimal"],
       "asset": {
         "original": "photo-1500530855697-b586d89ba3ee?auto=format&fit=crop&w=1800&q=82",
         "thumbnail": "photo-1500530855697-b586d89ba3ee?auto=format&fit=crop&w=720&q=70",
@@ -195,10 +225,11 @@
       "id": "life-002",
       "title": "旧书页",
       "description": "纸张纤维与手写批注，是时间可见的一部分。",
-      "topicIds": ["quiet-life"],
+      "topicIds": [
+        "quiet-life"
+      ],
       "takenAt": "2026-02-14T11:03:00Z",
       "location": "Home",
-      "tags": ["book", "texture", "memory"],
       "asset": {
         "original": "photo-1516979187457-637abb4f9353?auto=format&fit=crop&w=1800&q=82",
         "thumbnail": "photo-1516979187457-637abb4f9353?auto=format&fit=crop&w=720&q=70",
@@ -221,10 +252,11 @@
       "id": "portrait-002",
       "title": "侧脸练习",
       "description": "使用暗背景突出轮廓，保留眼神方向上的留白。",
-      "topicIds": ["portrait-study"],
+      "topicIds": [
+        "portrait-study"
+      ],
       "takenAt": "2026-01-20T19:24:00Z",
       "location": "Studio",
-      "tags": ["portrait", "low-key", "profile"],
       "asset": {
         "original": "photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=1500&q=82",
         "thumbnail": "photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=720&q=70",
@@ -241,6 +273,50 @@
         "aperture": 1.8,
         "shutterSpeed": "1/250",
         "focalLengthMm": 50
+      }
+    },
+    {
+      "id": "e391749f-6d73-463f-8a7c-8953cf183a54",
+      "title": "P6080890",
+      "topicIds": [],
+      "takenAt": "2025-06-07T21:21:42.000Z",
+      "asset": {
+        "original": "https://devcdn.ai4love.cn/tmp/2026/07/1783413362278-5f5268d6-7add-401f-a1f8-75313475d554-p6080890.jpg",
+        "thumbnail": "https://devcdn.ai4love.cn/tmp/2026/07/1783413362278-5f5268d6-7add-401f-a1f8-75313475d554-p6080890.jpg",
+        "preview": "https://devcdn.ai4love.cn/tmp/2026/07/1783413362278-5f5268d6-7add-401f-a1f8-75313475d554-p6080890.jpg",
+        "alt": "P6080890"
+      },
+      "exif": {
+        "cameraBrand": "OM Digital Solutions",
+        "cameraModel": "OM-3",
+        "lens": "OLYMPUS M.8mm F1.8",
+        "iso": 800,
+        "aperture": "f/1.8",
+        "shutterSpeed": "1/2s",
+        "focalLength": "8",
+        "capturedAt": "2025-06-07T21:21:42.000Z"
+      }
+    },
+    {
+      "id": "58c66d7e-7e76-4efb-9257-5b869e0e6d93",
+      "title": "P1120511",
+      "topicIds": [],
+      "takenAt": "2024-01-12T09:46:03.000Z",
+      "asset": {
+        "original": "https://devcdn.ai4love.cn/tmp/2026/07/1783444920518-121b6ad8-2800-4ece-88be-16c7b0f992b1-p1120511.jpg",
+        "thumbnail": "https://devcdn.ai4love.cn/tmp/2026/07/1783444920518-121b6ad8-2800-4ece-88be-16c7b0f992b1-p1120511.jpg",
+        "preview": "https://devcdn.ai4love.cn/tmp/2026/07/1783444920518-121b6ad8-2800-4ece-88be-16c7b0f992b1-p1120511.jpg",
+        "alt": "P1120511"
+      },
+      "exif": {
+        "cameraBrand": "OLYMPUS CORPORATION",
+        "cameraModel": "E-M1MarkIII",
+        "lens": "OLYMPUS M.8-25mm F4.0",
+        "iso": 200,
+        "aperture": "f/4",
+        "shutterSpeed": "1/50s",
+        "focalLength": "8",
+        "capturedAt": "2024-01-12T09:46:03.000Z"
       }
     }
   ]
