@@ -672,34 +672,71 @@ test("Main dev loads gallery through /api and virtualizes to the bottom row", as
 
 test("Main modal navigation buttons are vertically centered and switch photos", async ({
   page,
+  request,
 }) => {
+  const panoramic = await request.post(`${serverBaseUrl}/api/photos`, {
+    headers: { Authorization: `Bearer ${adminToken}` },
+    data: {
+      title: "超宽居中样片",
+      topicId: "editorial",
+      takenAt: "2026-07-30T08:00:00.000Z",
+      asset: {
+        original:
+          "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='1600' height='500'%3E%3Crect width='1600' height='500' fill='%23333333'/%3E%3C/svg%3E",
+        alt: "超宽居中样片",
+        width: 1600,
+        height: 500,
+      },
+    },
+  });
+  expect(panoramic.ok()).toBeTruthy();
+
   await page.setViewportSize({ width: 1280, height: 720 });
   await page.goto(mainBaseUrl);
   await page
-    .getByRole("button", { name: "查看图片：后台导出样片", exact: true })
+    .getByRole("button", { name: "查看图片：超宽居中样片", exact: true })
     .click();
-  const dialog = page.getByRole("dialog", { name: "后台导出样片" });
+  const dialog = page.getByRole("dialog", { name: "超宽居中样片" });
   await expect(dialog).toBeVisible();
 
-  const previousButton = page.getByRole("button", { name: "上一张" });
-  const navMetrics = await previousButton.evaluate((element) => {
-    const rect = element.getBoundingClientRect();
+  const navMetrics = await page.evaluate(() => {
     const imageWrap = document.querySelector(".modal__image-wrap");
-    if (!imageWrap) throw new Error("Modal image pane was not found");
+    const panel = document.querySelector(".modal__panel");
+    const prev = document.querySelector(".modal__nav--prev");
+    const next = document.querySelector(".modal__nav--next");
+    if (!imageWrap || !panel || !prev || !next) {
+      throw new Error("Modal navigation DOM was not found");
+    }
     const imageBox = imageWrap.getBoundingClientRect();
-    const styles = getComputedStyle(element);
+    const panelBox = panel.getBoundingClientRect();
+    const prevBox = prev.getBoundingClientRect();
+    const nextBox = next.getBoundingClientRect();
+    const prevStyles = getComputedStyle(prev);
+    const nextStyles = getComputedStyle(next);
     return {
-      centerY: rect.top + rect.height / 2,
       imageCenterY: imageBox.top + imageBox.height / 2,
-      transform: styles.transform,
+      prevCenterY: prevBox.top + prevBox.height / 2,
+      nextCenterY: nextBox.top + nextBox.height / 2,
+      imageHeight: imageBox.height,
+      panelHeight: panelBox.height,
+      prevTransform: prevStyles.transform,
+      nextTransform: nextStyles.transform,
     };
   });
-  expect(Math.abs(navMetrics.centerY - navMetrics.imageCenterY)).toBeLessThan(
+  expect(
+    Math.abs(navMetrics.prevCenterY - navMetrics.imageCenterY),
+  ).toBeLessThan(2);
+  expect(
+    Math.abs(navMetrics.nextCenterY - navMetrics.imageCenterY),
+  ).toBeLessThan(2);
+  expect(Math.abs(navMetrics.imageHeight - navMetrics.panelHeight)).toBeLessThan(
     2,
   );
-  expect(navMetrics.transform).not.toBe("none");
+  expect(navMetrics.imageHeight).toBeGreaterThan(600);
+  expect(navMetrics.prevTransform).not.toBe("none");
+  expect(navMetrics.nextTransform).not.toBe("none");
 
   await page.getByRole("button", { name: "下一张" }).click();
   await expect(page.getByRole("dialog")).toBeVisible();
-  await expect(page.locator(".modal h2")).not.toHaveText("后台导出样片");
+  await expect(page.locator(".modal h2")).not.toHaveText("超宽居中样片");
 });
