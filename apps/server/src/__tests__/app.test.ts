@@ -359,7 +359,10 @@ test("multipart upload persists Admin EXIF JSON for create and replacement", asy
     const persistedCreate = await authed(
       request(app).get(`/api/photos/${id}`),
     ).expect(200);
-    assert.deepEqual(persistedCreate.body.photo.exif, created.body.photos[0].exif);
+    assert.deepEqual(
+      persistedCreate.body.photo.exif,
+      created.body.photos[0].exif,
+    );
 
     const replacedAt = "2025-06-02T10:30:00.000Z";
     const replaced = await request(app)
