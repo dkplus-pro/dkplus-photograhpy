@@ -177,48 +177,63 @@ test.beforeAll(async () => {
   adminBaseUrl = `http://127.0.0.1:${adminPort}`;
   mainBaseUrl = `http://127.0.0.1:${mainPort}`;
 
-  spawnProcess("server", "pnpm", ["--dir", "apps/server", "exec", "tsx", "src/index.ts"], {
-    NODE_ENV: "test",
-    HOST: "127.0.0.1",
-    PORT: String(serverPort),
-    ADMIN_TOKEN: adminToken,
-    CORS_ORIGINS: adminBaseUrl,
-    DATABASE_FILE: databaseFile,
-    GALLERY_EXPORT_FILE: exportFile,
-    UPLOAD_DIR: uploadDir,
-    PUBLIC_BASE_URL: `${serverBaseUrl}/uploads`,
-  });
+  spawnProcess(
+    "server",
+    "pnpm",
+    ["--dir", "apps/server", "exec", "tsx", "src/index.ts"],
+    {
+      NODE_ENV: "test",
+      HOST: "127.0.0.1",
+      PORT: String(serverPort),
+      ADMIN_TOKEN: adminToken,
+      CORS_ORIGINS: adminBaseUrl,
+      DATABASE_FILE: databaseFile,
+      GALLERY_EXPORT_FILE: exportFile,
+      UPLOAD_DIR: uploadDir,
+      PUBLIC_BASE_URL: `${serverBaseUrl}/uploads`,
+    },
+  );
   await waitForHttp(`${serverBaseUrl}/health`, "server");
 
-  spawnProcess("admin", "pnpm", [
-    "--dir",
-    "apps/admin",
-    "exec",
-    "vite",
-    "--host",
-    "127.0.0.1",
-    "--port",
-    String(adminPort),
-    "--strictPort",
-  ], {
-    VITE_API_BASE_URL: `${serverBaseUrl}/api`,
-    VITE_ADMIN_TOKEN: adminToken,
-  });
+  spawnProcess(
+    "admin",
+    "pnpm",
+    [
+      "--dir",
+      "apps/admin",
+      "exec",
+      "vite",
+      "--host",
+      "127.0.0.1",
+      "--port",
+      String(adminPort),
+      "--strictPort",
+    ],
+    {
+      VITE_API_BASE_URL: `${serverBaseUrl}/api`,
+      VITE_ADMIN_TOKEN: adminToken,
+    },
+  );
   await waitForHttp(adminBaseUrl, "admin");
 
-  spawnProcess("main", "pnpm", [
-    "--dir",
-    "apps/main",
-    "exec",
-    "vite",
-    "--host",
-    "127.0.0.1",
-    "--port",
-    String(mainPort),
-    "--strictPort",
-  ], {
-    VITE_BASE_PATH: "/",
-  });
+  spawnProcess(
+    "main",
+    "pnpm",
+    [
+      "--dir",
+      "apps/main",
+      "exec",
+      "vite",
+      "--host",
+      "127.0.0.1",
+      "--port",
+      String(mainPort),
+      "--strictPort",
+    ],
+    {
+      VITE_BASE_PATH: "/",
+    },
+  );
   await waitForHttp(mainBaseUrl, "main");
 });
 
@@ -231,7 +246,9 @@ test.afterAll(async () => {
   if (root) await rm(root, { recursive: true, force: true });
 });
 
-test("Admin authenticated export action writes the Main JSON artifact", async ({ page }) => {
+test("Admin authenticated export action writes the Main JSON artifact", async ({
+  page,
+}) => {
   await page.goto(adminBaseUrl);
   await expect(page.getByRole("heading", { name: "图片管理" })).toBeVisible();
 
@@ -246,7 +263,11 @@ test("Admin authenticated export action writes the Main JSON artifact", async ({
   expect(response.ok()).toBeTruthy();
 
   const exported = JSON.parse(await readFile(exportFile, "utf8")) as {
-    photos: Array<{ id: string; topicIds: string[]; asset: { original: string } }>;
+    photos: Array<{
+      id: string;
+      topicIds: string[];
+      asset: { original: string };
+    }>;
     topics: unknown[];
   };
   expect(exported.topics).toHaveLength(1);
@@ -256,7 +277,9 @@ test("Admin authenticated export action writes the Main JSON artifact", async ({
   expect(exported.photos[0]?.asset.original).toContain("data:image/svg+xml");
 });
 
-test("Main grid remains compact and does not transform cards or images on hover", async ({ page }) => {
+test("Main grid remains compact and does not transform cards or images on hover", async ({
+  page,
+}) => {
   await page.setViewportSize({ width: 1366, height: 900 });
   await page.goto(mainBaseUrl);
   const card = page.locator(".photo-card").first();
@@ -267,7 +290,8 @@ test("Main grid remains compact and does not transform cards or images on hover"
     const image = element.querySelector("img");
     const row = element.closest(".virtual-grid__row");
     const meta = element.querySelector(".photo-card__meta");
-    if (!image || !row || !meta) throw new Error("Photo card DOM is incomplete");
+    if (!image || !row || !meta)
+      throw new Error("Photo card DOM is incomplete");
     return {
       cardTransform: getComputedStyle(element).transform,
       imageTransform: getComputedStyle(image).transform,
@@ -286,7 +310,8 @@ test("Main grid remains compact and does not transform cards or images on hover"
     const image = element.querySelector("img");
     const row = element.closest(".virtual-grid__row");
     const meta = element.querySelector(".photo-card__meta");
-    if (!image || !row || !meta) throw new Error("Photo card DOM is incomplete");
+    if (!image || !row || !meta)
+      throw new Error("Photo card DOM is incomplete");
     return {
       cardTransform: getComputedStyle(element).transform,
       imageTransform: getComputedStyle(image).transform,

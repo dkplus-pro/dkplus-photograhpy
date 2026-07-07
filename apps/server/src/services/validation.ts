@@ -64,10 +64,8 @@ function readAsset(value: unknown): Partial<PhotoAsset> | undefined {
     thumbnail: readString(value.thumbnail, "asset.thumbnail"),
     preview: readString(value.preview, "asset.preview"),
     alt: readString(value.alt, "asset.alt"),
-    width:
-      value.width === undefined ? undefined : Number(value.width),
-    height:
-      value.height === undefined ? undefined : Number(value.height),
+    width: value.width === undefined ? undefined : Number(value.width),
+    height: value.height === undefined ? undefined : Number(value.height),
   };
 }
 
@@ -135,7 +133,11 @@ export function validatePhotoInput(
     location: readString(value.location, "location"),
     tags: readStringArray(value.tags, "tags"),
     takenAt: readDate(value.takenAt, "takenAt"),
-    image: image ?? (asset?.original ? { url: asset.original, storage: "remote" } : undefined),
+    image:
+      image ??
+      (asset?.original
+        ? { url: asset.original, storage: "remote" }
+        : undefined),
     asset,
     exif: isRecord(value.exif) ? { ...value.exif } : undefined,
   };

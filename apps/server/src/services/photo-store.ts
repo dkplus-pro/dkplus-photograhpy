@@ -1,10 +1,5 @@
 import { randomUUID } from "node:crypto";
-import {
-  existsSync,
-  mkdirSync,
-  readFileSync,
-  promises as fs,
-} from "node:fs";
+import { existsSync, mkdirSync, readFileSync, promises as fs } from "node:fs";
 import path from "node:path";
 import Database from "better-sqlite3";
 import { AppError } from "../errors.js";
@@ -180,7 +175,8 @@ function normalizePhotoRecord(value: unknown): PhotoRecord {
 
   const topicIds = readStringArray(source.topicIds);
   const topicId = readString(source.topicId) ?? topicIds?.[0];
-  const takenAt = readString(source.takenAt) ?? readString(source.createdAt) ?? now;
+  const takenAt =
+    readString(source.takenAt) ?? readString(source.createdAt) ?? now;
 
   return {
     id: readString(source.id) ?? randomUUID(),
@@ -234,7 +230,8 @@ function mergePhoto(input: PhotoInput, existing?: PhotoRecord): PhotoRecord {
   }
 
   const topicId = input.topicId ?? existing?.topicId;
-  const topicIds = input.topicIds ?? (topicId ? [topicId] : existing?.topicIds ?? []);
+  const topicIds =
+    input.topicIds ?? (topicId ? [topicId] : (existing?.topicIds ?? []));
   const mergedImage: PhotoImage = {
     url: image.url,
     key: image.key ?? existing?.image.key,
@@ -292,8 +289,7 @@ function toClientPhoto(photo: PhotoRecord): Record<string, unknown> {
     thumbnail: photo.image.url,
     preview: photo.image.url,
     alt: photo.title,
-    width:
-      typeof photo.exif?.width === "number" ? photo.exif.width : undefined,
+    width: typeof photo.exif?.width === "number" ? photo.exif.width : undefined,
     height:
       typeof photo.exif?.height === "number" ? photo.exif.height : undefined,
   };
@@ -399,7 +395,9 @@ export class PhotoStore {
     const operation = this.db.transaction(() => {
       for (const id of ids) {
         const row = this.db
-          .prepare<[string], PhotoRow>("SELECT id, data FROM photos WHERE id = ?")
+          .prepare<[string], PhotoRow>(
+            "SELECT id, data FROM photos WHERE id = ?",
+          )
           .get(id);
         if (!row) {
           missing.push(id);
@@ -426,7 +424,11 @@ export class PhotoStore {
     };
     await fs.mkdir(path.dirname(this.options.exportFile), { recursive: true });
     const tempFile = `${this.options.exportFile}.${process.pid}.${Date.now()}.tmp`;
-    await fs.writeFile(tempFile, `${JSON.stringify(payload, null, 2)}\n`, "utf8");
+    await fs.writeFile(
+      tempFile,
+      `${JSON.stringify(payload, null, 2)}\n`,
+      "utf8",
+    );
     await fs.rename(tempFile, this.options.exportFile);
     return {
       exportFile: this.options.exportFile,
@@ -454,13 +456,53 @@ export class PhotoStore {
     };
   }
 
-  private async mutate<T>(updater: (data: GalleryData) => T): Promise<T> {
-    let result: T;
-    const operation = this.writeQueue.then(async () => {
-      const data = await this.read();
-      result = updater(data);
-      data.updatedAt = new Date().toISOString();
-      await this.write(data);
+  private createSchema(): void {
+    this.db.exec(`
+      CREATE TABLE IF NOT EXISTS photos (
+        id TEXT PRIMARY KEY,
+        data TEXT NOT NULL,
+        sort_time TEXT NOT NULL,
+        created_at TEXT NOT NULL,
+        updated_at TEXT NOT NULL
+      );
+      CREATE TABLE IF NOT EXISTS topics (
+        id TEXT PRIMARY KEY,
+        data TEXT NOT NULL,
+        sort_order INTEGER
+      );
+      CREATE TABLE IF NOT EXISTS gallery_meta (
+        key TEXT PRIMARY KEY,
+        value TEXT NOT NULL
+      );
+    `);
+  }
+
+  private seedFromJsonIfEmpty(): void {
+    const count = this.db
+      .prepare<[], { count: number }>("SELECT COUNT(*) AS count FROM photos")
+      .get()?.count;
+    if (count || !existsSync(this.options.seedFile)) return;
+
+    let data: GalleryData;
+    try {
+      data = normalizeGallery(
+        JSON.parse(readFileSync(this.options.seedFile, "utf8")),
+      );
+    } catch (error) {
+      if (error instanceof SyntaxError) {
+        throw new AppError(
+          500,
+          "DATA_FILE_INVALID_JSON",
+          `Seed data file contains invalid JSON: ${this.options.seedFile}`,
+        );
+      }
+      throw error;
+    }
+
+    const operation = this.db.transaction(() => {
+      for (const topic of data.topics) this.insertTopic(topic);
+      for (const photo of data.photos) this.insertPhoto(photo);
+      this.setMeta("updatedAt", data.updatedAt ?? new Date().toISOString());
     });
     this.writeQueue = operation.catch(() => undefined);
     await operation;

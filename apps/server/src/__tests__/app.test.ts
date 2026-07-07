@@ -160,7 +160,11 @@ test("existing JSON seeds an empty database and is rewritten only by explicit ex
     const artifact = JSON.parse(await readFile(config.exportFile, "utf8")) as {
       generatedAt: string;
       topics: unknown[];
-      photos: Array<{ id: string; topicIds: string[]; asset: { original: string } }>;
+      photos: Array<{
+        id: string;
+        topicIds: string[];
+        asset: { original: string };
+      }>;
     };
     assert.ok(artifact.generatedAt);
     assert.equal(artifact.topics.length, 1);
@@ -169,7 +173,8 @@ test("existing JSON seeds an empty database and is rewritten only by explicit ex
       ["seed-topic"],
     );
     assert.equal(
-      artifact.photos.find((photo) => photo.id === "seed-photo")?.asset.original,
+      artifact.photos.find((photo) => photo.id === "seed-photo")?.asset
+        .original,
       "seed/original.jpg",
     );
     assert.ok(artifact.photos.some((photo) => photo.id !== "seed-photo"));

@@ -107,5 +107,4 @@ describe("admin API client auth headers", () => {
     expect(headers.get("authorization")).toBe("Bearer export-token");
     expect(headers.get("content-type")).toBe("application/json");
   });
-
 });
