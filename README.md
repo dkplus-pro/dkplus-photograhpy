@@ -46,6 +46,6 @@ The current gallery/admin refinement contract and review checklist live in [`doc
 
 ## Data flow
 
-`data/photos.json` is the editable source of truth for gallery metadata. The public app build reads that file and writes a generated static artifact at `apps/main/public/data/gallery.json`, which is ignored by git.
+`data/photos.json` is the editable seed/export artifact for gallery metadata. The server keeps the private editable source in SQLite, exposes a minimal public client payload at `/api/gallery` for local Main development, and writes the generated static artifact used by production Main builds at `apps/main/public/data/gallery.json` (ignored by git). That public payload intentionally omits admin-only fields such as record `createdAt`/`updatedAt`, raw upload/image records, SQLite metadata, and secrets.
 
 Set `GALLERY_CDN_BASE_URL` (or `VITE_CDN_BASE_URL`) and optional `GALLERY_ASSET_PREFIX` during `pnpm --filter @dkplus/main build` to rewrite relative image asset keys to CDN URLs in the generated static JSON.

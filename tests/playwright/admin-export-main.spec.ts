@@ -266,11 +266,13 @@ test("Admin authenticated export action writes the Main JSON artifact", async ({
   expect(response.ok()).toBeTruthy();
 
   const exported = JSON.parse(await readFile(exportFile, "utf8")) as {
-    photos: Array<Record<string, unknown> & {
+    photos: Array<
+      Record<string, unknown> & {
       id: string;
       topicIds: string[];
       asset: { original: string };
-    }>;
+      }
+    >;
     topics: Array<Record<string, unknown>>;
   };
   expect(Object.keys(exported).sort()).toEqual(["generatedAt", "photos", "topics"]);
@@ -281,9 +283,12 @@ test("Admin authenticated export action writes the Main JSON artifact", async ({
   expect(exported.photos[0]?.id).toBe("admin-seed-photo");
   expect(exported.photos[0]?.topicIds).toEqual(["editorial"]);
   expect(exported.photos[0]?.asset.original).toContain("data:image/svg+xml");
-  expect(exported.photos[0]).not.toHaveProperty("createdAt");
-  expect(exported.photos[0]).not.toHaveProperty("updatedAt");
-  expect(exported.photos[0]).not.toHaveProperty("image");
+  expect("updatedAt" in exported).toBe(false);
+  expect("createdAt" in exported.topics[0]).toBe(false);
+  expect("updatedAt" in exported.topics[0]).toBe(false);
+  expect("createdAt" in exported.photos[0]).toBe(false);
+  expect("updatedAt" in exported.photos[0]).toBe(false);
+  expect("image" in exported.photos[0]).toBe(false);
 });
 
 test("Admin API auth and upload work without mutating the exported JSON", async ({
