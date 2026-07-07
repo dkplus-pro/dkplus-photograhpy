@@ -121,7 +121,9 @@ const buildHeaders = (init?: RequestInit): Headers => {
   return headers;
 };
 
-const normalizePhoto = (input: ServerPhotoEnvelope): PhotoRecord => {
+export const normalizePhotoForAdmin = (
+  input: ServerPhotoEnvelope,
+): PhotoRecord => {
   const source = "photo" in input ? input.photo : input;
   const imageUrl = resolveDisplayUrl(
     source.imageUrl ?? source.image?.url ?? source.asset?.original,
@@ -187,8 +189,8 @@ const requestJson = async <T>(
 const unwrapPhotos = (
   value: ServerPhoto[] | { photos?: ServerPhoto[]; data?: ServerPhoto[] },
 ): PhotoRecord[] => {
-  if (Array.isArray(value)) return value.map(normalizePhoto);
-  return (value.photos ?? value.data ?? []).map(normalizePhoto);
+  if (Array.isArray(value)) return value.map(normalizePhotoForAdmin);
+  return (value.photos ?? value.data ?? []).map(normalizePhotoForAdmin);
 };
 
 export const createApiClient = (
@@ -202,7 +204,7 @@ export const createApiClient = (
     );
   },
   async createPhoto(payload) {
-    return normalizePhoto(
+    return normalizePhotoForAdmin(
       await requestJson<ServerPhotoEnvelope>(baseUrl, "/photos", {
         method: "POST",
         body: JSON.stringify(toServerPayload(payload)),
@@ -210,7 +212,7 @@ export const createApiClient = (
     );
   },
   async updatePhoto(id, payload) {
-    return normalizePhoto(
+    return normalizePhotoForAdmin(
       await requestJson<ServerPhotoEnvelope>(
         baseUrl,
         `/photos/${encodeURIComponent(id)}`,
@@ -262,9 +264,9 @@ export const createApiClient = (
     return {
       ...result,
       photo: result.photo
-        ? normalizePhoto(result.photo)
+        ? normalizePhotoForAdmin(result.photo)
         : result.photos?.[0]
-          ? normalizePhoto(result.photos[0])
+          ? normalizePhotoForAdmin(result.photos[0])
           : undefined,
     };
   },
