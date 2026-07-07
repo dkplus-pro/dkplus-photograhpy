@@ -1,10 +1,42 @@
+# Dependencies
 node_modules/
+.pnpm-store/
+
+# Build outputs and caches
 dist/
+build/
 .turbo/
+.vite/
+.cache/
+coverage/
+*.tsbuildinfo
+
+# Generated public gallery data
+apps/main/public/data/gallery.json
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# OS/editor noise
 .DS_Store
+Thumbs.db
+.idea/
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json
+
+# Local environment files and secrets
 .env
 .env.*
 !.env.example
 !.env.local.example
-apps/main/public/data/gallery.json
-coverage/
+
+# Local uploads/temp data
+uploads/
+tmp/
+temp/
