@@ -47,9 +47,13 @@ describe("admin list UI contract", () => {
 
   it("preserves preview, add/edit/upload modals, and empty feedback", () => {
     expect(appSource).toContain("setPreviewPhoto(photo)");
-    expect(appSource).toContain('title={editingId ? "编辑图片记录" : "新增图片记录"}');
-    expect(appSource).toContain('visible={isUploadOpen}');
-    expect(appSource).toContain('title={previewPhoto ? photoTitle(previewPhoto) : "图片预览"}');
+    expect(appSource).toContain(
+      'title={editingId ? "编辑图片记录" : "新增图片记录"}',
+    );
+    expect(appSource).toContain("visible={isUploadOpen}");
+    expect(appSource).toContain(
+      'title={previewPhoto ? photoTitle(previewPhoto) : "图片预览"}',
+    );
     expect(appSource).toContain(
       "暂无匹配图片，可调整标题、品牌、机型或专题筛选",
     );
@@ -66,5 +70,17 @@ describe("admin list UI contract", () => {
     expect(styles).toContain("@media (max-width: 920px)");
     expect(styles).not.toMatch(/linear-gradient\(135deg,\s*rgba\(22, 93, 255/);
     expect(styles).not.toMatch(/radial-gradient\([\s\S]*rgba\(20, 201, 201/);
+  });
+
+  it("supports creating a new topic from admin photo flows", () => {
+    expect(appSource).toContain("customTopics");
+    expect(appSource).toContain("topicDraft");
+    expect(appSource).toContain("normalizeTopicId");
+    expect(appSource).toContain('aria-label="新增专题"');
+    expect(appSource).toContain('placeholder="专题名称，如：编辑精选"');
+    expect(appSource).toContain('placeholder="专题 ID（可选，自动生成）"');
+    expect(appSource).toContain("setTopicFilter(topicId)");
+    expect(appSource).toContain("请先选择或新增专题，再按当前专题选择图片。");
+    expect(appSource).not.toContain("untitled-topic");
   });
 });

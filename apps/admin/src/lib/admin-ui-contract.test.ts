@@ -32,7 +32,9 @@ describe("admin gallery list contract", () => {
     expect(columnsSource).toContain('title: "拍摄日期"');
     expect(columnsSource).not.toContain('title: "文件信息"');
     expect(columnsSource).not.toContain('title: "EXIF"');
-    expect(columnsSource).not.toMatch(/imageSummary|formatFileSize|mimeType|未知格式|未知大小/);
+    expect(columnsSource).not.toMatch(
+      /imageSummary|formatFileSize|mimeType|未知格式|未知大小/,
+    );
     expect(columnsSource).not.toMatch(/aperture|shutter|iso|ISO|光圈|快门/);
   });
 
@@ -58,5 +60,17 @@ describe("admin gallery list contract", () => {
     expect(styles).toContain(".photo-cell__thumb:hover img");
     expect(styles).not.toMatch(/linear-gradient\(135deg,\s*rgba\(22, 93, 255/);
     expect(styles).not.toMatch(/radial-gradient\([\s\S]*rgba\(20, 201, 201/);
+  });
+
+  it("supports creating a new topic from admin photo flows", () => {
+    expect(appSource).toContain("customTopics");
+    expect(appSource).toContain("topicDraft");
+    expect(appSource).toContain("normalizeTopicId");
+    expect(appSource).toContain('aria-label="新增专题"');
+    expect(appSource).toContain('placeholder="专题名称，如：编辑精选"');
+    expect(appSource).toContain('placeholder="专题 ID（可选，自动生成）"');
+    expect(appSource).toContain("setTopicFilter(topicId)");
+    expect(appSource).toContain("请先选择或新增专题，再按当前专题选择图片。");
+    expect(appSource).not.toContain("untitled-topic");
   });
 });
