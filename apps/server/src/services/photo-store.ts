@@ -305,10 +305,19 @@ function toClientPhoto(photo: PhotoRecord): Record<string, unknown> {
     topicIds,
     takenAt: photo.takenAt ?? photo.exif?.capturedAt ?? photo.createdAt,
     location: photo.location,
-    tags: photo.tags?.length ? photo.tags : undefined,
     asset,
     exif: photo.exif,
-  });
+  };
+}
+
+function toClientTopic(topic: TopicRecord): Record<string, unknown> {
+  return {
+    id: topic.id,
+    title: topic.title,
+    description: topic.description,
+    coverPhotoId: topic.coverPhotoId,
+    sortOrder: topic.sortOrder,
+  };
 }
 
 type ClientGalleryPayload = {

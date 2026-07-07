@@ -34,50 +34,8 @@ const assertArray = (value, label) => {
   return value;
 };
 
-const compactObject = (entries, { keepEmptyArrays = false } = {}) =>
-  Object.fromEntries(
-    entries.filter(([, value]) => {
-      if (value === undefined || value === null || value === '') return false;
-      if (Array.isArray(value) && value.length === 0 && !keepEmptyArrays) {
-        return false;
-      }
-      if (
-        value &&
-        typeof value === 'object' &&
-        !Array.isArray(value) &&
-        Object.keys(value).length === 0
-      ) {
-        return false;
-      }
-      return true;
-    })
-  );
-
-const compactAsset = (asset) =>
-  compactObject([
-    ['original', asset.original],
-    ['thumbnail', asset.thumbnail],
-    ['preview', asset.preview],
-    ['alt', asset.alt],
-    ['width', asset.width],
-    ['height', asset.height]
-  ]);
-
-const compactExif = (exif) => {
-  if (!exif || typeof exif !== 'object' || Array.isArray(exif)) return undefined;
-  const compact = compactObject(Object.entries(exif));
-  return Object.keys(compact).length ? compact : undefined;
-};
-
-const compactTopic = (topic) =>
-  compactObject([
-    ['id', topic.id],
-    ['title', topic.title],
-    ['description', topic.description],
-    ['slug', topic.slug],
-    ['coverPhotoId', topic.coverPhotoId],
-    ['sortOrder', topic.sortOrder]
-  ]);
+const definedEntries = (value) =>
+  Object.fromEntries(Object.entries(value).filter(([, entry]) => entry !== undefined));
 
 export function normalizeGalleryData(input) {
   const topics = assertArray(input.topics ?? [], 'topics').map(normalizeTopic);
@@ -93,27 +51,33 @@ export function normalizeGalleryData(input) {
         ? [photo.topicId]
         : [];
     const takenAt = photo.takenAt ?? photo.exif?.capturedAt ?? photo.createdAt ?? new Date().toISOString();
-    return compactObject(
-      [
-        ['id', photo.id],
-        ['title', photo.title],
-        ['description', photo.description],
-        ['topicIds', topicIds],
-        ['takenAt', takenAt],
-        ['location', photo.location],
-        ['asset', compactAsset(asset)],
-        ['urls', {
-          original: resolveAssetUrl(asset.original),
-          thumbnail: resolveAssetUrl(asset.thumbnail ?? asset.original),
-          preview: resolveAssetUrl(asset.preview ?? asset.thumbnail ?? asset.original)
-        }],
-        ['exif', compactExif(photo.exif)]
-      ],
-      { keepEmptyArrays: true }
-    );
+    const publicPhoto = definedEntries({
+      id: photo.id,
+      title: photo.title,
+      description: photo.description,
+      topicIds,
+      takenAt,
+      location: photo.location,
+      asset,
+      exif: photo.exif,
+      urls: {
+        original: resolveAssetUrl(asset.original),
+        thumbnail: resolveAssetUrl(asset.thumbnail ?? asset.original),
+        preview: resolveAssetUrl(asset.preview ?? asset.thumbnail ?? asset.original)
+      }
+    });
+    return publicPhoto;
   });
 
-  const topics = assertArray(input.topics ?? [], 'topics').map(compactTopic);
+  const topics = assertArray(input.topics ?? [], 'topics').map((topic) =>
+    definedEntries({
+      id: topic.id,
+      title: topic.title,
+      description: topic.description,
+      coverPhotoId: topic.coverPhotoId,
+      sortOrder: topic.sortOrder
+    })
+  );
   const topicIds = new Set(topics.map((topic) => topic.id));
   for (const photo of photos) {
     for (const topicId of photo.topicIds) {
