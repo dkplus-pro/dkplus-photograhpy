@@ -68,8 +68,10 @@ test("main modal navigation and virtual rows keep bottom-edge contracts", () => 
   assert.match(modalNavPlacement, /transform:\s*translateY\(-50%\);/);
   assert.match(modalNavPlacement, /place-items:\s*center;/);
 
-  assert.match(virtualRows, /containerRef\s*=\s*useRef<HTMLDivElement \| null>\(null\)/);
-  assert.doesNotMatch(virtualRows, /topOffset\s*=\s*260/);
-  assert.match(virtualRows, /rows\.length \* measuredRowHeight \+ \(rows\.length - 1\) \* gap/);
-  assert.match(virtualRows, /Math\.ceil\(\(viewport\.scrollY \+ viewport\.height - container\.top\) \/ stride\) \+\s*overscan/s);
+test("modal navigation is vertically centered in the image pane", () => {
+  assert.match(cssBlock(".modal__image-wrap"), /align-items:\s*center;/);
+  assert.match(
+    styles,
+    /\.modal__nav\s*\{[\s\S]*?top:\s*50%;[\s\S]*?transform:\s*translateY\(-50%\);/,
+  );
 });
