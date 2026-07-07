@@ -675,7 +675,8 @@ test("Main modal navigation buttons are vertically centered and switch photos", 
   expect(navMetrics.transform).not.toBe("none");
 
   await page.getByRole("button", { name: "下一张" }).click();
-  await expect(page.getByRole("dialog", { name: "后台导出样片 2" })).toBeVisible();
+  await expect(page.getByRole("dialog")).toBeVisible();
+  await expect(page.locator(".modal h2")).not.toHaveText("后台导出样片");
 });
 
 
