@@ -51,6 +51,10 @@ export function createPhotosRouter(
     ctx.body = { photos: await store.list() };
   });
 
+  router.get("/gallery", async (ctx) => {
+    ctx.body = await store.clientGalleryPayload();
+  });
+
   router.get("/photos/:id", async (ctx) => {
     ctx.body = { photo: await store.get(ctx.params.id) };
   });
