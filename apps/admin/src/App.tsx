@@ -117,7 +117,9 @@ const captureDateTime = (photo: PhotoRecord): number => {
 const uniqueSorted = (values: Array<string | undefined>): string[] =>
   [
     ...new Set(
-      values.map((value) => value?.trim()).filter(Boolean) as string[],
+      values
+        .map((value) => value?.trim())
+        .filter((value): value is string => Boolean(value)),
     ),
   ].sort((left, right) => left.localeCompare(right, "zh-CN"));
 
@@ -734,7 +736,20 @@ function App() {
               columns={columns}
               data={filteredPhotos}
               noDataElement={
-                <Empty description="暂无匹配图片，可调整标题、品牌、机型或专题筛选" />
+                <div className="table-empty-state">
+                  <Empty description="暂无匹配图片" />
+                  <Button
+                    size="mini"
+                    onClick={() => {
+                      setTitleQuery("");
+                      setBrandFilter(allFilterValue);
+                      setModelFilter(allFilterValue);
+                      setTopicFilter(allFilterValue);
+                    }}
+                  >
+                    清除筛选
+                  </Button>
+                </div>
               }
               scroll={{ x: 1000 }}
               rowSelection={{

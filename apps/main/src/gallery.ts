@@ -152,7 +152,7 @@ const normalizeExif = (exif?: RawExif): ExifData | undefined => {
     lensModel: exif.lensModel ?? exif.lens,
     shutterSpeed: exif.shutterSpeed ?? exif.shutter,
   });
-  return Object.keys(normalized).length ? normalized : undefined;
+  return Object.keys(normalized).length ? (normalized as ExifData) : undefined;
 };
 
 const normalizeTopic = (topic: RawTopic): Topic | undefined => {
@@ -164,7 +164,7 @@ const normalizeTopic = (topic: RawTopic): Topic | undefined => {
     slug: topic.slug,
     coverPhotoId: topic.coverPhotoId,
     sortOrder: topic.sortOrder,
-  });
+  }) as Topic;
 };
 
 const deriveTopics = (photos: RawPhoto[]): Topic[] => {
@@ -237,7 +237,7 @@ const normalizePhoto = (photo: RawPhoto, index: number): ResolvedPhoto => {
         asset.original,
     },
     exif: normalizeExif(photo.exif),
-  });
+  }) as ResolvedPhoto;
 };
 
 export const normalizePayload = (payload: unknown): GalleryPayload => {

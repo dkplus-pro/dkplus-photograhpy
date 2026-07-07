@@ -343,6 +343,22 @@ textarea {
   vertical-align: middle;
 }
 
+.photos-table .arco-table-cell {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.photos-table .arco-empty {
+  padding: 28px 0;
+}
+
+.table-empty-state {
+  display: grid;
+  justify-items: center;
+  gap: 8px;
+}
+
 .image-preview-modal .arco-modal {
   max-width: min(920px, calc(100vw - 32px));
 }
