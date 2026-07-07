@@ -811,6 +811,14 @@ textarea {
     grid-template-columns: 1fr;
   }
 
+  .editor-form {
+    grid-template-columns: 1fr;
+  }
+
+  .editor-upload-card {
+    position: static;
+  }
+
   .toolbar-actions {
     justify-content: flex-start;
   }
@@ -834,6 +842,10 @@ textarea {
   .editor-upload-card__header {
     align-items: stretch;
     flex-direction: column;
+  }
+
+  .topic-create-row {
+    grid-template-columns: 1fr;
   }
 
   .photo-cell {

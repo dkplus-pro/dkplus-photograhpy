@@ -59,6 +59,28 @@ describe("admin list UI contract", () => {
     );
   });
 
+  it("uses a two-pane editorial image editor with visible helpers and EXIF status", () => {
+    expect(appSource).toContain('className="editor-modal"');
+    expect(appSource).toContain('className="editor-shell"');
+    expect(appSource).toContain('className="editor-upload-card"');
+    expect(appSource).toContain('className="editor-metadata-card"');
+    expect(appSource).toContain('aria-label="图片上传与预览"');
+    expect(appSource).toContain('aria-label="图片元数据"');
+    expect(appSource).toContain("EXIF 状态");
+    expect(appSource).toContain("等待选择本地图片后读取。");
+    expect(appSource).toContain("新增记录必须选择本地图片");
+    expect(appSource).toContain("专题会同步写入主专题字段");
+    expect(styles).toContain(".editor-modal .arco-modal");
+    expect(styles).toMatch(
+      /\.editor-form\s*\{[\s\S]*?grid-template-columns:\s*minmax\(280px,\s*0\.92fr\)\s*minmax\(340px,\s*1\.08fr\);/,
+    );
+    expect(styles).toContain(".editor-exif-status");
+    expect(styles).toContain(".editor-metadata-card");
+    expect(styles).toMatch(
+      /@media \(max-width: 920px\)[\s\S]*?\.editor-form\s*\{[\s\S]*?grid-template-columns:\s*1fr;/,
+    );
+  });
+
   it("keeps dense accessible gallery styling with unified neutral hover and focus tones", () => {
     expect(styles).toMatch(
       /\.photos-table \.arco-table-th,[\s\S]*?\.photos-table \.arco-table-td\s*\{[\s\S]*?padding-top:\s*6px;[\s\S]*?text-align:\s*center;[\s\S]*?vertical-align:\s*middle;/,
