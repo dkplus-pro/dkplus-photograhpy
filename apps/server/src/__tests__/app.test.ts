@@ -43,7 +43,7 @@ const forbiddenClientKeys = [
   "tags",
 ];
 
-function assertNoClientInternals(value: unknown, path = "$" ): void {
+function assertNoClientInternals(value: unknown, path = "$"): void {
   if (Array.isArray(value)) {
     value.forEach((entry, index) =>
       assertNoClientInternals(entry, `${path}[${index}]`),
@@ -205,7 +205,7 @@ test("existing JSON seeds an empty database and is rewritten only by explicit ex
     assert.equal(seeded.body.photos.length, 1);
     assert.equal(seeded.body.photos[0].id, "seed-photo");
     assert.equal(seeded.body.photos[0].topicId, "seed-topic");
-    assert.equal(seeded.body.photos[0].image.url, "seed/raw-admin-image.jpg");
+    assert.equal(seeded.body.photos[0].image.url, "seed/original.jpg");
 
     await authed(request(app).post("/api/photos"))
       .send({
@@ -235,10 +235,11 @@ test("existing JSON seeds an empty database and is rewritten only by explicit ex
     const artifact = JSON.parse(await readFile(config.exportFile, "utf8")) as {
       generatedAt: string;
       topics: Array<Record<string, unknown>>;
-      photos: Array<Record<string, unknown> & {
-        id: string;
-        topicIds: string[];
-        asset: { original: string };
+      photos: Array<
+        Record<string, unknown> & {
+          id: string;
+          topicIds: string[];
+          asset: { original: string };
         }
       >;
     };
@@ -248,7 +249,11 @@ test("existing JSON seeds an empty database and is rewritten only by explicit ex
       "topics",
     ]);
     assert.ok(artifact.generatedAt);
-    assert.deepEqual(Object.keys(artifact).sort(), ["generatedAt", "photos", "topics"]);
+    assert.deepEqual(Object.keys(artifact).sort(), [
+      "generatedAt",
+      "photos",
+      "topics",
+    ]);
     assert.equal(artifact.topics.length, 1);
     assert.equal("createdAt" in artifact.topics[0], false);
     assert.equal("updatedAt" in artifact.topics[0], false);
@@ -256,7 +261,9 @@ test("existing JSON seeds an empty database and is rewritten only by explicit ex
       artifact.photos.find((photo) => photo.id === "seed-photo")?.topicIds,
       ["seed-topic"],
     );
-    const seedPhoto = artifact.photos.find((photo) => photo.id === "seed-photo");
+    const seedPhoto = artifact.photos.find(
+      (photo) => photo.id === "seed-photo",
+    );
     assert.equal(seedPhoto?.asset.original, "seed/original.jpg");
     assert.equal("createdAt" in (seedPhoto ?? {}), false);
     assert.equal("updatedAt" in (seedPhoto ?? {}), false);

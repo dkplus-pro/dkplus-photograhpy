@@ -267,6 +267,20 @@ const PhotoModal = ({
             src={active.urls.preview}
             alt={active.asset.alt ?? active.title}
           />
+          <button
+            className="modal__nav modal__nav--prev"
+            onClick={() => selectOffset(-1)}
+            aria-label="上一张"
+          >
+            ‹
+          </button>
+          <button
+            className="modal__nav modal__nav--next"
+            onClick={() => selectOffset(1)}
+            aria-label="下一张"
+          >
+            ›
+          </button>
         </div>
         <aside className="modal__info">
           <button className="modal__close" onClick={onClose} aria-label="关闭">
@@ -287,20 +301,6 @@ const PhotoModal = ({
           </dl>
         </aside>
       </article>
-      <button
-        className="modal__nav modal__nav--prev"
-        onClick={() => selectOffset(-1)}
-        aria-label="上一张"
-      >
-        ‹
-      </button>
-      <button
-        className="modal__nav modal__nav--next"
-        onClick={() => selectOffset(1)}
-        aria-label="下一张"
-      >
-        ›
-      </button>
     </div>
   );
 };

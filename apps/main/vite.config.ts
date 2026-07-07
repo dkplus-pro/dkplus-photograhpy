@@ -17,22 +17,14 @@ export default defineConfig({
         target: apiProxyTarget,
         changeOrigin: true,
       },
-    },
-  },
-  build: {
-    outDir: "dist",
-    sourcemap: true,
-  },
-  server: {
-    proxy: {
-      "/api": {
-        target: apiProxyTarget,
-        changeOrigin: true,
-      },
       "/uploads": {
         target: apiProxyTarget,
         changeOrigin: true,
       },
     },
+  },
+  build: {
+    outDir: "dist",
+    sourcemap: true,
   },
 });

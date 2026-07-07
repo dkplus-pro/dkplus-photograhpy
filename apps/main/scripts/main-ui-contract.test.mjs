@@ -11,7 +11,6 @@ const virtualRows = readFileSync(
   path.join(dirname, "../src/useVirtualRows.ts"),
   "utf8",
 );
-const mainSource = readFileSync(path.join(dirname, "../src/main.tsx"), "utf8");
 
 const escapeRegExp = (value) => value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 
@@ -26,8 +25,6 @@ const cssBlocks = (selector) => {
 };
 
 const cssBlock = (selector) => cssBlocks(selector)[0];
-const lastCssBlock = (selector) => cssBlocks(selector).at(-1);
-
 
 test("main photo cards keep the compact no-zoom square-card contract", () => {
   assert.match(cssBlock(".virtual-grid__row"), /gap:\s*10px;/);
@@ -54,7 +51,7 @@ test("main photo cards keep the compact no-zoom square-card contract", () => {
 test("main data loading uses the API in dev and static JSON in builds", () => {
   assert.match(
     mainSource,
-    /import\.meta\.env\.DEV\s*\?\s*`\$\{apiBaseUrl\}\/photos`/,
+    /import\.meta\.env\.DEV\s*\?\s*`\$\{apiBaseUrl\}\/gallery`/,
   );
   assert.match(
     mainSource,
@@ -62,11 +59,13 @@ test("main data loading uses the API in dev and static JSON in builds", () => {
   );
 });
 
-test("main modal navigation buttons stay vertically centered", () => {
-  assert.match(styles, /\.modal__nav\s*\{[\s\S]*?top:\s*50%;/);
+test("main virtual rows are measured from the grid container", () => {
+  assert.match(virtualRows, /containerRef\s*=\s*useRef/);
+  assert.match(virtualRows, /getBoundingClientRect\(\)/);
+  assert.match(virtualRows, /viewport\.scrollY\s*-\s*container\.top/);
   assert.match(
-    styles,
-    /\.modal__nav\s*\{[\s\S]*?transform:\s*translateY\(-50%\);/,
+    virtualRows,
+    /rows\.length \* measuredRowHeight \+ \(rows\.length - 1\) \* gap/,
   );
 });
 

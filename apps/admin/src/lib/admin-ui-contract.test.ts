@@ -25,13 +25,19 @@ describe("admin gallery list contract", () => {
     expect(appSource).toContain("sorter: (left, right)");
     expect(appSource).not.toContain("更新：");
     expect(appSource).not.toMatch(/scroll=\{\{\s*x:\s*\d+,\s*y:/);
-    expect(appSource).toMatch(/scroll=\{\{\s*x:\s*1180\s*\}\}/);
+    expect(appSource).toMatch(/scroll=\{\{\s*x:\s*1260\s*\}\}/);
   });
 
   it("centers dense table content and exposes focus/empty feedback", () => {
-    expect(styles).toMatch(/\.photos-table \.arco-table-th,[\s\S]*?text-align:\s*center;/);
-    expect(styles).toMatch(/\.photos-table \.arco-table-th,[\s\S]*?vertical-align:\s*middle;/);
+    expect(styles).toMatch(
+      /\.photos-table \.arco-table-th,[\s\S]*?text-align:\s*center;/,
+    );
+    expect(styles).toMatch(
+      /\.photos-table \.arco-table-th,[\s\S]*?vertical-align:\s*middle;/,
+    );
     expect(styles).toContain(".photos-table .arco-empty");
-    expect(styles).toContain(".toolbar .arco-input-inner-wrapper:focus-within");
+    expect(styles).toContain(
+      ".toolbar :where(.arco-input-inner-wrapper, .arco-select-view):focus-within",
+    );
   });
 });

@@ -19,17 +19,23 @@ describe("admin list UI contract", () => {
 
   it("removes list height locking and update-date display", () => {
     expect(appSource).toContain('title: "拍摄日期"');
-    expect(appSource).toContain("sorter: (left, right) => takenAtTime(left) - takenAtTime(right)");
+    expect(appSource).toContain(
+      "sorter: (left, right) => takenAtTime(left) - takenAtTime(right)",
+    );
     expect(appSource).not.toContain("更新：");
     expect(appSource).not.toContain("y: 560");
-    expect(appSource).toContain("scroll={{ x: 1000 }}");
+    expect(appSource).toContain("scroll={{ x: 1260 }}");
   });
 
   it("centers dense table content and preserves focus/empty feedback", () => {
     expect(styles).toMatch(
       /\.photos-table \.arco-table-th,[\s\S]*?\.photos-table \.arco-table-td\s*\{[\s\S]*?padding-top:\s*6px;[\s\S]*?text-align:\s*center;[\s\S]*?vertical-align:\s*middle;/,
     );
-    expect(appSource).toContain("暂无匹配图片，可调整标题、品牌、机型或专题筛选");
-    expect(styles).toContain(".toolbar :where(.arco-input-inner-wrapper, .arco-select-view):focus-within");
+    expect(appSource).toContain(
+      "暂无匹配图片，可调整标题、品牌、机型或专题筛选",
+    );
+    expect(styles).toContain(
+      ".toolbar :where(.arco-input-inner-wrapper, .arco-select-view):focus-within",
+    );
   });
 });

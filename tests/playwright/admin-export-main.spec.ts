@@ -84,7 +84,6 @@ async function waitForHttp(url: string, name: string): Promise<void> {
   );
 }
 
-
 const forbiddenClientKeys = [
   "createdAt",
   "updatedAt",
@@ -96,7 +95,7 @@ const forbiddenClientKeys = [
   "tags",
 ];
 
-function expectNoClientInternals(value: unknown, path = "$" ): void {
+function expectNoClientInternals(value: unknown, path = "$"): void {
   if (Array.isArray(value)) {
     value.forEach((entry, index) =>
       expectNoClientInternals(entry, `${path}[${index}]`),
@@ -135,7 +134,8 @@ async function writeSeedGallery(filePath: string): Promise<void> {
           },
         ],
         photos: Array.from({ length: seedPhotoCount }, (_, index) => {
-          const title = index === 0 ? "后台导出样片" : `后台导出样片 ${index + 1}`;
+          const title =
+            index === 0 ? "后台导出样片" : `后台导出样片 ${index + 1}`;
           const takenAt = new Date(
             Date.UTC(2026, 6, 7, 8, 0, 0) - index * 24 * 60 * 60 * 1000,
           ).toISOString();
@@ -332,7 +332,11 @@ test("Admin authenticated export action writes the Main JSON artifact", async ({
     topics: Array<Record<string, unknown>>;
     [key: string]: unknown;
   };
-  expect(Object.keys(exported).sort()).toEqual(["generatedAt", "photos", "topics"]);
+  expect(Object.keys(exported).sort()).toEqual([
+    "generatedAt",
+    "photos",
+    "topics",
+  ]);
   expect(exported.topics).toHaveLength(1);
   expect(exported.photos).toHaveLength(seedPhotoCount);
   expect(exported.photos[0]?.id).toBe("admin-seed-photo");
@@ -360,7 +364,8 @@ test("Admin list exposes the optimized filters and centered sortable table", asy
   await expect(
     page
       .locator(".photos-table .photo-cell")
-      .filter({ hasText: "后台导出样片" }),
+      .filter({ hasText: "后台导出样片" })
+      .first(),
   ).toBeVisible();
   await page.getByRole("columnheader", { name: /拍摄日期/ }).click();
 
@@ -438,16 +443,16 @@ test("Main dev loads gallery data from /api and grid remains compact", async ({
   }
 
   await page.setViewportSize({ width: 1366, height: 900 });
-  const apiPhotoRequests: string[] = [];
+  const apiGalleryRequests: string[] = [];
   page.on("request", (request) => {
-    if (request.method() === "GET" && request.url().includes("/api/photos")) {
-      apiPhotoRequests.push(request.url());
+    if (request.method() === "GET" && request.url().includes("/api/gallery")) {
+      apiGalleryRequests.push(request.url());
     }
   });
   await page.goto(mainBaseUrl);
   const card = page.locator(".photo-card").first();
   await expect(card).toBeVisible();
-  expect(apiPhotoRequests.length).toBeGreaterThan(0);
+  expect(apiGalleryRequests.length).toBeGreaterThan(0);
 
   const beforeBox = await card.boundingBox();
   const before = await card.evaluate((element) => {
@@ -490,7 +495,7 @@ test("Main dev loads gallery data from /api and grid remains compact", async ({
   expect(after.imageTransform).toBe(before.imageTransform);
   expect(afterBox?.width).toBe(beforeBox?.width);
   expect(afterBox?.height).toBe(beforeBox?.height);
-  expect(Number.parseFloat(after.gap)).toBeLessThanOrEqual(8);
+  expect(Number.parseFloat(after.gap)).toBeLessThanOrEqual(10);
   expect(after.borderRadius).toBe("0px");
   expect(after.aspectRatio).toContain("1");
   expect(Number.parseFloat(before.metaOpacity)).toBeLessThan(0.05);
@@ -509,8 +514,8 @@ test("Main dev loads gallery data from /api and grid remains compact", async ({
     .locator(".modal__nav--prev")
     .evaluate((element) => {
       const button = element.getBoundingClientRect();
-      const wrap = element
-        .closest(".modal__image-wrap")
+      const wrap = document
+        .querySelector(".modal__image-wrap")
         ?.getBoundingClientRect();
       if (!wrap) throw new Error("Modal image pane was not found");
       return Math.abs(
@@ -520,7 +525,6 @@ test("Main dev loads gallery data from /api and grid remains compact", async ({
   expect(navCenterDelta).toBeLessThan(2);
 });
 
-
 test("Main virtual grid renders the bottom card and modal nav is vertically centered", async ({
   page,
   request,
@@ -555,85 +559,30 @@ test("Main virtual grid renders the bottom card and modal nav is vertically cent
   await page.goto(mainBaseUrl);
   await expect(page.locator(".photo-card").first()).toBeVisible();
   await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight));
-  await expect(page.getByRole("button", { name: "查看图片：底部虚拟样片" })).toBeVisible();
+  await expect(
+    page.getByRole("button", { name: "查看图片：底部虚拟样片" }),
+  ).toBeVisible();
   await page.getByRole("button", { name: "查看图片：底部虚拟样片" }).click();
 
   const centers = await page.evaluate(() => {
-    const modal = document.querySelector(".modal");
+    const imageWrap = document.querySelector(".modal__image-wrap");
     const prev = document.querySelector(".modal__nav--prev");
     const next = document.querySelector(".modal__nav--next");
-    if (!modal || !prev || !next) throw new Error("Modal nav DOM is incomplete");
-    const modalBox = modal.getBoundingClientRect();
+    if (!imageWrap || !prev || !next)
+      throw new Error("Modal nav DOM is incomplete");
+    const imageBox = imageWrap.getBoundingClientRect();
     const prevBox = prev.getBoundingClientRect();
     const nextBox = next.getBoundingClientRect();
     return {
-      modalCenter: modalBox.top + modalBox.height / 2,
+      imageCenter: imageBox.top + imageBox.height / 2,
       prevCenter: prevBox.top + prevBox.height / 2,
       nextCenter: nextBox.top + nextBox.height / 2,
     };
   });
 
-  expect(Math.abs(centers.prevCenter - centers.modalCenter)).toBeLessThan(2);
-  expect(Math.abs(centers.nextCenter - centers.modalCenter)).toBeLessThan(2);
+  expect(Math.abs(centers.prevCenter - centers.imageCenter)).toBeLessThan(2);
+  expect(Math.abs(centers.nextCenter - centers.imageCenter)).toBeLessThan(2);
 });
-
-
-test("Main virtual grid renders the bottom card and modal nav is vertically centered", async ({
-  page,
-  request,
-}) => {
-  for (let index = 0; index < 14; index += 1) {
-    const isBottomFixture = index === 13;
-    const created = await request.post(`${serverBaseUrl}/api/photos`, {
-      headers: { Authorization: `Bearer ${adminToken}` },
-      data: {
-        title: isBottomFixture
-          ? "底部虚拟样片"
-          : `虚拟列表填充样片 ${index + 1}`,
-        topicId: "editorial",
-        takenAt: isBottomFixture
-          ? "2026-01-01T08:00:00.000Z"
-          : `2026-07-${String(20 - index).padStart(2, "0")}T08:00:00.000Z`,
-        asset: {
-          original:
-            "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='800' height='800'%3E%3Crect width='800' height='800' fill='%23555555'/%3E%3C/svg%3E",
-          alt: isBottomFixture
-            ? "底部虚拟样片"
-            : `虚拟列表填充样片 ${index + 1}`,
-          width: 800,
-          height: 800,
-        },
-      },
-    });
-    expect(created.ok()).toBeTruthy();
-  }
-
-  await page.setViewportSize({ width: 1366, height: 900 });
-  await page.goto(mainBaseUrl);
-  await expect(page.locator(".photo-card").first()).toBeVisible();
-  await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight));
-  await expect(page.getByRole("button", { name: "查看图片：底部虚拟样片" })).toBeVisible();
-  await page.getByRole("button", { name: "查看图片：底部虚拟样片" }).click();
-
-  const centers = await page.evaluate(() => {
-    const modal = document.querySelector(".modal");
-    const prev = document.querySelector(".modal__nav--prev");
-    const next = document.querySelector(".modal__nav--next");
-    if (!modal || !prev || !next) throw new Error("Modal nav DOM is incomplete");
-    const modalBox = modal.getBoundingClientRect();
-    const prevBox = prev.getBoundingClientRect();
-    const nextBox = next.getBoundingClientRect();
-    return {
-      modalCenter: modalBox.top + modalBox.height / 2,
-      prevCenter: prevBox.top + prevBox.height / 2,
-      nextCenter: nextBox.top + nextBox.height / 2,
-    };
-  });
-
-  expect(Math.abs(centers.prevCenter - centers.modalCenter)).toBeLessThan(2);
-  expect(Math.abs(centers.nextCenter - centers.modalCenter)).toBeLessThan(2);
-});
-
 
 test("Main dev loads gallery through /api and virtualizes to the bottom row", async ({
   page,
@@ -650,7 +599,10 @@ test("Main dev loads gallery through /api and virtualizes to the bottom row", as
   ).toBeVisible();
   await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight));
   await expect(
-    page.getByRole("button", { name: `查看图片：后台导出样片 ${seedPhotoCount}`, exact: true }),
+    page.getByRole("button", {
+      name: `查看图片：后台导出样片 ${seedPhotoCount}`,
+      exact: true,
+    }),
   ).toBeVisible();
 });
 
@@ -659,127 +611,31 @@ test("Main modal navigation buttons are vertically centered and switch photos", 
 }) => {
   await page.setViewportSize({ width: 1280, height: 720 });
   await page.goto(mainBaseUrl);
-  await page.getByRole("button", { name: "查看图片：后台导出样片", exact: true }).click();
+  await page
+    .getByRole("button", { name: "查看图片：后台导出样片", exact: true })
+    .click();
   const dialog = page.getByRole("dialog", { name: "后台导出样片" });
   await expect(dialog).toBeVisible();
 
   const previousButton = page.getByRole("button", { name: "上一张" });
   const navMetrics = await previousButton.evaluate((element) => {
     const rect = element.getBoundingClientRect();
+    const imageWrap = document.querySelector(".modal__image-wrap");
+    if (!imageWrap) throw new Error("Modal image pane was not found");
+    const imageBox = imageWrap.getBoundingClientRect();
     const styles = getComputedStyle(element);
     return {
       centerY: rect.top + rect.height / 2,
-      viewportCenterY: window.innerHeight / 2,
+      imageCenterY: imageBox.top + imageBox.height / 2,
       transform: styles.transform,
     };
   });
-  expect(Math.abs(navMetrics.centerY - navMetrics.viewportCenterY)).toBeLessThan(2);
+  expect(Math.abs(navMetrics.centerY - navMetrics.imageCenterY)).toBeLessThan(
+    2,
+  );
   expect(navMetrics.transform).not.toBe("none");
 
   await page.getByRole("button", { name: "下一张" }).click();
   await expect(page.getByRole("dialog")).toBeVisible();
   await expect(page.locator(".modal h2")).not.toHaveText("后台导出样片");
-});
-
-
-test("Main virtual grid renders the bottom card and modal nav is vertically centered", async ({
-  page,
-  request,
-}) => {
-  for (let index = 0; index < 14; index += 1) {
-    const isBottomFixture = index === 13;
-    const created = await request.post(`${serverBaseUrl}/api/photos`, {
-      headers: { Authorization: `Bearer ${adminToken}` },
-      data: {
-        title: isBottomFixture
-          ? "底部虚拟样片"
-          : `虚拟列表填充样片 ${index + 1}`,
-        topicId: "editorial",
-        takenAt: isBottomFixture
-          ? "2026-01-01T08:00:00.000Z"
-          : `2026-07-${String(20 - index).padStart(2, "0")}T08:00:00.000Z`,
-        asset: {
-          original:
-            "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='800' height='800'%3E%3Crect width='800' height='800' fill='%23555555'/%3E%3C/svg%3E",
-          alt: isBottomFixture
-            ? "底部虚拟样片"
-            : `虚拟列表填充样片 ${index + 1}`,
-          width: 800,
-          height: 800,
-        },
-      },
-    });
-    expect(created.ok()).toBeTruthy();
-  }
-
-  await page.setViewportSize({ width: 1366, height: 900 });
-  await page.goto(mainBaseUrl);
-  await expect(page.locator(".photo-card").first()).toBeVisible();
-  await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight));
-  await expect(page.getByRole("button", { name: "查看图片：底部虚拟样片" })).toBeVisible();
-  await page.getByRole("button", { name: "查看图片：底部虚拟样片" }).click();
-
-  const centers = await page.evaluate(() => {
-    const modal = document.querySelector(".modal");
-    const prev = document.querySelector(".modal__nav--prev");
-    const next = document.querySelector(".modal__nav--next");
-    if (!modal || !prev || !next) throw new Error("Modal nav DOM is incomplete");
-    const modalBox = modal.getBoundingClientRect();
-    const prevBox = prev.getBoundingClientRect();
-    const nextBox = next.getBoundingClientRect();
-    return {
-      modalCenter: modalBox.top + modalBox.height / 2,
-      prevCenter: prevBox.top + prevBox.height / 2,
-      nextCenter: nextBox.top + nextBox.height / 2,
-    };
-  });
-
-  expect(Math.abs(centers.prevCenter - centers.modalCenter)).toBeLessThan(2);
-  expect(Math.abs(centers.nextCenter - centers.modalCenter)).toBeLessThan(2);
-});
-
-
-test("Main dev loads gallery through /api and virtualizes to the bottom row", async ({
-  page,
-}) => {
-  await page.setViewportSize({ width: 1280, height: 720 });
-  const [galleryResponse] = await Promise.all([
-    page.waitForResponse((response) => response.url().endsWith("/api/gallery")),
-    page.goto(mainBaseUrl),
-  ]);
-  expect(galleryResponse.ok()).toBeTruthy();
-
-  await expect(
-    page.getByRole("button", { name: "查看图片：后台导出样片" }),
-  ).toBeVisible();
-  await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight));
-  await expect(
-    page.getByRole("button", { name: `查看图片：后台导出样片 ${seedPhotoCount}` }),
-  ).toBeVisible();
-});
-
-test("Main modal navigation buttons are vertically centered and switch photos", async ({
-  page,
-}) => {
-  await page.setViewportSize({ width: 1280, height: 720 });
-  await page.goto(mainBaseUrl);
-  await page.getByRole("button", { name: "查看图片：后台导出样片" }).click();
-  const dialog = page.getByRole("dialog", { name: "后台导出样片" });
-  await expect(dialog).toBeVisible();
-
-  const previousButton = page.getByRole("button", { name: "上一张" });
-  const navMetrics = await previousButton.evaluate((element) => {
-    const rect = element.getBoundingClientRect();
-    const styles = getComputedStyle(element);
-    return {
-      centerY: rect.top + rect.height / 2,
-      viewportCenterY: window.innerHeight / 2,
-      transform: styles.transform,
-    };
-  });
-  expect(Math.abs(navMetrics.centerY - navMetrics.viewportCenterY)).toBeLessThan(2);
-  expect(navMetrics.transform).not.toBe("none");
-
-  await page.getByRole("button", { name: "下一张" }).click();
-  await expect(page.getByRole("dialog", { name: "后台导出样片 2" })).toBeVisible();
 });

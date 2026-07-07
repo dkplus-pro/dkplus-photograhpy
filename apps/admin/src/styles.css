@@ -122,7 +122,9 @@ textarea {
 
 .toolbar {
   display: grid;
-  grid-template-columns: minmax(220px, 1.1fr) minmax(140px, 0.75fr) minmax(140px, 0.75fr) minmax(150px, 0.8fr) auto;
+  grid-template-columns:
+    minmax(220px, 1.1fr) minmax(140px, 0.75fr) minmax(140px, 0.75fr)
+    minmax(150px, 0.8fr) auto;
   gap: 10px;
   align-items: center;
 }

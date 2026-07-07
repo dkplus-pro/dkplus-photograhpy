@@ -272,7 +272,11 @@ function compactObject(
   const result: Record<string, unknown> = {};
   for (const [key, value] of entries) {
     if (value === undefined || value === null || value === "") continue;
-    if (Array.isArray(value) && value.length === 0 && !options.keepEmptyArrays) {
+    if (
+      Array.isArray(value) &&
+      value.length === 0 &&
+      !options.keepEmptyArrays
+    ) {
       continue;
     }
     if (isRecord(value) && Object.keys(value).length === 0) continue;
@@ -292,7 +296,9 @@ function compactAsset(asset: PhotoAsset): Record<string, unknown> {
   ]);
 }
 
-function compactExif(exif: PhotoRecord["exif"]): Record<string, unknown> | undefined {
+function compactExif(
+  exif: PhotoRecord["exif"],
+): Record<string, unknown> | undefined {
   if (!exif) return undefined;
   const compact = compactObject(Object.entries(exif));
   return Object.keys(compact).length ? compact : undefined;
@@ -456,7 +462,6 @@ export class PhotoStore {
   async exportToJson(): Promise<GalleryExportResult> {
     const generatedAt = new Date().toISOString();
     const payload = await this.clientGalleryPayload(generatedAt);
-    const { photos, topics } = payload;
     await fs.mkdir(path.dirname(this.options.exportFile), { recursive: true });
     const tempFile = `${this.options.exportFile}.${process.pid}.${Date.now()}.tmp`;
     await fs.writeFile(

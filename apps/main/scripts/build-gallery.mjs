@@ -27,7 +27,7 @@ const joinPath = (...parts) => parts.map(trim).filter(Boolean).join("/");
 export function resolveAssetUrl(value) {
   const raw = String(value ?? "").trim();
   if (!raw) throw new Error("Asset path cannot be empty");
-  if (isAbsolute(raw)) return raw;
+  if (isAbsolute(raw) || raw.startsWith("/")) return raw;
   const hashIndex = raw.indexOf("#");
   const hash = hashIndex >= 0 ? raw.slice(hashIndex) : "";
   const withoutHash = hashIndex >= 0 ? raw.slice(0, hashIndex) : raw;
@@ -43,28 +43,29 @@ const assertArray = (value, label) => {
   return value;
 };
 
-const compactObject = (entries, { keepEmptyArrays = false } = {}) =>
+const compact = (value, { keepEmptyArrays = false } = {}) =>
   Object.fromEntries(
-    entries.filter(([, value]) => {
-      if (value === undefined || value === null || value === '') return false;
-      if (Array.isArray(value) && value.length === 0 && !keepEmptyArrays) {
+    Object.entries(value).filter(([, entry]) => {
+      if (entry === undefined || entry === null || entry === "") return false;
+      if (Array.isArray(entry) && entry.length === 0 && !keepEmptyArrays) {
         return false;
       }
       if (
-        value &&
-        typeof value === 'object' &&
-        !Array.isArray(value) &&
-        Object.keys(value).length === 0
+        entry &&
+        typeof entry === "object" &&
+        !Array.isArray(entry) &&
+        Object.keys(entry).length === 0
       ) {
         return false;
       }
       return true;
-    })
+    }),
   );
 
 const normalizeExif = (value) => {
-  if (!value || typeof value !== "object" || Array.isArray(value))
+  if (!value || typeof value !== "object" || Array.isArray(value)) {
     return undefined;
+  }
   const normalized = compact({
     cameraBrand: value.cameraBrand ?? value.cameraMake,
     cameraModel: value.cameraModel,
@@ -113,7 +114,7 @@ const normalizeTopic = (topic, index) => {
 
 export function normalizeGalleryData(input) {
   const topics = assertArray(input.topics ?? [], "topics").map(normalizeTopic);
-  const topicIds = new Set(topics.map((topic) => topic.id));
+  const knownTopicIds = new Set(topics.map((topic) => topic.id));
   const photos = assertArray(input.photos, "photos").map((photo, index) => {
     const asset = normalizeAsset(photo);
     if (!photo.id || !photo.title || !asset?.original) {
@@ -131,37 +132,38 @@ export function normalizeGalleryData(input) {
       photo.exif?.capturedAt ??
       photo.createdAt ??
       new Date().toISOString();
-    return compact({
-      id: photo.id,
-      title: photo.title,
-      description: photo.description,
-      topicIds,
-      takenAt,
-      location: photo.location,
-      tags:
-        Array.isArray(photo.tags) && photo.tags.length ? photo.tags : undefined,
-      asset,
-      urls: {
-        original: resolveAssetUrl(asset.original),
-        thumbnail: resolveAssetUrl(asset.thumbnail ?? asset.original),
-        preview: resolveAssetUrl(
-          asset.preview ?? asset.thumbnail ?? asset.original,
-        ),
+    return compact(
+      {
+        id: photo.id,
+        title: photo.title,
+        description: photo.description,
+        topicIds,
+        takenAt,
+        location: photo.location,
+        asset,
+        urls: {
+          original: resolveAssetUrl(asset.original),
+          thumbnail: resolveAssetUrl(asset.thumbnail ?? asset.original),
+          preview: resolveAssetUrl(
+            asset.preview ?? asset.thumbnail ?? asset.original,
+          ),
+        },
+        exif: normalizeExif(photo.exif),
       },
-      exif: normalizeExif(photo.exif),
-    });
+      { keepEmptyArrays: true },
+    );
   });
 
-  const topics = assertArray(input.topics ?? [], 'topics').map(compactTopic);
-  const topicIds = new Set(topics.map((topic) => topic.id));
   for (const photo of photos) {
     for (const topicId of photo.topicIds) {
-      if (!topicIds.has(topicId))
+      if (!knownTopicIds.has(topicId)) {
         throw new Error(
           `Photo ${photo.id} references unknown topic ${topicId}`,
         );
+      }
     }
   }
+
   return {
     generatedAt: new Date().toISOString(),
     topics,

@@ -20,81 +20,11 @@ export const resolveDisplayAssetUrl = (value: string): string => {
   const hash = hashIndex >= 0 ? raw.slice(hashIndex) : "";
   const withoutHash = hashIndex >= 0 ? raw.slice(0, hashIndex) : raw;
   const queryIndex = withoutHash.indexOf("?");
-  const pathname = queryIndex >= 0 ? withoutHash.slice(0, queryIndex) : withoutHash;
+  const pathname =
+    queryIndex >= 0 ? withoutHash.slice(0, queryIndex) : withoutHash;
   const query = queryIndex >= 0 ? withoutHash.slice(queryIndex) : "";
   return `${fallbackCdnBaseUrl}/${trimSlashes(pathname)}${query}${hash}`;
 };
-
-const withResolvedUrls = (photo: ResolvedPhoto): ResolvedPhoto => ({
-  ...photo,
-  urls: photo.urls ?? {
-    original: resolveDisplayAssetUrl(photo.asset.original),
-    thumbnail: resolveDisplayAssetUrl(photo.asset.thumbnail ?? photo.asset.original),
-    preview: resolveDisplayAssetUrl(
-      photo.asset.preview ?? photo.asset.thumbnail ?? photo.asset.original,
-    ),
-  },
-});
-
-const fallbackCdnBaseUrl = "https://images.unsplash.com";
-const isAbsoluteUrl = (value: string): boolean =>
-  /^[a-z][a-z\d+.-]*:/i.test(value) || value.startsWith("//");
-
-const trimSlashes = (value: string): string => value.replace(/^\/+|\/+$/g, "");
-
-export const resolveDisplayAssetUrl = (value: string): string => {
-  const raw = value.trim();
-  if (!raw) return raw;
-  if (isAbsoluteUrl(raw) || raw.startsWith("/")) return raw;
-  const hashIndex = raw.indexOf("#");
-  const hash = hashIndex >= 0 ? raw.slice(hashIndex) : "";
-  const withoutHash = hashIndex >= 0 ? raw.slice(0, hashIndex) : raw;
-  const queryIndex = withoutHash.indexOf("?");
-  const pathname = queryIndex >= 0 ? withoutHash.slice(0, queryIndex) : withoutHash;
-  const query = queryIndex >= 0 ? withoutHash.slice(queryIndex) : "";
-  return `${fallbackCdnBaseUrl}/${trimSlashes(pathname)}${query}${hash}`;
-};
-
-const withResolvedUrls = (photo: ResolvedPhoto): ResolvedPhoto => ({
-  ...photo,
-  urls: photo.urls ?? {
-    original: resolveDisplayAssetUrl(photo.asset.original),
-    thumbnail: resolveDisplayAssetUrl(photo.asset.thumbnail ?? photo.asset.original),
-    preview: resolveDisplayAssetUrl(
-      photo.asset.preview ?? photo.asset.thumbnail ?? photo.asset.original,
-    ),
-  },
-});
-
-const fallbackCdnBaseUrl = "https://images.unsplash.com";
-const isAbsoluteUrl = (value: string): boolean =>
-  /^[a-z][a-z\d+.-]*:/i.test(value) || value.startsWith("//");
-
-const trimSlashes = (value: string): string => value.replace(/^\/+|\/+$/g, "");
-
-export const resolveDisplayAssetUrl = (value: string): string => {
-  const raw = value.trim();
-  if (!raw) return raw;
-  if (isAbsoluteUrl(raw) || raw.startsWith("/")) return raw;
-  const hashIndex = raw.indexOf("#");
-  const hash = hashIndex >= 0 ? raw.slice(hashIndex) : "";
-  const withoutHash = hashIndex >= 0 ? raw.slice(0, hashIndex) : raw;
-  const queryIndex = withoutHash.indexOf("?");
-  const pathname = queryIndex >= 0 ? withoutHash.slice(0, queryIndex) : withoutHash;
-  const query = queryIndex >= 0 ? withoutHash.slice(queryIndex) : "";
-  return `${fallbackCdnBaseUrl}/${trimSlashes(pathname)}${query}${hash}`;
-};
-
-const withResolvedUrls = (photo: ResolvedPhoto): ResolvedPhoto => ({
-  ...photo,
-  urls: photo.urls ?? {
-    original: resolveDisplayAssetUrl(photo.asset.original),
-    thumbnail: resolveDisplayAssetUrl(photo.asset.thumbnail ?? photo.asset.original),
-    preview: resolveDisplayAssetUrl(
-      photo.asset.preview ?? photo.asset.thumbnail ?? photo.asset.original,
-    ),
-  },
-});
 
 export const tabLabels = {
   latest: "最新",
@@ -181,8 +111,8 @@ const normalizeExif = (exif?: RawExif): ExifData | undefined => {
     cameraBrand: exif.cameraBrand ?? exif.cameraMake,
     lensModel: exif.lensModel ?? exif.lens,
     shutterSpeed: exif.shutterSpeed ?? exif.shutter,
-  }) as ExifData;
-  return Object.keys(normalized).length ? normalized : undefined;
+  });
+  return Object.keys(normalized).length ? (normalized as ExifData) : undefined;
 };
 
 const normalizeTopic = (topic: RawTopic): Topic | undefined => {
@@ -218,6 +148,19 @@ const deriveTopics = (photos: RawPhoto[]): Topic[] => {
   }
   return [...topics.values()];
 };
+
+const resolveUrls = (
+  asset: PhotoAsset,
+  urls?: Partial<ResolvedPhoto["urls"]>,
+): ResolvedPhoto["urls"] => ({
+  original: resolveDisplayAssetUrl(urls?.original ?? asset.original),
+  thumbnail: resolveDisplayAssetUrl(
+    urls?.thumbnail ?? asset.thumbnail ?? asset.original,
+  ),
+  preview: resolveDisplayAssetUrl(
+    urls?.preview ?? asset.preview ?? asset.thumbnail ?? asset.original,
+  ),
+});
 
 const normalizePhoto = (photo: RawPhoto, index: number): ResolvedPhoto => {
   const id = photo.id ?? `photo-${index}`;
@@ -255,17 +198,8 @@ const normalizePhoto = (photo: RawPhoto, index: number): ResolvedPhoto => {
     topicIds,
     takenAt,
     location: photo.location,
-    tags: photo.tags?.length ? photo.tags : undefined,
     asset,
-    urls: {
-      original: photo.urls?.original ?? asset.original,
-      thumbnail: photo.urls?.thumbnail ?? asset.thumbnail ?? asset.original,
-      preview:
-        photo.urls?.preview ??
-        asset.preview ??
-        asset.thumbnail ??
-        asset.original,
-    },
+    urls: resolveUrls(asset, photo.urls),
     exif: normalizeExif(photo.exif),
   }) as ResolvedPhoto;
 };

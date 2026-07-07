@@ -105,15 +105,6 @@ const randomId = () => `${Date.now().toString(36)}-${crypto.randomUUID()}`;
 
 const allFilterValue = "all";
 
-const captureDateValue = (photo: PhotoRecord): string | undefined =>
-  photo.takenAt ?? photo.exif?.capturedAt ?? photo.createdAt;
-
-const captureDateTime = (photo: PhotoRecord): number => {
-  const value = captureDateValue(photo);
-  const timestamp = value ? Date.parse(value) : Number.NaN;
-  return Number.isFinite(timestamp) ? timestamp : 0;
-};
-
 const uniqueSorted = (values: Array<string | undefined>): string[] =>
   [
     ...new Set(
@@ -215,23 +206,15 @@ function App() {
     return [...map.entries()].sort((a, b) => a[1].localeCompare(b[1], "zh-CN"));
   }, [photos]);
 
-  const cameraBrands = useMemo(() => {
-    const brands = new Set<string>();
-    for (const photo of photos) {
-      const brand = photo.exif?.cameraMake?.trim();
-      if (brand) brands.add(brand);
-    }
-    return [...brands].sort((a, b) => a.localeCompare(b, "zh-CN"));
-  }, [photos]);
+  const cameraBrands = useMemo(
+    () => uniqueSorted(photos.map((photo) => photo.exif?.cameraMake)),
+    [photos],
+  );
 
-  const cameraModels = useMemo(() => {
-    const models = new Set<string>();
-    for (const photo of photos) {
-      const model = photo.exif?.cameraModel?.trim();
-      if (model) models.add(model);
-    }
-    return [...models].sort((a, b) => a.localeCompare(b, "zh-CN"));
-  }, [photos]);
+  const cameraModels = useMemo(
+    () => uniqueSorted(photos.map((photo) => photo.exif?.cameraModel)),
+    [photos],
+  );
 
   const filteredPhotos = useMemo(() => {
     const normalizedTitle = titleFilter.trim().toLowerCase();
@@ -250,8 +233,7 @@ function App() {
         .join(" ")
         .toLowerCase();
       const matchesTitle =
-        !normalizedTitle ||
-        photoTitle(photo).toLowerCase().includes(normalizedTitle);
+        !normalizedTitle || searchableTitle.includes(normalizedTitle);
       return matchesTopic && matchesBrand && matchesModel && matchesTitle;
     });
   }, [brandFilter, modelFilter, photos, titleFilter, topicFilter]);
@@ -675,7 +657,10 @@ function App() {
               onChange={(value) => setBrandFilter(String(value))}
               options={[
                 { label: "全部品牌", value: "all" },
-                ...cameraBrands.map((brand) => ({ label: brand, value: brand })),
+                ...cameraBrands.map((brand) => ({
+                  label: brand,
+                  value: brand,
+                })),
               ]}
             />
             <Select
@@ -684,14 +669,16 @@ function App() {
               onChange={(value) => setModelFilter(String(value))}
               options={[
                 { label: "全部机型", value: "all" },
-                ...cameraModels.map((model) => ({ label: model, value: model })),
+                ...cameraModels.map((model) => ({
+                  label: model,
+                  value: model,
+                })),
               ]}
             />
             <Select
               aria-label="按专题筛选"
               value={topicFilter}
               onChange={(value) => setTopicFilter(String(value))}
-              aria-label="按专题筛选"
               options={[
                 { label: "全部专题", value: allFilterValue },
                 ...topics.map(([id, title]) => ({ label: title, value: id })),
@@ -737,11 +724,11 @@ function App() {
               data={filteredPhotos}
               noDataElement={
                 <div className="table-empty-state">
-                  <Empty description="暂无匹配图片" />
+                  <Empty description="暂无匹配图片，可调整标题、品牌、机型或专题筛选" />
                   <Button
                     size="mini"
                     onClick={() => {
-                      setTitleQuery("");
+                      setTitleFilter("");
                       setBrandFilter(allFilterValue);
                       setModelFilter(allFilterValue);
                       setTopicFilter(allFilterValue);
@@ -751,7 +738,7 @@ function App() {
                   </Button>
                 </div>
               }
-              scroll={{ x: 1000 }}
+              scroll={{ x: 1260 }}
               rowSelection={{
                 type: "checkbox",
                 checkAll: true,
