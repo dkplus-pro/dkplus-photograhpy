@@ -18,6 +18,7 @@ async function makeConfig(): Promise<{ config: ServerConfig; root: string }> {
       adminToken: "test-token",
       corsOrigins: ["http://localhost:5174"],
       dataFile: path.join(root, "photos.json"),
+      exportFile: path.join(root, "client", "photos.json"),
       uploadDir: path.join(root, "uploads"),
       publicBaseUrl: "http://cdn.test/uploads",
       cos: { enabled: false, prefix: "photos" },
@@ -92,6 +93,42 @@ test("photo CRUD and batch delete persist JSON records", async () => {
     await rm(root, { recursive: true, force: true });
   }
 });
+
+test("authenticated export writes the client JSON artifact on demand", async () => {
+  const { config, root } = await makeConfig();
+  try {
+    const app = createApp(config).callback();
+
+    await authed(request(app).post("/api/photos"))
+      .send({
+        title: "Exported frame",
+        image: { url: "https://cdn.example/exported.jpg", storage: "remote" },
+      })
+      .expect(201);
+
+    await assert.rejects(readFile(config.exportFile, "utf8"), {
+      code: "ENOENT",
+    });
+
+    const response = await authed(request(app).post("/api/gallery/export"))
+      .expect(200);
+
+    assert.equal(response.body.export.photos, 1);
+    assert.equal(response.body.export.topics, 0);
+    assert.match(response.body.export.exportedAt, /^\d{4}-\d{2}-\d{2}T/);
+
+    const exported = JSON.parse(await readFile(config.exportFile, "utf8")) as {
+      photos: Array<{ title: string }>;
+      topics: unknown[];
+    };
+    assert.equal(exported.photos.length, 1);
+    assert.equal(exported.photos[0].title, "Exported frame");
+    assert.deepEqual(exported.topics, []);
+  } finally {
+    await rm(root, { recursive: true, force: true });
+  }
+});
+
 
 test("multipart upload stores local file, extracts safe EXIF fallback, and creates photo", async () => {
   const { config, root } = await makeConfig();

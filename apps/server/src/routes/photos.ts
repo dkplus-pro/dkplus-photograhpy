@@ -44,6 +44,7 @@ function field(value: unknown): string | undefined {
 export function createPhotosRouter(
   store: PhotoStore,
   uploads: UploadService,
+  options: { exportFile: string },
 ): Router {
   const router = new Router({ prefix: "/api" });
 
@@ -87,6 +88,18 @@ export function createPhotosRouter(
   router.post("/photos/batch-delete", async (ctx) => {
     const result = await store.batchDelete(validateIds(body(ctx)));
     ctx.body = result;
+  });
+
+  router.post("/gallery/export", async (ctx) => {
+    const result = await store.exportToClient(options.exportFile);
+    ctx.body = {
+      export: {
+        exportedAt: result.exportedAt,
+        updatedAt: result.updatedAt,
+        photos: result.photoCount,
+        topics: result.topicCount,
+      },
+    };
   });
 
   router.post("/uploads", upload.any(), async (ctx) => {

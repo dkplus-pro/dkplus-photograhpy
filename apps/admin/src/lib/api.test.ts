@@ -78,4 +78,32 @@ describe("admin API client auth headers", () => {
     const headers = new Headers(init?.headers);
     expect(headers.get("authorization")).toBe("Bearer stored-token");
   });
+
+  it("posts the explicit export-to-client request with admin auth", async () => {
+    vi.stubEnv("VITE_ADMIN_TOKEN", "test-token");
+    const fetchMock = vi.fn(async (input: unknown, init?: RequestInit) => {
+      void input;
+      void init;
+      return jsonResponse({
+        export: {
+          exportedAt: "2026-07-07T06:30:00.000Z",
+          photos: 2,
+          topics: 1,
+        },
+      });
+    });
+    vi.stubGlobal("fetch", fetchMock);
+
+    const result = await createApiClient("http://api.test/api").exportToClient();
+
+    expect(result.photos).toBe(2);
+    expect(fetchMock).toHaveBeenCalledOnce();
+    const [url, init] = fetchMock.mock.calls[0] ?? [];
+    expect(url).toBe("http://api.test/api/gallery/export");
+    expect(init?.method).toBe("POST");
+    const headers = new Headers(init?.headers);
+    expect(headers.get("authorization")).toBe("Bearer test-token");
+    expect(headers.get("content-type")).toBe("application/json");
+  });
+
 });

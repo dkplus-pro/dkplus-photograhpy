@@ -11,12 +11,20 @@ export interface UploadResult {
   exif?: PhotoRecord["exif"];
 }
 
+export interface ExportToClientResult {
+  exportedAt: string;
+  updatedAt?: string;
+  photos: number;
+  topics: number;
+}
+
 export interface ApiClient {
   listPhotos: () => Promise<PhotoRecord[]>;
   createPhoto: (payload: PhotoPayload) => Promise<PhotoRecord>;
   updatePhoto: (id: string, payload: PhotoPayload) => Promise<PhotoRecord>;
   deletePhoto: (id: string) => Promise<void>;
   batchDelete: (ids: string[]) => Promise<void>;
+  exportToClient: () => Promise<ExportToClientResult>;
   uploadPhoto: (
     preview: UploadPreview,
     photoId?: string,
@@ -158,10 +166,13 @@ const requestJson = async <T>(
     let message = `${response.status} ${response.statusText}`;
     try {
       const body = (await response.json()) as {
-        error?: string;
+        error?: string | { message?: string };
         message?: string;
       };
-      message = body.error ?? body.message ?? message;
+      message =
+        typeof body.error === "string"
+          ? body.error
+          : body.error?.message ?? body.message ?? message;
     } catch {
       // Keep HTTP status fallback.
     }
@@ -219,6 +230,14 @@ export const createApiClient = (
       method: "POST",
       body: JSON.stringify({ ids }),
     });
+  },
+  async exportToClient() {
+    const result = await requestJson<{ export: ExportToClientResult }>(
+      baseUrl,
+      "/gallery/export",
+      { method: "POST" },
+    );
+    return result.export;
   },
   async uploadPhoto(preview, photoId) {
     const body = new FormData();

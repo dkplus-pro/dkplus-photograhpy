@@ -4,6 +4,13 @@ import path from "node:path";
 import { AppError } from "../errors.js";
 import type { GalleryData, PhotoInput, PhotoRecord } from "../types/gallery.js";
 
+export type GalleryExportResult = {
+  exportedAt: string;
+  updatedAt?: string;
+  photoCount: number;
+  topicCount: number;
+};
+
 function emptyGallery(): GalleryData {
   return { photos: [], topics: [], updatedAt: new Date(0).toISOString() };
 }
@@ -59,6 +66,13 @@ function mergePhoto(input: PhotoInput, existing?: PhotoRecord): PhotoRecord {
     },
     exif: input.exif ?? existing?.exif,
   };
+}
+
+async function writeGalleryFile(filePath: string, data: GalleryData): Promise<void> {
+  await fs.mkdir(path.dirname(filePath), { recursive: true });
+  const tempFile = `${filePath}.${process.pid}.${Date.now()}.tmp`;
+  await fs.writeFile(tempFile, `${JSON.stringify(data, null, 2)}\n`, "utf8");
+  await fs.rename(tempFile, filePath);
 }
 
 export class PhotoStore {
@@ -166,6 +180,24 @@ export class PhotoStore {
     return result;
   }
 
+  async exportToClient(exportFile: string): Promise<GalleryExportResult> {
+    await this.writeQueue;
+    const data = await this.read();
+    const exportedAt = new Date().toISOString();
+    const payload: GalleryData = {
+      photos: data.photos,
+      topics: data.topics,
+      updatedAt: data.updatedAt ?? exportedAt,
+    };
+    await writeGalleryFile(exportFile, payload);
+    return {
+      exportedAt,
+      updatedAt: payload.updatedAt,
+      photoCount: payload.photos.length,
+      topicCount: payload.topics.length,
+    };
+  }
+
   private async mutate<T>(updater: (data: GalleryData) => T): Promise<T> {
     let result: T;
     const operation = this.writeQueue.then(async () => {
@@ -180,9 +212,6 @@ export class PhotoStore {
   }
 
   private async write(data: GalleryData): Promise<void> {
-    await fs.mkdir(path.dirname(this.filePath), { recursive: true });
-    const tempFile = `${this.filePath}.${process.pid}.${Date.now()}.tmp`;
-    await fs.writeFile(tempFile, `${JSON.stringify(data, null, 2)}\n`, "utf8");
-    await fs.rename(tempFile, this.filePath);
+    await writeGalleryFile(this.filePath, data);
   }
 }

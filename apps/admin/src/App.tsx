@@ -118,6 +118,7 @@ function App() {
   const [topicFilter, setTopicFilter] = useState("all");
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
+  const [isExporting, setIsExporting] = useState(false);
   const [isEditorOpen, setIsEditorOpen] = useState(false);
   const [isUploadOpen, setIsUploadOpen] = useState(false);
   const [confirmAction, setConfirmAction] = useState<{
@@ -387,6 +388,24 @@ function App() {
     }
   };
 
+  const exportToClient = async () => {
+    setIsExporting(true);
+    try {
+      const result = await api.exportToClient();
+      pushMessage(
+        "success",
+        `已导出 ${result.photos} 张图片到客户端 JSON，Main 将在下次构建时使用。`,
+      );
+    } catch (error) {
+      pushMessage(
+        "error",
+        error instanceof Error ? error.message : "导出到客户端失败",
+      );
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
   const requestDeletePhoto = (photo: PhotoRecord) => {
     setConfirmAction({
       title: "删除图片记录",
@@ -544,6 +563,13 @@ function App() {
               新增图片
             </Button>
             <Button onClick={() => setIsUploadOpen(true)}>上传图片</Button>
+            <Button
+              type="outline"
+              loading={isExporting}
+              onClick={() => void exportToClient()}
+            >
+              导出到客户端
+            </Button>
           </Space>
         </header>
 

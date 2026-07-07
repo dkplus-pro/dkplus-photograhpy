@@ -22,6 +22,7 @@ export type ServerConfig = {
   adminToken?: string;
   corsOrigins: string[];
   dataFile: string;
+  exportFile: string;
   uploadDir: string;
   publicBaseUrl?: string;
   cos: CosConfig;
@@ -53,6 +54,10 @@ export function loadConfig(): ServerConfig {
     process.cwd(),
     process.env.DATA_FILE ?? "../../data/photos.json",
   );
+  const exportFile = path.resolve(
+    process.cwd(),
+    process.env.EXPORT_FILE ?? process.env.DATA_FILE ?? "../../data/photos.json",
+  );
   const uploadDir = path.resolve(
     process.cwd(),
     process.env.UPLOAD_DIR ?? "./uploads",
@@ -65,6 +70,7 @@ export function loadConfig(): ServerConfig {
     adminToken: optional(process.env.ADMIN_TOKEN),
     corsOrigins: parseList(process.env.CORS_ORIGINS),
     dataFile,
+    exportFile,
     uploadDir,
     publicBaseUrl: optional(process.env.PUBLIC_BASE_URL),
     cos: {
