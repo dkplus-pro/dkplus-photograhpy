@@ -126,10 +126,10 @@ const VirtualPhotoGrid = ({
 
 const TopicGrid = ({
   data,
-  onOpen,
+  onSelectTopic,
 }: {
   data: GalleryPayload;
-  onOpen: (photo: ResolvedPhoto) => void;
+  onSelectTopic: (topicId: string) => void;
 }) => (
   <div className="topic-grid" aria-label="专题列表">
     {data.topics.map((topic) => {
@@ -141,8 +141,9 @@ const TopicGrid = ({
         <button
           className="topic-card"
           key={topic.id}
-          onClick={() => cover && onOpen(cover)}
+          onClick={() => onSelectTopic(topic.id)}
           disabled={!cover}
+          aria-label={`查看专题：${topic.title}`}
         >
           {cover ? (
             <img
@@ -162,6 +163,35 @@ const TopicGrid = ({
       );
     })}
   </div>
+);
+
+const TopicDetail = ({
+  topic,
+  photos,
+  onBack,
+  onOpen,
+}: {
+  topic: GalleryPayload["topics"][number];
+  photos: ResolvedPhoto[];
+  onBack: () => void;
+  onOpen: (photo: ResolvedPhoto) => void;
+}) => (
+  <section className="topic-detail" aria-labelledby="topic-detail-title">
+    <header className="topic-detail__header">
+      <div>
+        <p className="topic-detail__breadcrumb">专题 / {topic.title}</p>
+        <h1 id="topic-detail-title">{topic.title}</h1>
+        {topic.description && <p>{topic.description}</p>}
+      </div>
+      <div className="topic-detail__actions">
+        <span>{photos.length} 张作品</span>
+        <button type="button" onClick={onBack}>
+          返回专题列表
+        </button>
+      </div>
+    </header>
+    <VirtualPhotoGrid photos={photos} style="square" onOpen={onOpen} />
+  </section>
 );
 
 const Timeline = ({
@@ -308,7 +338,25 @@ const PhotoModal = ({
 const App = () => {
   const { data, error } = useGallery();
   const [tab, setTab] = useState<TabKey>("latest");
+  const [selectedTopicId, setSelectedTopicId] = useState<string | null>(null);
   const [activePhoto, setActivePhoto] = useState<ResolvedPhoto | null>(null);
+  const selectedTopic =
+    data && selectedTopicId
+      ? data.topics.find((topic) => topic.id === selectedTopicId)
+      : undefined;
+  const topicPhotos = useMemo(
+    () =>
+      data && selectedTopicId
+        ? data.photos.filter((photo) => photo.topicIds.includes(selectedTopicId))
+        : [],
+    [data, selectedTopicId],
+  );
+  const modalPhotos =
+    data && tab === "topics" && selectedTopic ? topicPhotos : (data?.photos ?? []);
+  const selectTab = (key: TabKey) => {
+    setTab(key);
+    if (key !== "topics") setSelectedTopicId(null);
+  };
 
   if (error) {
     return (
@@ -352,7 +400,7 @@ const App = () => {
                 role="tab"
                 aria-selected={tab === key}
                 className={tab === key ? "active" : ""}
-                onClick={() => setTab(key)}
+                onClick={() => selectTab(key)}
               >
                 {tabLabels[key]}
               </button>
@@ -367,14 +415,24 @@ const App = () => {
             onOpen={setActivePhoto}
           />
         )}
-        {tab === "topics" && <TopicGrid data={data} onOpen={setActivePhoto} />}
+        {tab === "topics" &&
+          (selectedTopic ? (
+            <TopicDetail
+              topic={selectedTopic}
+              photos={topicPhotos}
+              onBack={() => setSelectedTopicId(null)}
+              onOpen={setActivePhoto}
+            />
+          ) : (
+            <TopicGrid data={data} onSelectTopic={setSelectedTopicId} />
+          ))}
         {tab === "timeline" && (
           <Timeline photos={data.photos} onOpen={setActivePhoto} />
         )}
       </main>
 
       <PhotoModal
-        photos={data.photos}
+        photos={modalPhotos}
         active={activePhoto}
         onClose={() => setActivePhoto(null)}
         onSelect={setActivePhoto}
