@@ -391,10 +391,10 @@ function App() {
   const exportToClient = async () => {
     setIsExporting(true);
     try {
-      const result = await api.exportToClient();
+      const result = await api.exportGallery();
       pushMessage(
         "success",
-        `已导出 ${result.photos} 张图片到客户端 JSON，Main 将在下次构建时使用。`,
+        `已导出到客户端：${result.photoCount} 张图片、${result.topicCount} 个专题。`,
       );
     } catch (error) {
       pushMessage(
@@ -614,6 +614,13 @@ function App() {
                 onClick={requestBatchDelete}
               >
                 删除所选
+              </Button>
+              <Button
+                type="outline"
+                loading={isExporting}
+                onClick={() => void exportToClient()}
+              >
+                导出到客户端
               </Button>
             </Space>
           </div>

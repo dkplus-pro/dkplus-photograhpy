@@ -11,11 +11,11 @@ export interface UploadResult {
   exif?: PhotoRecord["exif"];
 }
 
-export interface ExportToClientResult {
-  exportedAt: string;
-  updatedAt?: string;
-  photos: number;
-  topics: number;
+export interface ExportResult {
+  exportFile: string;
+  generatedAt: string;
+  photoCount: number;
+  topicCount: number;
 }
 
 export interface ApiClient {
@@ -24,7 +24,7 @@ export interface ApiClient {
   updatePhoto: (id: string, payload: PhotoPayload) => Promise<PhotoRecord>;
   deletePhoto: (id: string) => Promise<void>;
   batchDelete: (ids: string[]) => Promise<void>;
-  exportToClient: () => Promise<ExportToClientResult>;
+  exportGallery: () => Promise<ExportResult>;
   uploadPhoto: (
     preview: UploadPreview,
     photoId?: string,
@@ -59,6 +59,7 @@ type ServerPhoto = PhotoRecord & {
 };
 
 type ServerPhotoEnvelope = ServerPhoto | { photo: ServerPhoto };
+type ServerExportEnvelope = ExportResult | { export: ExportResult };
 
 const isAbsoluteUrl = (value: string): boolean =>
   /^[a-z][a-z\d+.-]*:/i.test(value) || value.startsWith("//");
@@ -231,13 +232,13 @@ export const createApiClient = (
       body: JSON.stringify({ ids }),
     });
   },
-  async exportToClient() {
-    const result = await requestJson<{ export: ExportToClientResult }>(
+  async exportGallery() {
+    const result = await requestJson<ServerExportEnvelope>(
       baseUrl,
-      "/gallery/export",
+      "/export/client",
       { method: "POST" },
     );
-    return result.export;
+    return "export" in result ? result.export : result;
   },
   async uploadPhoto(preview, photoId) {
     const body = new FormData();
