@@ -167,7 +167,13 @@ async function writeSeedGallery(filePath: string): Promise<void> {
             },
             exif: {
               cameraBrand: index % 2 ? "Fujifilm" : "Sony",
+              cameraMake: index % 2 ? "Fujifilm" : "Sony",
               cameraModel: index % 2 ? "X-H2" : "A7R V",
+              lens: index % 2 ? "XF 56mm F1.2 R WR" : "FE 35mm F1.4 GM",
+              aperture: index % 2 ? "f/2.8" : "f/4",
+              shutter: index % 2 ? "1/500s" : "1/250s",
+              shutterSpeed: index % 2 ? "1/500s" : "1/250s",
+              iso: index % 2 ? 400 : 100,
             },
           };
         }),
@@ -347,7 +353,7 @@ test("Admin authenticated export action writes the Main JSON artifact", async ({
   );
 });
 
-test("Admin list exposes the optimized filters and centered sortable table", async ({
+test("Admin list exposes optimized metadata columns and gallery interactions", async ({
   page,
 }) => {
   await page.goto(adminBaseUrl);
@@ -355,25 +361,59 @@ test("Admin list exposes the optimized filters and centered sortable table", asy
   await expect(page.getByLabel("按品牌筛选")).toBeVisible();
   await expect(page.getByLabel("按机型筛选")).toBeVisible();
   await expect(page.getByLabel("按专题筛选")).toBeVisible();
+
+  const table = page.locator(".photos-table");
+  await expect(table.getByRole("columnheader", { name: /型号/ })).toBeVisible();
+  await expect(table.getByRole("columnheader", { name: /镜头/ })).toBeVisible();
   await expect(
-    page.getByRole("columnheader", { name: /拍摄日期/ }),
+    table.getByRole("columnheader", { name: /拍摄日期/ }),
   ).toBeVisible();
+  await expect(table.getByRole("columnheader", { name: /文件信息/ })).toHaveCount(
+    0,
+  );
+  await expect(table.getByRole("columnheader", { name: /^EXIF$/ })).toHaveCount(
+    0,
+  );
   await expect(page.getByText(/更新：/)).toHaveCount(0);
 
   await page.getByPlaceholder("按标题筛选").fill("后台导出样片");
   await expect(
-    page
-      .locator(".photos-table .photo-cell")
-      .filter({ hasText: "后台导出样片" })
-      .first(),
+    table.locator(".photo-cell").filter({ hasText: "后台导出样片" }).first(),
   ).toBeVisible();
-  await page.getByRole("columnheader", { name: /拍摄日期/ }).click();
+  await expect(table.getByText("A7R V").first()).toBeVisible();
+  await expect(table.getByText("FE 35mm F1.4 GM").first()).toBeVisible();
+  await expect(
+    table.getByText(/image\/jpeg|未知格式|未知大小|\bISO\b|f\/4|1\/250s/),
+  ).toHaveCount(0);
 
-  const firstCellAlign = await page
-    .locator(".photos-table .arco-table-td")
+  await table.getByRole("columnheader", { name: /拍摄日期/ }).click();
+
+  const firstCellAlign = await table
+    .locator(".arco-table-td")
     .first()
     .evaluate((element) => getComputedStyle(element).textAlign);
   expect(firstCellAlign).toBe("center");
+
+  await table.locator(".photo-cell__thumb").first().click();
+  await expect(page.getByRole("dialog", { name: /后台导出样片/ })).toBeVisible();
+  await page.keyboard.press("Escape");
+
+  await page.getByRole("button", { name: "新增图片" }).first().click();
+  await expect(page.getByRole("dialog", { name: "新增图片记录" })).toBeVisible();
+  await page.keyboard.press("Escape");
+
+  const bodyBackgroundImage = await page.evaluate(
+    () => getComputedStyle(document.body).backgroundImage,
+  );
+  expect(bodyBackgroundImage).not.toContain("22, 93, 255");
+  expect(bodyBackgroundImage).not.toContain("20, 201, 201");
+
+  await page.locator(".photo-cell__thumb").first().focus();
+  const focusOutline = await page
+    .locator(".photo-cell__thumb")
+    .first()
+    .evaluate((element) => getComputedStyle(element).outlineStyle);
+  expect(focusOutline).not.toBe("none");
 });
 
 test("Admin API auth and upload work without mutating the exported JSON", async ({
