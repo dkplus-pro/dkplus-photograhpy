@@ -69,6 +69,28 @@ test("main virtual rows are measured from the grid container", () => {
   );
 });
 
+test("topics tab opens a secondary virtual topic detail page", () => {
+  assert.match(mainSource, /selectedTopicId/);
+  assert.match(mainSource, /const TopicDetail =/);
+  assert.match(mainSource, /onSelectTopic\(topic\.id\)/);
+  assert.match(mainSource, /onSelectTopic=\{setSelectedTopicId\}/);
+  assert.doesNotMatch(mainSource, /onClick=\{\(\) => cover && onOpen\(cover\)\}/);
+  assert.match(
+    mainSource,
+    /data\.photos\.filter\(\(photo\) => photo\.topicIds\.includes\(selectedTopicId\)\)/,
+  );
+  assert.match(
+    mainSource,
+    /<VirtualPhotoGrid\s+photos=\{topicPhotos\}\s+style="square"/,
+  );
+  assert.match(
+    mainSource,
+    /data && tab === "topics" && selectedTopic \? topicPhotos : \(data\?\.photos \?\? \[\]\)/,
+  );
+  assert.match(cssBlock(".topic-detail__header"), /justify-content:\s*space-between;/);
+  assert.match(cssBlock(".topic-detail__actions button"), /border-radius:\s*999px;/);
+});
+
 test("modal navigation is vertically centered in the image pane", () => {
   assert.match(
     cssBlock(".modal__panel"),
