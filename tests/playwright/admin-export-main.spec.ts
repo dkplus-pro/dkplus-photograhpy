@@ -438,14 +438,16 @@ test("Main dev loads gallery data from /api and grid remains compact", async ({
   }
 
   await page.setViewportSize({ width: 1366, height: 900 });
-  const apiResponses: string[] = [];
-  page.on("response", (response) => {
-    if (response.url().includes("/api/gallery")) apiResponses.push(response.url());
+  const apiPhotoRequests: string[] = [];
+  page.on("request", (request) => {
+    if (request.method() === "GET" && request.url().includes("/api/photos")) {
+      apiPhotoRequests.push(request.url());
+    }
   });
   await page.goto(mainBaseUrl);
-  await expect.poll(() => apiResponses.length).toBeGreaterThan(0);
   const card = page.locator(".photo-card").first();
   await expect(card).toBeVisible();
+  expect(apiPhotoRequests.length).toBeGreaterThan(0);
 
   const beforeBox = await card.boundingBox();
   const before = await card.evaluate((element) => {
@@ -488,7 +490,7 @@ test("Main dev loads gallery data from /api and grid remains compact", async ({
   expect(after.imageTransform).toBe(before.imageTransform);
   expect(afterBox?.width).toBe(beforeBox?.width);
   expect(afterBox?.height).toBe(beforeBox?.height);
-  expect(Number.parseFloat(after.gap)).toBeLessThanOrEqual(10);
+  expect(Number.parseFloat(after.gap)).toBeLessThanOrEqual(8);
   expect(after.borderRadius).toBe("0px");
   expect(after.aspectRatio).toContain("1");
   expect(Number.parseFloat(before.metaOpacity)).toBeLessThan(0.05);
