@@ -29,11 +29,7 @@ import {
   photoTitle,
   summarizeUpload,
 } from "./lib/format";
-import type {
-  PhotoPayload,
-  PhotoRecord,
-  UploadPreview,
-} from "./types";
+import type { PhotoPayload, PhotoRecord, UploadPreview } from "./types";
 
 const api = createApiClient();
 const TextArea = Input.TextArea;
@@ -109,7 +105,9 @@ function App() {
   const [payload, setPayload] = useState<PhotoPayload>(emptyPayload);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [previews, setPreviews] = useState<UploadPreview[]>([]);
-  const [editorPreview, setEditorPreview] = useState<UploadPreview | null>(null);
+  const [editorPreview, setEditorPreview] = useState<UploadPreview | null>(
+    null,
+  );
   const [previewPhoto, setPreviewPhoto] = useState<PhotoRecord | null>(null);
   const previewsRef = useRef<UploadPreview[]>([]);
   const editorPreviewRef = useRef<UploadPreview | null>(null);
@@ -293,9 +291,7 @@ function App() {
           : await api.updatePhoto(editingId, cleanPayload);
         if (!updated) throw new Error("图片更新后没有返回记录。");
         setPhotos((current) =>
-          current.map((photo) =>
-            photo.id === editingId ? updated : photo,
-          ),
+          current.map((photo) => (photo.id === editingId ? updated : photo)),
         );
         pushMessage("success", "图片记录已更新");
       } else if (editorPreview) {

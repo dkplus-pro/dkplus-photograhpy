@@ -114,7 +114,9 @@ export function createPhotosRouter(
       const stored = await uploads.store(file);
       const exif = await extractExif(stored.buffer);
       const input: PhotoInput = {
-        title: photoId ? field(form.title) : field(form.title) ?? file.originalname,
+        title: photoId
+          ? field(form.title)
+          : (field(form.title) ?? file.originalname),
         description: field(form.description),
         topicId: field(form.topicId),
         tags: field(form.tags)
