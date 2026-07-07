@@ -419,10 +419,10 @@ test("Admin list exposes optimized metadata columns and gallery interactions", a
   await page.keyboard.press("Escape");
 
   await page.getByRole("button", { name: "上传图片" }).first().click();
-  const uploadDialog = page.getByRole("dialog", { name: "批量上传图片" });
+  const uploadDialog = page.getByRole("dialog", { name: "上传图片" });
   await expect(uploadDialog).toBeVisible();
   await expect(
-    uploadDialog.getByRole("button", { name: "开始上传" }),
+    uploadDialog.getByRole("button", { name: "上传暂存文件" }),
   ).toBeDisabled();
   await page.keyboard.press("Escape");
 
