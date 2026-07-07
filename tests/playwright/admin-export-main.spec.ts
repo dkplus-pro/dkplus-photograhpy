@@ -8,6 +8,8 @@ import net from "node:net";
 const repoRoot = process.cwd();
 const adminToken = "playwright-export-token";
 
+test.describe.configure({ mode: "serial" });
+
 type ManagedProcess = {
   name: string;
   process: ChildProcessWithoutNullStreams;
