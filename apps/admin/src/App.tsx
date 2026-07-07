@@ -119,6 +119,8 @@ function App() {
   const quickFileInputRef = useRef<HTMLInputElement>(null);
   const topicFileInputRef = useRef<HTMLInputElement>(null);
   const [titleFilter, setTitleFilter] = useState("");
+  const [brandFilter, setBrandFilter] = useState("all");
+  const [modelFilter, setModelFilter] = useState("all");
   const [topicFilter, setTopicFilter] = useState("all");
   const [brandFilter, setBrandFilter] = useState("all");
   const [modelFilter, setModelFilter] = useState("all");
@@ -195,23 +197,32 @@ function App() {
     return [...map.entries()].sort((a, b) => a[1].localeCompare(b[1], "zh-CN"));
   }, [photos]);
 
-  const cameraBrands = useMemo(() => {
-    const brands = new Set<string>();
-    for (const photo of photos) {
-      const brand = photo.exif?.cameraMake?.trim();
-      if (brand) brands.add(brand);
-    }
-    return [...brands].sort((a, b) => a.localeCompare(b, "zh-CN"));
-  }, [photos]);
+  const brands = useMemo(
+    () =>
+      [
+        ...new Set(
+          photos
+            .map((photo) => photo.exif?.cameraMake?.trim())
+            .filter((value): value is string => Boolean(value)),
+        ),
+      ].sort((a, b) => a.localeCompare(b, "zh-CN")),
+    [photos],
+  );
 
-  const cameraModels = useMemo(() => {
-    const models = new Set<string>();
-    for (const photo of photos) {
-      const model = photo.exif?.cameraModel?.trim();
-      if (model) models.add(model);
-    }
-    return [...models].sort((a, b) => a.localeCompare(b, "zh-CN"));
-  }, [photos]);
+  const models = useMemo(
+    () =>
+      [
+        ...new Set(
+          photos
+            .map((photo) => photo.exif?.cameraModel?.trim())
+            .filter((value): value is string => Boolean(value)),
+        ),
+      ].sort((a, b) => a.localeCompare(b, "zh-CN")),
+    [photos],
+  );
+
+  const photoTakenAt = (photo: PhotoRecord) =>
+    photo.takenAt ?? photo.exif?.capturedAt ?? photo.createdAt;
 
   const filteredPhotos = useMemo(() => {
     const normalizedTitle = titleFilter.trim().toLowerCase();
@@ -223,15 +234,19 @@ function App() {
       const model = photo.exif?.cameraModel?.trim() || "";
       const matchesTopic =
         topicFilter === "all" || topicIds.includes(topicFilter);
-      const matchesBrand = brandFilter === "all" || brand === brandFilter;
-      const matchesModel = modelFilter === "all" || model === modelFilter;
-      const searchableTitle = [photoTitle(photo), photo.description]
-        .filter(Boolean)
-        .join(" ")
-        .toLowerCase();
+      const matchesBrand =
+        brandFilter === "all" || photo.exif?.cameraMake === brandFilter;
+      const matchesModel =
+        modelFilter === "all" || photo.exif?.cameraModel === modelFilter;
       const matchesTitle =
-        !normalizedTitle || searchableTitle.includes(normalizedTitle);
-      return matchesTopic && matchesBrand && matchesModel && matchesTitle;
+        !normalizedTitle ||
+        photoTitle(photo).toLowerCase().includes(normalizedTitle);
+      return (
+        matchesTopic &&
+        matchesBrand &&
+        matchesModel &&
+        matchesTitle
+      );
     });
   }, [brandFilter, modelFilter, photos, titleFilter, topicFilter]);
 
@@ -490,7 +505,7 @@ function App() {
     {
       title: "图片",
       dataIndex: "title",
-      width: 300,
+      width: 320,
       align: "center",
       render: (_value, photo) => (
         <div className="photo-cell">
@@ -522,7 +537,7 @@ function App() {
     {
       title: "专题",
       dataIndex: "topicTitle",
-      width: 130,
+      width: 140,
       align: "center",
       render: (_value, photo) =>
         photo.topicTitle || photo.topicId || photo.topicIds?.[0] || "未分组",
@@ -530,7 +545,7 @@ function App() {
     {
       title: "文件信息",
       dataIndex: "image",
-      width: 210,
+      width: 240,
       align: "center",
       render: (_value, photo) => (
         <div className="rich-lines">
@@ -545,12 +560,25 @@ function App() {
     {
       title: "EXIF",
       dataIndex: "exif",
-      width: 210,
+      width: 220,
       align: "center",
       render: (_value, photo) => (
         <div className="rich-lines">
           <strong>{exifLine(photo.exif)}</strong>
-          <span>{photo.exif?.lens || "暂无镜头信息"}</span>
+        </div>
+      ),
+    },
+    {
+      title: "拍摄日期",
+      dataIndex: "takenAt",
+      width: 150,
+      align: "center",
+      sorter: (left, right) =>
+        new Date(photoTakenAt(left) ?? 0).getTime() -
+        new Date(photoTakenAt(right) ?? 0).getTime(),
+      render: (_value, photo) => (
+        <div className="rich-lines">
+          <strong>{formatDate(photoTakenAt(photo))}</strong>
         </div>
       ),
     },
@@ -643,10 +671,25 @@ function App() {
           <div className="toolbar">
             <Input
               allowClear
-              aria-label="按标题筛选"
               value={titleFilter}
               onChange={setTitleFilter}
               placeholder="按标题筛选"
+            />
+            <Select
+              value={brandFilter}
+              onChange={(value) => setBrandFilter(String(value))}
+              options={[
+                { label: "全部品牌", value: "all" },
+                ...brands.map((brand) => ({ label: brand, value: brand })),
+              ]}
+            />
+            <Select
+              value={modelFilter}
+              onChange={(value) => setModelFilter(String(value))}
+              options={[
+                { label: "全部机型", value: "all" },
+                ...models.map((model) => ({ label: model, value: model })),
+              ]}
             />
             <Select
               aria-label="按品牌筛选"
@@ -713,10 +756,8 @@ function App() {
               stripe
               columns={columns}
               data={filteredPhotos}
-              noDataElement={
-                <Empty description="暂无匹配图片，可调整标题、品牌、机型或专题筛选" />
-              }
-              scroll={{ x: 1000 }}
+              noDataElement={<Empty description="暂无匹配图片" />}
+              scroll={{ x: 1180 }}
               rowSelection={{
                 type: "checkbox",
                 checkAll: true,
