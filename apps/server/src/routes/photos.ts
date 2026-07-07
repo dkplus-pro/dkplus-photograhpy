@@ -85,18 +85,20 @@ function normalizeClientExif(value: unknown): ExifMetadata | undefined {
     return undefined;
   }
   if (!isRecord(value)) {
-    throw new AppError(400, "UPLOAD_INVALID_EXIF", "exif must be a JSON object");
+    throw new AppError(
+      400,
+      "UPLOAD_INVALID_EXIF",
+      "exif must be a JSON object",
+    );
   }
 
   const normalized: ExifMetadata = {
-    cameraBrand:
-      exifString(value.cameraBrand) ?? exifString(value.cameraMake),
+    cameraBrand: exifString(value.cameraBrand) ?? exifString(value.cameraMake),
     cameraModel: exifString(value.cameraModel),
     lens: exifString(value.lens) ?? exifString(value.lensModel),
     iso: exifNumber(value.iso),
     aperture: exifString(value.aperture),
-    shutterSpeed:
-      exifString(value.shutterSpeed) ?? exifString(value.shutter),
+    shutterSpeed: exifString(value.shutterSpeed) ?? exifString(value.shutter),
     focalLength:
       focalLength(value.focalLength) ?? focalLengthMm(value.focalLengthMm),
     width: exifNumber(value.width),
@@ -121,11 +123,7 @@ function parseClientExif(value: unknown): ExifMetadata | undefined {
     if (error instanceof AppError) {
       throw error;
     }
-    throw new AppError(
-      400,
-      "UPLOAD_INVALID_EXIF",
-      "exif must be valid JSON",
-    );
+    throw new AppError(400, "UPLOAD_INVALID_EXIF", "exif must be valid JSON");
   }
 }
 
