@@ -314,6 +314,101 @@ test("multipart upload stores local file, extracts safe EXIF fallback, and creat
   }
 });
 
+test("multipart upload persists Admin EXIF JSON for create and replacement", async () => {
+  const { config, root } = await makeConfig();
+  try {
+    const app = createApp(config).callback();
+    const createdAt = "2024-05-01T12:00:00.000Z";
+    const created = await request(app)
+      .post("/api/uploads")
+      .set("Authorization", "Bearer test-token")
+      .field("title", "EXIF upload")
+      .field(
+        "exif",
+        JSON.stringify({
+          cameraMake: "Nikon",
+          cameraModel: "Z 8",
+          lens: "NIKKOR Z 50mm f/1.8 S",
+          iso: "640",
+          aperture: "f/2",
+          shutter: "1/500s",
+          focalLength: "50mm",
+          capturedAt: createdAt,
+          unsafe: "ignored",
+        }),
+      )
+      .attach("file", Buffer.from([0xff, 0xd8, 0xff, 0xd9]), {
+        filename: "exif-create.jpg",
+        contentType: "image/jpeg",
+      })
+      .expect(201);
+
+    const id = created.body.photos[0].id as string;
+    assert.deepEqual(created.body.photos[0].exif, {
+      cameraBrand: "Nikon",
+      cameraModel: "Z 8",
+      lens: "NIKKOR Z 50mm f/1.8 S",
+      iso: 640,
+      aperture: "f/2",
+      shutterSpeed: "1/500s",
+      focalLength: "50mm",
+      capturedAt: createdAt,
+    });
+    assert.equal(created.body.photos[0].takenAt, createdAt);
+
+    const persistedCreate = await authed(
+      request(app).get(`/api/photos/${id}`),
+    ).expect(200);
+    assert.deepEqual(persistedCreate.body.photo.exif, created.body.photos[0].exif);
+
+    const replacedAt = "2025-06-02T10:30:00.000Z";
+    const replaced = await request(app)
+      .post("/api/uploads")
+      .set("Authorization", "Bearer test-token")
+      .field("photoId", id)
+      .field("title", "EXIF replacement")
+      .field(
+        "exif",
+        JSON.stringify({
+          cameraBrand: "Canon",
+          cameraModel: "R5",
+          lensModel: "RF 24-70mm F2.8 L IS USM",
+          shutterSpeed: "1/250s",
+          focalLengthMm: 70,
+          width: "4000",
+          height: 3000,
+          capturedAt: replacedAt,
+        }),
+      )
+      .attach("file", Buffer.from([0xff, 0xd8, 0xff, 0xd9]), {
+        filename: "exif-replacement.jpg",
+        contentType: "image/jpeg",
+      })
+      .expect(200);
+
+    assert.equal(replaced.body.photo.id, id);
+    assert.equal(replaced.body.photo.title, "EXIF replacement");
+    assert.deepEqual(replaced.body.photo.exif, {
+      cameraBrand: "Canon",
+      cameraModel: "R5",
+      lens: "RF 24-70mm F2.8 L IS USM",
+      shutterSpeed: "1/250s",
+      focalLength: "70mm",
+      width: 4000,
+      height: 3000,
+      capturedAt: replacedAt,
+    });
+    assert.equal(replaced.body.photo.takenAt, replacedAt);
+
+    const listed = await authed(request(app).get("/api/photos")).expect(200);
+    assert.equal(listed.body.photos.length, 1);
+    assert.deepEqual(listed.body.photos[0].exif, replaced.body.photo.exif);
+    await assertExportFileMissing(config.exportFile);
+  } finally {
+    await rm(root, { recursive: true, force: true });
+  }
+});
+
 test("multipart upload can replace an existing SQLite photo image", async () => {
   const { config, root } = await makeConfig();
   try {
