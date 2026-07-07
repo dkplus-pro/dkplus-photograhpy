@@ -674,69 +674,92 @@ test("Main modal navigation buttons are vertically centered and switch photos", 
   page,
   request,
 }) => {
-  const panoramic = await request.post(`${serverBaseUrl}/api/photos`, {
-    headers: { Authorization: `Bearer ${adminToken}` },
-    data: {
+  const aspectRatioFixtures = [
+    {
       title: "超宽居中样片",
-      topicId: "editorial",
-      takenAt: "2026-07-30T08:00:00.000Z",
-      asset: {
-        original:
-          "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='1600' height='500'%3E%3Crect width='1600' height='500' fill='%23333333'/%3E%3C/svg%3E",
-        alt: "超宽居中样片",
-        width: 1600,
-        height: 500,
-      },
+      takenAt: "2026-07-31T08:00:00.000Z",
+      svg: "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='1600' height='500'%3E%3Crect width='1600' height='500' fill='%23333333'/%3E%3C/svg%3E",
+      width: 1600,
+      height: 500,
     },
-  });
-  expect(panoramic.ok()).toBeTruthy();
+    {
+      title: "竖幅居中样片",
+      takenAt: "2026-07-30T08:00:00.000Z",
+      svg: "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='500' height='1600'%3E%3Crect width='500' height='1600' fill='%23444444'/%3E%3C/svg%3E",
+      width: 500,
+      height: 1600,
+    },
+  ];
+
+  for (const fixture of aspectRatioFixtures) {
+    const created = await request.post(`${serverBaseUrl}/api/photos`, {
+      headers: { Authorization: `Bearer ${adminToken}` },
+      data: {
+        title: fixture.title,
+        topicId: "editorial",
+        takenAt: fixture.takenAt,
+        asset: {
+          original: fixture.svg,
+          alt: fixture.title,
+          width: fixture.width,
+          height: fixture.height,
+        },
+      },
+    });
+    expect(created.ok()).toBeTruthy();
+  }
 
   await page.setViewportSize({ width: 1280, height: 720 });
-  await page.goto(mainBaseUrl);
-  await page
-    .getByRole("button", { name: "查看图片：超宽居中样片", exact: true })
-    .click();
-  const dialog = page.getByRole("dialog", { name: "超宽居中样片" });
-  await expect(dialog).toBeVisible();
 
-  const navMetrics = await page.evaluate(() => {
-    const imageWrap = document.querySelector(".modal__image-wrap");
-    const panel = document.querySelector(".modal__panel");
-    const prev = document.querySelector(".modal__nav--prev");
-    const next = document.querySelector(".modal__nav--next");
-    if (!imageWrap || !panel || !prev || !next) {
-      throw new Error("Modal navigation DOM was not found");
-    }
-    const imageBox = imageWrap.getBoundingClientRect();
-    const panelBox = panel.getBoundingClientRect();
-    const prevBox = prev.getBoundingClientRect();
-    const nextBox = next.getBoundingClientRect();
-    const prevStyles = getComputedStyle(prev);
-    const nextStyles = getComputedStyle(next);
-    return {
-      imageCenterY: imageBox.top + imageBox.height / 2,
-      prevCenterY: prevBox.top + prevBox.height / 2,
-      nextCenterY: nextBox.top + nextBox.height / 2,
-      imageHeight: imageBox.height,
-      panelHeight: panelBox.height,
-      prevTransform: prevStyles.transform,
-      nextTransform: nextStyles.transform,
-    };
-  });
-  expect(
-    Math.abs(navMetrics.prevCenterY - navMetrics.imageCenterY),
-  ).toBeLessThan(2);
-  expect(
-    Math.abs(navMetrics.nextCenterY - navMetrics.imageCenterY),
-  ).toBeLessThan(2);
-  expect(Math.abs(navMetrics.imageHeight - navMetrics.panelHeight)).toBeLessThan(
-    2,
-  );
-  expect(navMetrics.imageHeight).toBeGreaterThan(600);
-  expect(navMetrics.prevTransform).not.toBe("none");
-  expect(navMetrics.nextTransform).not.toBe("none");
+  for (const fixture of aspectRatioFixtures) {
+    await page.goto(mainBaseUrl);
+    await page
+      .getByRole("button", { name: `查看图片：${fixture.title}`, exact: true })
+      .click();
+    const dialog = page.getByRole("dialog", { name: fixture.title });
+    await expect(dialog).toBeVisible();
+
+    const navMetrics = await page.evaluate(() => {
+      const imageWrap = document.querySelector(".modal__image-wrap");
+      const panel = document.querySelector(".modal__panel");
+      const prev = document.querySelector(".modal__nav--prev");
+      const next = document.querySelector(".modal__nav--next");
+      if (!imageWrap || !panel || !prev || !next) {
+        throw new Error("Modal navigation DOM was not found");
+      }
+      const imageBox = imageWrap.getBoundingClientRect();
+      const panelBox = panel.getBoundingClientRect();
+      const prevBox = prev.getBoundingClientRect();
+      const nextBox = next.getBoundingClientRect();
+      const prevStyles = getComputedStyle(prev);
+      const nextStyles = getComputedStyle(next);
+      return {
+        imageCenterY: imageBox.top + imageBox.height / 2,
+        prevCenterY: prevBox.top + prevBox.height / 2,
+        nextCenterY: nextBox.top + nextBox.height / 2,
+        imageHeight: imageBox.height,
+        panelHeight: panelBox.height,
+        prevTransform: prevStyles.transform,
+        nextTransform: nextStyles.transform,
+      };
+    });
+    expect(
+      Math.abs(navMetrics.prevCenterY - navMetrics.imageCenterY),
+    ).toBeLessThan(2);
+    expect(
+      Math.abs(navMetrics.nextCenterY - navMetrics.imageCenterY),
+    ).toBeLessThan(2);
+    expect(
+      Math.abs(navMetrics.imageHeight - navMetrics.panelHeight),
+    ).toBeLessThan(2);
+    expect(navMetrics.imageHeight).toBeGreaterThan(600);
+    expect(navMetrics.prevTransform).not.toBe("none");
+    expect(navMetrics.nextTransform).not.toBe("none");
+  }
 
   await page.getByRole("button", { name: "下一张" }).click();
   await expect(page.getByRole("dialog")).toBeVisible();
-  await expect(page.locator(".modal h2")).not.toHaveText("超宽居中样片");
+  await expect(page.locator(".modal h2")).not.toHaveText(
+    aspectRatioFixtures[aspectRatioFixtures.length - 1]?.title ?? "",
+  );
 });

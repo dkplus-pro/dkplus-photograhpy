@@ -72,9 +72,13 @@ test("main virtual rows are measured from the grid container", () => {
 test("modal navigation is vertically centered in the image pane", () => {
   assert.match(
     cssBlock(".modal__panel"),
-    /height:\s*min\(820px,\s*calc\(100dvh - 32px\)\);/,
+    /height:\s*min\(820px,\s*calc\(100dvh - clamp\(24px, 6vw, 72px\)\)\);/,
   );
   assert.match(cssBlock(".modal__image-wrap"), /align-items:\s*center;/);
+  assert.match(
+    cssBlock(".modal__image-wrap"),
+    /min-height:\s*min\(420px, 100%\);/,
+  );
   assert.match(cssBlock(".modal__image-wrap"), /height:\s*100%;/);
   assert.match(
     styles,
