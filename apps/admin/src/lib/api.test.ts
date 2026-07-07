@@ -59,6 +59,7 @@ describe("admin API client auth headers", () => {
   });
 
   it("falls back to the local admin token storage key", async () => {
+    vi.stubEnv("VITE_ADMIN_TOKEN", "");
     vi.stubGlobal("window", {
       localStorage: {
         getItem: vi.fn(() => " stored-token "),
