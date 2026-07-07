@@ -196,21 +196,30 @@ function mergeAsset(
   image: PhotoImage,
   existing?: PhotoRecord,
 ): PhotoAsset | undefined {
-  const source = input.asset ?? existing?.asset;
+  const replacesImage =
+    Boolean(input.image?.url) && input.image?.url !== existing?.image.url;
+  const source = input.asset ?? (replacesImage ? undefined : existing?.asset);
   const original = source?.original ?? image.url;
   if (!original) return undefined;
   return {
     original,
-    thumbnail: source?.thumbnail ?? existing?.asset?.thumbnail ?? image.url,
+    thumbnail:
+      source?.thumbnail ??
+      (replacesImage ? undefined : existing?.asset?.thumbnail) ??
+      image.url,
     preview:
       source?.preview ??
-      existing?.asset?.preview ??
+      (replacesImage ? undefined : existing?.asset?.preview) ??
       source?.thumbnail ??
-      existing?.asset?.thumbnail ??
+      (replacesImage ? undefined : existing?.asset?.thumbnail) ??
       image.url,
     alt: source?.alt ?? input.title ?? existing?.title ?? image.fileName,
-    width: source?.width ?? existing?.asset?.width,
-    height: source?.height ?? existing?.asset?.height,
+    width:
+      source?.width ??
+      (replacesImage ? input.exif?.width : existing?.asset?.width),
+    height:
+      source?.height ??
+      (replacesImage ? input.exif?.height : existing?.asset?.height),
   };
 }
 
