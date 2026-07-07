@@ -118,8 +118,10 @@ function App() {
   const editorFileInputRef = useRef<HTMLInputElement>(null);
   const quickFileInputRef = useRef<HTMLInputElement>(null);
   const topicFileInputRef = useRef<HTMLInputElement>(null);
-  const [query, setQuery] = useState("");
+  const [titleFilter, setTitleFilter] = useState("");
   const [topicFilter, setTopicFilter] = useState("all");
+  const [brandFilter, setBrandFilter] = useState("all");
+  const [modelFilter, setModelFilter] = useState("all");
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
@@ -193,34 +195,45 @@ function App() {
     return [...map.entries()].sort((a, b) => a[1].localeCompare(b[1], "zh-CN"));
   }, [photos]);
 
+  const cameraBrands = useMemo(() => {
+    const brands = new Set<string>();
+    for (const photo of photos) {
+      const brand = photo.exif?.cameraMake?.trim();
+      if (brand) brands.add(brand);
+    }
+    return [...brands].sort((a, b) => a.localeCompare(b, "zh-CN"));
+  }, [photos]);
+
+  const cameraModels = useMemo(() => {
+    const models = new Set<string>();
+    for (const photo of photos) {
+      const model = photo.exif?.cameraModel?.trim();
+      if (model) models.add(model);
+    }
+    return [...models].sort((a, b) => a.localeCompare(b, "zh-CN"));
+  }, [photos]);
+
   const filteredPhotos = useMemo(() => {
-    const normalizedQuery = query.trim().toLowerCase();
+    const normalizedTitle = titleFilter.trim().toLowerCase();
     return photos.filter((photo) => {
       const topicIds = [photo.topicId, ...(photo.topicIds ?? [])].filter(
         Boolean,
       );
+      const brand = photo.exif?.cameraMake?.trim() || "";
+      const model = photo.exif?.cameraModel?.trim() || "";
       const matchesTopic =
         topicFilter === "all" || topicIds.includes(topicFilter);
-      const searchable = [
-        photo.title,
-        photo.description,
-        photo.topicTitle,
-        photo.topicId,
-        photo.location,
-        photo.image?.fileName,
-        photo.image?.mimeType,
-        photo.image?.storage,
-        ...(photo.tags ?? []),
-        exifLine(photo.exif),
-      ]
+      const matchesBrand = brandFilter === "all" || brand === brandFilter;
+      const matchesModel = modelFilter === "all" || model === modelFilter;
+      const searchableTitle = [photoTitle(photo), photo.description]
+        .filter(Boolean)
         .join(" ")
         .toLowerCase();
-      return (
-        matchesTopic &&
-        (!normalizedQuery || searchable.includes(normalizedQuery))
-      );
+      const matchesTitle =
+        !normalizedTitle || searchableTitle.includes(normalizedTitle);
+      return matchesTopic && matchesBrand && matchesModel && matchesTitle;
     });
-  }, [photos, query, topicFilter]);
+  }, [brandFilter, modelFilter, photos, titleFilter, topicFilter]);
 
   const selectedCount = selectedIds.size;
   const stagedSummary = useMemo(() => summarizeUpload(previews), [previews]);
@@ -465,11 +478,20 @@ function App() {
     }
   };
 
+  const takenAtValue = (photo: PhotoRecord): string =>
+    photo.takenAt ?? photo.exif?.capturedAt ?? photo.createdAt ?? "";
+
+  const takenAtTime = (photo: PhotoRecord): number => {
+    const timestamp = Date.parse(takenAtValue(photo));
+    return Number.isFinite(timestamp) ? timestamp : 0;
+  };
+
   const columns: TableColumnProps<PhotoRecord>[] = [
     {
       title: "图片",
       dataIndex: "title",
-      width: 320,
+      width: 300,
+      align: "center",
       render: (_value, photo) => (
         <div className="photo-cell">
           {photo.thumbnailUrl || photo.imageUrl ? (
@@ -500,14 +522,16 @@ function App() {
     {
       title: "专题",
       dataIndex: "topicTitle",
-      width: 140,
+      width: 130,
+      align: "center",
       render: (_value, photo) =>
         photo.topicTitle || photo.topicId || photo.topicIds?.[0] || "未分组",
     },
     {
       title: "文件信息",
       dataIndex: "image",
-      width: 240,
+      width: 210,
+      align: "center",
       render: (_value, photo) => (
         <div className="rich-lines">
           <strong>{imageSummary(photo)}</strong>
@@ -519,27 +543,31 @@ function App() {
       ),
     },
     {
-      title: "EXIF / 时间",
+      title: "EXIF",
       dataIndex: "exif",
-      width: 260,
+      width: 210,
+      align: "center",
       render: (_value, photo) => (
         <div className="rich-lines">
           <strong>{exifLine(photo.exif)}</strong>
-          <span>
-            拍摄：
-            {formatDate(
-              photo.takenAt ?? photo.exif?.capturedAt ?? photo.createdAt,
-            )}
-          </span>
-          <span>更新：{formatDate(photo.updatedAt)}</span>
+          <span>{photo.exif?.lens || "暂无镜头信息"}</span>
         </div>
       ),
+    },
+    {
+      title: "拍摄日期",
+      dataIndex: "takenAt",
+      width: 150,
+      align: "center",
+      sorter: (left, right) => takenAtTime(left) - takenAtTime(right),
+      defaultSortOrder: "descend",
+      render: (_value, photo) => formatDate(takenAtValue(photo)),
     },
     {
       title: "操作",
       key: "actions",
       width: 150,
-      align: "right",
+      align: "center",
       render: (_value, photo) => (
         <Space size="mini">
           <Button size="mini" type="outline" onClick={() => editPhoto(photo)}>
@@ -615,11 +643,31 @@ function App() {
           <div className="toolbar">
             <Input
               allowClear
-              value={query}
-              onChange={setQuery}
-              placeholder="搜索标题、专题、文件名、标签或 EXIF"
+              aria-label="按标题筛选"
+              value={titleFilter}
+              onChange={setTitleFilter}
+              placeholder="按标题筛选"
             />
             <Select
+              aria-label="按品牌筛选"
+              value={brandFilter}
+              onChange={(value) => setBrandFilter(String(value))}
+              options={[
+                { label: "全部品牌", value: "all" },
+                ...cameraBrands.map((brand) => ({ label: brand, value: brand })),
+              ]}
+            />
+            <Select
+              aria-label="按机型筛选"
+              value={modelFilter}
+              onChange={(value) => setModelFilter(String(value))}
+              options={[
+                { label: "全部机型", value: "all" },
+                ...cameraModels.map((model) => ({ label: model, value: model })),
+              ]}
+            />
+            <Select
+              aria-label="按专题筛选"
               value={topicFilter}
               onChange={(value) => setTopicFilter(String(value))}
               options={[
@@ -627,7 +675,7 @@ function App() {
                 ...topics.map(([id, title]) => ({ label: title, value: id })),
               ]}
             />
-            <Space wrap>
+            <Space wrap className="toolbar-actions">
               <Button type="primary" onClick={openCreateEditor}>
                 新增图片
               </Button>
@@ -665,8 +713,10 @@ function App() {
               stripe
               columns={columns}
               data={filteredPhotos}
-              noDataElement={<Empty description="暂无匹配图片" />}
-              scroll={{ x: 1110, y: 560 }}
+              noDataElement={
+                <Empty description="暂无匹配图片，可调整标题、品牌、机型或专题筛选" />
+              }
+              scroll={{ x: 1000 }}
               rowSelection={{
                 type: "checkbox",
                 checkAll: true,
@@ -676,10 +726,10 @@ function App() {
                   setSelectedIds(new Set(keys.map((key) => String(key)))),
               }}
               pagination={{
-                pageSize: 8,
+                pageSize: 12,
                 size: "small",
                 sizeCanChange: true,
-                sizeOptions: [8, 16, 32],
+                sizeOptions: [12, 24, 48],
                 showTotal: (total, range) =>
                   `显示 ${range[0]}-${range[1]}，共 ${total} 条`,
               }}

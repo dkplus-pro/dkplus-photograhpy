@@ -122,8 +122,8 @@ textarea {
 
 .toolbar {
   display: grid;
-  grid-template-columns: minmax(260px, 1fr) minmax(180px, 260px) auto;
-  gap: 12px;
+  grid-template-columns: minmax(220px, 1.1fr) minmax(140px, 0.75fr) minmax(140px, 0.75fr) minmax(150px, 0.8fr) auto;
+  gap: 10px;
   align-items: center;
 }
 
@@ -133,17 +133,18 @@ textarea {
 
 .photo-cell {
   display: grid;
-  grid-template-columns: 64px minmax(0, 1fr);
-  gap: 10px;
+  grid-template-columns: 56px minmax(0, 1fr);
+  gap: 8px;
   align-items: center;
+  text-align: left;
   min-width: 0;
 }
 
 .photo-cell__thumb,
 .photo-cell__empty {
   display: block;
-  width: 64px;
-  height: 48px;
+  width: 56px;
+  height: 44px;
   border: 0;
   padding: 0;
   overflow: hidden;
@@ -199,8 +200,10 @@ textarea {
 
 .rich-lines {
   display: grid;
+  justify-items: center;
   gap: 2px;
   min-width: 0;
+  text-align: center;
 }
 
 .rich-lines span,
@@ -327,8 +330,10 @@ textarea {
 
 .photos-table .arco-table-th,
 .photos-table .arco-table-td {
-  padding-top: 8px;
-  padding-bottom: 8px;
+  padding-top: 6px;
+  padding-bottom: 6px;
+  text-align: center;
+  vertical-align: middle;
 }
 
 .image-preview-modal .arco-modal {
@@ -348,8 +353,21 @@ textarea {
   background: #111827;
 }
 
-.arco-table-td {
-  vertical-align: top;
+.photos-table .arco-table-td {
+  vertical-align: middle;
+}
+
+.photos-table .arco-table-empty-row .arco-table-td {
+  padding: 32px 16px;
+}
+
+.toolbar :where(.arco-input-inner-wrapper, .arco-select-view):focus-within {
+  outline: 3px solid rgba(22, 93, 255, 0.24);
+  outline-offset: 2px;
+}
+
+.toolbar-actions {
+  justify-content: flex-end;
 }
 
 @media (max-width: 920px) {
@@ -357,6 +375,10 @@ textarea {
   .toolbar {
     display: grid;
     grid-template-columns: 1fr;
+  }
+
+  .toolbar-actions {
+    justify-content: flex-start;
   }
 
   .stats-grid {
