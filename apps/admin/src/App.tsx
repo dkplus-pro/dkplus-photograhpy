@@ -307,27 +307,6 @@ function App() {
     pushMessage("success", `已新增专题“${title}”，并设为当前专题。`);
   };
 
-  const withTopicTitle = (
-    photo: PhotoRecord,
-    topicId?: string,
-    topicTitle?: string,
-  ): PhotoRecord => {
-    const cleanTopicId = topicId?.trim();
-    const cleanTopicTitle = topicTitle?.trim();
-
-    if (!cleanTopicId || !cleanTopicTitle) return photo;
-
-    return {
-      ...photo,
-      topicId: photo.topicId || cleanTopicId,
-      topicIds: photo.topicIds?.length ? photo.topicIds : [cleanTopicId],
-      topicTitle: photo.topicTitle || cleanTopicTitle,
-    };
-  };
-
-  const withSelectedTopic = (photo: PhotoRecord): PhotoRecord =>
-    withTopicTitle(photo, payload.topicId, payload.topicTitle);
-
   const resetEditor = () => {
     setEditingId(null);
     setPayload(emptyPayload);
@@ -979,7 +958,7 @@ function App() {
                 allowClear
                 showSearch
                 value={payload.topicId || undefined}
-                placeholder="选择已有专题，或在下方创建专题"
+                placeholder="选择已有专题，或在新增图片里创建专题"
                 onChange={(value) =>
                   selectTopic(typeof value === "string" ? value : "")
                 }
@@ -988,25 +967,6 @@ function App() {
                   value: id,
                 }))}
               />
-              <div className="topic-create-row" aria-label="上传时新增专题">
-                <Input
-                  value={topicDraft.title}
-                  onChange={(value) =>
-                    setTopicDraft((current) => ({ ...current, title: value }))
-                  }
-                  placeholder="专题名称，如：编辑精选"
-                />
-                <Input
-                  value={topicDraft.id}
-                  onChange={(value) =>
-                    setTopicDraft((current) => ({ ...current, id: value }))
-                  }
-                  placeholder="专题 ID（可选，自动生成）"
-                />
-                <Button type="outline" onClick={createTopicFromDraft}>
-                  创建专题
-                </Button>
-              </div>
             </label>
             <Space wrap>
               <Button onClick={() => quickFileInputRef.current?.click()}>
