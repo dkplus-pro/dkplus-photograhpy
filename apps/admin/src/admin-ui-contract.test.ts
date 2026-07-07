@@ -7,13 +7,6 @@ const dirname = path.dirname(fileURLToPath(import.meta.url));
 const appSource = readFileSync(path.join(dirname, "App.tsx"), "utf8");
 const styles = readFileSync(path.join(dirname, "styles.css"), "utf8");
 
-const cssBlock = (selector: string): string => {
-  const escaped = selector.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-  const match = styles.match(new RegExp(`${escaped}\\s*\\{([\\s\\S]*?)\\n\\}`, "m"));
-  expect(match, `Expected ${selector} CSS block to exist`).toBeTruthy();
-  return match?.[1] ?? "";
-};
-
 describe("admin list UI contract", () => {
   it("keeps explicit title, brand, model, and topic filters", () => {
     expect(appSource).toContain('aria-label="按标题筛选"');
