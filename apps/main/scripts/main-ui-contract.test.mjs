@@ -22,8 +22,8 @@ const cssBlock = (selector) => {
 };
 
 test("main photo cards keep the compact no-zoom square-card contract", () => {
-  assert.match(cssBlock(".virtual-grid__row"), /gap:\s*12px;/);
-  assert.match(virtualRows, /gap\s*=\s*12,/);
+  assert.match(cssBlock(".virtual-grid__row"), /gap:\s*10px;/);
+  assert.match(virtualRows, /gap\s*=\s*10,/);
 
   assert.match(cssBlock(".photo-card"), /border-radius:\s*0;/);
   assert.match(cssBlock(".photo-card.square"), /aspect-ratio:\s*1;/);
@@ -41,4 +41,13 @@ test("main photo cards keep the compact no-zoom square-card contract", () => {
   );
 
   assert.doesNotMatch(styles, /\b(mosaic|adaptive)\b/i);
+});
+
+test("main virtual grid measures its container and keeps modal nav centered", () => {
+  assert.match(virtualRows, /containerRef\s*=\s*useRef/);
+  assert.doesNotMatch(virtualRows, /topOffset\s*=\s*260/);
+  assert.match(virtualRows, /containerTop:\s*rect\s*\?/);
+  assert.match(virtualRows, /rows\.length \* resolvedRowHeight \+ \(rows\.length - 1\) \* gap/);
+
+  assert.match(styles, /\.modal__nav\s*\{[\s\S]*?top:\s*50%;[\s\S]*?transform:\s*translateY\(-50%\);/);
 });

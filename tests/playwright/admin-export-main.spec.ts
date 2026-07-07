@@ -234,6 +234,7 @@ test.beforeAll(async () => {
     ],
     {
       VITE_BASE_PATH: "/",
+      VITE_API_PROXY_TARGET: serverBaseUrl,
     },
   );
   await waitForHttp(mainBaseUrl, "main");
@@ -265,18 +266,24 @@ test("Admin authenticated export action writes the Main JSON artifact", async ({
   expect(response.ok()).toBeTruthy();
 
   const exported = JSON.parse(await readFile(exportFile, "utf8")) as {
-    photos: Array<{
+    photos: Array<Record<string, unknown> & {
       id: string;
       topicIds: string[];
       asset: { original: string };
     }>;
-    topics: unknown[];
+    topics: Array<Record<string, unknown>>;
   };
+  expect(Object.keys(exported).sort()).toEqual(["generatedAt", "photos", "topics"]);
   expect(exported.topics).toHaveLength(1);
+  expect(exported.topics[0]).not.toHaveProperty("createdAt");
+  expect(exported.topics[0]).not.toHaveProperty("updatedAt");
   expect(exported.photos).toHaveLength(1);
   expect(exported.photos[0]?.id).toBe("admin-seed-photo");
   expect(exported.photos[0]?.topicIds).toEqual(["editorial"]);
   expect(exported.photos[0]?.asset.original).toContain("data:image/svg+xml");
+  expect(exported.photos[0]).not.toHaveProperty("createdAt");
+  expect(exported.photos[0]).not.toHaveProperty("updatedAt");
+  expect(exported.photos[0]).not.toHaveProperty("image");
 });
 
 test("Admin API auth and upload work without mutating the exported JSON", async ({
@@ -316,11 +323,16 @@ test("Admin API auth and upload work without mutating the exported JSON", async 
   await expect(readFile(exportFile, "utf8")).resolves.toBe(beforeUploadExport);
 });
 
-test("Main grid remains compact and does not transform cards or images on hover", async ({
+test("Main dev loads gallery data from /api and grid remains compact", async ({
   page,
 }) => {
   await page.setViewportSize({ width: 1366, height: 900 });
+  const apiResponses: string[] = [];
+  page.on("response", (response) => {
+    if (response.url().includes("/api/gallery")) apiResponses.push(response.url());
+  });
   await page.goto(mainBaseUrl);
+  await expect.poll(() => apiResponses.length).toBeGreaterThan(0);
   const card = page.locator(".photo-card").first();
   await expect(card).toBeVisible();
 
@@ -365,9 +377,39 @@ test("Main grid remains compact and does not transform cards or images on hover"
   expect(after.imageTransform).toBe(before.imageTransform);
   expect(afterBox?.width).toBe(beforeBox?.width);
   expect(afterBox?.height).toBe(beforeBox?.height);
-  expect(Number.parseFloat(after.gap)).toBeLessThanOrEqual(12);
+  expect(Number.parseFloat(after.gap)).toBeLessThanOrEqual(10);
   expect(after.borderRadius).toBe("0px");
   expect(after.aspectRatio).toContain("1");
   expect(Number.parseFloat(before.metaOpacity)).toBeLessThan(0.05);
   expect(Number.parseFloat(after.metaOpacity)).toBeGreaterThan(0.95);
+});
+
+
+test("Main virtual grid renders the bottom card and modal nav is vertically centered", async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 1366, height: 900 });
+  await page.goto(mainBaseUrl);
+  await expect(page.locator(".photo-card").first()).toBeVisible();
+  await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight));
+  await expect(page.getByRole("button", { name: "查看图片：后台导出样片" })).toBeVisible();
+  await page.getByRole("button", { name: "查看图片：后台导出样片" }).click();
+
+  const centers = await page.evaluate(() => {
+    const modal = document.querySelector(".modal");
+    const prev = document.querySelector(".modal__nav--prev");
+    const next = document.querySelector(".modal__nav--next");
+    if (!modal || !prev || !next) throw new Error("Modal nav DOM is incomplete");
+    const modalBox = modal.getBoundingClientRect();
+    const prevBox = prev.getBoundingClientRect();
+    const nextBox = next.getBoundingClientRect();
+    return {
+      modalCenter: modalBox.top + modalBox.height / 2,
+      prevCenter: prevBox.top + prevBox.height / 2,
+      nextCenter: nextBox.top + nextBox.height / 2,
+    };
+  });
+
+  expect(Math.abs(centers.prevCenter - centers.modalCenter)).toBeLessThan(2);
+  expect(Math.abs(centers.nextCenter - centers.modalCenter)).toBeLessThan(2);
 });
