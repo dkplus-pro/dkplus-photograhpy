@@ -74,21 +74,34 @@ test("topics tab opens a secondary virtual topic detail page", () => {
   assert.match(mainSource, /const TopicDetail =/);
   assert.match(mainSource, /onSelectTopic\(topic\.id\)/);
   assert.match(mainSource, /onSelectTopic=\{setSelectedTopicId\}/);
-  assert.doesNotMatch(mainSource, /onClick=\{\(\) => cover && onOpen\(cover\)\}/);
-  assert.match(
+  assert.doesNotMatch(
     mainSource,
-    /data\.photos\.filter\(\(photo\) => photo\.topicIds\.includes\(selectedTopicId\)\)/,
+    /onClick=\{\(\) => cover && onOpen\(cover\)\}/,
   );
   assert.match(
     mainSource,
-    /<VirtualPhotoGrid\s+photos=\{topicPhotos\}\s+style="square"/,
+    /data\.photos\.filter\([\s\S]*?photo\.topicIds\.includes\(selectedTopicId\)/,
   );
   assert.match(
     mainSource,
-    /data && tab === "topics" && selectedTopic \? topicPhotos : \(data\?\.photos \?\? \[\]\)/,
+    /<VirtualPhotoGrid[\s\S]*?photos=\{photos\}[\s\S]*?style="square"/,
   );
-  assert.match(cssBlock(".topic-detail__header"), /justify-content:\s*space-between;/);
-  assert.match(cssBlock(".topic-detail__actions button"), /border-radius:\s*999px;/);
+  assert.match(
+    mainSource,
+    /<TopicDetail[\s\S]*?photos=\{topicPhotos\}/,
+  );
+  assert.match(
+    mainSource,
+    /data && tab === "topics" && selectedTopic[\s\S]*?\? topicPhotos[\s\S]*?: \(data\?\.photos \?\? \[\]\)/,
+  );
+  assert.match(
+    cssBlock(".topic-detail__header"),
+    /justify-content:\s*space-between;/,
+  );
+  assert.match(
+    cssBlock(".topic-detail__actions button"),
+    /border-radius:\s*999px;/,
+  );
 });
 
 test("modal navigation is vertically centered in the image pane", () => {

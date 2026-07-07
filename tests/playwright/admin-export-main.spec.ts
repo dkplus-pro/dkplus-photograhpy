@@ -670,6 +670,118 @@ test("Main dev loads gallery through /api and virtualizes to the bottom row", as
   ).toBeVisible();
 });
 
+test("Main topics tab opens a virtual detail page with scoped modal navigation", async ({
+  page,
+}) => {
+  const svg = (fill: string) =>
+    `data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='800' height='800'%3E%3Crect width='800' height='800' fill='%23${fill}'/%3E%3C/svg%3E`;
+  const makePhoto = (
+    id: string,
+    title: string,
+    topicIds: string[],
+    takenAt: string,
+    fill: string,
+  ) => ({
+    id,
+    title,
+    description: `${title} description`,
+    topicIds,
+    takenAt,
+    asset: {
+      original: svg(fill),
+      thumbnail: svg(fill),
+      preview: svg(fill),
+      alt: title,
+      width: 800,
+      height: 800,
+    },
+  });
+
+  await page.route("**/api/gallery", async (route) => {
+    await route.fulfill({
+      contentType: "application/json",
+      body: JSON.stringify({
+        generatedAt: "2026-07-07T00:00:00.000Z",
+        topics: [
+          {
+            id: "editorial",
+            title: "编辑精选",
+            description: "三张编辑精选作品",
+            sortOrder: 1,
+          },
+          {
+            id: "travel",
+            title: "旅行专题",
+            description: "不应出现在编辑精选二级页",
+            sortOrder: 2,
+          },
+        ],
+        photos: [
+          makePhoto(
+            "travel-a",
+            "旅行样片",
+            ["travel"],
+            "2030-01-01T00:00:00.000Z",
+            "775533",
+          ),
+          makePhoto(
+            "editorial-a",
+            "编辑样片 A",
+            ["editorial"],
+            "2029-01-01T00:00:00.000Z",
+            "222222",
+          ),
+          makePhoto(
+            "editorial-b",
+            "编辑样片 B",
+            ["editorial"],
+            "2028-01-01T00:00:00.000Z",
+            "333333",
+          ),
+          makePhoto(
+            "editorial-c",
+            "编辑样片 C",
+            ["editorial"],
+            "2027-01-01T00:00:00.000Z",
+            "444444",
+          ),
+        ],
+      }),
+    });
+  });
+
+  await page.setViewportSize({ width: 1280, height: 720 });
+  await page.goto(mainBaseUrl);
+  await page.getByRole("tab", { name: "专题" }).click();
+  await page.getByRole("button", { name: "查看专题：编辑精选" }).click();
+
+  await expect(
+    page.getByRole("heading", { name: "编辑精选", level: 1 }),
+  ).toBeVisible();
+  await expect(page.getByText("专题 / 编辑精选")).toBeVisible();
+  await expect(page.getByText("3 张作品")).toBeVisible();
+  await expect(
+    page.getByRole("button", { name: "查看图片：编辑样片 A" }),
+  ).toBeVisible();
+  await expect(
+    page.getByRole("button", { name: "查看图片：旅行样片" }),
+  ).toHaveCount(0);
+
+  await page.getByRole("button", { name: "查看图片：编辑样片 A" }).click();
+  await expect(page.getByRole("dialog", { name: "编辑样片 A" })).toBeVisible();
+  await expect(page.locator(".modal .eyebrow")).toHaveText("1 / 3");
+
+  await page.getByRole("button", { name: "下一张" }).click();
+  await expect(page.locator(".modal h2")).toHaveText("编辑样片 B");
+  await expect(page.locator(".modal .eyebrow")).toHaveText("2 / 3");
+
+  await page.getByRole("button", { name: "关闭" }).click();
+  await page.getByRole("button", { name: "返回专题列表" }).click();
+  await expect(
+    page.getByRole("button", { name: "查看专题：旅行专题" }),
+  ).toBeVisible();
+});
+
 test("Main modal navigation buttons are vertically centered and switch photos", async ({
   page,
   request,

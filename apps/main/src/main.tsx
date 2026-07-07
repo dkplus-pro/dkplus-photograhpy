@@ -347,12 +347,16 @@ const App = () => {
   const topicPhotos = useMemo(
     () =>
       data && selectedTopicId
-        ? data.photos.filter((photo) => photo.topicIds.includes(selectedTopicId))
+        ? data.photos.filter((photo) =>
+            photo.topicIds.includes(selectedTopicId),
+          )
         : [],
     [data, selectedTopicId],
   );
   const modalPhotos =
-    data && tab === "topics" && selectedTopic ? topicPhotos : (data?.photos ?? []);
+    data && tab === "topics" && selectedTopic
+      ? topicPhotos
+      : (data?.photos ?? []);
   const selectTab = (key: TabKey) => {
     setTab(key);
     if (key !== "topics") setSelectedTopicId(null);
