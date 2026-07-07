@@ -100,7 +100,6 @@ const VirtualPhotoGrid = ({
   const { columns, containerRef, rows, totalHeight } = useVirtualRows(
     photos,
     300,
-    8,
   );
   return (
     <div
