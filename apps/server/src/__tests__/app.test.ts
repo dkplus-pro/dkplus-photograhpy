@@ -125,3 +125,32 @@ test("multipart upload stores local file, extracts safe EXIF fallback, and creat
     await rm(root, { recursive: true, force: true });
   }
 });
+
+test("local upload files are served from /uploads without admin auth", async () => {
+  const { config, root } = await makeConfig();
+  config.publicBaseUrl = undefined;
+  try {
+    const app = createApp(config).callback();
+    const uploaded = await request(app)
+      .post("/api/uploads")
+      .set("Authorization", "Bearer test-token")
+      .field("title", "Local static frame")
+      .attach("files", Buffer.from([0xff, 0xd8, 0xff, 0xd9]), {
+        filename: "local-frame.jpg",
+        contentType: "image/jpeg",
+      })
+      .expect(201);
+
+    const uploadUrl = uploaded.body.photos[0].image.url as string;
+    assert.match(uploadUrl, /^\/uploads\//);
+
+    const staticResponse = await request(app).get(uploadUrl).expect(200);
+    assert.match(staticResponse.headers["content-type"], /^image\/jpeg/);
+    assert.deepEqual(
+      staticResponse.body,
+      Buffer.from([0xff, 0xd8, 0xff, 0xd9]),
+    );
+  } finally {
+    await rm(root, { recursive: true, force: true });
+  }
+});

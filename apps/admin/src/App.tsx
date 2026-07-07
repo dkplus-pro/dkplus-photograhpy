@@ -1,11 +1,30 @@
-import { useEffect, useMemo, useState } from "react";
-import type { FormEvent } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import {
+  Button,
+  Card,
+  ConfigProvider,
+  Empty,
+  Input,
+  Message,
+  Modal,
+  Select,
+  Space,
+  Spin,
+  Statistic,
+  Table,
+  Tag,
+  Typography,
+} from "@arco-design/web-react";
+import type { TableColumnProps } from "@arco-design/web-react";
+import zhCN from "@arco-design/web-react/es/locale/zh-CN";
 
 import { createApiClient } from "./lib/api";
 import { extractExif } from "./lib/exif";
 import {
   exifLine,
   formatDate,
+  formatFileSize,
+  imageSummary,
   photoTitle,
   summarizeUpload,
 } from "./lib/format";
@@ -13,24 +32,32 @@ import type {
   PhotoPayload,
   PhotoRecord,
   PhotoStatus,
-  ToastMessage,
   UploadPreview,
 } from "./types";
 
 const api = createApiClient();
+const TextArea = Input.TextArea;
+const { Text } = Typography;
 
 const demoPhotos: PhotoRecord[] = [
   {
     id: "demo-01",
-    title: "Harbor after rain",
-    description:
-      "A quiet reflective study used when the API is not connected yet.",
+    title: "雨后港口",
+    description: "API 未连接时用于预览后台列表的反光街景样片。",
     topicId: "street",
-    topicTitle: "Street",
+    topicTitle: "街头",
     status: "published",
     imageUrl:
       "https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?auto=format&fit=crop&w=900&q=80",
     createdAt: "2026-02-18T08:00:00.000Z",
+    updatedAt: "2026-02-18T08:00:00.000Z",
+    image: {
+      url: "https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?auto=format&fit=crop&w=900&q=80",
+      fileName: "harbor-after-rain.jpg",
+      mimeType: "image/jpeg",
+      size: 924_000,
+      storage: "remote",
+    },
     exif: {
       cameraMake: "Sony",
       cameraModel: "A7 IV",
@@ -42,14 +69,22 @@ const demoPhotos: PhotoRecord[] = [
   },
   {
     id: "demo-02",
-    title: "Studio geometry",
-    description: "Monochrome topic cover candidate with high-contrast forms.",
+    title: "几何影棚",
+    description: "用于检查草稿状态、专题与 EXIF 展示的黑白样片。",
     topicId: "studio",
-    topicTitle: "Studio",
+    topicTitle: "影棚",
     status: "draft",
     imageUrl:
       "https://images.unsplash.com/photo-1492691527719-9d1e07e534b4?auto=format&fit=crop&w=900&q=80",
     createdAt: "2026-01-04T08:00:00.000Z",
+    updatedAt: "2026-01-04T08:00:00.000Z",
+    image: {
+      url: "https://images.unsplash.com/photo-1492691527719-9d1e07e534b4?auto=format&fit=crop&w=900&q=80",
+      fileName: "studio-geometry.jpg",
+      mimeType: "image/jpeg",
+      size: 1_320_000,
+      storage: "remote",
+    },
     exif: {
       cameraMake: "Fujifilm",
       cameraModel: "GFX 100S",
@@ -70,32 +105,19 @@ const emptyPayload: PhotoPayload = {
   imageUrl: "",
 };
 
+const statusLabel: Record<PhotoStatus, string> = {
+  draft: "草稿",
+  published: "已发布",
+  archived: "已归档",
+};
+
+const statusColor: Record<PhotoStatus, string> = {
+  draft: "gray",
+  published: "green",
+  archived: "orangered",
+};
+
 const randomId = () => `${Date.now().toString(36)}-${crypto.randomUUID()}`;
-
-const cameraIcon = (
-  <svg aria-hidden="true" viewBox="0 0 24 24" className="icon">
-    <path d="M4 8.5A2.5 2.5 0 0 1 6.5 6h1.8l1.2-2h5l1.2 2h1.8A2.5 2.5 0 0 1 20 8.5v8A2.5 2.5 0 0 1 17.5 19h-11A2.5 2.5 0 0 1 4 16.5v-8Z" />
-    <path d="M12 16a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7Z" />
-  </svg>
-);
-
-const uploadIcon = (
-  <svg aria-hidden="true" viewBox="0 0 24 24" className="icon">
-    <path d="M12 4v12" />
-    <path d="m7 9 5-5 5 5" />
-    <path d="M5 20h14" />
-  </svg>
-);
-
-const trashIcon = (
-  <svg aria-hidden="true" viewBox="0 0 24 24" className="icon">
-    <path d="M4 7h16" />
-    <path d="M10 11v6" />
-    <path d="M14 11v6" />
-    <path d="m6 7 1 14h10l1-14" />
-    <path d="M9 7V4h6v3" />
-  </svg>
-);
 
 function App() {
   const [photos, setPhotos] = useState<PhotoRecord[]>([]);
@@ -103,23 +125,23 @@ function App() {
   const [payload, setPayload] = useState<PhotoPayload>(emptyPayload);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [previews, setPreviews] = useState<UploadPreview[]>([]);
+  const previewsRef = useRef<UploadPreview[]>([]);
+  const quickFileInputRef = useRef<HTMLInputElement>(null);
+  const topicFileInputRef = useRef<HTMLInputElement>(null);
   const [query, setQuery] = useState("");
   const [topicFilter, setTopicFilter] = useState("all");
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
-  const [toasts, setToasts] = useState<ToastMessage[]>([]);
+  const [isEditorOpen, setIsEditorOpen] = useState(false);
+  const [isUploadOpen, setIsUploadOpen] = useState(false);
   const [confirmAction, setConfirmAction] = useState<{
     title: string;
     body: string;
     onConfirm: () => Promise<void>;
   } | null>(null);
 
-  const pushToast = (tone: ToastMessage["tone"], text: string) => {
-    const id = randomId();
-    setToasts((current) => [...current, { id, tone, text }]);
-    window.setTimeout(() => {
-      setToasts((current) => current.filter((toast) => toast.id !== id));
-    }, 4200);
+  const pushMessage = (tone: "success" | "error" | "info", text: string) => {
+    Message[tone](text);
   };
 
   const refresh = async () => {
@@ -129,9 +151,9 @@ function App() {
       setPhotos(records);
     } catch (error) {
       setPhotos(demoPhotos);
-      pushToast(
+      pushMessage(
         "info",
-        `API unavailable; showing demo data. ${error instanceof Error ? error.message : ""}`.trim(),
+        `API 暂不可用，正在显示演示数据。${error instanceof Error ? error.message : ""}`.trim(),
       );
     } finally {
       setIsLoading(false);
@@ -142,25 +164,52 @@ function App() {
     void refresh();
   }, []);
 
+  useEffect(() => {
+    previewsRef.current = previews;
+  }, [previews]);
+
+  useEffect(
+    () => () => {
+      for (const preview of previewsRef.current) {
+        URL.revokeObjectURL(preview.previewUrl);
+      }
+    },
+    [],
+  );
+
   const topics = useMemo(() => {
     const map = new Map<string, string>();
     for (const photo of photos) {
-      if (photo.topicId)
+      if (photo.topicId) {
         map.set(photo.topicId, photo.topicTitle || photo.topicId);
+      }
+      for (const topicId of photo.topicIds ?? []) {
+        if (!map.has(topicId)) {
+          map.set(topicId, topicId);
+        }
+      }
     }
-    return [...map.entries()].sort((a, b) => a[1].localeCompare(b[1]));
+    return [...map.entries()].sort((a, b) => a[1].localeCompare(b[1], "zh-CN"));
   }, [photos]);
 
   const filteredPhotos = useMemo(() => {
     const normalizedQuery = query.trim().toLowerCase();
     return photos.filter((photo) => {
+      const topicIds = [photo.topicId, ...(photo.topicIds ?? [])].filter(
+        Boolean,
+      );
       const matchesTopic =
-        topicFilter === "all" || photo.topicId === topicFilter;
+        topicFilter === "all" || topicIds.includes(topicFilter);
       const searchable = [
         photo.title,
         photo.description,
         photo.topicTitle,
         photo.topicId,
+        photo.location,
+        photo.image?.fileName,
+        photo.image?.mimeType,
+        photo.image?.storage,
+        ...(photo.tags ?? []),
         exifLine(photo.exif),
       ]
         .join(" ")
@@ -174,10 +223,21 @@ function App() {
 
   const selectedCount = selectedIds.size;
   const stagedSummary = useMemo(() => summarizeUpload(previews), [previews]);
+  const publishedCount = photos.filter(
+    (photo) => (photo.status ?? "published") === "published",
+  ).length;
+  const draftCount = photos.filter((photo) => photo.status === "draft").length;
 
   const resetEditor = () => {
     setEditingId(null);
     setPayload(emptyPayload);
+    setIsEditorOpen(false);
+  };
+
+  const openCreateEditor = () => {
+    setEditingId(null);
+    setPayload(emptyPayload);
+    setIsEditorOpen(true);
   };
 
   const editPhoto = (photo: PhotoRecord) => {
@@ -185,16 +245,16 @@ function App() {
     setPayload({
       title: photo.title || "",
       description: photo.description || "",
-      topicId: photo.topicId || "",
+      topicId: photo.topicId || photo.topicIds?.[0] || "",
       topicTitle: photo.topicTitle || "",
-      status: photo.status || "draft",
-      imageUrl: photo.imageUrl,
+      status: photo.status || "published",
+      imageUrl: photo.imageUrl || photo.image?.url || "",
       exif: photo.exif,
     });
+    setIsEditorOpen(true);
   };
 
-  const savePhoto = async (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
+  const savePhoto = async () => {
     setIsSaving(true);
     try {
       const cleanPayload: PhotoPayload = {
@@ -206,22 +266,34 @@ function App() {
         imageUrl: payload.imageUrl?.trim(),
       };
 
+      if (!editingId && !cleanPayload.imageUrl) {
+        pushMessage("error", "请填写图片 URL，或通过上传功能创建图片。");
+        return;
+      }
+
       if (editingId) {
         const updated = await api.updatePhoto(editingId, cleanPayload);
         setPhotos((current) =>
-          current.map((photo) => (photo.id === editingId ? updated : photo)),
+          current.map((photo) =>
+            photo.id === editingId
+              ? { ...updated, status: cleanPayload.status ?? updated.status }
+              : photo,
+          ),
         );
-        pushToast("success", "Photo record updated");
+        pushMessage("success", "图片记录已更新");
       } else {
         const created = await api.createPhoto(cleanPayload);
-        setPhotos((current) => [created, ...current]);
-        pushToast("success", "Photo record created");
+        setPhotos((current) => [
+          { ...created, status: cleanPayload.status ?? created.status },
+          ...current,
+        ]);
+        pushMessage("success", "图片记录已创建");
       }
       resetEditor();
     } catch (error) {
-      pushToast(
+      pushMessage(
         "error",
-        error instanceof Error ? error.message : "Unable to save photo",
+        error instanceof Error ? error.message : "保存图片记录失败",
       );
     } finally {
       setIsSaving(false);
@@ -248,14 +320,15 @@ function App() {
       })),
     );
     setPreviews((current) => [...current, ...staged]);
-    pushToast(
-      "info",
-      `${staged.length} upload${staged.length === 1 ? "" : "s"} staged with EXIF preview`,
-    );
+    setIsUploadOpen(true);
+    pushMessage("info", `已暂存 ${staged.length} 个文件并读取 EXIF 预览`);
   };
 
   const clearPreviews = () => {
-    for (const preview of previews) URL.revokeObjectURL(preview.previewUrl);
+    for (const preview of previewsRef.current) {
+      URL.revokeObjectURL(preview.previewUrl);
+    }
+    previewsRef.current = [];
     setPreviews([]);
   };
 
@@ -269,34 +342,20 @@ function App() {
         if (result.photo) uploaded.push(result.photo);
       }
       if (uploaded.length) setPhotos((current) => [...uploaded, ...current]);
-      pushToast(
-        "success",
-        `Uploaded ${previews.length} file${previews.length === 1 ? "" : "s"}`,
-      );
+      pushMessage("success", `已上传 ${previews.length} 个文件`);
       clearPreviews();
+      setIsUploadOpen(false);
     } catch (error) {
-      pushToast(
-        "error",
-        error instanceof Error ? error.message : "Upload failed",
-      );
+      pushMessage("error", error instanceof Error ? error.message : "上传失败");
     } finally {
       setIsSaving(false);
     }
   };
 
-  const toggleSelected = (id: string) => {
-    setSelectedIds((current) => {
-      const next = new Set(current);
-      if (next.has(id)) next.delete(id);
-      else next.add(id);
-      return next;
-    });
-  };
-
   const requestDeletePhoto = (photo: PhotoRecord) => {
     setConfirmAction({
-      title: "Delete photo record",
-      body: `Delete “${photoTitle(photo)}”? This removes the admin record and cannot be undone.`,
+      title: "删除图片记录",
+      body: `确认删除“${photoTitle(photo)}”？此操作会移除后台记录，且无法撤销。`,
       async onConfirm() {
         await api.deletePhoto(photo.id);
         setPhotos((current) =>
@@ -307,7 +366,7 @@ function App() {
           next.delete(photo.id);
           return next;
         });
-        pushToast("success", "Photo deleted");
+        pushMessage("success", "图片已删除");
       },
     });
   };
@@ -315,384 +374,389 @@ function App() {
   const requestBatchDelete = () => {
     const ids = [...selectedIds];
     setConfirmAction({
-      title: "Delete selected records",
-      body: `Delete ${ids.length} selected record${ids.length === 1 ? "" : "s"}? This action cannot be undone.`,
+      title: "批量删除图片记录",
+      body: `确认删除已选择的 ${ids.length} 条记录？此操作无法撤销。`,
       async onConfirm() {
         await api.batchDelete(ids);
         setPhotos((current) =>
           current.filter((photo) => !ids.includes(photo.id)),
         );
         setSelectedIds(new Set());
-        pushToast("success", "Selected records deleted");
+        pushMessage("success", "已删除所选记录");
       },
     });
   };
 
   const runConfirmedAction = async () => {
     if (!confirmAction) return;
+    setIsSaving(true);
     try {
       await confirmAction.onConfirm();
     } catch (error) {
-      pushToast(
-        "error",
-        error instanceof Error ? error.message : "Action failed",
-      );
+      pushMessage("error", error instanceof Error ? error.message : "操作失败");
     } finally {
+      setIsSaving(false);
       setConfirmAction(null);
     }
   };
 
-  return (
-    <main className="admin-shell">
-      <section className="hero-panel" aria-labelledby="page-title">
-        <div>
-          <p className="eyebrow">DKPlus Photography CMS</p>
-          <h1 id="page-title">Admin contact sheet for image operations</h1>
-          <p className="hero-copy">
-            Curate published gallery records, stage bulk uploads, preview EXIF,
-            and keep destructive edits behind a confirmation checkpoint.
-          </p>
-        </div>
-        <div className="hero-stats" aria-label="Gallery statistics">
-          <span>
-            <strong>{photos.length}</strong> records
-          </span>
-          <span>
-            <strong>{topics.length}</strong> topics
-          </span>
-          <span>
-            <strong>{selectedCount}</strong> selected
-          </span>
-        </div>
-      </section>
-
-      <section className="toolbar card" aria-label="Photo filters">
-        <label>
-          <span>Search records</span>
-          <input
-            value={query}
-            onChange={(event) => setQuery(event.target.value)}
-            placeholder="Title, topic, EXIF"
-          />
-        </label>
-        <label>
-          <span>Topic</span>
-          <select
-            value={topicFilter}
-            onChange={(event) => setTopicFilter(event.target.value)}
-          >
-            <option value="all">All topics</option>
-            {topics.map(([id, title]) => (
-              <option key={id} value={id}>
-                {title}
-              </option>
-            ))}
-          </select>
-        </label>
-        <button
-          className="btn-secondary"
-          type="button"
-          onClick={() => void refresh()}
-          disabled={isLoading}
-        >
-          Refresh API
-        </button>
-      </section>
-
-      <div className="workspace-grid">
-        <section className="card editor-card" aria-labelledby="editor-title">
-          <div className="section-heading">
-            <div>
-              <p className="eyebrow">Record editor</p>
-              <h2 id="editor-title">
-                {editingId ? "Update photo metadata" : "Create photo record"}
-              </h2>
-            </div>
-            {editingId ? (
-              <button
-                className="text-button"
-                type="button"
-                onClick={resetEditor}
-              >
-                Cancel edit
-              </button>
-            ) : null}
+  const columns: TableColumnProps<PhotoRecord>[] = [
+    {
+      title: "图片",
+      dataIndex: "title",
+      width: 300,
+      render: (_value, photo) => (
+        <div className="photo-cell">
+          {photo.thumbnailUrl || photo.imageUrl ? (
+            <img
+              src={photo.thumbnailUrl || photo.imageUrl}
+              alt={photoTitle(photo)}
+              loading="lazy"
+            />
+          ) : (
+            <span className="photo-cell__empty">无图</span>
+          )}
+          <div>
+            <strong>{photoTitle(photo)}</strong>
+            <Text type="secondary" className="line-clamp">
+              {photo.description || "暂无描述"}
+            </Text>
           </div>
-
-          <form
-            className="form-grid"
-            onSubmit={(event) => void savePhoto(event)}
+        </div>
+      ),
+    },
+    {
+      title: "状态",
+      dataIndex: "status",
+      width: 96,
+      render: (_value, photo) => {
+        const status = photo.status || "published";
+        return <Tag color={statusColor[status]}>{statusLabel[status]}</Tag>;
+      },
+    },
+    {
+      title: "专题",
+      dataIndex: "topicTitle",
+      width: 150,
+      render: (_value, photo) =>
+        photo.topicTitle || photo.topicId || photo.topicIds?.[0] || "未分组",
+    },
+    {
+      title: "文件信息",
+      dataIndex: "image",
+      width: 260,
+      render: (_value, photo) => (
+        <div className="rich-lines">
+          <strong>{imageSummary(photo)}</strong>
+          <span>{photo.image?.mimeType || "未知格式"}</span>
+          <span>
+            {photo.image?.size ? formatFileSize(photo.image.size) : "未知大小"}
+          </span>
+        </div>
+      ),
+    },
+    {
+      title: "EXIF / 时间",
+      dataIndex: "exif",
+      width: 280,
+      render: (_value, photo) => (
+        <div className="rich-lines">
+          <strong>{exifLine(photo.exif)}</strong>
+          <span>
+            拍摄：
+            {formatDate(
+              photo.takenAt ?? photo.exif?.capturedAt ?? photo.createdAt,
+            )}
+          </span>
+          <span>更新：{formatDate(photo.updatedAt)}</span>
+        </div>
+      ),
+    },
+    {
+      title: "操作",
+      key: "actions",
+      width: 168,
+      align: "right",
+      render: (_value, photo) => (
+        <Space size="mini">
+          <Button size="mini" type="outline" onClick={() => editPhoto(photo)}>
+            编辑
+          </Button>
+          <Button
+            size="mini"
+            status="danger"
+            type="outline"
+            onClick={() => requestDeletePhoto(photo)}
           >
+            删除
+          </Button>
+        </Space>
+      ),
+    },
+  ];
+
+  return (
+    <ConfigProvider locale={zhCN}>
+      <main className="admin-shell">
+        <header className="admin-header" aria-labelledby="page-title">
+          <div>
+            <p className="eyebrow">DKPlus 图库后台</p>
+            <h1 id="page-title">图片管理</h1>
+          </div>
+          <Space wrap>
+            <Button onClick={() => void refresh()} loading={isLoading}>
+              刷新 API
+            </Button>
+            <Button type="primary" onClick={openCreateEditor}>
+              新增图片
+            </Button>
+            <Button onClick={() => setIsUploadOpen(true)}>上传图片</Button>
+          </Space>
+        </header>
+
+        <section className="stats-grid" aria-label="图片统计">
+          <Card bordered={false}>
+            <Statistic title="图片记录" value={photos.length} />
+          </Card>
+          <Card bordered={false}>
+            <Statistic title="已发布" value={publishedCount} />
+          </Card>
+          <Card bordered={false}>
+            <Statistic title="草稿" value={draftCount} />
+          </Card>
+          <Card bordered={false}>
+            <Statistic title="已选择" value={selectedCount} />
+          </Card>
+        </section>
+
+        <Card className="toolbar-card" bordered={false}>
+          <div className="toolbar">
+            <Input
+              allowClear
+              value={query}
+              onChange={setQuery}
+              placeholder="搜索标题、专题、文件名、标签或 EXIF"
+            />
+            <Select
+              value={topicFilter}
+              onChange={(value) => setTopicFilter(String(value))}
+              options={[
+                { label: "全部专题", value: "all" },
+                ...topics.map(([id, title]) => ({ label: title, value: id })),
+              ]}
+            />
+            <Space wrap>
+              <Button type="primary" onClick={openCreateEditor}>
+                新增图片
+              </Button>
+              <Button
+                status="danger"
+                disabled={selectedCount === 0}
+                onClick={requestBatchDelete}
+              >
+                删除所选
+              </Button>
+            </Space>
+          </div>
+        </Card>
+
+        <Card
+          className="table-card"
+          bordered={false}
+          title="图片列表"
+          extra={<Tag color="arcoblue">{filteredPhotos.length} 条结果</Tag>}
+        >
+          <Spin loading={isLoading} style={{ width: "100%" }}>
+            <Table<PhotoRecord>
+              rowKey="id"
+              size="mini"
+              border={{ wrapper: true, cell: true }}
+              tableLayoutFixed
+              stripe
+              columns={columns}
+              data={filteredPhotos}
+              noDataElement={<Empty description="暂无匹配图片" />}
+              scroll={{ x: 1250 }}
+              rowSelection={{
+                type: "checkbox",
+                checkAll: true,
+                preserveSelectedRowKeys: true,
+                selectedRowKeys: [...selectedIds],
+                onChange: (keys) =>
+                  setSelectedIds(new Set(keys.map((key) => String(key)))),
+              }}
+              pagination={{
+                pageSize: 8,
+                size: "small",
+                sizeCanChange: true,
+                sizeOptions: [8, 16, 32],
+                showTotal: (total, range) =>
+                  `显示 ${range[0]}-${range[1]}，共 ${total} 条`,
+              }}
+            />
+          </Spin>
+        </Card>
+
+        <Modal
+          title={editingId ? "编辑图片记录" : "新增图片记录"}
+          visible={isEditorOpen}
+          onCancel={resetEditor}
+          onOk={() => void savePhoto()}
+          confirmLoading={isSaving}
+          okText="保存"
+          cancelText="取消"
+          maskClosable={false}
+          unmountOnExit
+        >
+          <div className="editor-form">
             <label>
-              <span>Title optional</span>
-              <input
+              <span>标题（可选）</span>
+              <Input
                 value={payload.title || ""}
-                onChange={(event) =>
-                  setPayload({ ...payload, title: event.target.value })
-                }
-                placeholder="Evening study"
+                onChange={(value) => setPayload({ ...payload, title: value })}
+                placeholder="例如：雨后街角"
               />
             </label>
             <label>
-              <span>Status</span>
-              <select
+              <span>状态</span>
+              <Select
                 value={payload.status || "draft"}
-                onChange={(event) =>
-                  setPayload({
-                    ...payload,
-                    status: event.target.value as PhotoStatus,
-                  })
+                onChange={(value) =>
+                  setPayload({ ...payload, status: value as PhotoStatus })
                 }
-              >
-                <option value="draft">Draft</option>
-                <option value="published">Published</option>
-                <option value="archived">Archived</option>
-              </select>
+                options={Object.entries(statusLabel).map(([value, label]) => ({
+                  label,
+                  value,
+                }))}
+              />
             </label>
             <label>
-              <span>Topic ID</span>
-              <input
+              <span>专题 ID</span>
+              <Input
                 value={payload.topicId || ""}
-                onChange={(event) =>
-                  setPayload({ ...payload, topicId: event.target.value })
-                }
+                onChange={(value) => setPayload({ ...payload, topicId: value })}
                 placeholder="street"
               />
             </label>
             <label>
-              <span>Topic title</span>
-              <input
+              <span>专题名称</span>
+              <Input
                 value={payload.topicTitle || ""}
-                onChange={(event) =>
-                  setPayload({ ...payload, topicTitle: event.target.value })
+                onChange={(value) =>
+                  setPayload({ ...payload, topicTitle: value })
                 }
-                placeholder="Street"
+                placeholder="街头"
               />
             </label>
             <label className="span-2">
-              <span>Image URL</span>
-              <input
+              <span>图片 URL（新增时必填）</span>
+              <Input
                 value={payload.imageUrl || ""}
-                onChange={(event) =>
-                  setPayload({ ...payload, imageUrl: event.target.value })
+                onChange={(value) =>
+                  setPayload({ ...payload, imageUrl: value })
                 }
                 placeholder="https://cdn.example.com/photo.jpg"
               />
             </label>
             <label className="span-2">
-              <span>Description optional</span>
-              <textarea
+              <span>描述（可选）</span>
+              <TextArea
                 value={payload.description || ""}
-                onChange={(event) =>
-                  setPayload({ ...payload, description: event.target.value })
+                onChange={(value) =>
+                  setPayload({ ...payload, description: value })
                 }
-                placeholder="Short editorial note"
-                rows={4}
+                placeholder="简短说明这张图片的内容"
+                autoSize={{ minRows: 3, maxRows: 5 }}
               />
             </label>
-            <button
-              className="btn-primary span-2"
-              type="submit"
-              disabled={isSaving}
-            >
-              {cameraIcon}
-              {editingId ? "Save metadata" : "Create record"}
-            </button>
-          </form>
-        </section>
-
-        <section className="card upload-card" aria-labelledby="upload-title">
-          <div className="section-heading">
-            <div>
-              <p className="eyebrow">Upload queue</p>
-              <h2 id="upload-title">Quick and topic uploads</h2>
-            </div>
-            <span className="status-pill">{stagedSummary}</span>
           </div>
-          <div className="upload-actions">
-            <label className="file-drop">
-              <input
-                type="file"
-                accept="image/*"
-                multiple
-                onChange={(event) =>
-                  void stageFiles(event.target.files, "quick")
-                }
-              />
-              {uploadIcon}
-              <span>Quick upload</span>
-            </label>
-            <label className="file-drop strong">
-              <input
-                type="file"
-                accept="image/*"
-                multiple
-                onChange={(event) =>
-                  void stageFiles(event.target.files, "topic")
-                }
-              />
-              {uploadIcon}
-              <span>Topic upload</span>
-            </label>
-          </div>
-          <div className="preview-strip" aria-live="polite">
-            {previews.map((preview) => (
-              <article className="preview-card" key={preview.id}>
-                <img src={preview.previewUrl} alt="" loading="lazy" />
-                <div>
-                  <strong>{preview.title}</strong>
-                  <span>{preview.topicId || "No topic"}</span>
-                  <small>{exifLine(preview.exif)}</small>
-                </div>
-              </article>
-            ))}
-          </div>
-          <div className="button-row">
-            <button
-              className="btn-primary"
-              type="button"
-              disabled={!previews.length || isSaving}
-              onClick={() => void uploadStaged()}
-            >
-              Upload staged files
-            </button>
-            <button
-              className="btn-secondary"
-              type="button"
-              disabled={!previews.length}
-              onClick={clearPreviews}
-            >
-              Clear queue
-            </button>
-          </div>
-        </section>
-      </div>
+        </Modal>
 
-      <section className="card list-card" aria-labelledby="list-title">
-        <div className="section-heading">
-          <div>
-            <p className="eyebrow">Library</p>
-            <h2 id="list-title">Photo records</h2>
-          </div>
-          <button
-            className="btn-danger"
-            type="button"
-            onClick={requestBatchDelete}
-            disabled={selectedCount === 0}
-          >
-            {trashIcon}Delete selected
-          </button>
-        </div>
-
-        {isLoading ? (
-          <p className="empty-state">Loading records from API…</p>
-        ) : null}
-        {!isLoading && filteredPhotos.length === 0 ? (
-          <p className="empty-state">No records match the current filter.</p>
-        ) : null}
-
-        <div className="photo-grid">
-          {filteredPhotos.map((photo) => (
-            <article className="photo-card" key={photo.id}>
-              <label className="checkline">
-                <input
-                  type="checkbox"
-                  checked={selectedIds.has(photo.id)}
-                  onChange={() => toggleSelected(photo.id)}
-                />
-                <span>Select record</span>
-              </label>
-              <img
-                src={photo.thumbnailUrl || photo.imageUrl}
-                alt={photoTitle(photo)}
-                loading="lazy"
-              />
-              <div className="photo-body">
-                <div>
-                  <p className="status-pill">{photo.status || "draft"}</p>
-                  <h3>{photoTitle(photo)}</h3>
-                  <p>{photo.description || "No description provided."}</p>
-                </div>
-                <dl>
-                  <div>
-                    <dt>Topic</dt>
-                    <dd>{photo.topicTitle || photo.topicId || "Unassigned"}</dd>
-                  </div>
-                  <div>
-                    <dt>Created</dt>
-                    <dd>{formatDate(photo.createdAt)}</dd>
-                  </div>
-                  <div>
-                    <dt>EXIF</dt>
-                    <dd>{exifLine(photo.exif)}</dd>
-                  </div>
-                </dl>
-                <div className="button-row">
-                  <button
-                    className="btn-secondary"
-                    type="button"
-                    onClick={() => editPhoto(photo)}
-                  >
-                    Edit
-                  </button>
-                  <button
-                    className="btn-danger"
-                    type="button"
-                    onClick={() => requestDeletePhoto(photo)}
-                  >
-                    {trashIcon}Delete
-                  </button>
-                </div>
-              </div>
-            </article>
-          ))}
-        </div>
-      </section>
-
-      <div
-        className="toast-region"
-        role="status"
-        aria-live="polite"
-        aria-atomic="true"
-      >
-        {toasts.map((toast) => (
-          <div className={`toast ${toast.tone}`} key={toast.id}>
-            {toast.text}
-          </div>
-        ))}
-      </div>
-
-      {confirmAction ? (
-        <div className="modal-overlay" role="presentation">
-          <section
-            className="modal"
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="confirm-title"
-            aria-describedby="confirm-body"
-          >
-            <h2 id="confirm-title">{confirmAction.title}</h2>
-            <p id="confirm-body">{confirmAction.body}</p>
-            <div className="button-row end">
-              <button
-                className="btn-secondary"
-                type="button"
-                onClick={() => setConfirmAction(null)}
+        <Modal
+          title="上传图片"
+          visible={isUploadOpen}
+          onCancel={() => setIsUploadOpen(false)}
+          onOk={() => void uploadStaged()}
+          confirmLoading={isSaving}
+          okText="上传暂存文件"
+          cancelText="关闭"
+          okButtonProps={{ disabled: previews.length === 0 }}
+          maskClosable={false}
+        >
+          <div className="upload-panel">
+            <p className="upload-hint">
+              先选择文件并在本地读取 EXIF，确认后统一提交到 /api/uploads。
+            </p>
+            <Space wrap>
+              <Button onClick={() => quickFileInputRef.current?.click()}>
+                快速选择
+              </Button>
+              <Button
+                type="primary"
+                onClick={() => topicFileInputRef.current?.click()}
               >
-                Cancel
-              </button>
-              <button
-                className="btn-danger"
-                type="button"
-                onClick={() => void runConfirmedAction()}
-              >
-                {trashIcon}Confirm delete
-              </button>
+                按当前专题选择
+              </Button>
+              <Button disabled={!previews.length} onClick={clearPreviews}>
+                清空暂存
+              </Button>
+            </Space>
+            <input
+              ref={quickFileInputRef}
+              className="hidden-file-input"
+              type="file"
+              accept="image/*"
+              multiple
+              onChange={(event) => {
+                void stageFiles(event.currentTarget.files, "quick");
+                event.currentTarget.value = "";
+              }}
+            />
+            <input
+              ref={topicFileInputRef}
+              className="hidden-file-input"
+              type="file"
+              accept="image/*"
+              multiple
+              onChange={(event) => {
+                void stageFiles(event.currentTarget.files, "topic");
+                event.currentTarget.value = "";
+              }}
+            />
+            <p className="status-line">{stagedSummary}</p>
+            <div className="preview-list" aria-live="polite">
+              {previews.length ? (
+                previews.map((preview) => (
+                  <article className="preview-card" key={preview.id}>
+                    <img src={preview.previewUrl} alt="" loading="lazy" />
+                    <div>
+                      <strong>{preview.title}</strong>
+                      <span>{preview.topicId || "未指定专题"}</span>
+                      <small>{exifLine(preview.exif)}</small>
+                    </div>
+                  </article>
+                ))
+              ) : (
+                <Empty description="尚未暂存上传文件" />
+              )}
             </div>
-          </section>
-        </div>
-      ) : null}
-    </main>
+          </div>
+        </Modal>
+
+        <Modal
+          title={confirmAction?.title}
+          visible={Boolean(confirmAction)}
+          onCancel={() => setConfirmAction(null)}
+          onOk={() => void runConfirmedAction()}
+          confirmLoading={isSaving}
+          okText="确认删除"
+          cancelText="取消"
+          okButtonProps={{ status: "danger" }}
+        >
+          <p>{confirmAction?.body}</p>
+        </Modal>
+      </main>
+    </ConfigProvider>
   );
 }
 

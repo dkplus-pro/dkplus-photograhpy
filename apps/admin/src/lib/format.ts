@@ -45,6 +45,32 @@ export const exifLine = (exif?: PhotoExif): string => {
 export const photoTitle = (photo: PhotoRecord): string =>
   photo.title?.trim() || `未命名 ${photo.id}`;
 
+export const formatFileSize = (bytes?: number): string => {
+  if (bytes === undefined || !Number.isFinite(bytes) || bytes < 0) {
+    return "未知大小";
+  }
+  if (bytes < 1024) return `${bytes} B`;
+  const units = ["KB", "MB", "GB"] as const;
+  let value = bytes / 1024;
+  for (const unit of units) {
+    if (value < 1024 || unit === "GB") {
+      return `${Number(value.toFixed(value >= 100 ? 0 : 1))} ${unit}`;
+    }
+    value /= 1024;
+  }
+  return "未知大小";
+};
+
+export const imageSummary = (photo: PhotoRecord): string => {
+  const fileName =
+    photo.image?.fileName ||
+    photo.image?.key?.split("/").at(-1) ||
+    photo.imageUrl.split("/").at(-1) ||
+    "未命名文件";
+  const storage = photo.image?.storage ? ` · ${photo.image.storage}` : "";
+  return `${fileName}${storage}`;
+};
+
 export const summarizeUpload = (previews: UploadPreview[]): string => {
   if (previews.length === 0) return "未暂存文件";
   const topics = new Set(

@@ -4,6 +4,8 @@ import {
   exifLine,
   formatAperture,
   formatExposure,
+  formatFileSize,
+  imageSummary,
   summarizeUpload,
 } from "./format";
 import type { UploadPreview } from "../types";
@@ -56,5 +58,21 @@ describe("format helpers", () => {
         iso: 100,
       }),
     ).toBe("Nikon Z 8 · 50mm f/1.8 · f/2 · 1/500s · ISO 100");
+  });
+
+  it("formats compact file metadata for table cells", () => {
+    expect(formatFileSize(1_572_864)).toBe("1.5 MB");
+    expect(
+      imageSummary({
+        id: "p1",
+        title: "Frame",
+        imageUrl: "https://cdn.example.com/fallback.jpg",
+        image: {
+          url: "https://cdn.example.com/photos/frame.jpg",
+          fileName: "frame.jpg",
+          storage: "cos",
+        },
+      }),
+    ).toBe("frame.jpg · cos");
   });
 });

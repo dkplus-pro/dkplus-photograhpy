@@ -3,6 +3,7 @@ import type { ProxyOptions, UserConfig } from "vite";
 import config from "../../vite.config";
 
 const apiProxy = (config as UserConfig).server?.proxy?.["/api"];
+const uploadsProxy = (config as UserConfig).server?.proxy?.["/uploads"];
 
 function expectProxyOptions(value: unknown): asserts value is ProxyOptions {
   expect(value).toBeTypeOf("object");
@@ -17,5 +18,13 @@ describe("admin Vite API proxy", () => {
       process.env.VITE_API_PROXY_TARGET ?? "http://127.0.0.1:4010",
     );
     expect(apiProxy.changeOrigin).toBe(true);
+  });
+
+  it("forwards local /uploads thumbnails to the same Koa server", () => {
+    expectProxyOptions(uploadsProxy);
+    expect(uploadsProxy.target).toBe(
+      process.env.VITE_API_PROXY_TARGET ?? "http://127.0.0.1:4010",
+    );
+    expect(uploadsProxy.changeOrigin).toBe(true);
   });
 });

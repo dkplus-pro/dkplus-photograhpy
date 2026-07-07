@@ -15,6 +15,13 @@ export default defineConfig({
         target: apiProxyTarget,
         changeOrigin: true,
       },
+      // Local upload records may resolve to /uploads/... when PUBLIC_BASE_URL
+      // is omitted. Proxy that path too so table thumbnails hit Koa's static
+      // upload reader instead of Vite's 404 handler.
+      "/uploads": {
+        target: apiProxyTarget,
+        changeOrigin: true,
+      },
     },
   },
   preview: {

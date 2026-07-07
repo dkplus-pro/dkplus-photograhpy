@@ -11,6 +11,15 @@ export interface PhotoExif {
   capturedAt?: string;
 }
 
+export interface PhotoImage {
+  url: string;
+  key?: string;
+  fileName?: string;
+  mimeType?: string;
+  size?: number;
+  storage?: "local" | "cos" | "remote";
+}
+
 export interface PhotoRecord {
   id: string;
   title?: string;
@@ -22,6 +31,7 @@ export interface PhotoRecord {
   location?: string;
   status?: PhotoStatus;
   imageUrl: string;
+  image?: PhotoImage;
   thumbnailUrl?: string;
   takenAt?: string;
   createdAt?: string;
