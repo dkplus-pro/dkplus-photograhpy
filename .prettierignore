@@ -1,0 +1,20 @@
+# Generated/runtime files
+AGENTS.md
+pnpm-lock.yaml
+node_modules/
+dist/
+build/
+.turbo/
+.vite/
+coverage/
+apps/main/public/data/gallery.json
+
+# Reference design materials managed outside source formatting
+design-system/
+
+# Local-only files
+.env
+.env.*
+uploads/
+tmp/
+temp/
