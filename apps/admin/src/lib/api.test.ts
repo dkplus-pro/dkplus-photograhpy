@@ -39,7 +39,11 @@ describe("admin API client auth headers", () => {
 
   it("sends the VITE_ADMIN_TOKEN bearer header for multipart uploads", async () => {
     vi.stubEnv("VITE_ADMIN_TOKEN", " test-token ");
-    const fetchMock = vi.fn(async () => jsonResponse({ photos: [photo] }, 201));
+    const fetchMock = vi.fn(async (input: unknown, init?: RequestInit) => {
+      void input;
+      void init;
+      return jsonResponse({ photos: [photo] }, 201);
+    });
     vi.stubGlobal("fetch", fetchMock);
 
     await createApiClient("http://api.test/api").uploadPhoto(makePreview());
@@ -60,7 +64,11 @@ describe("admin API client auth headers", () => {
         getItem: vi.fn(() => " stored-token "),
       },
     });
-    const fetchMock = vi.fn(async () => jsonResponse({ photos: [] }));
+    const fetchMock = vi.fn(async (input: unknown, init?: RequestInit) => {
+      void input;
+      void init;
+      return jsonResponse({ photos: [] });
+    });
     vi.stubGlobal("fetch", fetchMock);
 
     await createApiClient("http://api.test/api").listPhotos();
