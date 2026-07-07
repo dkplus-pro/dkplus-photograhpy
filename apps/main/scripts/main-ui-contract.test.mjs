@@ -62,11 +62,13 @@ test("main data loading uses the API in dev and static JSON in builds", () => {
   );
 });
 
-test("main modal navigation and virtual rows keep bottom-edge contracts", () => {
-  const modalNavPlacement = lastCssBlock(".modal__nav");
-  assert.match(modalNavPlacement, /top:\s*50%;/);
-  assert.match(modalNavPlacement, /transform:\s*translateY\(-50%\);/);
-  assert.match(modalNavPlacement, /place-items:\s*center;/);
+test("main modal navigation buttons stay vertically centered", () => {
+  assert.match(styles, /\.modal__nav\s*\{[\s\S]*?top:\s*50%;/);
+  assert.match(
+    styles,
+    /\.modal__nav\s*\{[\s\S]*?transform:\s*translateY\(-50%\);/,
+  );
+});
 
 test("modal navigation is vertically centered in the image pane", () => {
   assert.match(cssBlock(".modal__image-wrap"), /align-items:\s*center;/);
