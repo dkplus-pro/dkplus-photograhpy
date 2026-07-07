@@ -10,7 +10,9 @@ import type { GalleryPayload, GridStyle, ResolvedPhoto, TabKey } from "./types";
 import { useVirtualRows } from "./useVirtualRows";
 import "./styles.css";
 
-const dataUrl = `${import.meta.env.BASE_URL}data/gallery.json`;
+const dataUrl = import.meta.env.DEV
+  ? "/api/gallery"
+  : `${import.meta.env.BASE_URL}data/gallery.json`;
 
 const useGallery = () => {
   const [data, setData] = useState<GalleryPayload | null>(null);

@@ -1,5 +1,18 @@
 import type { GalleryPayload, ResolvedPhoto, Topic } from "./types";
 
+const cdnBaseUrl = (
+  import.meta.env.VITE_CDN_BASE_URL ?? "https://images.unsplash.com"
+).replace(/\/+$/, "");
+
+const isAbsoluteUrl = (value: string): boolean =>
+  /^[a-z][a-z\d+.-]*:/i.test(value) || value.startsWith("//");
+
+const resolveAssetUrl = (value: string): string => {
+  const raw = value.trim();
+  if (isAbsoluteUrl(raw) || raw.startsWith("/")) return raw;
+  return `${cdnBaseUrl}/${raw.replace(/^\/+/, "")}`;
+};
+
 export const tabLabels = {
   latest: "最新",
   topics: "专题",
@@ -48,10 +61,24 @@ export const topicCover = (
   photos.find((photo) => photo.id === topic.coverPhotoId) ??
   photos.find((photo) => photo.topicIds.includes(topic.id));
 
+const normalizePhoto = (photo: ResolvedPhoto): ResolvedPhoto => {
+  const original = photo.asset.original;
+  const thumbnail = photo.asset.thumbnail ?? original;
+  const preview = photo.asset.preview ?? thumbnail;
+  return {
+    ...photo,
+    urls: photo.urls ?? {
+      original: resolveAssetUrl(original),
+      thumbnail: resolveAssetUrl(thumbnail),
+      preview: resolveAssetUrl(preview),
+    },
+  };
+};
+
 export const normalizePayload = (payload: GalleryPayload): GalleryPayload => ({
   ...payload,
   topics: [...payload.topics].sort(
     (a, b) => (a.sortOrder ?? 999) - (b.sortOrder ?? 999),
   ),
-  photos: [...payload.photos].sort(compareNewest),
+  photos: [...payload.photos].map(normalizePhoto).sort(compareNewest),
 });

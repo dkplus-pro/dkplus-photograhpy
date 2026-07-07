@@ -22,7 +22,11 @@ function safeEqual(left: string, right: string): boolean {
 
 export function createAuthMiddleware(config: ServerConfig): Koa.Middleware {
   return async (ctx, next) => {
-    if (ctx.path === "/health" || ctx.path === "/api/health") {
+    if (
+      ctx.path === "/health" ||
+      ctx.path === "/api/health" ||
+      ctx.path === "/api/gallery"
+    ) {
       await next();
       return;
     }
