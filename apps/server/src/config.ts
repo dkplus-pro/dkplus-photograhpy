@@ -74,6 +74,12 @@ export function loadConfig(): ServerConfig {
       process.env.DATA_FILE ??
       "../../data/photos.json",
   );
+  const exportFile = path.resolve(
+    process.cwd(),
+    process.env.EXPORT_FILE ??
+      process.env.DATA_FILE ??
+      "../../data/photos.json",
+  );
   const uploadDir = path.resolve(
     process.cwd(),
     process.env.UPLOAD_DIR ?? "./uploads",
