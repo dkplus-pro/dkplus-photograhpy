@@ -307,17 +307,7 @@ function toClientPhoto(photo: PhotoRecord): Record<string, unknown> {
     location: photo.location,
     asset,
     exif: photo.exif,
-  };
-}
-
-function toClientTopic(topic: TopicRecord): Record<string, unknown> {
-  return {
-    id: topic.id,
-    title: topic.title,
-    description: topic.description,
-    coverPhotoId: topic.coverPhotoId,
-    sortOrder: topic.sortOrder,
-  };
+  });
 }
 
 type ClientGalleryPayload = {

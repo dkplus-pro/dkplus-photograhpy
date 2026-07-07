@@ -89,6 +89,7 @@ export const useVirtualRows = <T>(
     const rows: T[][] = [];
     for (let index = 0; index < items.length; index += columns) {
       rows.push(items.slice(index, index + columns));
+    }
     const measuredRowHeight =
       container.width > 0
         ? Math.max(1, (container.width - gap * (columns - 1)) / columns)

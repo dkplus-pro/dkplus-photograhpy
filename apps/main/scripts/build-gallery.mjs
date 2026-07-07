@@ -37,9 +37,40 @@ const assertArray = (value, label) => {
 const definedEntries = (value) =>
   Object.fromEntries(Object.entries(value).filter(([, entry]) => entry !== undefined));
 
+const normalizeTopic = (topic) =>
+  definedEntries({
+    id: topic.id,
+    title: topic.title,
+    description: topic.description,
+    slug: topic.slug,
+    coverPhotoId: topic.coverPhotoId,
+    sortOrder: topic.sortOrder
+  });
+
+const normalizeAsset = (photo) => {
+  const source = photo.asset ?? {};
+  const original = source.original ?? photo.image?.url ?? photo.imageUrl ?? photo.urls?.original;
+  if (!original) return undefined;
+  return definedEntries({
+    original,
+    thumbnail: source.thumbnail ?? photo.thumbnailUrl ?? photo.urls?.thumbnail ?? photo.image?.url ?? original,
+    preview:
+      source.preview ??
+      source.thumbnail ??
+      photo.thumbnailUrl ??
+      photo.urls?.preview ??
+      photo.urls?.thumbnail ??
+      photo.image?.url ??
+      original,
+    alt: source.alt ?? photo.title,
+    width: source.width ?? photo.exif?.width,
+    height: source.height ?? photo.exif?.height
+  });
+};
+
 export function normalizeGalleryData(input) {
   const topics = assertArray(input.topics ?? [], 'topics').map(normalizeTopic);
-  const topicIds = new Set(topics.map((topic) => topic.id));
+  const knownTopicIds = new Set(topics.map((topic) => topic.id));
   const photos = assertArray(input.photos, 'photos').map((photo, index) => {
     const asset = normalizeAsset(photo);
     if (!photo.id || !photo.title || !asset?.original) {
@@ -51,7 +82,7 @@ export function normalizeGalleryData(input) {
         ? [photo.topicId]
         : [];
     const takenAt = photo.takenAt ?? photo.exif?.capturedAt ?? photo.createdAt ?? new Date().toISOString();
-    const publicPhoto = definedEntries({
+    return definedEntries({
       id: photo.id,
       title: photo.title,
       description: photo.description,
@@ -66,22 +97,11 @@ export function normalizeGalleryData(input) {
         preview: resolveAssetUrl(asset.preview ?? asset.thumbnail ?? asset.original)
       }
     });
-    return publicPhoto;
   });
 
-  const topics = assertArray(input.topics ?? [], 'topics').map((topic) =>
-    definedEntries({
-      id: topic.id,
-      title: topic.title,
-      description: topic.description,
-      coverPhotoId: topic.coverPhotoId,
-      sortOrder: topic.sortOrder
-    })
-  );
-  const topicIds = new Set(topics.map((topic) => topic.id));
   for (const photo of photos) {
     for (const topicId of photo.topicIds) {
-      if (!topicIds.has(topicId)) throw new Error(`Photo ${photo.id} references unknown topic ${topicId}`);
+      if (!knownTopicIds.has(topicId)) throw new Error(`Photo ${photo.id} references unknown topic ${topicId}`);
     }
   }
   return {
