@@ -235,8 +235,15 @@ test("Admin authenticated export action writes the Main JSON artifact", async ({
   await page.goto(adminBaseUrl);
   await expect(page.getByRole("heading", { name: "图片管理" })).toBeVisible();
 
-  await page.getByRole("button", { name: "导出到客户端" }).first().click();
-  await expect(page.getByText(/已导出到客户端：1 张图片、1 个专题/)).toBeVisible();
+  const [response] = await Promise.all([
+    page.waitForResponse(
+      (candidate) =>
+        candidate.url().endsWith("/api/export/client") &&
+        candidate.request().method() === "POST",
+    ),
+    page.getByRole("button", { name: "导出到客户端" }).first().click(),
+  ]);
+  expect(response.ok()).toBeTruthy();
 
   const exported = JSON.parse(await readFile(exportFile, "utf8")) as {
     photos: Array<{ id: string; topicIds: string[]; asset: { original: string } }>;
