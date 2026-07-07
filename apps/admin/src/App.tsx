@@ -949,7 +949,7 @@ function App() {
                 allowClear
                 showSearch
                 value={payload.topicId || undefined}
-                placeholder="选择已有专题，或在新增图片里创建专题"
+                placeholder="选择已有专题，或在下方创建专题"
                 onChange={(value) =>
                   selectTopic(typeof value === "string" ? value : "")
                 }
@@ -958,6 +958,25 @@ function App() {
                   value: id,
                 }))}
               />
+              <div className="topic-create-row" aria-label="上传时新增专题">
+                <Input
+                  value={topicDraft.title}
+                  onChange={(value) =>
+                    setTopicDraft((current) => ({ ...current, title: value }))
+                  }
+                  placeholder="专题名称，如：编辑精选"
+                />
+                <Input
+                  value={topicDraft.id}
+                  onChange={(value) =>
+                    setTopicDraft((current) => ({ ...current, id: value }))
+                  }
+                  placeholder="专题 ID（可选，自动生成）"
+                />
+                <Button type="outline" onClick={createTopicFromDraft}>
+                  创建专题
+                </Button>
+              </div>
             </label>
             <Space wrap>
               <Button onClick={() => quickFileInputRef.current?.click()}>
