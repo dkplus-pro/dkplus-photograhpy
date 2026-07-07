@@ -435,8 +435,8 @@ textarea {
 
 .photos-table .arco-table-th,
 .photos-table .arco-table-td {
-  padding-top: 7px;
-  padding-bottom: 7px;
+  padding-top: 6px;
+  padding-bottom: 6px;
   text-align: center;
   vertical-align: middle;
 }
