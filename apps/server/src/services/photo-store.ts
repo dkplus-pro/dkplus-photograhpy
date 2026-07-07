@@ -340,12 +340,6 @@ function toClientPhoto(photo: PhotoRecord): Record<string, unknown> {
   );
 }
 
-type ClientGalleryPayload = {
-  generatedAt: string;
-  topics: Record<string, unknown>[];
-  photos: Record<string, unknown>[];
-};
-
 export class PhotoStore {
   private readonly db: Database.Database;
 
@@ -476,16 +470,6 @@ export class PhotoStore {
       generatedAt,
       photoCount: payload.photos.length,
       topicCount: payload.topics.length,
-    };
-  }
-
-  async clientGalleryPayload(
-    generatedAt = new Date().toISOString(),
-  ): Promise<ClientGalleryPayload> {
-    return {
-      generatedAt,
-      topics: this.listTopics().map(toClientTopic),
-      photos: (await this.list()).map(toClientPhoto),
     };
   }
 

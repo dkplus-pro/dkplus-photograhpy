@@ -15,13 +15,19 @@ const mainSource = readFileSync(path.join(dirname, "../src/main.tsx"), "utf8");
 
 const escapeRegExp = (value) => value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 
-const cssBlock = (selector) => {
-  const match = styles.match(
-    new RegExp(`${escapeRegExp(selector)}\\s*\\{([\\s\\S]*?)\\n\\}`, "m"),
-  );
-  assert.ok(match, `Expected ${selector} CSS block to exist`);
-  return match[1];
+const cssBlocks = (selector) => {
+  const matches = [
+    ...styles.matchAll(
+      new RegExp(`${escapeRegExp(selector)}\\s*\\{([\\s\\S]*?)\\n\\}`, "gm"),
+    ),
+  ];
+  assert.ok(matches.length, `Expected ${selector} CSS block to exist`);
+  return matches.map((match) => match[1]);
 };
+
+const cssBlock = (selector) => cssBlocks(selector)[0];
+const lastCssBlock = (selector) => cssBlocks(selector).at(-1);
+
 
 test("main photo cards keep the compact no-zoom square-card contract", () => {
   assert.match(cssBlock(".virtual-grid__row"), /gap:\s*10px;/);
@@ -56,15 +62,14 @@ test("main data loading uses the API in dev and static JSON in builds", () => {
   );
 });
 
-test("main virtual rows are measured from the grid container", () => {
-  assert.match(virtualRows, /containerRef\s*=\s*useRef/);
-  assert.match(virtualRows, /getBoundingClientRect\(\)/);
-  assert.match(virtualRows, /viewport\.scrollY\s*-\s*container\.top/);
-  assert.match(
-    virtualRows,
-    /rows\.length \* measuredRowHeight \+ \(rows\.length - 1\) \* gap/,
-  );
-});
+test("main modal navigation and virtual rows keep bottom-edge contracts", () => {
+  const modalNavPlacement = lastCssBlock(".modal__nav");
+  assert.match(modalNavPlacement, /top:\s*50%;/);
+  assert.match(modalNavPlacement, /transform:\s*translateY\(-50%\);/);
+  assert.match(modalNavPlacement, /place-items:\s*center;/);
 
-  assert.match(styles, /\.modal__nav\s*\{[\s\S]*?top:\s*50%;[\s\S]*?transform:\s*translateY\(-50%\);/);
+  assert.match(virtualRows, /containerRef\s*=\s*useRef<HTMLDivElement \| null>\(null\)/);
+  assert.doesNotMatch(virtualRows, /topOffset\s*=\s*260/);
+  assert.match(virtualRows, /rows\.length \* measuredRowHeight \+ \(rows\.length - 1\) \* gap/);
+  assert.match(virtualRows, /Math\.ceil\(\(viewport\.scrollY \+ viewport\.height - container\.top\) \/ stride\) \+\s*overscan/s);
 });
