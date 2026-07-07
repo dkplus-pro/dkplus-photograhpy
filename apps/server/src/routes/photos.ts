@@ -9,7 +9,7 @@ import {
   type UploadedFile,
 } from "../services/upload-service.js";
 import { validateIds, validatePhotoInput } from "../services/validation.js";
-import type { PhotoInput } from "../types/gallery.js";
+import type { ExifMetadata, PhotoInput } from "../types/gallery.js";
 
 const upload = multer({
   storage: multer.memoryStorage(),
@@ -39,6 +39,98 @@ function field(value: unknown): string | undefined {
     return value[0].trim();
   }
   return undefined;
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+
+function exifString(value: unknown): string | undefined {
+  if (typeof value === "string" && value.trim()) {
+    return value.trim();
+  }
+  if (typeof value === "number" && Number.isFinite(value)) {
+    return String(value);
+  }
+  return undefined;
+}
+
+function exifNumber(value: unknown): number | undefined {
+  if (typeof value === "number" && Number.isFinite(value)) {
+    return value;
+  }
+  if (typeof value === "string" && value.trim()) {
+    const parsed = Number(value);
+    return Number.isFinite(parsed) ? parsed : undefined;
+  }
+  return undefined;
+}
+
+function focalLength(value: unknown): string | undefined {
+  const stringValue = exifString(value);
+  if (stringValue) {
+    return stringValue;
+  }
+  const numberValue = exifNumber(value);
+  return numberValue === undefined
+    ? undefined
+    : `${Number(numberValue.toFixed(1))}mm`;
+}
+
+function normalizeClientExif(value: unknown): ExifMetadata | undefined {
+  if (value === undefined) {
+    return undefined;
+  }
+  if (!isRecord(value)) {
+    throw new AppError(400, "UPLOAD_INVALID_EXIF", "exif must be a JSON object");
+  }
+
+  const normalized: ExifMetadata = {
+    cameraBrand:
+      exifString(value.cameraBrand) ?? exifString(value.cameraMake),
+    cameraModel: exifString(value.cameraModel),
+    lens: exifString(value.lens) ?? exifString(value.lensModel),
+    iso: exifNumber(value.iso),
+    aperture: exifString(value.aperture),
+    shutterSpeed:
+      exifString(value.shutterSpeed) ?? exifString(value.shutter),
+    focalLength:
+      focalLength(value.focalLength) ?? focalLength(value.focalLengthMm),
+    width: exifNumber(value.width),
+    height: exifNumber(value.height),
+    capturedAt: exifString(value.capturedAt),
+  };
+
+  return Object.values(normalized).some((entry) => entry !== undefined)
+    ? normalized
+    : undefined;
+}
+
+function parseClientExif(value: unknown): ExifMetadata | undefined {
+  const raw = field(value);
+  if (!raw) {
+    return undefined;
+  }
+
+  try {
+    return normalizeClientExif(JSON.parse(raw));
+  } catch (error) {
+    if (error instanceof AppError) {
+      throw error;
+    }
+    throw new AppError(
+      400,
+      "UPLOAD_INVALID_EXIF",
+      "exif must be valid JSON",
+    );
+  }
+}
+
+function mergeExif(
+  serverExif: ExifMetadata,
+  clientExif: ExifMetadata | undefined,
+): ExifMetadata {
+  return clientExif ? { ...serverExif, ...clientExif } : serverExif;
 }
 
 export function createPhotosRouter(
@@ -109,6 +201,7 @@ export function createPhotosRouter(
 
     const form = body(ctx) as Record<string, unknown>;
     const photoId = field(form.photoId);
+    const clientExif = parseClientExif(form.exif);
     if (photoId && incoming.length !== 1) {
       throw new AppError(
         400,
@@ -120,7 +213,7 @@ export function createPhotosRouter(
     const created = [];
     for (const file of incoming) {
       const stored = await uploads.store(file);
-      const exif = await extractExif(stored.buffer);
+      const exif = mergeExif(await extractExif(stored.buffer), clientExif);
       const input: PhotoInput = {
         title: photoId
           ? field(form.title)
