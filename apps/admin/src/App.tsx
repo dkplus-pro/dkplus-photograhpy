@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
+  Alert,
   Button,
   Card,
   ConfigProvider,
@@ -31,7 +32,6 @@ import {
 import type {
   PhotoPayload,
   PhotoRecord,
-  PhotoStatus,
   UploadPreview,
 } from "./types";
 
@@ -46,7 +46,6 @@ const demoPhotos: PhotoRecord[] = [
     description: "API 未连接时用于预览后台列表的反光街景样片。",
     topicId: "street",
     topicTitle: "街头",
-    status: "published",
     imageUrl:
       "https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?auto=format&fit=crop&w=900&q=80",
     createdAt: "2026-02-18T08:00:00.000Z",
@@ -70,10 +69,9 @@ const demoPhotos: PhotoRecord[] = [
   {
     id: "demo-02",
     title: "几何影棚",
-    description: "用于检查草稿状态、专题与 EXIF 展示的黑白样片。",
+    description: "用于检查专题与 EXIF 展示的黑白样片。",
     topicId: "studio",
     topicTitle: "影棚",
-    status: "draft",
     imageUrl:
       "https://images.unsplash.com/photo-1492691527719-9d1e07e534b4?auto=format&fit=crop&w=900&q=80",
     createdAt: "2026-01-04T08:00:00.000Z",
@@ -101,20 +99,6 @@ const emptyPayload: PhotoPayload = {
   description: "",
   topicId: "",
   topicTitle: "",
-  status: "draft",
-  imageUrl: "",
-};
-
-const statusLabel: Record<PhotoStatus, string> = {
-  draft: "草稿",
-  published: "已发布",
-  archived: "已归档",
-};
-
-const statusColor: Record<PhotoStatus, string> = {
-  draft: "gray",
-  published: "green",
-  archived: "orangered",
 };
 
 const randomId = () => `${Date.now().toString(36)}-${crypto.randomUUID()}`;
