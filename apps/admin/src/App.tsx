@@ -100,6 +100,25 @@ const emptyPayload: PhotoPayload = {
   topicTitle: "",
 };
 
+type TopicDraft = {
+  id: string;
+  title: string;
+};
+
+type TopicOption = [id: string, title: string];
+
+const emptyTopicDraft: TopicDraft = { id: "", title: "" };
+
+const normalizeTopicId = (value: string): string =>
+  value
+    .normalize("NFKC")
+    .trim()
+    .toLowerCase()
+    .replace(/[\s/_]+/g, "-")
+    .replace(/[^\p{L}\p{N}-]+/gu, "")
+    .replace(/-+/g, "-")
+    .replace(/^-|-$/g, "");
+
 const randomId = () => `${Date.now().toString(36)}-${crypto.randomUUID()}`;
 
 const allFilterValue = "all";
@@ -117,6 +136,8 @@ function App() {
   const [photos, setPhotos] = useState<PhotoRecord[]>([]);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(() => new Set());
   const [payload, setPayload] = useState<PhotoPayload>(emptyPayload);
+  const [customTopics, setCustomTopics] = useState<TopicOption[]>([]);
+  const [topicDraft, setTopicDraft] = useState<TopicDraft>(emptyTopicDraft);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [previews, setPreviews] = useState<UploadPreview[]>([]);
   const [editorPreview, setEditorPreview] = useState<UploadPreview | null>(
@@ -202,8 +223,11 @@ function App() {
         }
       }
     }
+    for (const [id, title] of customTopics) {
+      map.set(id, title || id);
+    }
     return [...map.entries()].sort((a, b) => a[1].localeCompare(b[1], "zh-CN"));
-  }, [photos]);
+  }, [customTopics, photos]);
 
   const cameraBrands = useMemo(
     () => uniqueSorted(photos.map((photo) => photo.exif?.cameraMake)),
@@ -257,6 +281,30 @@ function App() {
     }
     editorPreviewRef.current = nextPreview;
     setEditorPreview(nextPreview);
+  };
+
+  const selectTopic = (topicId: string) => {
+    const topicTitle = topics.find(([id]) => id === topicId)?.[1] || "";
+    setPayload((current) => ({ ...current, topicId, topicTitle }));
+  };
+
+  const createTopicFromDraft = () => {
+    const title = topicDraft.title.trim();
+    const topicId = normalizeTopicId(topicDraft.id || title);
+
+    if (!title || !topicId) {
+      pushMessage("error", "请填写专题名称，或补充可用的专题 ID。");
+      return;
+    }
+
+    setCustomTopics((current) => {
+      const withoutDuplicate = current.filter(([id]) => id !== topicId);
+      return [...withoutDuplicate, [topicId, title]];
+    });
+    setPayload((current) => ({ ...current, topicId, topicTitle: title }));
+    setTopicFilter(topicId);
+    setTopicDraft(emptyTopicDraft);
+    pushMessage("success", `已新增专题“${title}”，并设为当前专题。`);
   };
 
   const resetEditor = () => {
@@ -367,6 +415,10 @@ function App() {
     mode: "quick" | "topic",
   ) => {
     if (!files?.length) return;
+    if (mode === "topic" && !payload.topicId?.trim()) {
+      pushMessage("error", "请先选择或新增专题，再按当前专题选择图片。");
+      return;
+    }
     const staged = await Promise.all(
       Array.from(files).map(async (file) => ({
         id: randomId(),
@@ -375,7 +427,7 @@ function App() {
         title: file.name.replace(/\.[^.]+$/, "").replace(/[-_]+/g, " "),
         topicId:
           mode === "topic"
-            ? payload.topicId?.trim() || "untitled-topic"
+            ? payload.topicId?.trim() || ""
             : payload.topicId?.trim() || "",
         description: payload.description?.trim() || "",
         exif: await extractExif(file),
@@ -783,18 +835,34 @@ function App() {
                 allowClear
                 showSearch
                 value={payload.topicId || undefined}
-                placeholder="选择已有专题，或留空"
-                onChange={(value) => {
-                  const topicId = typeof value === "string" ? value : "";
-                  const topicTitle =
-                    topics.find(([id]) => id === topicId)?.[1] || "";
-                  setPayload({ ...payload, topicId, topicTitle });
-                }}
+                placeholder="选择已有专题，或先在下方新增"
+                onChange={(value) =>
+                  selectTopic(typeof value === "string" ? value : "")
+                }
                 options={topics.map(([id, title]) => ({
                   label: `${title} (${id})`,
                   value: id,
                 }))}
               />
+              <div className="topic-create-row" aria-label="新增专题">
+                <Input
+                  value={topicDraft.title}
+                  onChange={(value) =>
+                    setTopicDraft((current) => ({ ...current, title: value }))
+                  }
+                  placeholder="专题名称，如：编辑精选"
+                />
+                <Input
+                  value={topicDraft.id}
+                  onChange={(value) =>
+                    setTopicDraft((current) => ({ ...current, id: value }))
+                  }
+                  placeholder="专题 ID（可选，自动生成）"
+                />
+                <Button type="outline" onClick={createTopicFromDraft}>
+                  创建专题
+                </Button>
+              </div>
             </label>
             <div className="span-2 editor-upload-card">
               <div className="editor-upload-card__header">
@@ -875,6 +943,22 @@ function App() {
             <p className="upload-hint">
               先选择文件并在本地读取 EXIF，确认后统一提交到 /api/uploads。
             </p>
+            <label className="upload-topic-select">
+              <span>当前专题（可选）</span>
+              <Select
+                allowClear
+                showSearch
+                value={payload.topicId || undefined}
+                placeholder="选择已有专题，或在新增图片里创建专题"
+                onChange={(value) =>
+                  selectTopic(typeof value === "string" ? value : "")
+                }
+                options={topics.map(([id, title]) => ({
+                  label: `${title} (${id})`,
+                  value: id,
+                }))}
+              />
+            </label>
             <Space wrap>
               <Button onClick={() => quickFileInputRef.current?.click()}>
                 快速选择
