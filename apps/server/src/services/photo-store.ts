@@ -9,6 +9,7 @@ import type {
   PhotoImage,
   PhotoInput,
   PhotoRecord,
+  TopicInput,
   TopicRecord,
 } from "../types/gallery.js";
 
@@ -156,6 +157,17 @@ function normalizeTopicRecord(value: unknown): TopicRecord {
   };
 }
 
+function normalizeTopicId(value: string): string {
+  return value
+    .normalize("NFKC")
+    .trim()
+    .toLowerCase()
+    .replace(/[\s/_]+/g, "-")
+    .replace(/[^\p{L}\p{N}-]+/gu, "")
+    .replace(/-+/g, "-")
+    .replace(/^-|-$/g, "");
+}
+
 function normalizePhotoRecord(value: unknown): PhotoRecord {
   const source = isRecord(value) ? value : {};
   const now = new Date().toISOString();
@@ -272,6 +284,44 @@ function parsePhotoRow(row: PhotoRow | undefined, id: string): PhotoRecord {
     throw new AppError(404, "PHOTO_NOT_FOUND", `Photo ${id} was not found`);
   }
   return normalizePhotoRecord(JSON.parse(row.data));
+}
+
+function parseTopicRow(row: TopicRow | undefined, id: string): TopicRecord {
+  if (!row) {
+    throw new AppError(404, "TOPIC_NOT_FOUND", `Topic ${id} was not found`);
+  }
+  return normalizeTopicRecord(JSON.parse(row.data));
+}
+
+function mergeTopic(input: TopicInput, existing?: TopicRecord): TopicRecord {
+  const now = new Date().toISOString();
+  const title = input.title ?? existing?.title;
+  if (!title?.trim()) {
+    throw new AppError(400, "VALIDATION_ERROR", "title is required");
+  }
+
+  const normalizedSlug =
+    input.slug ?? existing?.slug ?? normalizeTopicId(input.title ?? title);
+  const id =
+    input.id ||
+    existing?.id ||
+    normalizedSlug ||
+    normalizeTopicId(title) ||
+    randomUUID();
+
+  return {
+    id,
+    title: title.trim(),
+    description:
+      input.description !== undefined
+        ? readString(input.description)
+        : existing?.description,
+    slug: normalizedSlug || undefined,
+    coverPhotoId: input.coverPhotoId ?? existing?.coverPhotoId,
+    sortOrder: input.sortOrder ?? existing?.sortOrder,
+    createdAt: existing?.createdAt ?? now,
+    updatedAt: now,
+  };
 }
 
 function compactObject(
@@ -393,6 +443,72 @@ export class PhotoStore {
         .get(id),
       id,
     );
+  }
+
+  listTopics(): TopicRecord[] {
+    return this.db
+      .prepare<[], TopicRow>(
+        `SELECT id, data
+         FROM topics
+         ORDER BY sort_order IS NULL, sort_order ASC, id ASC`,
+      )
+      .all()
+      .map((row) => normalizeTopicRecord(JSON.parse(row.data)));
+  }
+
+  async getTopic(id: string): Promise<TopicRecord> {
+    return parseTopicRow(
+      this.db
+        .prepare<[string], TopicRow>("SELECT id, data FROM topics WHERE id = ?")
+        .get(id),
+      id,
+    );
+  }
+
+  async createTopic(input: TopicInput): Promise<TopicRecord> {
+    const next = mergeTopic(input);
+    const operation = this.db.transaction(() => {
+      if (this.topicExists(next.id)) {
+        throw new AppError(
+          409,
+          "TOPIC_ID_CONFLICT",
+          `Topic ${next.id} already exists`,
+        );
+      }
+      this.insertTopic(next);
+      this.touch();
+    });
+    operation();
+    return next;
+  }
+
+  async updateTopic(id: string, input: TopicInput): Promise<TopicRecord> {
+    const current = await this.getTopic(id);
+    const updated = mergeTopic({ ...input, id }, current);
+    const operation = this.db.transaction(() => {
+      this.insertTopic(updated);
+      this.touch();
+    });
+    operation();
+    return updated;
+  }
+
+  async deleteTopic(id: string): Promise<TopicRecord> {
+    const deleted = await this.getTopic(id);
+    const operation = this.db.transaction(() => {
+      const usageCount = this.countTopicReferences(id);
+      if (usageCount > 0) {
+        throw new AppError(
+          409,
+          "TOPIC_IN_USE",
+          `Topic ${id} is used by ${usageCount} photo(s)`,
+        );
+      }
+      this.db.prepare("DELETE FROM topics WHERE id = ?").run(id);
+      this.touch();
+    });
+    operation();
+    return deleted;
   }
 
   async create(input: PhotoInput): Promise<PhotoRecord> {
@@ -542,17 +658,6 @@ export class PhotoStore {
     operation();
   }
 
-  private listTopics(): TopicRecord[] {
-    return this.db
-      .prepare<[], TopicRow>(
-        `SELECT id, data
-         FROM topics
-         ORDER BY sort_order IS NULL, sort_order ASC, id ASC`,
-      )
-      .all()
-      .map((row) => normalizeTopicRecord(JSON.parse(row.data)));
-  }
-
   private insertPhoto(photo: PhotoRecord): void {
     this.db
       .prepare<{
@@ -599,6 +704,23 @@ export class PhotoStore {
     return Boolean(
       this.db.prepare<[string]>("SELECT 1 FROM photos WHERE id = ?").get(id),
     );
+  }
+
+  private topicExists(id: string): boolean {
+    return Boolean(
+      this.db.prepare<[string]>("SELECT 1 FROM topics WHERE id = ?").get(id),
+    );
+  }
+
+  private countTopicReferences(id: string): number {
+    return this.db
+      .prepare<[], PhotoRow>("SELECT id, data FROM photos")
+      .all()
+      .map((row) => parsePhotoRow(row, row.id))
+      .filter(
+        (photo) =>
+          photo.topicId === id || Boolean(photo.topicIds?.includes(id)),
+      ).length;
   }
 
   private touch(): void {

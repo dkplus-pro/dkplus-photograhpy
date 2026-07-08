@@ -56,6 +56,15 @@ export type TopicRecord = {
   updatedAt?: string;
 };
 
+export type TopicInput = {
+  id?: string;
+  title?: string;
+  description?: string;
+  slug?: string;
+  coverPhotoId?: string;
+  sortOrder?: number;
+};
+
 export type GalleryData = {
   photos: PhotoRecord[];
   topics: TopicRecord[];

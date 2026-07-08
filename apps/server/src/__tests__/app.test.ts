@@ -177,6 +177,73 @@ test("photo CRUD and batch delete persist in SQLite without mutating JSON export
   }
 });
 
+test("topic CRUD persists in SQLite and explicit export includes current topics", async () => {
+  const { config, root } = await makeConfig();
+  try {
+    const app = createApp(config).callback();
+
+    const created = await authed(request(app).post("/api/topics"))
+      .send({
+        id: "editorial",
+        title: "编辑精选",
+        description: "首页专题",
+      })
+      .expect(201);
+    assert.equal(created.body.topic.id, "editorial");
+    assert.equal(created.body.topic.title, "编辑精选");
+    assert.equal(created.body.topic.description, "首页专题");
+
+    const listed = await authed(request(app).get("/api/topics")).expect(200);
+    assert.equal(listed.body.topics.length, 1);
+    assert.equal(listed.body.topics[0].id, "editorial");
+    await assertExportFileMissing(config.exportFile);
+
+    const updated = await authed(request(app).patch("/api/topics/editorial"))
+      .send({ title: "编辑精选更新", description: "" })
+      .expect(200);
+    assert.equal(updated.body.topic.title, "编辑精选更新");
+    assert.equal("description" in updated.body.topic, false);
+
+    const photo = await authed(request(app).post("/api/photos"))
+      .send({
+        title: "Topic-linked frame",
+        topicId: "editorial",
+        image: {
+          url: "https://cdn.example/topic-linked.jpg",
+          storage: "remote",
+        },
+      })
+      .expect(201);
+
+    await authed(request(app).delete("/api/topics/editorial")).expect(409);
+
+    const exported = await authed(request(app).post("/api/export/client"))
+      .send({})
+      .expect(200);
+    assert.equal(exported.body.export.topicCount, 1);
+    const artifact = await readClientExport(config.exportFile);
+    assert.deepEqual(artifact.topics[0], {
+      id: "editorial",
+      title: "编辑精选更新",
+      slug: "编辑精选",
+    });
+
+    await authed(request(app).delete(`/api/photos/${photo.body.photo.id}`))
+      .send({})
+      .expect(200);
+    const deleted = await authed(request(app).delete("/api/topics/editorial"))
+      .send({})
+      .expect(200);
+    assert.equal(deleted.body.deleted.id, "editorial");
+    const emptyTopics = await authed(request(app).get("/api/topics")).expect(
+      200,
+    );
+    assert.deepEqual(emptyTopics.body.topics, []);
+  } finally {
+    await rm(root, { recursive: true, force: true });
+  }
+});
+
 test("existing JSON seeds an empty database and is rewritten only by explicit export", async () => {
   const { config, root } = await makeConfig();
   const seedJson = `${JSON.stringify(

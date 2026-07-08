@@ -8,7 +8,11 @@ import {
   UploadService,
   type UploadedFile,
 } from "../services/upload-service.js";
-import { validateIds, validatePhotoInput } from "../services/validation.js";
+import {
+  validateIds,
+  validatePhotoInput,
+  validateTopicInput,
+} from "../services/validation.js";
 import type { ExifMetadata, PhotoInput } from "../types/gallery.js";
 
 const upload = multer({
@@ -153,6 +157,43 @@ export function createPhotosRouter(
 
   router.get("/photos/:id", async (ctx) => {
     ctx.body = { photo: await store.get(ctx.params.id) };
+  });
+
+  router.get("/topics", (ctx) => {
+    ctx.body = { topics: store.listTopics() };
+  });
+
+  router.get("/topics/:id", async (ctx) => {
+    ctx.body = { topic: await store.getTopic(ctx.params.id) };
+  });
+
+  router.post("/topics", async (ctx) => {
+    const topic = await store.createTopic(
+      validateTopicInput(body(ctx), { requireTitle: true }),
+    );
+    ctx.status = 201;
+    ctx.body = { topic };
+  });
+
+  router.put("/topics/:id", async (ctx) => {
+    const topic = await store.updateTopic(
+      ctx.params.id,
+      validateTopicInput(body(ctx)),
+    );
+    ctx.body = { topic };
+  });
+
+  router.patch("/topics/:id", async (ctx) => {
+    const topic = await store.updateTopic(
+      ctx.params.id,
+      validateTopicInput(body(ctx)),
+    );
+    ctx.body = { topic };
+  });
+
+  router.delete("/topics/:id", async (ctx) => {
+    const deleted = await store.deleteTopic(ctx.params.id);
+    ctx.body = { deleted };
   });
 
   router.post("/photos", async (ctx) => {
