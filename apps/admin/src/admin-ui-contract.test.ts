@@ -51,8 +51,12 @@ describe("admin list UI contract", () => {
     expect(appSource).toContain("pageSize: topicPageSize");
     expect(appSource).toContain("sizeCanChange: true");
     expect(appSource).toContain("sizeOptions: adminPageSizeOptions");
-    expect(appSource).toContain("onPageSizeChange: (size) => setPhotoPageSize(size)");
-    expect(appSource).toContain("onPageSizeChange: (size) => setTopicPageSize(size)");
+    expect(appSource).toContain(
+      "onPageSizeChange: (size) => setPhotoPageSize(size)",
+    );
+    expect(appSource).toContain(
+      "onPageSizeChange: (size) => setTopicPageSize(size)",
+    );
   });
 
   it("preserves preview, add/edit/upload modals, and empty feedback", () => {

@@ -47,14 +47,22 @@ describe("admin gallery list contract", () => {
     expect(appSource).not.toContain("y: 560");
     expect(appSource).toContain("pagination={{");
     expect(appSource).toContain("const adminPageSizeOptions = [10, 20, 50]");
-    expect(appSource).toContain("const [photoPageSize, setPhotoPageSize] = useState(10)");
-    expect(appSource).toContain("const [topicPageSize, setTopicPageSize] = useState(10)");
+    expect(appSource).toContain(
+      "const [photoPageSize, setPhotoPageSize] = useState(10)",
+    );
+    expect(appSource).toContain(
+      "const [topicPageSize, setTopicPageSize] = useState(10)",
+    );
     expect(appSource).toContain("pageSize: photoPageSize");
     expect(appSource).toContain("pageSize: topicPageSize");
     expect(appSource).toContain("sizeCanChange: true");
     expect(appSource).toContain("sizeOptions: adminPageSizeOptions");
-    expect(appSource).toContain("onPageSizeChange: (size) => setPhotoPageSize(size)");
-    expect(appSource).toContain("onPageSizeChange: (size) => setTopicPageSize(size)");
+    expect(appSource).toContain(
+      "onPageSizeChange: (size) => setPhotoPageSize(size)",
+    );
+    expect(appSource).toContain(
+      "onPageSizeChange: (size) => setTopicPageSize(size)",
+    );
     expect(appSource).toContain("setPreviewPhoto(photo)");
     expect(appSource).toContain("isEditorOpen");
     expect(appSource).toContain("isUploadOpen");
@@ -67,7 +75,7 @@ describe("admin gallery list contract", () => {
     expect(appSource).toContain('aria-label="图片元数据"');
     expect(appSource).toContain("EXIF 状态");
     expect(appSource).toContain("等待选择本地图片后读取。");
-    expect(appSource).toContain('visible={isUploadOpen}');
+    expect(appSource).toContain("visible={isUploadOpen}");
     expect(appSource).toContain('className="preview-card"');
     expect(appSource).not.toContain("上方确认图片与 EXIF");
     expect(appSource).not.toContain("保存时继续沿用现有上传与持久化流程");

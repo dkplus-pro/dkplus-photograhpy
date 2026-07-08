@@ -52,8 +52,12 @@ describe("admin gallery list contract", () => {
     expect(appSource).toContain("pageSize: photoPageSize");
     expect(appSource).toContain("pageSize: topicPageSize");
     expect(appSource).toContain("sizeOptions: adminPageSizeOptions");
-    expect(appSource).toContain("onPageSizeChange: (size) => setPhotoPageSize(size)");
-    expect(appSource).toContain("onPageSizeChange: (size) => setTopicPageSize(size)");
+    expect(appSource).toContain(
+      "onPageSizeChange: (size) => setPhotoPageSize(size)",
+    );
+    expect(appSource).toContain(
+      "onPageSizeChange: (size) => setTopicPageSize(size)",
+    );
   });
 
   it("keeps the redesigned editor modal compact with stacked upload preview plus metadata sections", () => {
