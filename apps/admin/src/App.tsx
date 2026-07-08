@@ -37,6 +37,7 @@ import {
 import type {
   PhotoPayload,
   PhotoRecord,
+  TopicRecord,
   ToastMessage,
   UploadPreview,
 } from "./types";
@@ -116,11 +117,13 @@ const emptyPayload: PhotoPayload = {
 type TopicDraft = {
   id: string;
   title: string;
+  description: string;
 };
 
 type TopicOption = [id: string, title: string];
+type AdminPage = "photos" | "topics";
 
-const emptyTopicDraft: TopicDraft = { id: "", title: "" };
+const emptyTopicDraft: TopicDraft = { id: "", title: "", description: "" };
 
 const normalizeTopicId = (value: string): string =>
   value
@@ -146,11 +149,16 @@ const uniqueSorted = (values: Array<string | undefined>): string[] =>
   ].sort((left, right) => left.localeCompare(right, "zh-CN"));
 
 function App() {
+  const [activePage, setActivePage] = useState<AdminPage>("photos");
   const [photos, setPhotos] = useState<PhotoRecord[]>([]);
+  const [managedTopics, setManagedTopics] = useState<TopicRecord[]>([]);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(() => new Set());
   const [payload, setPayload] = useState<PhotoPayload>(emptyPayload);
   const [customTopics, setCustomTopics] = useState<TopicOption[]>([]);
   const [topicDraft, setTopicDraft] = useState<TopicDraft>(emptyTopicDraft);
+  const [managedTopicDraft, setManagedTopicDraft] =
+    useState<TopicDraft>(emptyTopicDraft);
+  const [editingTopicId, setEditingTopicId] = useState<string | null>(null);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [previews, setPreviews] = useState<UploadPreview[]>([]);
   const [editorPreview, setEditorPreview] = useState<UploadPreview | null>(
@@ -168,9 +176,12 @@ function App() {
   const [modelFilter, setModelFilter] = useState("all");
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
+  const [isTopicLoading, setIsTopicLoading] = useState(true);
+  const [isTopicSaving, setIsTopicSaving] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
   const [isEditorOpen, setIsEditorOpen] = useState(false);
   const [isUploadOpen, setIsUploadOpen] = useState(false);
+  const [isTopicEditorOpen, setIsTopicEditorOpen] = useState(false);
   const [messages, setMessages] = useState<ToastMessage[]>([]);
   const [confirmAction, setConfirmAction] = useState<{
     title: string;
@@ -190,18 +201,37 @@ function App() {
 
   const refresh = async () => {
     setIsLoading(true);
-    try {
-      const records = await api.listPhotos();
-      setPhotos(records);
-    } catch (error) {
+    setIsTopicLoading(true);
+    const [photoResult, topicResult] = await Promise.allSettled([
+      api.listPhotos(),
+      api.listTopics(),
+    ]);
+
+    if (photoResult.status === "fulfilled") {
+      setPhotos(photoResult.value);
+    } else {
       setPhotos(demoPhotos);
       pushMessage(
         "info",
-        `API 暂不可用，正在显示演示数据。${error instanceof Error ? error.message : ""}`.trim(),
+        `API 暂不可用，正在显示演示数据。${
+          photoResult.reason instanceof Error ? photoResult.reason.message : ""
+        }`.trim(),
       );
-    } finally {
-      setIsLoading(false);
     }
+
+    if (topicResult.status === "fulfilled") {
+      setManagedTopics(topicResult.value);
+    } else {
+      pushMessage(
+        "info",
+        `专题 API 暂不可用，专题管理将显示从图片推导的专题。${
+          topicResult.reason instanceof Error ? topicResult.reason.message : ""
+        }`.trim(),
+      );
+    }
+
+    setIsLoading(false);
+    setIsTopicLoading(false);
   };
 
   useEffect(() => {
