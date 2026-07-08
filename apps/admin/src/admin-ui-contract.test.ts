@@ -46,7 +46,13 @@ describe("admin list UI contract", () => {
     expect(appSource).not.toContain("y: 560");
     expect(appSource).toContain("scroll={{ x: 1260 }}");
     expect(appSource).toContain("pagination={{");
-    expect(appSource).toContain("pageSize: 12");
+    expect(appSource).toContain("const adminPageSizeOptions = [10, 20, 50]");
+    expect(appSource).toContain("pageSize: photoPageSize");
+    expect(appSource).toContain("pageSize: topicPageSize");
+    expect(appSource).toContain("sizeCanChange: true");
+    expect(appSource).toContain("sizeOptions: adminPageSizeOptions");
+    expect(appSource).toContain("onPageSizeChange: (size) => setPhotoPageSize(size)");
+    expect(appSource).toContain("onPageSizeChange: (size) => setTopicPageSize(size)");
   });
 
   it("preserves preview, add/edit/upload modals, and empty feedback", () => {
@@ -63,7 +69,7 @@ describe("admin list UI contract", () => {
     );
   });
 
-  it("uses a stacked editorial image editor with visible helpers and EXIF status", () => {
+  it("uses a compact stacked image editor with EXIF status", () => {
     expect(appSource).toContain('className="editor-modal"');
     expect(appSource).toContain('className="editor-shell"');
     expect(appSource).toContain('className="editor-upload-card"');
@@ -72,15 +78,30 @@ describe("admin list UI contract", () => {
     expect(appSource).toContain('aria-label="图片元数据"');
     expect(appSource).toContain("EXIF 状态");
     expect(appSource).toContain("等待选择本地图片后读取。");
-    expect(appSource).toContain("新增记录必须选择本地图片");
+    expect(appSource).not.toContain("新增记录必须选择本地图片");
+    expect(appSource).not.toContain("先选择文件并在本地读取 EXIF");
     expect(appSource).toContain("专题会同步写入主专题字段");
     expect(styles).toContain(".editor-modal .arco-modal");
+    expect(styles).not.toContain(".editor-hero");
+    expect(styles).not.toContain(".upload-hint");
+    expect(styles).toContain("min-height: 220px;");
+    expect(styles).toContain("max-height: 220px;");
+    expect(styles).toContain("grid-template-columns: 56px minmax(0, 1fr);");
     expect(styles).toMatch(
       /\.editor-form\s*\{[\s\S]*?grid-template-columns:\s*1fr;[\s\S]*?align-items:\s*stretch;/,
     );
     expect(styles).toContain(".editor-exif-status");
     expect(styles).toContain(".editor-metadata-card");
     expect(styles).not.toMatch(/grid-template-columns:\s*minmax\(280px/);
+  });
+
+  it("lets relevant modals close by Escape and mask click", () => {
+    const modalProps = appSource.match(/maskClosable/g) ?? [];
+    const escapeProps = appSource.match(/escToExit/g) ?? [];
+
+    expect(modalProps.length).toBeGreaterThanOrEqual(5);
+    expect(escapeProps.length).toBeGreaterThanOrEqual(5);
+    expect(appSource).not.toContain("maskClosable={false}");
   });
 
   it("keeps dense accessible gallery styling with unified neutral hover and focus tones", () => {

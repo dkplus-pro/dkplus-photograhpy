@@ -48,9 +48,15 @@ describe("admin gallery list contract", () => {
     expect(appSource).not.toContain("更新：");
     expect(appSource).not.toMatch(/scroll=\{\{\s*x:\s*\d+,\s*y:/);
     expect(appSource).toMatch(/scroll=\{\{\s*x:\s*1260\s*\}\}/);
+    expect(appSource).toContain("const adminPageSizeOptions = [10, 20, 50]");
+    expect(appSource).toContain("pageSize: photoPageSize");
+    expect(appSource).toContain("pageSize: topicPageSize");
+    expect(appSource).toContain("sizeOptions: adminPageSizeOptions");
+    expect(appSource).toContain("onPageSizeChange: (size) => setPhotoPageSize(size)");
+    expect(appSource).toContain("onPageSizeChange: (size) => setTopicPageSize(size)");
   });
 
-  it("keeps the redesigned editor modal as stacked upload preview plus metadata sections", () => {
+  it("keeps the redesigned editor modal compact with stacked upload preview plus metadata sections", () => {
     expect(appSource).toContain('className="editor-modal"');
     expect(appSource).toContain('className="editor-upload-card"');
     expect(appSource).toContain('className="editor-metadata-card"');
@@ -60,13 +66,28 @@ describe("admin gallery list contract", () => {
     expect(appSource).toContain("EXIF 状态");
     expect(appSource).toContain("选择新文件后会刷新 EXIF");
     expect(appSource).toContain("专题会同步写入主专题字段");
+    expect(appSource).not.toContain("新增记录必须选择本地图片");
+    expect(appSource).not.toContain("先选择文件并在本地读取 EXIF");
     expect(styles).toContain(".editor-modal .arco-modal");
-    expect(styles).toContain(".editor-hero");
+    expect(styles).not.toContain(".editor-hero");
+    expect(styles).not.toContain(".upload-hint");
     expect(styles).toContain(".editor-exif-status");
+    expect(styles).toContain("min-height: 220px;");
+    expect(styles).toContain("max-height: 220px;");
+    expect(styles).toContain("grid-template-columns: 56px minmax(0, 1fr);");
     expect(styles).toMatch(
       /\.editor-form\s*\{[\s\S]*?grid-template-columns:\s*1fr;[\s\S]*?align-items:\s*stretch;/,
     );
     expect(styles).not.toMatch(/grid-template-columns:\s*minmax\(280px/);
+  });
+
+  it("lets relevant modals close by Escape and mask click", () => {
+    const modalProps = appSource.match(/maskClosable/g) ?? [];
+    const escapeProps = appSource.match(/escToExit/g) ?? [];
+
+    expect(modalProps.length).toBeGreaterThanOrEqual(5);
+    expect(escapeProps.length).toBeGreaterThanOrEqual(5);
+    expect(appSource).not.toContain("maskClosable={false}");
   });
 
   it("centers dense table content and keeps unified neutral hover and focus tones", () => {
