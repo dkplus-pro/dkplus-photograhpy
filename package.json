@@ -2,7 +2,7 @@
   "name": "dkplus-photography",
   "version": "0.1.0",
   "private": true,
-  "description": "Static photography gallery and admin tooling for DKPlus Photography.",
+  "description": "Static photography gallery and admin tooling for dk+ photography.",
   "license": "UNLICENSED",
   "packageManager": "pnpm@10.31.0",
   "engines": {

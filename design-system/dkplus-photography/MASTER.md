@@ -6,7 +6,7 @@
 
 ---
 
-**Project:** DKPlus Photography
+**Project:** dk+ photography
 **Generated:** 2026-07-07 13:05:21
 **Category:** Photography Studio
 

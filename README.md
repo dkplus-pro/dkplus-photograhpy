@@ -1,4 +1,4 @@
-# DKPlus Photography
+# dk+ photography
 
 A pnpm/turbo monorepo for a static public photography gallery, admin UI, shared TypeScript domain helpers, and a private admin API.
 

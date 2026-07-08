@@ -562,7 +562,7 @@ const App = () => {
       <header className="hero">
         <nav className="topbar" aria-label="站点导航">
           <a href="#/latest" className="brand">
-            DKPlus Photography
+            dk+ photography
           </a>
           <div className="topbar__actions">
             <span className="topbar__count">

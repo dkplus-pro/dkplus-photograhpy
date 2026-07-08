@@ -1,6 +1,6 @@
 # @dkplus/shared
 
-Shared TypeScript contract package for DKPlus Photography.
+Shared TypeScript contract package for dk+ photography.
 
 ## Exports
 

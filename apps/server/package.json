@@ -2,7 +2,7 @@
   "name": "@dkplus/server",
   "version": "0.1.0",
   "private": true,
-  "description": "Admin Koa API for DKPlus Photography JSON data, uploads, COS storage, and EXIF metadata.",
+  "description": "Admin Koa API for dk+ photography JSON data, uploads, COS storage, and EXIF metadata.",
   "main": "dist/index.js",
   "scripts": {
     "dev": "tsx watch src/index.ts",

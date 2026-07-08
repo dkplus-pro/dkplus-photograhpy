@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "type": "module",
-  "description": "Shared DKPlus Photography domain types and gallery helpers.",
+  "description": "Shared dk+ photography domain types and gallery helpers.",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "exports": {
