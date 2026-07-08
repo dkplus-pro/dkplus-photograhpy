@@ -235,7 +235,9 @@ test("topic CRUD persists in SQLite and explicit export includes current topics"
       .send({})
       .expect(200);
     assert.equal(deleted.body.deleted.id, "editorial");
-    const emptyTopics = await authed(request(app).get("/api/topics")).expect(200);
+    const emptyTopics = await authed(request(app).get("/api/topics")).expect(
+      200,
+    );
     assert.deepEqual(emptyTopics.body.topics, []);
   } finally {
     await rm(root, { recursive: true, force: true });

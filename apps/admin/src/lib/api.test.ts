@@ -196,8 +196,12 @@ describe("admin API client auth headers", () => {
   it("creates, updates, and deletes topics through Admin CRUD endpoints", async () => {
     const fetchMock = vi.fn(async (input: unknown, init?: RequestInit) => {
       const url = String(input);
-      if (init?.method === "DELETE") return jsonResponse(undefined, 204);
-      if (url.endsWith("/topics")) {
+      if (url.endsWith("/topics") && !init?.method) {
+        return jsonResponse({
+          topics: [{ id: "editorial", title: "编辑精选" }],
+        });
+      }
+      if (url.endsWith("/topics") && init?.method === "POST") {
         return jsonResponse(
           {
             topic: {

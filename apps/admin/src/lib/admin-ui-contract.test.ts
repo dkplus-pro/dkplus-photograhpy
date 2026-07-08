@@ -118,14 +118,30 @@ describe("admin gallery list contract", () => {
   });
 
   it("supports creating a new topic from admin photo flows", () => {
-    expect(appSource).toContain("customTopics");
+    expect(appSource).toContain("api.createTopic");
     expect(appSource).toContain("topicDraft");
     expect(appSource).toContain("normalizeTopicId");
     expect(appSource).toContain('aria-label="新增专题"');
     expect(appSource).toContain('placeholder="专题名称，如：编辑精选"');
     expect(appSource).toContain('placeholder="专题 ID（可选，自动生成）"');
-    expect(appSource).toContain("setTopicFilter(topicId)");
+    expect(appSource).toContain("setTopicFilter(created.id)");
     expect(appSource).toContain("请先选择或新增专题，再按当前专题选择图片。");
     expect(appSource).not.toContain("untitled-topic");
+  });
+
+  it("adds a left sidebar and persisted topic management CRUD page", () => {
+    expect(appSource).toContain('className="admin-sidebar"');
+    expect(appSource).toContain('aria-label="后台导航"');
+    expect(appSource).toContain('<MenuItem key="photos">图片管理</MenuItem>');
+    expect(appSource).toContain('<MenuItem key="topics">专题管理</MenuItem>');
+    expect(appSource).toContain('title="专题列表"');
+    expect(appSource).toContain("isTopicEditorOpen");
+    expect(appSource).toContain("api.listTopics");
+    expect(appSource).toContain("api.updateTopic");
+    expect(appSource).toContain("api.deleteTopic");
+    expect(appSource).toContain("先移除该专题下的图片关联后再删除");
+    expect(styles).toContain(".admin-layout");
+    expect(styles).toContain(".admin-sidebar");
+    expect(styles).toContain(".topic-form");
   });
 });

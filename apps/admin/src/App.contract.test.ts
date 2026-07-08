@@ -132,8 +132,8 @@ describe("admin gallery list contract", () => {
   it("adds a left sidebar and persisted topic management CRUD page", () => {
     expect(appSource).toContain('className="admin-sidebar"');
     expect(appSource).toContain('aria-label="后台导航"');
-    expect(appSource).toContain("<MenuItem key=\"photos\">图片管理</MenuItem>");
-    expect(appSource).toContain("<MenuItem key=\"topics\">专题管理</MenuItem>");
+    expect(appSource).toContain('<MenuItem key="photos">图片管理</MenuItem>');
+    expect(appSource).toContain('<MenuItem key="topics">专题管理</MenuItem>');
     expect(appSource).toContain('title="专题列表"');
     expect(appSource).toContain("isTopicEditorOpen");
     expect(appSource).toContain("api.listTopics");
