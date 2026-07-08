@@ -254,23 +254,64 @@ function App() {
     [],
   );
 
-  const topics = useMemo(() => {
-    const map = new Map<string, string>();
+  const topicUsage = useMemo(() => {
+    const map = new Map<string, number>();
+    for (const photo of photos) {
+      for (const topicId of [photo.topicId, ...(photo.topicIds ?? [])]) {
+        const normalizedTopicId = topicId?.trim();
+        if (!normalizedTopicId) continue;
+        map.set(normalizedTopicId, (map.get(normalizedTopicId) ?? 0) + 1);
+      }
+    }
+    return map;
+  }, [photos]);
+
+  const topicRows = useMemo<TopicRecord[]>(() => {
+    const map = new Map<string, TopicRecord>();
+    const upsertTopic = (topic: TopicRecord) => {
+      const id = topic.id.trim();
+      if (!id) return;
+      map.set(id, {
+        ...map.get(id),
+        ...topic,
+        id,
+        title: topic.title?.trim() || map.get(id)?.title || id,
+        description:
+          topic.description?.trim() || map.get(id)?.description || undefined,
+      });
+    };
+
+    for (const topic of managedTopics) {
+      upsertTopic(topic);
+    }
+
     for (const photo of photos) {
       if (photo.topicId) {
-        map.set(photo.topicId, photo.topicTitle || photo.topicId);
+        upsertTopic({
+          id: photo.topicId,
+          title: photo.topicTitle || photo.topicId,
+        });
       }
       for (const topicId of photo.topicIds ?? []) {
         if (!map.has(topicId)) {
-          map.set(topicId, topicId);
+          upsertTopic({ id: topicId, title: topicId });
         }
       }
     }
+
     for (const [id, title] of customTopics) {
-      map.set(id, title || id);
+      upsertTopic({ id, title: title || id });
     }
-    return [...map.entries()].sort((a, b) => a[1].localeCompare(b[1], "zh-CN"));
-  }, [customTopics, photos]);
+
+    return [...map.values()].sort((a, b) =>
+      a.title.localeCompare(b.title, "zh-CN"),
+    );
+  }, [customTopics, managedTopics, photos]);
+
+  const topics = useMemo<TopicOption[]>(
+    () => topicRows.map((topic) => [topic.id, topic.title]),
+    [topicRows],
+  );
 
   const cameraBrands = useMemo(
     () => uniqueSorted(photos.map((photo) => photo.exif?.cameraMake)),
@@ -308,6 +349,8 @@ function App() {
   const stagedSummary = useMemo(() => summarizeUpload(previews), [previews]);
   const visibleCount = filteredPhotos.length;
   const topicCount = topics.length;
+  const usedTopicCount = [...topicUsage.values()].filter((count) => count > 0)
+    .length;
   const editingPhoto = useMemo(
     () => photos.find((photo) => photo.id === editingId) ?? null,
     [editingId, photos],
@@ -334,7 +377,16 @@ function App() {
     setPayload((current) => ({ ...current, topicId, topicTitle }));
   };
 
-  const createTopicFromDraft = () => {
+  const upsertManagedTopic = (topic: TopicRecord) => {
+    setManagedTopics((current) => {
+      const withoutDuplicate = current.filter((item) => item.id !== topic.id);
+      return [...withoutDuplicate, topic].sort((a, b) =>
+        a.title.localeCompare(b.title, "zh-CN"),
+      );
+    });
+  };
+
+  const createTopicFromDraft = async () => {
     const title = topicDraft.title.trim();
     const topicId = normalizeTopicId(topicDraft.id || title);
 
@@ -343,10 +395,26 @@ function App() {
       return;
     }
 
-    setCustomTopics((current) => {
-      const withoutDuplicate = current.filter(([id]) => id !== topicId);
-      return [...withoutDuplicate, [topicId, title]];
-    });
+    try {
+      const createdTopic = await api.createTopic({
+        id: topicId,
+        title,
+        description: topicDraft.description,
+      });
+      upsertManagedTopic(createdTopic);
+    } catch (error) {
+      setCustomTopics((current) => {
+        const withoutDuplicate = current.filter(([id]) => id !== topicId);
+        return [...withoutDuplicate, [topicId, title]];
+      });
+      pushMessage(
+        "info",
+        `专题 API 暂不可用，已作为本地专题继续图片流程。${
+          error instanceof Error ? error.message : ""
+        }`.trim(),
+      );
+    }
+
     setPayload((current) => ({ ...current, topicId, topicTitle: title }));
     setTopicFilter(topicId);
     setTopicDraft(emptyTopicDraft);
@@ -604,6 +672,92 @@ function App() {
     });
   };
 
+  const openCreateTopicEditor = () => {
+    setEditingTopicId(null);
+    setManagedTopicDraft(emptyTopicDraft);
+    setIsTopicEditorOpen(true);
+  };
+
+  const editTopic = (topic: TopicRecord) => {
+    setEditingTopicId(topic.id);
+    setManagedTopicDraft({
+      id: topic.id,
+      title: topic.title,
+      description: topic.description || "",
+    });
+    setIsTopicEditorOpen(true);
+  };
+
+  const resetTopicEditor = () => {
+    setEditingTopicId(null);
+    setManagedTopicDraft(emptyTopicDraft);
+    setIsTopicEditorOpen(false);
+  };
+
+  const saveTopic = async () => {
+    const title = managedTopicDraft.title.trim();
+    const topicId = editingTopicId ?? normalizeTopicId(managedTopicDraft.id || title);
+    const description = managedTopicDraft.description.trim();
+
+    if (!title || !topicId) {
+      pushMessage("error", "请填写专题标题，或补充可用的专题 ID。");
+      return;
+    }
+
+    setIsTopicSaving(true);
+    try {
+      const savedTopic = editingTopicId
+        ? await api.updateTopic(editingTopicId, { title, description })
+        : await api.createTopic({ id: topicId, title, description });
+      upsertManagedTopic(savedTopic);
+      setCustomTopics((current) =>
+        current.filter(([id]) => id !== savedTopic.id),
+      );
+      setTopicFilter(savedTopic.id);
+      resetTopicEditor();
+      pushMessage("success", `专题“${savedTopic.title}”已保存。`);
+    } catch (error) {
+      pushMessage(
+        "error",
+        error instanceof Error ? error.message : "保存专题失败",
+      );
+    } finally {
+      setIsTopicSaving(false);
+    }
+  };
+
+  const requestDeleteTopic = (topic: TopicRecord) => {
+    const usageCount = topicUsage.get(topic.id) ?? 0;
+    if (usageCount > 0) {
+      pushMessage(
+        "error",
+        `专题“${topic.title}”仍关联 ${usageCount} 张图片，请先调整图片专题后再删除。`,
+      );
+      return;
+    }
+
+    setConfirmAction({
+      title: "删除专题",
+      body: `确认删除专题“${topic.title}”？此操作只删除专题记录，不会修改图片。`,
+      async onConfirm() {
+        await api.deleteTopic(topic.id);
+        setManagedTopics((current) =>
+          current.filter((item) => item.id !== topic.id),
+        );
+        setCustomTopics((current) =>
+          current.filter(([id]) => id !== topic.id),
+        );
+        if (topicFilter === topic.id) setTopicFilter(allFilterValue);
+        setPayload((current) =>
+          current.topicId === topic.id
+            ? { ...current, topicId: "", topicTitle: "" }
+            : current,
+        );
+        pushMessage("success", "专题已删除");
+      },
+    });
+  };
+
   const runConfirmedAction = async () => {
     if (!confirmAction) return;
     setIsSaving(true);
@@ -713,6 +867,69 @@ function App() {
           </Button>
         </Space>
       ),
+    },
+  ];
+
+  const topicColumns: TableColumnProps<TopicRecord>[] = [
+    {
+      title: "专题名称",
+      dataIndex: "title",
+      width: 260,
+      render: (_value, topic) => (
+        <div className="topic-title-cell">
+          <strong>{topic.title}</strong>
+          <Text type="secondary">{topic.description || "暂无专题描述"}</Text>
+        </div>
+      ),
+    },
+    {
+      title: "专题 ID",
+      dataIndex: "id",
+      width: 180,
+      render: (_value, topic) => (
+        <Tag>{topic.slug ? `${topic.id} / ${topic.slug}` : topic.id}</Tag>
+      ),
+    },
+    {
+      title: "图片数",
+      dataIndex: "id",
+      width: 110,
+      align: "center",
+      render: (_value, topic) => topicUsage.get(topic.id) ?? 0,
+    },
+    {
+      title: "更新时间",
+      dataIndex: "updatedAt",
+      width: 150,
+      align: "center",
+      render: (_value, topic) =>
+        formatDate(topic.updatedAt ?? topic.createdAt ?? ""),
+    },
+    {
+      title: "操作",
+      key: "actions",
+      width: 170,
+      align: "center",
+      render: (_value, topic) => {
+        const usageCount = topicUsage.get(topic.id) ?? 0;
+        return (
+          <Space size="mini">
+            <Button size="mini" type="outline" onClick={() => editTopic(topic)}>
+              编辑
+            </Button>
+            <Button
+              size="mini"
+              status="danger"
+              type="outline"
+              disabled={usageCount > 0}
+              title={usageCount > 0 ? "仍有关联图片，不能删除" : "删除专题"}
+              onClick={() => requestDeleteTopic(topic)}
+            >
+              删除
+            </Button>
+          </Space>
+        );
+      },
     },
   ];
 
