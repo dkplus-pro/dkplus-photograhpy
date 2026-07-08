@@ -136,8 +136,6 @@ type TopicDraft = {
   description: string;
 };
 
-type TopicOption = [id: string, title: string];
-
 const emptyTopicDraft: TopicDraft = { id: "", title: "", description: "" };
 const emptyTopicPayload: TopicPayload = { title: "", description: "" };
 type AdminSection = "photos" | "topics";
@@ -215,15 +213,16 @@ function App() {
 
   const refresh = async () => {
     setIsLoading(true);
-    const [photoResult, topicResult] = await Promise.allSettled([
-      api.listPhotos(),
-      api.listTopics(),
-    ]);
-
-    if (photoResult.status === "fulfilled") {
-      setPhotos(photoResult.value);
-    } else {
+    try {
+      const [records, topicRecords] = await Promise.all([
+        api.listPhotos(),
+        api.listTopics(),
+      ]);
+      setPhotos(records);
+      setTopics(topicRecords);
+    } catch (error) {
       setPhotos(demoPhotos);
+      setTopics(demoTopics);
       pushMessage(
         "info",
         `API 暂不可用，正在显示演示数据。${
@@ -233,20 +232,6 @@ function App() {
     } finally {
       setIsLoading(false);
     }
-
-    if (topicResult.status === "fulfilled") {
-      setTopics(topicResult.value);
-    } else {
-      setTopics(demoTopics);
-      pushMessage(
-        "info",
-        `专题 API 暂不可用，专题管理将显示演示专题。${
-          topicResult.reason instanceof Error ? topicResult.reason.message : ""
-        }`.trim(),
-      );
-    }
-
-    setIsLoading(false);
   };
 
   useEffect(() => {
@@ -742,7 +727,7 @@ function App() {
   const requestDeleteTopic = (topic: TopicRecord) => {
     const usageCount = topicUsageById.get(topic.id) ?? 0;
     if (usageCount > 0) {
-      pushMessage("error", "先移除该专题下的图片关联后再删除。");
+      pushMessage("error", "该专题仍有关联图片，请先移除图片专题后再删除。");
       return;
     }
     setConfirmAction({

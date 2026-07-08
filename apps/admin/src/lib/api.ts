@@ -22,6 +22,10 @@ export interface ExportResult {
 
 export interface ApiClient {
   listPhotos: () => Promise<PhotoRecord[]>;
+  listTopics: () => Promise<TopicRecord[]>;
+  createTopic: (payload: TopicPayload) => Promise<TopicRecord>;
+  updateTopic: (id: string, payload: TopicPayload) => Promise<TopicRecord>;
+  deleteTopic: (id: string) => Promise<void>;
   createPhoto: (payload: PhotoPayload) => Promise<PhotoRecord>;
   updatePhoto: (id: string, payload: PhotoPayload) => Promise<PhotoRecord>;
   deletePhoto: (id: string) => Promise<void>;
@@ -241,6 +245,38 @@ export const createApiClient = (
         PhotoRecord[] | { photos?: PhotoRecord[]; data?: PhotoRecord[] }
       >(baseUrl, "/photos"),
     );
+  },
+  async listTopics() {
+    return unwrapTopics(
+      await requestJson<
+        TopicRecord[] | { topics?: TopicRecord[]; data?: TopicRecord[] }
+      >(baseUrl, "/topics"),
+    );
+  },
+  async createTopic(payload) {
+    return normalizeTopicForAdmin(
+      await requestJson<ServerTopicEnvelope>(baseUrl, "/topics", {
+        method: "POST",
+        body: JSON.stringify(toServerTopicPayload(payload)),
+      }),
+    );
+  },
+  async updateTopic(id, payload) {
+    return normalizeTopicForAdmin(
+      await requestJson<ServerTopicEnvelope>(
+        baseUrl,
+        `/topics/${encodeURIComponent(id)}`,
+        {
+          method: "PATCH",
+          body: JSON.stringify(toServerTopicPayload(payload)),
+        },
+      ),
+    );
+  },
+  async deleteTopic(id) {
+    await requestJson<void>(baseUrl, `/topics/${encodeURIComponent(id)}`, {
+      method: "DELETE",
+    });
   },
   async createPhoto(payload) {
     return normalizePhotoForAdmin(
