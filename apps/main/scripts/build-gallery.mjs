@@ -89,9 +89,6 @@ const normalizeAsset = (photo) => {
   if (!original) return undefined;
   return compact({
     original,
-    thumbnail: source.thumbnail ?? photo.thumbnailUrl ?? imageUrl,
-    preview:
-      source.preview ?? source.thumbnail ?? photo.thumbnailUrl ?? imageUrl,
     alt: source.alt ?? photo.title,
     width: source.width ?? photo.exif?.width,
     height: source.height ?? photo.exif?.height,
@@ -132,6 +129,7 @@ export function normalizeGalleryData(input) {
       photo.exif?.capturedAt ??
       photo.createdAt ??
       new Date().toISOString();
+    const originalUrl = resolveAssetUrl(asset.original);
     return compact(
       {
         id: photo.id,
@@ -142,11 +140,9 @@ export function normalizeGalleryData(input) {
         location: photo.location,
         asset,
         urls: {
-          original: resolveAssetUrl(asset.original),
-          thumbnail: resolveAssetUrl(asset.thumbnail ?? asset.original),
-          preview: resolveAssetUrl(
-            asset.preview ?? asset.thumbnail ?? asset.original,
-          ),
+          original: originalUrl,
+          thumbnail: originalUrl,
+          preview: originalUrl,
         },
         exif: normalizeExif(photo.exif),
       },

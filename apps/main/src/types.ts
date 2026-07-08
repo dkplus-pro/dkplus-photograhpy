@@ -26,8 +26,6 @@ export interface Topic {
 
 export interface PhotoAsset {
   original: string;
-  thumbnail?: string;
-  preview?: string;
   alt?: string;
   width?: number;
   height?: number;

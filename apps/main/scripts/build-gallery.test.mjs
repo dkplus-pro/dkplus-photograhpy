@@ -1,6 +1,14 @@
 import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
+import path from "node:path";
 import test from "node:test";
+import { fileURLToPath } from "node:url";
 import { normalizeGalleryData } from "./build-gallery.mjs";
+
+const dirname = path.dirname(fileURLToPath(import.meta.url));
+const sourceGallery = JSON.parse(
+  readFileSync(path.join(dirname, "../../../data/photos.json"), "utf8"),
+);
 
 const forbiddenKeys = new Set([
   "updatedAt",
@@ -23,6 +31,17 @@ const assertNoForbiddenKeys = (value) => {
     assert.equal(forbiddenKeys.has(key), false, `Forbidden JSON key: ${key}`);
     assertNoForbiddenKeys(entry);
   }
+};
+
+const assertSingleAssetUrl = (photo) => {
+  assert.equal(typeof photo.asset?.original, "string");
+  assert.equal("thumbnail" in photo.asset, false);
+  assert.equal("preview" in photo.asset, false);
+};
+
+const assertDerivedUrlBases = (photo) => {
+  assert.equal(photo.urls.thumbnail, photo.urls.original);
+  assert.equal(photo.urls.preview, photo.urls.original);
 };
 
 test("normalizes gallery records and writes resolved CDN urls", () => {
@@ -54,6 +73,8 @@ test("normalizes gallery records and writes resolved CDN urls", () => {
     gallery.photos[0].urls.original,
     /^https:\/\/images\.unsplash\.com\/photo-demo/,
   );
+  assertSingleAssetUrl(gallery.photos[0]);
+  assertDerivedUrlBases(gallery.photos[0]);
   assert.doesNotMatch(JSON.stringify(gallery), /imageMogr2/);
   assert.deepEqual(Object.keys(gallery).sort(), [
     "generatedAt",
@@ -141,11 +162,49 @@ test("exports only the minimal client gallery JSON contract", () => {
     "topicIds",
     "urls",
   ]);
+  assert.deepEqual(Object.keys(gallery.photos[0].asset).sort(), [
+    "alt",
+    "height",
+    "original",
+    "width",
+  ]);
   assert.equal(gallery.photos[0].asset.original, "client-original.jpg");
   assert.match(
     gallery.photos[0].urls.thumbnail,
-    /^https:\/\/images\.unsplash\.com\/client-thumb\.jpg/,
+    /^https:\/\/images\.unsplash\.com\/client-original\.jpg/,
   );
+  assertDerivedUrlBases(gallery.photos[0]);
+  assert.doesNotMatch(JSON.stringify(gallery), /client-(thumb|preview)\.jpg/);
   assert.doesNotMatch(JSON.stringify(gallery), /imageMogr2/);
   assertNoForbiddenKeys(gallery);
+});
+
+test("source gallery preserves b176cc1 Xinjiang records with a single asset url", () => {
+  assert.equal(sourceGallery.topics.length, 5);
+  assert.equal(sourceGallery.photos.length, 20);
+  assert.equal(
+    sourceGallery.topics.find((topic) => topic.id === "新疆2025")?.title,
+    "新疆2025",
+  );
+
+  const xinjiangPhotos = sourceGallery.photos.filter((photo) =>
+    photo.topicIds?.includes("新疆2025"),
+  );
+  assert.equal(xinjiangPhotos.length, 7);
+  assert.deepEqual(
+    xinjiangPhotos.map((photo) => photo.id),
+    [
+      "bd623c99-8f07-4abf-9bb4-58adb316a5cd",
+      "aa95acdf-1ae8-4bca-9dd7-87ac192f0a7d",
+      "2e1d3cae-e53d-4b06-82a7-dde0a06fa933",
+      "0d718d6b-2ef5-4a4d-b5b0-617bb7a6f18e",
+      "d9bb85d4-10ae-40ab-a7c7-9070bdef3dd4",
+      "73fb9fd9-6ce9-489d-a89c-bd34601653f7",
+      "0fefdbdb-24e0-4106-8724-5f415435e0d9",
+    ],
+  );
+
+  for (const photo of sourceGallery.photos) {
+    assertSingleAssetUrl(photo);
+  }
 });

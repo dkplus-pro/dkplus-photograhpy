@@ -166,8 +166,13 @@ export const buildTopicSummaries = (
 
 type RawExif = ExifData;
 
+type RawAsset = Partial<PhotoAsset> & {
+  thumbnail?: string;
+  preview?: string;
+};
+
 type RawPhoto = Partial<Omit<ResolvedPhoto, "asset" | "urls">> & {
-  asset?: Partial<PhotoAsset>;
+  asset?: RawAsset;
   urls?: Partial<ResolvedPhoto["urls"]>;
   image?: { url?: string };
   imageUrl?: string;
@@ -242,15 +247,14 @@ const deriveTopics = (photos: RawPhoto[]): Topic[] => {
 const resolveUrls = (
   asset: PhotoAsset,
   urls?: Partial<ResolvedPhoto["urls"]>,
-): ResolvedPhoto["urls"] => ({
-  original: resolveDisplayAssetUrl(urls?.original ?? asset.original),
-  thumbnail: resolveDisplayAssetUrl(
-    urls?.thumbnail ?? asset.thumbnail ?? asset.original,
-  ),
-  preview: resolveDisplayAssetUrl(
-    urls?.preview ?? asset.preview ?? asset.thumbnail ?? asset.original,
-  ),
-});
+): ResolvedPhoto["urls"] => {
+  const original = resolveDisplayAssetUrl(urls?.original ?? asset.original);
+  return {
+    original,
+    thumbnail: original,
+    preview: original,
+  };
+};
 
 const normalizePhoto = (photo: RawPhoto, index: number): ResolvedPhoto => {
   const id = photo.id ?? `photo-${index}`;
@@ -260,12 +264,6 @@ const normalizePhoto = (photo: RawPhoto, index: number): ResolvedPhoto => {
   if (!original) throw new Error(`photos[${index}] 缺少图片地址`);
   const asset = compact({
     original,
-    thumbnail: photo.asset?.thumbnail ?? photo.thumbnailUrl ?? imageUrl,
-    preview:
-      photo.asset?.preview ??
-      photo.asset?.thumbnail ??
-      photo.thumbnailUrl ??
-      imageUrl,
     alt: photo.asset?.alt ?? title,
     width: photo.asset?.width ?? photo.exif?.width,
     height: photo.asset?.height ?? photo.exif?.height,
