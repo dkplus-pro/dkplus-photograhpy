@@ -351,6 +351,10 @@ function App() {
   const topicCount = topics.length;
   const usedTopicCount = [...topicUsage.values()].filter((count) => count > 0)
     .length;
+  const topicReferenceCount = [...topicUsage.values()].reduce(
+    (sum, count) => sum + count,
+    0,
+  );
   const editingPhoto = useMemo(
     () => photos.find((photo) => photo.id === editingId) ?? null,
     [editingId, photos],
