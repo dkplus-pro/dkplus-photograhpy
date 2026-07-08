@@ -11,6 +11,10 @@ const gallerySource = readFileSync(
   "utf8",
 );
 const mainSource = readFileSync(path.join(dirname, "../src/main.tsx"), "utf8");
+const gallerySource = readFileSync(
+  path.join(dirname, "../src/gallery.ts"),
+  "utf8",
+);
 const virtualRows = readFileSync(
   path.join(dirname, "../src/useVirtualRows.ts"),
   "utf8",
@@ -96,18 +100,63 @@ test("main virtual rows are measured from the grid container", () => {
   );
 });
 
+test("main tab rendering precomputes topic stats before render branches", () => {
+  assert.match(mainSource, /const buildTopicSummaries =/);
+  assert.match(mainSource, /const photoById = new Map/);
+  assert.match(mainSource, /const photosByTopic = new Map/);
+  assert.match(mainSource, /topicPhotos\.push\(photo\)/);
+  assert.match(mainSource, /firstPhotoByTopic\.set\(topicId, photo\)/);
+  assert.match(mainSource, /const topicSummaryById = useMemo/);
+  assert.match(mainSource, /const topicPhotos = selectedTopicSummary\?\.photos \?\? \[\]/);
+  assert.doesNotMatch(
+    mainSource,
+    /data\.photos\.filter\([\s\S]*?photo\.topicIds\.includes\(selectedTopicId\)/,
+  );
+});
+
+test("timeline grouping and virtual rows avoid duplicated hot-path work", () => {
+  assert.match(gallerySource, /for \(const photo of photos\)/);
+  assert.match(gallerySource, /group\.push\(photo\)/);
+  assert.doesNotMatch(gallerySource, /groups\.set\(key,\s*\[\.\.\./);
+  assert.doesNotMatch(gallerySource, /\[\.\.\.photos\]\.sort\(compareNewest\)/);
+
+  assert.match(virtualRows, /const viewportSubscribers = new Set/);
+  assert.match(virtualRows, /const subscribeViewport =/);
+  assert.match(
+    virtualRows,
+    /window\.addEventListener\("scroll", scheduleViewportUpdate, \{ passive: true \}\)/,
+  );
+  assert.equal(
+    virtualRows.match(/window\.addEventListener\("scroll"/g)?.length,
+    1,
+  );
+  assert.doesNotMatch(
+    virtualRows,
+    /window\.addEventListener\("resize", update/,
+  );
+});
+
+test("tab and topic changes are scheduled as non-urgent transitions", () => {
+  assert.match(mainSource, /startTransition/);
+  assert.match(mainSource, /startTransition\(\(\) => \{\s*setTab\(key\);/);
+  assert.match(
+    mainSource,
+    /startTransition\(\(\) => setSelectedTopicId\(topicId\)\)/,
+  );
+  assert.match(
+    mainSource,
+    /startTransition\(\(\) => setSelectedTopicId\(null\)\)/,
+  );
+});
+
 test("topics tab opens a secondary virtual topic detail page", () => {
   assert.match(mainSource, /selectedTopicId/);
   assert.match(mainSource, /const TopicDetail =/);
   assert.match(mainSource, /onSelectTopic\(topic\.id\)/);
-  assert.match(mainSource, /onSelectTopic=\{setSelectedTopicId\}/);
+  assert.match(mainSource, /onSelectTopic=\{selectTopic\}/);
   assert.doesNotMatch(
     mainSource,
     /onClick=\{\(\) => cover && onOpen\(cover\)\}/,
-  );
-  assert.match(
-    mainSource,
-    /data\.photos\.filter\([\s\S]*?photo\.topicIds\.includes\(selectedTopicId\)/,
   );
   assert.match(
     mainSource,
