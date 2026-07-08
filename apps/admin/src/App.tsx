@@ -1025,200 +1025,39 @@ function App() {
             ))}
           </div>
         )}
-        <aside className="admin-sidebar" aria-label="后台菜单">
-          <div className="admin-sidebar__brand">
-            <span>DK</span>
-            <strong>Admin Console</strong>
-            <small>Gallery Ops</small>
-          </div>
-          <nav className="sidebar-menu">
-            <button
-              type="button"
-              className={`sidebar-menu__item ${
-                activePage === "photos" ? "sidebar-menu__item--active" : ""
-              }`}
-              aria-current={activePage === "photos" ? "page" : undefined}
-              onClick={() => setActivePage("photos")}
-            >
-              <span>图片管理</span>
-              <small>照片上传、筛选与导出</small>
-            </button>
-            <button
-              type="button"
-              className={`sidebar-menu__item ${
-                activePage === "topics" ? "sidebar-menu__item--active" : ""
-              }`}
-              aria-current={activePage === "topics" ? "page" : undefined}
-              onClick={() => setActivePage("topics")}
-            >
-              <span>专题管理</span>
-              <small>专题标题、描述与引用</small>
-            </button>
-          </nav>
-        </aside>
-
-        <section className="admin-workbench">
-          <header className="admin-header" aria-labelledby="page-title">
-            <div>
-              <p className="eyebrow">DKPlus 图库后台</p>
-              <h1 id="page-title">
-                {activePage === "photos" ? "图片管理" : "专题管理"}
-              </h1>
+        <div className="admin-layout">
+          <aside className="admin-sidebar" aria-label="后台导航">
+            <div className="admin-sidebar__brand">
+              <span>DKPlus Admin</span>
+              <strong>图库后台</strong>
             </div>
-            {activePage === "photos" ? (
-              <Space wrap>
-                <Button onClick={() => void refresh()} loading={isLoading}>
-                  刷新 API
-                </Button>
-                <Button type="primary" onClick={openCreateEditor}>
-                  新增图片
-                </Button>
-                <Button onClick={() => setIsUploadOpen(true)}>上传图片</Button>
-                <Button
-                  type="outline"
-                  loading={isExporting}
-                  onClick={() => void exportToClient()}
-                >
-                  导出到客户端
-                </Button>
-              </Space>
-            ) : (
-              <Space wrap>
-                <Button
-                  onClick={() => void refresh()}
-                  loading={isLoading || isTopicLoading}
-                >
-                  刷新 API
-                </Button>
-                <Button type="primary" onClick={openCreateTopicEditor}>
-                  新增专题
-                </Button>
-              </Space>
-            )}
-          </header>
+            <Menu
+              className="admin-menu"
+              selectedKeys={[activeSection]}
+              onClickMenuItem={(key) => setActiveSection(key as AdminSection)}
+            >
+              <MenuItem key="photos">图片管理</MenuItem>
+              <MenuItem key="topics">专题管理</MenuItem>
+            </Menu>
+          </aside>
 
-        <Card className="toolbar-card" bordered={false}>
-          <div className="toolbar">
-            <Input
-              allowClear
-              aria-label="按标题筛选"
-              value={titleFilter}
-              onChange={setTitleFilter}
-              placeholder="按标题筛选"
-            />
-            <Select
-              aria-label="按品牌筛选"
-              value={brandFilter}
-              onChange={(value) => setBrandFilter(String(value))}
-              options={[
-                { label: "全部品牌", value: "all" },
-                ...cameraBrands.map((brand) => ({
-                  label: brand,
-                  value: brand,
-                })),
-              ]}
-            />
-            <Select
-              aria-label="按机型筛选"
-              value={modelFilter}
-              onChange={(value) => setModelFilter(String(value))}
-              options={[
-                { label: "全部机型", value: "all" },
-                ...cameraModels.map((model) => ({
-                  label: model,
-                  value: model,
-                })),
-              ]}
-            />
-            <Select
-              aria-label="按专题筛选"
-              value={topicFilter}
-              onChange={(value) => setTopicFilter(String(value))}
-              options={[
-                { label: "全部专题", value: allFilterValue },
-                ...topicOptions.map(([id, title]) => ({
-                  label: title,
-                  value: id,
-                })),
-              ]}
-            />
-            <Space wrap className="toolbar-actions">
-              <Button type="primary" onClick={openCreateEditor}>
-                新增图片
-              </Button>
-              <Button
-                status="danger"
-                disabled={selectedCount === 0}
-                onClick={requestBatchDelete}
-              >
-                删除所选
-              </Button>
-              <Button
-                type="outline"
-                loading={isExporting}
-                onClick={() => void exportToClient()}
-              >
-                导出到客户端
-              </Button>
-            </Space>
-          </div>
-        </Card>
-
-              <Card className="toolbar-card" bordered={false}>
-                <div className="toolbar">
-                  <Input
-                    allowClear
-                    aria-label="按标题筛选"
-                    value={titleFilter}
-                    onChange={setTitleFilter}
-                    placeholder="按标题筛选"
-                  />
-                  <Select
-                    aria-label="按品牌筛选"
-                    value={brandFilter}
-                    onChange={(value) => setBrandFilter(String(value))}
-                    options={[
-                      { label: "全部品牌", value: "all" },
-                      ...cameraBrands.map((brand) => ({
-                        label: brand,
-                        value: brand,
-                      })),
-                    ]}
-                  />
-                  <Select
-                    aria-label="按机型筛选"
-                    value={modelFilter}
-                    onChange={(value) => setModelFilter(String(value))}
-                    options={[
-                      { label: "全部机型", value: "all" },
-                      ...cameraModels.map((model) => ({
-                        label: model,
-                        value: model,
-                      })),
-                    ]}
-                  />
-                  <Select
-                    aria-label="按专题筛选"
-                    value={topicFilter}
-                    onChange={(value) => setTopicFilter(String(value))}
-                    options={[
-                      { label: "全部专题", value: allFilterValue },
-                      ...topics.map(([id, title]) => ({
-                        label: title,
-                        value: id,
-                      })),
-                    ]}
-                  />
-                  <Space wrap className="toolbar-actions">
+          <section className="admin-content">
+            {activeSection === "photos" ? (
+              <>
+                <header className="admin-header" aria-labelledby="page-title">
+                  <div>
+                    <p className="eyebrow">DKPlus 图库后台</p>
+                    <h1 id="page-title">图片管理</h1>
+                  </div>
+                  <Space wrap>
+                    <Button onClick={() => void refresh()} loading={isLoading}>
+                      刷新 API
+                    </Button>
                     <Button type="primary" onClick={openCreateEditor}>
                       新增图片
                     </Button>
-                    <Button
-                      status="danger"
-                      disabled={selectedCount === 0}
-                      onClick={requestBatchDelete}
-                    >
-                      删除所选
+                    <Button onClick={() => setIsUploadOpen(true)}>
+                      上传图片
                     </Button>
                     <Button
                       type="outline"
@@ -1226,6 +1065,287 @@ function App() {
                       onClick={() => void exportToClient()}
                     >
                       导出到客户端
+                    </Button>
+                  </Space>
+                </header>
+
+                <section className="stats-grid" aria-label="图片统计">
+                  <Card bordered={false}>
+                    <Statistic title="图片记录" value={photos.length} />
+                  </Card>
+                  <Card bordered={false}>
+                    <Statistic title="筛选结果" value={visibleCount} />
+                  </Card>
+                  <Card bordered={false}>
+                    <Statistic title="专题数量" value={topicCount} />
+                  </Card>
+                  <Card bordered={false}>
+                    <Statistic title="已选择" value={selectedCount} />
+                  </Card>
+                </section>
+
+                <Card className="toolbar-card" bordered={false}>
+                  <div className="toolbar">
+                    <Input
+                      allowClear
+                      aria-label="按标题筛选"
+                      value={titleFilter}
+                      onChange={setTitleFilter}
+                      placeholder="按标题筛选"
+                    />
+                    <Select
+                      aria-label="按品牌筛选"
+                      value={brandFilter}
+                      onChange={(value) => setBrandFilter(String(value))}
+                      options={[
+                        { label: "全部品牌", value: "all" },
+                        ...cameraBrands.map((brand) => ({
+                          label: brand,
+                          value: brand,
+                        })),
+                      ]}
+                    />
+                    <Select
+                      aria-label="按机型筛选"
+                      value={modelFilter}
+                      onChange={(value) => setModelFilter(String(value))}
+                      options={[
+                        { label: "全部机型", value: "all" },
+                        ...cameraModels.map((model) => ({
+                          label: model,
+                          value: model,
+                        })),
+                      ]}
+                    />
+                    <Select
+                      aria-label="按专题筛选"
+                      value={topicFilter}
+                      onChange={(value) => setTopicFilter(String(value))}
+                      options={[
+                        { label: "全部专题", value: allFilterValue },
+                        ...topicOptions.map(([id, title]) => ({
+                          label: title,
+                          value: id,
+                        })),
+                      ]}
+                    />
+                    <Space wrap className="toolbar-actions">
+                      <Button type="primary" onClick={openCreateEditor}>
+                        新增图片
+                      </Button>
+                      <Button
+                        status="danger"
+                        disabled={selectedCount === 0}
+                        onClick={requestBatchDelete}
+                      >
+                        删除所选
+                      </Button>
+                      <Button
+                        type="outline"
+                        loading={isExporting}
+                        onClick={() => void exportToClient()}
+                      >
+                        导出到客户端
+                      </Button>
+                    </Space>
+                  </div>
+                </Card>
+
+                <Card
+                  className="table-card"
+                  bordered={false}
+                  title="图片列表"
+                  extra={<Tag>{filteredPhotos.length} 条结果</Tag>}
+                >
+                  <Spin loading={isLoading} style={{ width: "100%" }}>
+                    <Table<PhotoRecord>
+                      className="photos-table"
+                      rowKey="id"
+                      size="mini"
+                      border={{ wrapper: true, cell: true }}
+                      tableLayoutFixed
+                      stripe
+                      columns={columns}
+                      data={filteredPhotos}
+                      noDataElement={
+                        <div className="table-empty-state">
+                          <Empty description="暂无匹配图片，可调整标题、品牌、机型或专题筛选" />
+                          <Button
+                            size="mini"
+                            onClick={() => {
+                              setTitleFilter("");
+                              setBrandFilter(allFilterValue);
+                              setModelFilter(allFilterValue);
+                              setTopicFilter(allFilterValue);
+                            }}
+                          >
+                            清除筛选
+                          </Button>
+                        </div>
+                      }
+                      scroll={{ x: 1260 }}
+                      rowSelection={{
+                        type: "checkbox",
+                        checkAll: true,
+                        preserveSelectedRowKeys: true,
+                        selectedRowKeys: [...selectedIds],
+                        onChange: (keys) =>
+                          setSelectedIds(
+                            new Set(keys.map((key) => String(key))),
+                          ),
+                      }}
+                      pagination={{
+                        pageSize: 12,
+                        size: "small",
+                        sizeCanChange: true,
+                        sizeOptions: [12, 24, 48],
+                        showTotal: (total, range) =>
+                          `显示 ${range[0]}-${range[1]}，共 ${total} 条`,
+                      }}
+                    />
+                  </Spin>
+                </Card>
+              </>
+            ) : (
+              <>
+                <header className="admin-header" aria-labelledby="page-title">
+                  <div>
+                    <p className="eyebrow">DKPlus 图库后台</p>
+                    <h1 id="page-title">专题管理</h1>
+                  </div>
+                  <Space wrap>
+                    <Button onClick={() => void refresh()} loading={isLoading}>
+                      刷新 API
+                    </Button>
+                    <Button type="primary" onClick={openCreateTopicEditor}>
+                      新增专题
+                    </Button>
+                    <Button
+                      type="outline"
+                      loading={isExporting}
+                      onClick={() => void exportToClient()}
+                    >
+                      导出到客户端
+                    </Button>
+                  </Space>
+                </header>
+
+                <section className="stats-grid topic-stats" aria-label="专题统计">
+                  <Card bordered={false}>
+                    <Statistic title="专题记录" value={topics.length} />
+                  </Card>
+                  <Card bordered={false}>
+                    <Statistic title="已关联图片" value={topicUsageById.size} />
+                  </Card>
+                  <Card bordered={false}>
+                    <Statistic title="图片记录" value={photos.length} />
+                  </Card>
+                  <Card bordered={false}>
+                    <Statistic
+                      title="未关联专题"
+                      value={photos.filter((photo) => !photo.topicId).length}
+                    />
+                  </Card>
+                </section>
+
+                <Card
+                  className="table-card topic-table-card"
+                  bordered={false}
+                  title="专题列表"
+                  extra={<Tag>{topics.length} 条专题</Tag>}
+                >
+                  <Spin loading={isLoading} style={{ width: "100%" }}>
+                    <Table<TopicRecord>
+                      className="photos-table topics-table"
+                      rowKey="id"
+                      size="mini"
+                      border={{ wrapper: true, cell: true }}
+                      tableLayoutFixed
+                      stripe
+                      columns={topicColumns}
+                      data={topics}
+                      noDataElement={
+                        <div className="table-empty-state">
+                          <Empty description="暂无专题，可创建标题与描述后用于图片分组" />
+                          <Button size="mini" onClick={openCreateTopicEditor}>
+                            新增专题
+                          </Button>
+                        </div>
+                      }
+                      scroll={{ x: 760 }}
+                      pagination={{
+                        pageSize: 12,
+                        size: "small",
+                        showTotal: (total, range) =>
+                          `显示 ${range[0]}-${range[1]}，共 ${total} 条`,
+                      }}
+                    />
+                  </Spin>
+                  <Alert
+                    className="topic-delete-policy"
+                    type="info"
+                    content="删除专题前需先移除相关图片的专题关联；专题 CRUD 仅持久化到 SQLite，客户端 JSON 仍通过导出流程生成。"
+                  />
+                </Card>
+              </>
+            )}
+
+        <Modal
+          className="editor-modal"
+          title={editingId ? "编辑图片记录" : "新增图片记录"}
+          visible={isEditorOpen}
+          onCancel={resetEditor}
+          onOk={() => void savePhoto()}
+          confirmLoading={isSaving}
+          okText="保存"
+          cancelText="取消"
+          maskClosable={false}
+          unmountOnExit
+        >
+          <div className="editor-shell" aria-label="图片编辑器">
+            <header className="editor-hero">
+              <p className="editor-hero__kicker">Editorial upload desk</p>
+              <h2>
+                {editingId ? "校订图片与专题信息" : "创建一条新的图片记录"}
+              </h2>
+              <p>
+                上方确认图片与 EXIF
+                状态，下方补充标题、专题和描述；保存时继续沿用现有上传与持久化流程。
+              </p>
+            </header>
+
+            <Alert
+              type="info"
+              content={
+                editingId
+                  ? "如需替换图片，请选择新的本地图片；不选择文件时仅保存文字与专题。"
+                  : "新增图片需要先选择本地图片，保存时会上传到 /api/uploads。"
+              }
+            />
+
+            <div className="editor-form" role="group" aria-label="图片资料表单">
+              <section
+                className="editor-upload-card"
+                aria-label="图片上传与预览"
+              >
+                <div className="editor-upload-card__header">
+                  <div>
+                    <span className="editor-section-label">Step 01</span>
+                    <strong>上传 / 预览</strong>
+                    <span>
+                      {editorPreview
+                        ? editorPreview.file.name
+                        : editingId
+                          ? "当前图片；可选择新文件替换"
+                          : "请选择一张图片"}
+                    </span>
+                  </div>
+                  <Space wrap>
+                    <Button
+                      type={editorPreview || editingId ? "outline" : "primary"}
+                      onClick={() => editorFileInputRef.current?.click()}
+                    >
+                      {editorPreview || editingId ? "更换图片" : "选择图片"}
                     </Button>
                   </Space>
                 </div>
@@ -1663,209 +1783,59 @@ function App() {
             </div>
           </Modal>
 
-          <Modal
-            title="上传图片"
-            visible={isUploadOpen}
-            onCancel={() => setIsUploadOpen(false)}
-            onOk={() => void uploadStaged()}
-            confirmLoading={isSaving}
-            okText="上传暂存文件"
-            cancelText="关闭"
-            okButtonProps={{ disabled: previews.length === 0 }}
-            maskClosable={false}
-          >
-            <div className="upload-panel">
-              <p className="upload-hint">
-                先选择文件并在本地读取 EXIF，确认后统一提交到 /api/uploads。
-              </p>
-              <label className="upload-topic-select">
-                <span>当前专题（可选）</span>
-                <Select
-                  allowClear
-                  showSearch
-                  value={payload.topicId || undefined}
-                  placeholder="选择已有专题，或在新增图片里创建专题"
-                  onChange={(value) =>
-                    selectTopic(typeof value === "string" ? value : "")
-                  }
-                  options={topics.map(([id, title]) => ({
-                    label: `${title} (${id})`,
-                    value: id,
-                  }))}
-                />
-              </label>
-              <Space wrap>
-                <Button onClick={() => quickFileInputRef.current?.click()}>
-                  快速选择
-                </Button>
-                <Button
-                  type="primary"
-                  onClick={() => topicFileInputRef.current?.click()}
-                >
-                  按当前专题选择
-                </Button>
-                <Button disabled={!previews.length} onClick={clearPreviews}>
-                  清空暂存
-                </Button>
-              </Space>
-              <input
-                ref={quickFileInputRef}
-                className="hidden-file-input"
-                type="file"
-                accept="image/*"
-                multiple
-                onChange={(event) => {
-                  void stageFiles(event.currentTarget.files, "quick");
-                  event.currentTarget.value = "";
-                }}
+        <Modal
+          title={editingTopicId ? "编辑专题" : "新增专题"}
+          visible={isTopicEditorOpen}
+          onCancel={resetTopicEditor}
+          onOk={() => void saveTopic()}
+          confirmLoading={isSaving}
+          okText="保存"
+          cancelText="取消"
+          maskClosable={false}
+          unmountOnExit
+        >
+          <div className="topic-form" aria-label="专题资料表单">
+            <label>
+              <span>专题标题</span>
+              <Input
+                value={topicPayload.title}
+                onChange={(value) =>
+                  setTopicPayload((current) => ({ ...current, title: value }))
+                }
+                placeholder="例如：编辑精选"
               />
-              <input
-                ref={topicFileInputRef}
-                className="hidden-file-input"
-                type="file"
-                accept="image/*"
-                multiple
-                onChange={(event) => {
-                  void stageFiles(event.currentTarget.files, "topic");
-                  event.currentTarget.value = "";
-                }}
+            </label>
+            <label>
+              <span>专题描述</span>
+              <TextArea
+                value={topicPayload.description || ""}
+                onChange={(value) =>
+                  setTopicPayload((current) => ({
+                    ...current,
+                    description: value,
+                  }))
+                }
+                placeholder="用一两句话描述专题内容"
+                autoSize={{ minRows: 4, maxRows: 7 }}
               />
-              <p className="status-line">{stagedSummary}</p>
-              <div className="preview-list" aria-live="polite">
-                {previews.length ? (
-                  previews.map((preview) => (
-                    <article className="preview-card" key={preview.id}>
-                      <img src={preview.previewUrl} alt="" loading="lazy" />
-                      <div>
-                        <strong>{preview.title}</strong>
-                        <span>{preview.topicId || "未指定专题"}</span>
-                        <small>{exifLine(preview.exif)}</small>
-                      </div>
-                    </article>
-                  ))
-                ) : (
-                  <Empty description="尚未暂存上传文件" />
-                )}
-              </div>
-            </div>
-          </Modal>
+            </label>
+          </div>
+        </Modal>
 
-          <Modal
-            className="topic-editor-modal"
-            title={editingTopicId ? "编辑专题" : "新增专题"}
-            visible={isTopicEditorOpen}
-            onCancel={resetTopicEditor}
-            onOk={() => void saveTopic()}
-            confirmLoading={isTopicSaving}
-            okText="保存专题"
-            cancelText="取消"
-            maskClosable={false}
-            unmountOnExit
-          >
-            <div className="topic-form" aria-label="专题资料表单">
-              <header className="topic-form__hero">
-                <p className="editor-hero__kicker">Topic desk</p>
-                <h2>{editingTopicId ? "校订专题信息" : "创建专题记录"}</h2>
-                <p>
-                  专题管理页只暴露标题与描述；专题 ID/slug
-                  作为稳定内部标识保留给图片关系与前台导出使用。
-                </p>
-              </header>
-
-              <label>
-                <span>专题标题</span>
-                <Input
-                  value={managedTopicDraft.title}
-                  onChange={(value) =>
-                    setManagedTopicDraft((current) => ({
-                      ...current,
-                      title: value,
-                    }))
-                  }
-                  placeholder="例如：编辑精选"
-                />
-              </label>
-
-              <label>
-                <span>专题 ID</span>
-                <Input
-                  value={managedTopicDraft.id}
-                  disabled={Boolean(editingTopicId)}
-                  onChange={(value) =>
-                    setManagedTopicDraft((current) => ({
-                      ...current,
-                      id: value,
-                    }))
-                  }
-                  placeholder="可选，留空时按标题自动生成"
-                />
-                <small>
-                  编辑已有专题时保留稳定 ID；如需调整图片归属，请回到图片管理。
-                </small>
-              </label>
-
-              <label className="span-2">
-                <span>专题描述</span>
-                <TextArea
-                  value={managedTopicDraft.description}
-                  onChange={(value) =>
-                    setManagedTopicDraft((current) => ({
-                      ...current,
-                      description: value,
-                    }))
-                  }
-                  placeholder="描述专题的策展方向、拍摄项目或前台展示说明"
-                  autoSize={{ minRows: 4, maxRows: 7 }}
-                />
-              </label>
-
-              <Alert
-                type="info"
-                content="保存后会通过 Admin API 写入 SQLite topics 表；导出到客户端仍沿用现有导出按钮。"
-              />
-            </div>
-          </Modal>
-
-          <Modal
-            title={previewPhoto ? photoTitle(previewPhoto) : "图片预览"}
-            visible={Boolean(previewPhoto)}
-            onCancel={() => setPreviewPhoto(null)}
-            footer={null}
-            className="image-preview-modal"
-            unmountOnExit
-          >
-            {previewPhoto && (
-              <div className="image-preview-modal__body">
-                <img
-                  src={withAdminPreviewDisplayUrl(
-                    previewPhoto.imageUrl ||
-                      previewPhoto.image?.url ||
-                      previewPhoto.thumbnailUrl,
-                  )}
-                  alt={photoTitle(previewPhoto)}
-                />
-                <div className="rich-lines">
-                  <strong>{imageSummary(previewPhoto)}</strong>
-                  <span>{previewPhoto.description || "暂无描述"}</span>
-                  <span>{exifLine(previewPhoto.exif)}</span>
-                </div>
-              </div>
-            )}
-          </Modal>
-
-          <Modal
-            title={confirmAction?.title}
-            visible={Boolean(confirmAction)}
-            onCancel={() => setConfirmAction(null)}
-            onOk={() => void runConfirmedAction()}
-            confirmLoading={isSaving}
-            okText="确认删除"
-            cancelText="取消"
-            okButtonProps={{ status: "danger" }}
-          >
-            <p>{confirmAction?.body}</p>
-          </Modal>
-        </section>
+        <Modal
+          title={confirmAction?.title}
+          visible={Boolean(confirmAction)}
+          onCancel={() => setConfirmAction(null)}
+          onOk={() => void runConfirmedAction()}
+          confirmLoading={isSaving}
+          okText="确认删除"
+          cancelText="取消"
+          okButtonProps={{ status: "danger" }}
+        >
+          <p>{confirmAction?.body}</p>
+        </Modal>
+          </section>
+        </div>
       </main>
     </ConfigProvider>
   );
