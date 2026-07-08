@@ -1,6 +1,12 @@
 import React, { startTransition, useEffect, useMemo, useState } from "react";
 import { createRoot } from "react-dom/client";
-import { groupByMonth, normalizePayload, tabLabels } from "./gallery";
+import {
+  groupByMonth,
+  normalizePayload,
+  tabLabels,
+  topicCover,
+  withThumbnailDisplayQuery,
+} from "./gallery";
 import type { GalleryPayload, GridStyle, ResolvedPhoto, TabKey } from "./types";
 import { useVirtualRows } from "./useVirtualRows";
 import "./styles.css";
@@ -107,7 +113,7 @@ const PhotoCard = ({
     aria-label={`查看图片：${photo.title}`}
   >
     <img
-      src={photo.urls.thumbnail}
+      src={withThumbnailDisplayQuery(photo.urls.thumbnail)}
       alt={photo.asset.alt ?? photo.title}
       loading="lazy"
       width={photo.asset.width}
@@ -167,30 +173,36 @@ const TopicGrid = ({
   onSelectTopic: (topicId: string) => void;
 }) => (
   <div className="topic-grid" aria-label="专题列表">
-    {summaries.map(({ topic, cover, count }) => (
-      <button
-        className="topic-card"
-        key={topic.id}
-        onClick={() => onSelectTopic(topic.id)}
-        disabled={!cover}
-        aria-label={`查看专题：${topic.title}`}
-      >
-        {cover ? (
-          <img
-            src={cover.urls.thumbnail}
-            alt={cover.asset.alt ?? topic.title}
-            loading="lazy"
-          />
-        ) : (
-          <span className="topic-card__empty" />
-        )}
-        <span className="topic-card__copy">
-          <strong>{topic.title}</strong>
-          <small>{count} 张作品</small>
-          <em>{topic.description}</em>
-        </span>
-      </button>
-    ))}
+    {data.topics.map((topic) => {
+      const cover = topicCover(topic, data.photos);
+      const count = data.photos.filter((photo) =>
+        photo.topicIds.includes(topic.id),
+      ).length;
+      return (
+        <button
+          className="topic-card"
+          key={topic.id}
+          onClick={() => onSelectTopic(topic.id)}
+          disabled={!cover}
+          aria-label={`查看专题：${topic.title}`}
+        >
+          {cover ? (
+            <img
+              src={withThumbnailDisplayQuery(cover.urls.thumbnail)}
+              alt={cover.asset.alt ?? topic.title}
+              loading="lazy"
+            />
+          ) : (
+            <span className="topic-card__empty" />
+          )}
+          <span className="topic-card__copy">
+            <strong>{topic.title}</strong>
+            <small>{count} 张作品</small>
+            <em>{topic.description}</em>
+          </span>
+        </button>
+      );
+    })}
   </div>
 );
 

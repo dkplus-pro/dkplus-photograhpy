@@ -6,6 +6,10 @@ import { fileURLToPath } from "node:url";
 
 const dirname = path.dirname(fileURLToPath(import.meta.url));
 const styles = readFileSync(path.join(dirname, "../src/styles.css"), "utf8");
+const gallerySource = readFileSync(
+  path.join(dirname, "../src/gallery.ts"),
+  "utf8",
+);
 const mainSource = readFileSync(path.join(dirname, "../src/main.tsx"), "utf8");
 const virtualRows = readFileSync(
   path.join(dirname, "../src/useVirtualRows.ts"),
@@ -56,6 +60,29 @@ test("main data loading uses the API in dev and static JSON in builds", () => {
   assert.match(
     mainSource,
     /staticDataUrl\s*=\s*`\$\{import\.meta\.env\.BASE_URL\}data\/gallery\.json`/,
+  );
+});
+
+test("main list thumbnails use display-only Tencent thumbnail query", () => {
+  assert.match(gallerySource, /withThumbnailDisplayQuery/);
+  assert.match(gallerySource, /imageMogr2\/thumbnail\/800x/);
+  assert.match(gallerySource, /\^\(data\|blob\):/);
+  assert.match(gallerySource, /raw\.includes\("imageMogr2"\)/);
+  assert.match(gallerySource, /images\.unsplash\.com/);
+  assert.match(gallerySource, /const hashIndex = raw\.indexOf\("#"\)/);
+
+  assert.match(
+    mainSource,
+    /src=\{withThumbnailDisplayQuery\(photo\.urls\.thumbnail\)\}/,
+  );
+  assert.match(
+    mainSource,
+    /src=\{withThumbnailDisplayQuery\(cover\.urls\.thumbnail\)\}/,
+  );
+  assert.match(mainSource, /src=\{active\.urls\.preview\}/);
+  assert.doesNotMatch(
+    mainSource,
+    /withThumbnailDisplayQuery\(active\.urls\.preview\)/,
   );
 });
 

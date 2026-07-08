@@ -7,7 +7,7 @@ import type {
 } from "./types";
 
 const fallbackCdnBaseUrl = "https://images.unsplash.com";
-const listThumbnailQuery = "imageMogr2/thumbnail/800x";
+const thumbnailDisplayQuery = "imageMogr2/thumbnail/800x";
 const isAbsoluteUrl = (value: string): boolean =>
   /^[a-z][a-z\d+.-]*:/i.test(value) || value.startsWith("//");
 const isHttpUrl = (value: string): boolean =>
@@ -33,23 +33,23 @@ export const resolveDisplayAssetUrl = (value: string): string => {
   return `${fallbackCdnBaseUrl}/${trimSlashes(pathname)}${query}${hash}`;
 };
 
-const isUnsplashImageUrl = (value: string): boolean => {
-  const candidate = value.startsWith("//") ? `https:${value}` : value;
+const isUnsplashUrl = (value: string): boolean => {
   try {
-    return new URL(candidate).hostname === "images.unsplash.com";
+    const parsed = new URL(value.startsWith("//") ? `https:${value}` : value);
+    return parsed.hostname === "images.unsplash.com";
   } catch {
     return false;
   }
 };
 
-export const reduceListThumbnailQuality = (value: string): string => {
+export const withThumbnailDisplayQuery = (value: string): string => {
   const raw = value.trim();
   if (
     !raw ||
-    !isHttpUrl(raw) ||
-    hasSkippedListThumbnailProtocol(raw) ||
-    hasListThumbnailTransform(raw) ||
-    isUnsplashImageUrl(raw)
+    /^(data|blob):/i.test(raw) ||
+    !/^(https?:)?\/\//i.test(raw) ||
+    raw.includes("imageMogr2") ||
+    isUnsplashUrl(raw)
   ) {
     return value;
   }
@@ -57,8 +57,13 @@ export const reduceListThumbnailQuality = (value: string): string => {
   const hashIndex = raw.indexOf("#");
   const hash = hashIndex >= 0 ? raw.slice(hashIndex) : "";
   const withoutHash = hashIndex >= 0 ? raw.slice(0, hashIndex) : raw;
-  const separator = withoutHash.includes("?") ? "&" : "?";
-  return `${withoutHash}${separator}${listThumbnailQuery}${hash}`;
+  const separator = withoutHash.includes("?")
+    ? withoutHash.endsWith("?") || withoutHash.endsWith("&")
+      ? ""
+      : "&"
+    : "?";
+
+  return `${withoutHash}${separator}${thumbnailDisplayQuery}${hash}`;
 };
 
 export const tabLabels = {
