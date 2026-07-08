@@ -54,6 +54,7 @@ test("normalizes gallery records and writes resolved CDN urls", () => {
     gallery.photos[0].urls.original,
     /^https:\/\/images\.unsplash\.com\/photo-demo/,
   );
+  assert.doesNotMatch(JSON.stringify(gallery), /imageMogr2/);
   assert.deepEqual(Object.keys(gallery).sort(), [
     "generatedAt",
     "photos",
@@ -145,5 +146,6 @@ test("exports only the minimal client gallery JSON contract", () => {
     gallery.photos[0].urls.thumbnail,
     /^https:\/\/images\.unsplash\.com\/client-thumb\.jpg/,
   );
+  assert.doesNotMatch(JSON.stringify(gallery), /imageMogr2/);
   assertNoForbiddenKeys(gallery);
 });
