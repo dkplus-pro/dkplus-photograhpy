@@ -1237,11 +1237,6 @@ function App() {
                         )}
                       </Space>
                     </div>
-                    <p className="editor-helper">
-                      {editingId
-                        ? "保持原图或选择新文件替换；替换后会重新读取本地 EXIF。"
-                        : "新增记录必须选择本地图片，系统会先生成预览并读取 EXIF。"}
-                    </p>
                     <input
                       ref={editorFileInputRef}
                       className="hidden-file-input"
