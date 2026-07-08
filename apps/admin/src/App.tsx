@@ -136,9 +136,6 @@ type TopicDraft = {
   description: string;
 };
 
-type TopicOption = [id: string, title: string];
-type AdminPage = "photos" | "topics";
-
 const emptyTopicDraft: TopicDraft = { id: "", title: "", description: "" };
 const emptyTopicPayload: TopicPayload = { title: "", description: "" };
 type AdminSection = "photos" | "topics";
@@ -167,7 +164,6 @@ const uniqueSorted = (values: Array<string | undefined>): string[] =>
   ].sort((left, right) => left.localeCompare(right, "zh-CN"));
 
 function App() {
-  const [activePage, setActivePage] = useState<AdminPage>("photos");
   const [photos, setPhotos] = useState<PhotoRecord[]>([]);
   const [topics, setTopics] = useState<TopicRecord[]>([]);
   const [activeSection, setActiveSection] = useState<AdminSection>("photos");
@@ -194,8 +190,6 @@ function App() {
   const [modelFilter, setModelFilter] = useState("all");
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
-  const [isTopicLoading, setIsTopicLoading] = useState(true);
-  const [isTopicSaving, setIsTopicSaving] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
   const [isEditorOpen, setIsEditorOpen] = useState(false);
   const [isUploadOpen, setIsUploadOpen] = useState(false);
@@ -219,7 +213,6 @@ function App() {
 
   const refresh = async () => {
     setIsLoading(true);
-    setIsTopicLoading(true);
     try {
       const [records, topicRecords] = await Promise.all([
         api.listPhotos(),
@@ -238,7 +231,6 @@ function App() {
       );
     } finally {
       setIsLoading(false);
-      setIsTopicLoading(false);
     }
   };
 
