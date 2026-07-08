@@ -57,11 +57,85 @@ img {
   gap: 16px;
   color: var(--muted);
 }
+.topbar__actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 14px;
+  margin-left: auto;
+}
+.topbar__count {
+  white-space: nowrap;
+}
 .brand {
   color: var(--foreground);
   font-family: "Fira Code", monospace;
   font-weight: 700;
   text-decoration: none;
+}
+.data-saver {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 44px;
+  padding: 6px 12px 6px 8px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--surface);
+  box-shadow: 0 10px 30px rgba(24, 24, 27, 0.06);
+  color: var(--foreground);
+  cursor: pointer;
+}
+.data-saver input {
+  position: relative;
+  flex: 0 0 auto;
+  width: 46px;
+  height: 26px;
+  margin: 0;
+  appearance: none;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: #d4d4d8;
+  cursor: pointer;
+  transition:
+    background 180ms ease,
+    border-color 180ms ease;
+}
+.data-saver input::after {
+  content: "";
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 18px;
+  height: 18px;
+  border-radius: 999px;
+  background: #fff;
+  box-shadow: 0 2px 8px rgba(9, 9, 11, 0.2);
+  transition: transform 180ms ease;
+}
+.data-saver input:checked {
+  border-color: var(--primary);
+  background: var(--primary);
+}
+.data-saver input:checked::after {
+  transform: translateX(20px);
+}
+.data-saver input:focus-visible {
+  outline: 3px solid var(--ring);
+  outline-offset: 4px;
+}
+.data-saver__copy {
+  display: grid;
+  gap: 1px;
+  line-height: 1.1;
+}
+.data-saver__copy span {
+  font-weight: 700;
+}
+.data-saver__copy small {
+  color: var(--muted);
+  font-size: 0.72rem;
 }
 .eyebrow {
   margin: 0 0 16px;
@@ -476,6 +550,10 @@ dd {
   .topbar {
     align-items: flex-start;
     flex-direction: column;
+  }
+  .topbar__actions {
+    justify-content: flex-start;
+    margin-left: 0;
   }
   .shell {
     width: min(100% - 28px, 1440px);

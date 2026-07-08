@@ -63,6 +63,38 @@ test("main data loading uses the API in dev and static JSON in builds", () => {
   );
 });
 
+test("main data-saver switch controls modal preview quality only", () => {
+  assert.match(
+    mainSource,
+    /const \[dataSaverEnabled, setDataSaverEnabled\] = useState\(false\)/,
+  );
+  assert.match(mainSource, /className="topbar__actions"/);
+  assert.match(mainSource, /className="data-saver"/);
+  assert.match(mainSource, /role="switch"/);
+  assert.match(mainSource, /aria-label="省流模式"/);
+  assert.match(mainSource, /aria-checked=\{dataSaverEnabled\}/);
+  assert.match(mainSource, /checked=\{dataSaverEnabled\}/);
+  assert.match(mainSource, /dataSaverEnabled=\{dataSaverEnabled\}/);
+  assert.match(cssBlock(".topbar__actions"), /justify-content:\s*flex-end;/);
+  assert.match(cssBlock(".data-saver"), /min-height:\s*44px;/);
+  assert.match(cssBlock(".data-saver input"), /appearance:\s*none;/);
+
+  assert.match(
+    gallerySource,
+    /const previewQualityDisplayQuery = "imageMogr2\/quality\/25"/,
+  );
+  assert.match(gallerySource, /export const withPreviewQualityDisplayQuery =/);
+  assert.match(
+    mainSource,
+    /const previewUrl = dataSaverEnabled[\s\S]*?withPreviewQualityDisplayQuery\(active\.urls\.preview\)[\s\S]*?: active\.urls\.preview/,
+  );
+  assert.match(mainSource, /src=\{previewUrl\}/);
+  assert.doesNotMatch(
+    mainSource,
+    /withThumbnailDisplayQuery\(active\.urls\.preview\)/,
+  );
+});
+
 test("main list thumbnails use display-only Tencent thumbnail query", () => {
   assert.match(gallerySource, /withThumbnailDisplayQuery/);
   assert.match(gallerySource, /imageMogr2\/thumbnail\/800x/);
@@ -79,7 +111,11 @@ test("main list thumbnails use display-only Tencent thumbnail query", () => {
     mainSource,
     /src=\{withThumbnailDisplayQuery\(cover\.urls\.thumbnail\)\}/,
   );
-  assert.match(mainSource, /src=\{active\.urls\.preview\}/);
+  assert.match(mainSource, /src=\{previewUrl\}/);
+  assert.match(
+    mainSource,
+    /const previewUrl = dataSaverEnabled[\s\S]*?withPreviewQualityDisplayQuery\(active\.urls\.preview\)[\s\S]*?: active\.urls\.preview/,
+  );
   assert.doesNotMatch(
     mainSource,
     /withThumbnailDisplayQuery\(active\.urls\.preview\)/,
@@ -222,7 +258,12 @@ test("display-only thumbnail reduction does not affect modal preview quality", (
     gallerySource,
     /const thumbnailDisplayQuery = "imageMogr2\/thumbnail\/800x"/,
   );
+  assert.match(
+    gallerySource,
+    /const previewQualityDisplayQuery = "imageMogr2\/quality\/25"/,
+  );
   assert.match(gallerySource, /export const withThumbnailDisplayQuery =/);
+  assert.match(gallerySource, /export const withPreviewQualityDisplayQuery =/);
   assert.match(
     gallerySource,
     /thumbnail:\s*resolveDisplayAssetUrl\([\s\S]*?urls\?\.thumbnail/,
@@ -236,7 +277,11 @@ test("display-only thumbnail reduction does not affect modal preview quality", (
     mainSource,
     /src=\{withThumbnailDisplayQuery\(photo\.urls\.thumbnail\)\}/,
   );
-  assert.match(mainSource, /src=\{active\.urls\.preview\}/);
+  assert.match(mainSource, /src=\{previewUrl\}/);
+  assert.match(
+    mainSource,
+    /const previewUrl = dataSaverEnabled[\s\S]*?withPreviewQualityDisplayQuery\(active\.urls\.preview\)[\s\S]*?: active\.urls\.preview/,
+  );
   assert.doesNotMatch(
     mainSource,
     /withThumbnailDisplayQuery\(active\.urls\.preview\)/,

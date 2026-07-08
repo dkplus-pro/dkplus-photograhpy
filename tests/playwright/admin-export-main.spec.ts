@@ -801,6 +801,9 @@ test("Main topics tab opens a virtual detail page with scoped modal navigation",
     "true",
   );
   await expect(page.locator(".photo-card").first()).toBeVisible();
+  const dataSaverSwitch = page.getByRole("switch", { name: "省流模式" });
+  await expect(dataSaverSwitch).toBeVisible();
+  await expect(dataSaverSwitch).not.toBeChecked();
 
   await page.goto(`${mainBaseUrl}#/topics`);
   await expect(page.getByRole("tab", { name: "专题" })).toHaveAttribute(
@@ -845,6 +848,38 @@ test("Main topics tab opens a virtual detail page with scoped modal navigation",
     "editorial-a-preview.jpg?token=preview#preview",
   );
   expect(modalPreviewSrc).not.toContain("imageMogr2");
+  await page.getByRole("button", { name: "关闭", exact: true }).click();
+
+  await dataSaverSwitch.check();
+  await expect(dataSaverSwitch).toBeChecked();
+  await expect(dataSaverSwitch).toHaveAttribute("aria-checked", "true");
+  await routedCard.click();
+  const dataSaverModalPreviewSrc = await page
+    .locator(".modal__image-wrap img")
+    .getAttribute("src");
+  expect(dataSaverModalPreviewSrc).toContain(
+    "editorial-a-preview.jpg?token=preview&imageMogr2/quality/25#preview",
+  );
+  await page.getByRole("button", { name: "下一张" }).click();
+  await expect(page.locator(".modal h2")).toHaveText("编辑样片 B");
+  await page.getByRole("button", { name: "上一张" }).click();
+  await expect(page.locator(".modal h2")).toHaveText("编辑样片 A");
+  const restoredDataSaverPreviewSrc = await page
+    .locator(".modal__image-wrap img")
+    .getAttribute("src");
+  expect(restoredDataSaverPreviewSrc).toContain(
+    "editorial-a-preview.jpg?token=preview&imageMogr2/quality/25#preview",
+  );
+  await page.getByRole("button", { name: "关闭", exact: true }).click();
+  await expect(dataSaverSwitch).toBeChecked();
+
+  await routedCard.click();
+  const reopenedDataSaverPreviewSrc = await page
+    .locator(".modal__image-wrap img")
+    .getAttribute("src");
+  expect(reopenedDataSaverPreviewSrc).toContain(
+    "editorial-a-preview.jpg?token=preview&imageMogr2/quality/25#preview",
+  );
   await page.getByRole("button", { name: "关闭", exact: true }).click();
 
   await page.getByRole("button", { name: "返回专题列表" }).click();
