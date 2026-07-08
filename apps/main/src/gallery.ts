@@ -8,6 +8,7 @@ import type {
 
 const fallbackCdnBaseUrl = "https://images.unsplash.com";
 const thumbnailDisplayQuery = "imageMogr2/thumbnail/800x";
+const previewQualityDisplayQuery = "imageMogr2/quality/25";
 const isAbsoluteUrl = (value: string): boolean =>
   /^[a-z][a-z\d+.-]*:/i.test(value) || value.startsWith("//");
 const trimSlashes = (value: string): string => value.replace(/^\/+|\/+$/g, "");
@@ -35,7 +36,10 @@ const isUnsplashUrl = (value: string): boolean => {
   }
 };
 
-export const withThumbnailDisplayQuery = (value: string): string => {
+const withImageMogr2DisplayQuery = (
+  value: string,
+  operation: string,
+): string => {
   const raw = value.trim();
   if (
     !raw ||
@@ -56,8 +60,14 @@ export const withThumbnailDisplayQuery = (value: string): string => {
       : "&"
     : "?";
 
-  return `${withoutHash}${separator}${thumbnailDisplayQuery}${hash}`;
+  return `${withoutHash}${separator}${operation}${hash}`;
 };
+
+export const withThumbnailDisplayQuery = (value: string): string =>
+  withImageMogr2DisplayQuery(value, thumbnailDisplayQuery);
+
+export const withPreviewQualityDisplayQuery = (value: string): string =>
+  withImageMogr2DisplayQuery(value, previewQualityDisplayQuery);
 
 export const tabLabels = {
   latest: "最新",

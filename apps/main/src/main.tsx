@@ -11,6 +11,7 @@ import {
   groupByMonth,
   normalizePayload,
   tabLabels,
+  withPreviewQualityDisplayQuery,
   withThumbnailDisplayQuery,
 } from "./gallery";
 import type { TopicSummary } from "./gallery";
@@ -272,11 +273,13 @@ const Timeline = ({
 const PhotoModal = ({
   photos,
   active,
+  dataSaverEnabled,
   onClose,
   onSelect,
 }: {
   photos: ResolvedPhoto[];
   active: ResolvedPhoto | null;
+  dataSaverEnabled: boolean;
   onClose: () => void;
   onSelect: (photo: ResolvedPhoto) => void;
 }) => {
@@ -306,6 +309,9 @@ const PhotoModal = ({
   }, [active, index]);
 
   if (!active) return null;
+  const previewUrl = dataSaverEnabled
+    ? withPreviewQualityDisplayQuery(active.urls.preview)
+    : active.urls.preview;
   const exifRows = [
     [
       "相机",
@@ -341,10 +347,7 @@ const PhotoModal = ({
       />
       <article className="modal__panel">
         <div className="modal__image-wrap">
-          <img
-            src={active.urls.preview}
-            alt={active.asset.alt ?? active.title}
-          />
+          <img src={previewUrl} alt={active.asset.alt ?? active.title} />
           <button
             className="modal__nav modal__nav--prev"
             onClick={() => selectOffset(-1)}
@@ -391,6 +394,7 @@ const App = () => {
   const [isRoutePending, startRouteTransition] = useTransition();
   const deferredRoute = useDeferredValue(route);
   const [activePhoto, setActivePhoto] = useState<ResolvedPhoto | null>(null);
+  const [dataSaverEnabled, setDataSaverEnabled] = useState(false);
   const topicSummaries = useMemo(
     () => (data ? buildTopicSummaries(data.topics, data.photos) : []),
     [data],
@@ -474,9 +478,26 @@ const App = () => {
           <a href="#/latest" className="brand">
             DKPlus Photography
           </a>
-          <span>
-            {data.photos.length} Photos · {data.topics.length} Topics
-          </span>
+          <div className="topbar__actions">
+            <span className="topbar__count">
+              {data.photos.length} Photos · {data.topics.length} Topics
+            </span>
+            <label className="data-saver">
+              <input
+                type="checkbox"
+                role="switch"
+                aria-label="省流模式"
+                checked={dataSaverEnabled}
+                onChange={(event) =>
+                  setDataSaverEnabled(event.currentTarget.checked)
+                }
+              />
+              <span className="data-saver__copy">
+                <span>省流模式</span>
+                <small>{dataSaverEnabled ? "大图低流量" : "原图预览"}</small>
+              </span>
+            </label>
+          </div>
         </nav>
       </header>
 
@@ -523,6 +544,7 @@ const App = () => {
       <PhotoModal
         photos={modalPhotos}
         active={activePhoto}
+        dataSaverEnabled={dataSaverEnabled}
         onClose={() => setActivePhoto(null)}
         onSelect={setActivePhoto}
       />
