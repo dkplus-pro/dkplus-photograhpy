@@ -220,6 +220,11 @@ test("topic and timeline derived data are precomputed without repeated render sc
 test("display-only thumbnail reduction does not affect modal preview quality", () => {
   assert.match(
     gallerySource,
+    /const listThumbnailQuery = "imageMogr2\/thumbnail\/800x"/,
+  );
+  assert.match(gallerySource, /export const reduceListThumbnailQuality =/);
+  assert.match(
+    gallerySource,
     /const thumbnailDisplayQuery = "imageMogr2\/thumbnail\/800x"/,
   );
   assert.match(gallerySource, /export const withThumbnailDisplayQuery =/);

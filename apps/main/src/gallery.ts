@@ -234,8 +234,10 @@ const resolveUrls = (
   urls?: Partial<ResolvedPhoto["urls"]>,
 ): ResolvedPhoto["urls"] => ({
   original: resolveDisplayAssetUrl(urls?.original ?? asset.original),
-  thumbnail: resolveDisplayAssetUrl(
-    urls?.thumbnail ?? asset.thumbnail ?? asset.original,
+  thumbnail: reduceListThumbnailQuality(
+    resolveDisplayAssetUrl(
+      urls?.thumbnail ?? asset.thumbnail ?? asset.original,
+    ),
   ),
   preview: resolveDisplayAssetUrl(
     urls?.preview ?? asset.preview ?? asset.thumbnail ?? asset.original,
