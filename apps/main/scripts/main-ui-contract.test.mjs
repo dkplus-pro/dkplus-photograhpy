@@ -107,7 +107,10 @@ test("main tab rendering precomputes topic stats before render branches", () => 
   assert.match(mainSource, /topicPhotos\.push\(photo\)/);
   assert.match(mainSource, /firstPhotoByTopic\.set\(topicId, photo\)/);
   assert.match(mainSource, /const topicSummaryById = useMemo/);
-  assert.match(mainSource, /const topicPhotos = selectedTopicSummary\?\.photos \?\? \[\]/);
+  assert.match(
+    mainSource,
+    /const topicPhotos = selectedTopicSummary\?\.photos \?\? \[\]/,
+  );
   assert.doesNotMatch(
     mainSource,
     /data\.photos\.filter\([\s\S]*?photo\.topicIds\.includes\(selectedTopicId\)/,
@@ -124,7 +127,7 @@ test("timeline grouping and virtual rows avoid duplicated hot-path work", () => 
   assert.match(virtualRows, /const subscribeViewport =/);
   assert.match(
     virtualRows,
-    /window\.addEventListener\("scroll", scheduleViewportUpdate, \{ passive: true \}\)/,
+    /window\.addEventListener\("scroll", scheduleViewportUpdate,[\s\S]*?passive:\s*true/,
   );
   assert.equal(
     virtualRows.match(/window\.addEventListener\("scroll"/g)?.length,

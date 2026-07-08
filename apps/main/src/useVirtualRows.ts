@@ -53,8 +53,12 @@ const subscribeViewport = (subscriber: (viewport: ViewportState) => void) => {
 
   if (!isViewportListening) {
     isViewportListening = true;
-    window.addEventListener("resize", scheduleViewportUpdate, { passive: true });
-    window.addEventListener("scroll", scheduleViewportUpdate, { passive: true });
+    window.addEventListener("resize", scheduleViewportUpdate, {
+      passive: true,
+    });
+    window.addEventListener("scroll", scheduleViewportUpdate, {
+      passive: true,
+    });
   }
 
   return () => {

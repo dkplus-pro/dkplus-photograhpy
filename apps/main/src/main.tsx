@@ -435,16 +435,13 @@ const App = () => {
     () => (data ? buildTopicSummaries(data.topics, data.photos) : []),
     [data],
   );
-  const selectedTopicSummary = useMemo(() => {
-    if (deferredRoute.tab !== "topics" || !deferredRoute.topicKey) {
-      return undefined;
-    }
-    return topicSummaries.find(
-      ({ topic }) =>
-        topic.id === deferredRoute.topicKey ||
-        topic.slug === deferredRoute.topicKey,
-    );
-  }, [deferredRoute.tab, deferredRoute.topicKey, topicSummaries]);
+  const topicSummaryById = useMemo(
+    () => new Map(topicSummaries.map((summary) => [summary.topic.id, summary])),
+    [topicSummaries],
+  );
+  const selectedTopicSummary = selectedTopicId
+    ? topicSummaryById.get(selectedTopicId)
+    : undefined;
   const selectedTopic = selectedTopicSummary?.topic;
   const topicPhotos = selectedTopicSummary?.photos ?? [];
   const modalPhotos =
