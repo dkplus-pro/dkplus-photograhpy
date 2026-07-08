@@ -1417,7 +1417,10 @@ function App() {
                         }
                         placeholder="专题 ID（可选，自动生成）"
                       />
-                      <Button type="outline" onClick={createTopicFromDraft}>
+                      <Button
+                        type="outline"
+                        onClick={() => void createTopicFromDraft()}
+                      >
                         创建专题
                       </Button>
                     </div>
@@ -1524,6 +1527,82 @@ function App() {
                   <Empty description="尚未暂存上传文件" />
                 )}
               </div>
+            </div>
+          </Modal>
+
+          <Modal
+            className="topic-editor-modal"
+            title={editingTopicId ? "编辑专题" : "新增专题"}
+            visible={isTopicEditorOpen}
+            onCancel={resetTopicEditor}
+            onOk={() => void saveTopic()}
+            confirmLoading={isTopicSaving}
+            okText="保存专题"
+            cancelText="取消"
+            maskClosable={false}
+            unmountOnExit
+          >
+            <div className="topic-form" aria-label="专题资料表单">
+              <header className="topic-form__hero">
+                <p className="editor-hero__kicker">Topic desk</p>
+                <h2>{editingTopicId ? "校订专题信息" : "创建专题记录"}</h2>
+                <p>
+                  专题管理页只暴露标题与描述；专题 ID/slug
+                  作为稳定内部标识保留给图片关系与前台导出使用。
+                </p>
+              </header>
+
+              <label>
+                <span>专题标题</span>
+                <Input
+                  value={managedTopicDraft.title}
+                  onChange={(value) =>
+                    setManagedTopicDraft((current) => ({
+                      ...current,
+                      title: value,
+                    }))
+                  }
+                  placeholder="例如：编辑精选"
+                />
+              </label>
+
+              <label>
+                <span>专题 ID</span>
+                <Input
+                  value={managedTopicDraft.id}
+                  disabled={Boolean(editingTopicId)}
+                  onChange={(value) =>
+                    setManagedTopicDraft((current) => ({
+                      ...current,
+                      id: value,
+                    }))
+                  }
+                  placeholder="可选，留空时按标题自动生成"
+                />
+                <small>
+                  编辑已有专题时保留稳定 ID；如需调整图片归属，请回到图片管理。
+                </small>
+              </label>
+
+              <label className="span-2">
+                <span>专题描述</span>
+                <TextArea
+                  value={managedTopicDraft.description}
+                  onChange={(value) =>
+                    setManagedTopicDraft((current) => ({
+                      ...current,
+                      description: value,
+                    }))
+                  }
+                  placeholder="描述专题的策展方向、拍摄项目或前台展示说明"
+                  autoSize={{ minRows: 4, maxRows: 7 }}
+                />
+              </label>
+
+              <Alert
+                type="info"
+                content="保存后会通过 Admin API 写入 SQLite topics 表；导出到客户端仍沿用现有导出按钮。"
+              />
             </div>
           </Modal>
 
