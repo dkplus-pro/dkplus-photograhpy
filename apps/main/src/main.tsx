@@ -89,6 +89,24 @@ const galleryRouteWithoutPhoto = (route: AppRoute): AppRoute =>
     ? { tab: "topics", topicKey: route.topicKey }
     : { tab: route.tab };
 
+const dataSaverStorageKey = "dkplus:data-saver";
+
+const readStoredDataSaverEnabled = (): boolean => {
+  try {
+    return window.localStorage.getItem(dataSaverStorageKey) === "true";
+  } catch {
+    return false;
+  }
+};
+
+const writeStoredDataSaverEnabled = (enabled: boolean) => {
+  try {
+    window.localStorage.setItem(dataSaverStorageKey, String(enabled));
+  } catch {
+    // Ignore storage access errors so the switch still works in private modes.
+  }
+};
+
 const useGallery = () => {
   const [data, setData] = useState<GalleryPayload | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -419,7 +437,9 @@ const App = () => {
   );
   const [isRoutePending, startRouteTransition] = useTransition();
   const deferredRoute = useDeferredValue(route);
-  const [dataSaverEnabled, setDataSaverEnabled] = useState(false);
+  const [dataSaverEnabled, setDataSaverEnabled] = useState(() =>
+    readStoredDataSaverEnabled(),
+  );
   const topicSummaries = useMemo(
     () => (data ? buildTopicSummaries(data.topics, data.photos) : []),
     [data],
@@ -468,6 +488,10 @@ const App = () => {
       window.removeEventListener("popstate", syncRoute);
     };
   }, []);
+
+  useEffect(() => {
+    writeStoredDataSaverEnabled(dataSaverEnabled);
+  }, [dataSaverEnabled]);
 
   const navigateToRoute = (nextRoute: AppRoute) => {
     const hash = routeToHash(nextRoute);

@@ -63,10 +63,25 @@ test("main data loading uses the API in dev and static JSON in builds", () => {
   );
 });
 
-test("main data-saver switch controls modal preview quality only", () => {
+test("main data-saver switch persists and controls modal preview quality only", () => {
+  assert.match(mainSource, /const dataSaverStorageKey = "dkplus:data-saver"/);
   assert.match(
     mainSource,
-    /const \[dataSaverEnabled, setDataSaverEnabled\] = useState\(false\)/,
+    /window\.localStorage\.getItem\(dataSaverStorageKey\) === "true"/,
+  );
+  assert.match(
+    mainSource,
+    /window\.localStorage\.setItem\(dataSaverStorageKey, String\(enabled\)\)/,
+  );
+  assert.match(mainSource, /readStoredDataSaverEnabled/);
+  assert.match(mainSource, /writeStoredDataSaverEnabled/);
+  assert.match(
+    mainSource,
+    /const \[dataSaverEnabled, setDataSaverEnabled\] = useState\(\(\) =>\s*readStoredDataSaverEnabled\(\),\s*\)/,
+  );
+  assert.match(
+    mainSource,
+    /useEffect\(\(\) => \{\s*writeStoredDataSaverEnabled\(dataSaverEnabled\);\s*\}, \[dataSaverEnabled\]\)/,
   );
   assert.match(mainSource, /className="topbar__actions"/);
   assert.match(mainSource, /className="data-saver"/);
