@@ -285,7 +285,9 @@ function App() {
   const editorImageUrl =
     editorPreview?.previewUrl ||
     withAdminPreviewDisplayUrl(
-      editingPhoto?.imageUrl || editingPhoto?.thumbnailUrl || editingPhoto?.image?.url,
+      editingPhoto?.imageUrl ||
+        editingPhoto?.image?.url ||
+        editingPhoto?.thumbnailUrl,
     ) ||
     "";
 
@@ -609,7 +611,9 @@ function App() {
               aria-label={`放大预览：${photoTitle(photo)}`}
             >
               <img
-                src={withAdminThumbnailDisplayUrl(photo.thumbnailUrl || photo.imageUrl)}
+                src={withAdminThumbnailDisplayUrl(
+                  photo.thumbnailUrl || photo.imageUrl,
+                )}
                 alt={photoTitle(photo)}
                 loading="lazy"
               />
@@ -1131,8 +1135,8 @@ function App() {
               <img
                 src={withAdminPreviewDisplayUrl(
                   previewPhoto.imageUrl ||
-                    previewPhoto.thumbnailUrl ||
-                    previewPhoto.image?.url,
+                    previewPhoto.image?.url ||
+                    previewPhoto.thumbnailUrl,
                 )}
                 alt={photoTitle(previewPhoto)}
               />

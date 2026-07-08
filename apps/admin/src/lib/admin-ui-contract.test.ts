@@ -7,6 +7,10 @@ import { describe, expect, it } from "vitest";
 const dirname = path.dirname(fileURLToPath(import.meta.url));
 const appSource = readFileSync(path.join(dirname, "../App.tsx"), "utf8");
 const styles = readFileSync(path.join(dirname, "../styles.css"), "utf8");
+const displayUrlSource = readFileSync(
+  path.join(dirname, "display-url.ts"),
+  "utf8",
+);
 const columnsSource = appSource.slice(
   appSource.indexOf("const columns"),
   appSource.indexOf("return ("),
@@ -102,12 +106,15 @@ describe("admin gallery list contract", () => {
   it("uses display-only image transforms for admin thumbnails and previews", () => {
     expect(appSource).toContain("withAdminThumbnailDisplayUrl");
     expect(appSource).toContain("withAdminPreviewDisplayUrl");
-    expect(columnsSource).toContain(
-      "src={withAdminThumbnailDisplayUrl(photo.thumbnailUrl || photo.imageUrl)}",
+    expect(columnsSource).toMatch(
+      /src=\{withAdminThumbnailDisplayUrl\([\s\S]*?photo\.thumbnailUrl \|\| photo\.imageUrl/,
     );
-    expect(appSource).toContain("imageMogr2/thumbnail/100x");
-    expect(appSource).toContain("imageMogr2/quality/25");
-    expect(appSource).toContain("/^(data|blob):/i");
+    expect(appSource).toMatch(
+      /src=\{withAdminPreviewDisplayUrl\([\s\S]*?previewPhoto\.imageUrl \|\|[\s\S]*?previewPhoto\.image\?\.url \|\|[\s\S]*?previewPhoto\.thumbnailUrl/,
+    );
+    expect(displayUrlSource).toContain("imageMogr2/thumbnail/100x");
+    expect(displayUrlSource).toContain("imageMogr2/quality/25");
+    expect(displayUrlSource).toContain("/^(data|blob):/i");
   });
 
   it("supports creating a new topic from admin photo flows", () => {
