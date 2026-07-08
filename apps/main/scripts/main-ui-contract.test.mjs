@@ -110,6 +110,43 @@ test("main data-saver switch persists and controls modal preview quality only", 
   );
 });
 
+test("main photo detail paints the existing thumbnail until the preview image loads", () => {
+  assert.match(
+    mainSource,
+    /const \[loadedPreview, setLoadedPreview\] = useState<\{\s*photoId: string;\s*url: string;\s*\} \| null>\(null\)/,
+  );
+  assert.match(
+    mainSource,
+    /const previewUrl = active[\s\S]*?withPreviewQualityDisplayQuery\(active\.urls\.preview\)[\s\S]*?: active\.urls\.preview[\s\S]*?: "";/,
+  );
+  assert.match(
+    mainSource,
+    /const placeholderUrl = active[\s\S]*?withThumbnailDisplayQuery\(active\.urls\.thumbnail\)[\s\S]*?: "";/,
+  );
+  assert.match(
+    mainSource,
+    /const previewIsLoaded =[\s\S]*?loadedPreview\?\.photoId === active\?\.id[\s\S]*?loadedPreview\?\.url === previewUrl/,
+  );
+  assert.match(
+    mainSource,
+    /const placeholderBackgroundImage = placeholderUrl[\s\S]*?JSON\.stringify\(placeholderUrl\)/,
+  );
+  assert.match(
+    mainSource,
+    /data-preview-loaded=\{previewIsLoaded\}[\s\S]*?style=\{\{ backgroundImage: placeholderBackgroundImage \}\}/,
+  );
+  assert.match(
+    mainSource,
+    /onLoad=\{\(\) =>\s*setLoadedPreview\(\{ photoId: active\.id, url: previewUrl \}\)\s*\}/,
+  );
+  assert.match(cssBlock(".modal__image-wrap"), /background-size:\s*contain;/);
+  assert.match(cssBlock(".modal__image-wrap img"), /opacity:\s*0;/);
+  assert.match(
+    cssBlock('.modal__image-wrap[data-preview-loaded="true"] img'),
+    /opacity:\s*1;/,
+  );
+});
+
 test("main list thumbnails use display-only Tencent thumbnail query", () => {
   assert.match(gallerySource, /withThumbnailDisplayQuery/);
   assert.match(gallerySource, /imageMogr2\/thumbnail\/800x/);
