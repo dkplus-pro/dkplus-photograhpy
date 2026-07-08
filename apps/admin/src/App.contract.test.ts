@@ -11,6 +11,7 @@ const displayUrlSource = readFileSync(
   join(currentDir, "lib/display-url.ts"),
   "utf8",
 );
+const apiSource = readFileSync(join(currentDir, "lib/api.ts"), "utf8");
 const columnsSource = appSource.slice(
   appSource.indexOf("const columns"),
   appSource.indexOf("const topicColumns"),
@@ -66,6 +67,8 @@ describe("admin gallery list contract", () => {
     expect(appSource).toContain("setPreviewPhoto(photo)");
     expect(appSource).toContain("isEditorOpen");
     expect(appSource).toContain("isUploadOpen");
+    expect(appSource).toContain("api.uploadPhotos(previews)");
+    expect(apiSource).toContain('baseUrl, "/uploads/bulk"');
   });
 
   it("documents the compact stacked editor and upload modal contract", () => {
