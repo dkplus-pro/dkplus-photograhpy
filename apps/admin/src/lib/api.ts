@@ -22,6 +22,10 @@ export interface ExportResult {
 
 export interface ApiClient {
   listPhotos: () => Promise<PhotoRecord[]>;
+  listTopics: () => Promise<TopicRecord[]>;
+  createTopic: (payload: TopicPayload) => Promise<TopicRecord>;
+  updateTopic: (id: string, payload: TopicPayload) => Promise<TopicRecord>;
+  deleteTopic: (id: string) => Promise<void>;
   createPhoto: (payload: PhotoPayload) => Promise<PhotoRecord>;
   updatePhoto: (id: string, payload: PhotoPayload) => Promise<PhotoRecord>;
   deletePhoto: (id: string) => Promise<void>;
@@ -100,7 +104,7 @@ const toServerPayload = (payload: PhotoPayload) => ({
 const toServerTopicPayload = (payload: TopicPayload) => ({
   id: payload.id?.trim() || undefined,
   title: payload.title.trim(),
-  description: payload.description?.trim() || undefined,
+  description: payload.description?.trim() ?? "",
 });
 
 const readAdminToken = (): string | undefined => {
@@ -227,11 +231,14 @@ const unwrapPhotos = (
   return (value.photos ?? value.data ?? []).map(normalizePhotoForAdmin);
 };
 
+const normalizeTopicForAdmin = (input: ServerTopicEnvelope): TopicRecord =>
+  "topic" in input ? input.topic : input;
+
 const unwrapTopics = (
   value: TopicRecord[] | { topics?: TopicRecord[]; data?: TopicRecord[] },
 ): TopicRecord[] => {
-  if (Array.isArray(value)) return value.map(normalizeTopicForAdmin);
-  return (value.topics ?? value.data ?? []).map(normalizeTopicForAdmin);
+  if (Array.isArray(value)) return value;
+  return value.topics ?? value.data ?? [];
 };
 
 export const createApiClient = (
@@ -243,6 +250,38 @@ export const createApiClient = (
         PhotoRecord[] | { photos?: PhotoRecord[]; data?: PhotoRecord[] }
       >(baseUrl, "/photos"),
     );
+  },
+  async listTopics() {
+    return unwrapTopics(
+      await requestJson<
+        TopicRecord[] | { topics?: TopicRecord[]; data?: TopicRecord[] }
+      >(baseUrl, "/topics"),
+    );
+  },
+  async createTopic(payload) {
+    return normalizeTopicForAdmin(
+      await requestJson<ServerTopicEnvelope>(baseUrl, "/topics", {
+        method: "POST",
+        body: JSON.stringify(toServerTopicPayload(payload)),
+      }),
+    );
+  },
+  async updateTopic(id, payload) {
+    return normalizeTopicForAdmin(
+      await requestJson<ServerTopicEnvelope>(
+        baseUrl,
+        `/topics/${encodeURIComponent(id)}`,
+        {
+          method: "PATCH",
+          body: JSON.stringify(toServerTopicPayload(payload)),
+        },
+      ),
+    );
+  },
+  async deleteTopic(id) {
+    await requestJson<void>(baseUrl, `/topics/${encodeURIComponent(id)}`, {
+      method: "DELETE",
+    });
   },
   async createPhoto(payload) {
     return normalizePhotoForAdmin(

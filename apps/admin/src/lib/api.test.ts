@@ -156,6 +156,76 @@ describe("admin API client auth headers", () => {
     expect(headers.get("content-type")).toBe("application/json");
   });
 
+  it("reads and mutates persisted topics through the Admin API", async () => {
+    vi.stubEnv("VITE_ADMIN_TOKEN", " topic-token ");
+    const fetchMock = vi.fn(async (input: unknown, init?: RequestInit) => {
+      const url = String(input);
+      if (url.endsWith("/topics") && !init?.method) {
+        return jsonResponse({ topics: [{ id: "editorial", title: "编辑精选" }] });
+      }
+      if (url.endsWith("/topics") && init?.method === "POST") {
+        return jsonResponse(
+          {
+            topic: {
+              id: "travel",
+              title: "旅行专题",
+              description: "旅拍合集",
+            },
+          },
+          201,
+        );
+      }
+      if (url.endsWith("/topics/travel") && init?.method === "PATCH") {
+        return jsonResponse({
+          topic: {
+            id: "travel",
+            title: "旅行专题更新",
+            description: "更新说明",
+          },
+        });
+      }
+      return jsonResponse(undefined, 204);
+    });
+    vi.stubGlobal("fetch", fetchMock);
+    const client = createApiClient("http://api.test/api");
+
+    await expect(client.listTopics()).resolves.toEqual([
+      { id: "editorial", title: "编辑精选" },
+    ]);
+    await expect(
+      client.createTopic({
+        id: " travel ",
+        title: " 旅行专题 ",
+        description: " 旅拍合集 ",
+      }),
+    ).resolves.toMatchObject({ id: "travel", title: "旅行专题" });
+    await expect(
+      client.updateTopic("travel", {
+        title: "旅行专题更新",
+        description: "更新说明",
+      }),
+    ).resolves.toMatchObject({ id: "travel", title: "旅行专题更新" });
+    await expect(client.deleteTopic("travel")).resolves.toBeUndefined();
+
+    expect(fetchMock).toHaveBeenCalledTimes(4);
+    expect(fetchMock.mock.calls.map(([url]) => url)).toEqual([
+      "http://api.test/api/topics",
+      "http://api.test/api/topics",
+      "http://api.test/api/topics/travel",
+      "http://api.test/api/topics/travel",
+    ]);
+    const createBody = JSON.parse(
+      String(fetchMock.mock.calls[1]?.[1]?.body),
+    ) as Record<string, string>;
+    expect(createBody).toEqual({
+      id: "travel",
+      title: "旅行专题",
+      description: "旅拍合集",
+    });
+    const headers = new Headers(fetchMock.mock.calls[2]?.[1]?.headers);
+    expect(headers.get("authorization")).toBe("Bearer topic-token");
+  });
+
   it("normalizes server photo assets and EXIF aliases for admin filters", () => {
     const normalized = normalizePhotoForAdmin({
       id: "photo-server",

@@ -6,6 +6,7 @@ import {
   ConfigProvider,
   Empty,
   Input,
+  Menu,
   Modal,
   Select,
   Space,
@@ -37,6 +38,7 @@ import {
 import type {
   PhotoPayload,
   PhotoRecord,
+  TopicPayload,
   TopicRecord,
   ToastMessage,
   UploadPreview,
@@ -45,6 +47,7 @@ import type {
 const api = createApiClient();
 const TextArea = Input.TextArea;
 const { Text } = Typography;
+const MenuItem = Menu.Item;
 
 const arcoTheme: ConfigProviderProps["theme"] = {
   primaryColor: "#141414",
@@ -107,6 +110,19 @@ const demoPhotos: PhotoRecord[] = [
   },
 ];
 
+const demoTopics: TopicRecord[] = [
+  {
+    id: "street",
+    title: "街头",
+    description: "API 未连接时用于预览图片管理的街景专题。",
+  },
+  {
+    id: "studio",
+    title: "影棚",
+    description: "API 未连接时用于预览专题管理的影棚专题。",
+  },
+];
+
 const emptyPayload: PhotoPayload = {
   title: "",
   description: "",
@@ -124,6 +140,8 @@ type TopicOption = [id: string, title: string];
 type AdminPage = "photos" | "topics";
 
 const emptyTopicDraft: TopicDraft = { id: "", title: "", description: "" };
+const emptyTopicPayload: TopicPayload = { title: "", description: "" };
+type AdminSection = "photos" | "topics";
 
 const normalizeTopicId = (value: string): string =>
   value
