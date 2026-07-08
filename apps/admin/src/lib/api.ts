@@ -2,6 +2,8 @@ import type {
   PhotoExif,
   PhotoPayload,
   PhotoRecord,
+  TopicPayload,
+  TopicRecord,
   UploadPreview,
 } from "../types";
 
@@ -24,6 +26,10 @@ export interface ApiClient {
   updatePhoto: (id: string, payload: PhotoPayload) => Promise<PhotoRecord>;
   deletePhoto: (id: string) => Promise<void>;
   batchDelete: (ids: string[]) => Promise<void>;
+  listTopics: () => Promise<TopicRecord[]>;
+  createTopic: (payload: TopicPayload) => Promise<TopicRecord>;
+  updateTopic: (id: string, payload: TopicPayload) => Promise<TopicRecord>;
+  deleteTopic: (id: string) => Promise<void>;
   exportGallery: () => Promise<ExportResult>;
   uploadPhoto: (
     preview: UploadPreview,
@@ -53,6 +59,7 @@ type ServerPhoto = PhotoRecord & {
 };
 
 type ServerPhotoEnvelope = ServerPhoto | { photo: ServerPhoto };
+type ServerTopicEnvelope = TopicRecord | { topic: TopicRecord };
 type ServerExportEnvelope = ExportResult | { export: ExportResult };
 type ServerExif = PhotoExif & {
   cameraBrand?: string;
@@ -88,6 +95,12 @@ const toServerPayload = (payload: PhotoPayload) => ({
       }
     : undefined,
   exif: payload.exif,
+});
+
+const toServerTopicPayload = (payload: TopicPayload) => ({
+  id: payload.id?.trim() || undefined,
+  title: payload.title.trim(),
+  description: payload.description?.trim() || undefined,
 });
 
 const readAdminToken = (): string | undefined => {
@@ -149,6 +162,18 @@ export const normalizePhotoForAdmin = (
   };
 };
 
+export const normalizeTopicForAdmin = (
+  input: ServerTopicEnvelope,
+): TopicRecord => {
+  const source = "topic" in input ? input.topic : input;
+  return {
+    ...source,
+    id: source.id.trim(),
+    title: source.title.trim(),
+    description: source.description?.trim() || undefined,
+  };
+};
+
 const normalizeExifForAdmin = (exif?: ServerExif): PhotoExif | undefined => {
   if (!exif) return undefined;
   return {
@@ -202,6 +227,13 @@ const unwrapPhotos = (
   return (value.photos ?? value.data ?? []).map(normalizePhotoForAdmin);
 };
 
+const unwrapTopics = (
+  value: TopicRecord[] | { topics?: TopicRecord[]; data?: TopicRecord[] },
+): TopicRecord[] => {
+  if (Array.isArray(value)) return value.map(normalizeTopicForAdmin);
+  return (value.topics ?? value.data ?? []).map(normalizeTopicForAdmin);
+};
+
 export const createApiClient = (
   baseUrl = import.meta.env.VITE_API_BASE_URL ?? "/api",
 ): ApiClient => ({
@@ -241,6 +273,38 @@ export const createApiClient = (
     await requestJson<void>(baseUrl, "/photos/batch-delete", {
       method: "POST",
       body: JSON.stringify({ ids }),
+    });
+  },
+  async listTopics() {
+    return unwrapTopics(
+      await requestJson<
+        TopicRecord[] | { topics?: TopicRecord[]; data?: TopicRecord[] }
+      >(baseUrl, "/topics"),
+    );
+  },
+  async createTopic(payload) {
+    return normalizeTopicForAdmin(
+      await requestJson<ServerTopicEnvelope>(baseUrl, "/topics", {
+        method: "POST",
+        body: JSON.stringify(toServerTopicPayload(payload)),
+      }),
+    );
+  },
+  async updateTopic(id, payload) {
+    return normalizeTopicForAdmin(
+      await requestJson<ServerTopicEnvelope>(
+        baseUrl,
+        `/topics/${encodeURIComponent(id)}`,
+        {
+          method: "PATCH",
+          body: JSON.stringify(toServerTopicPayload(payload)),
+        },
+      ),
+    );
+  },
+  async deleteTopic(id) {
+    await requestJson<void>(baseUrl, `/topics/${encodeURIComponent(id)}`, {
+      method: "DELETE",
     });
   },
   async exportGallery() {
