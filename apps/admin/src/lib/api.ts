@@ -249,8 +249,8 @@ const requestJson = async <T>(
 const hasBulkFailures = (value: unknown): value is ServerUploadBulkResult =>
   Boolean(
     value &&
-      typeof value === "object" &&
-      Array.isArray((value as { failed?: unknown }).failed),
+    typeof value === "object" &&
+    Array.isArray((value as { failed?: unknown }).failed),
   );
 
 const requestBulkUploadJson = async (
@@ -275,8 +275,7 @@ const requestBulkUploadJson = async (
 
     let message = `${response.status} ${response.statusText}`;
     const body = parsedBody as
-      | { error?: string | { message?: string }; message?: string }
-      | undefined;
+      { error?: string | { message?: string }; message?: string } | undefined;
     if (body) {
       message =
         typeof body.error === "string"
