@@ -61,10 +61,7 @@ function field(value: unknown): string | undefined {
   return undefined;
 }
 
-function itemField(
-  value: unknown,
-  path: string,
-): string | undefined {
+function itemField(value: unknown, path: string): string | undefined {
   if (value === undefined || value === null || value === "") {
     return undefined;
   }
@@ -84,7 +81,10 @@ function tags(value: unknown, path: string): string[] | undefined {
       .map((tag) => tag.trim())
       .filter(Boolean);
   }
-  if (Array.isArray(value) && value.every((entry) => typeof entry === "string")) {
+  if (
+    Array.isArray(value) &&
+    value.every((entry) => typeof entry === "string")
+  ) {
     return value.map((entry) => entry.trim()).filter(Boolean);
   }
   throw new AppError(
@@ -411,7 +411,9 @@ export function createPhotosRouter(
 
     const form = body(ctx) as Record<string, unknown>;
     const itemInputs = parseBulkItems(form.items, incoming.length);
-    const sharedClientExif = itemInputs ? undefined : parseClientExif(form.exif);
+    const sharedClientExif = itemInputs
+      ? undefined
+      : parseClientExif(form.exif);
     const created = [];
     const failed: BulkUploadFailure[] = [];
 
