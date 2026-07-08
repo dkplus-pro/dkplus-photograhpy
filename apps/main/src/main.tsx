@@ -322,6 +322,10 @@ const PhotoModal = ({
   onClose: () => void;
   onSelect: (photo: ResolvedPhoto) => void;
 }) => {
+  const [loadedPreview, setLoadedPreview] = useState<{
+    photoId: string;
+    url: string;
+  } | null>(null);
   const index = active
     ? photos.findIndex((photo) => photo.id === active.id)
     : -1;
@@ -347,10 +351,25 @@ const PhotoModal = ({
     };
   }, [active, index]);
 
+  const previewUrl = active
+    ? dataSaverEnabled
+      ? withPreviewQualityDisplayQuery(active.urls.preview)
+      : active.urls.preview
+    : "";
+  const placeholderUrl = active
+    ? withThumbnailDisplayQuery(active.urls.thumbnail)
+    : "";
+  const previewIsLoaded =
+    loadedPreview?.photoId === active?.id && loadedPreview?.url === previewUrl;
+  const placeholderBackgroundImage = placeholderUrl
+    ? `url(${JSON.stringify(placeholderUrl)})`
+    : undefined;
+
+  useEffect(() => {
+    setLoadedPreview(null);
+  }, [active?.id, previewUrl]);
+
   if (!active) return null;
-  const previewUrl = dataSaverEnabled
-    ? withPreviewQualityDisplayQuery(active.urls.preview)
-    : active.urls.preview;
   const exifRows = [
     [
       "相机",
@@ -385,12 +404,19 @@ const PhotoModal = ({
         aria-label="关闭图片详情"
       />
       <article className="modal__panel">
-        <div className="modal__image-wrap">
+        <div
+          className="modal__image-wrap"
+          data-preview-loaded={previewIsLoaded}
+          style={{ backgroundImage: placeholderBackgroundImage }}
+        >
           <img
             src={previewUrl}
             alt={active.asset.alt ?? active.title}
             draggable={false}
             onContextMenu={preventImageSave}
+            onLoad={() =>
+              setLoadedPreview({ photoId: active.id, url: previewUrl })
+            }
           />
           <button
             className="modal__nav modal__nav--prev"
