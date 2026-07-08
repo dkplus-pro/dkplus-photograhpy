@@ -10,6 +10,7 @@ const displayUrlSource = readFileSync(
   path.join(dirname, "lib/display-url.ts"),
   "utf8",
 );
+const apiSource = readFileSync(path.join(dirname, "lib/api.ts"), "utf8");
 const columnsSource = appSource.slice(
   appSource.indexOf("const columns"),
   appSource.indexOf("const topicColumns"),
@@ -71,6 +72,8 @@ describe("admin list UI contract", () => {
     expect(appSource).toContain(
       "暂无匹配图片，可调整标题、品牌、机型或专题筛选",
     );
+    expect(appSource).toContain("api.uploadPhotos(previews)");
+    expect(apiSource).toContain('baseUrl, "/uploads/bulk"');
   });
 
   it("uses a compact stacked image editor with EXIF status", () => {
