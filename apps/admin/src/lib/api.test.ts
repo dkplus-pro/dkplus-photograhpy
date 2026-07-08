@@ -1,6 +1,10 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-import { createApiClient, normalizePhotoForAdmin } from "./api";
+import {
+  createApiClient,
+  normalizePhotoForAdmin,
+  normalizeTopicForAdmin,
+} from "./api";
 import type { UploadPreview } from "../types";
 
 const photo = {
@@ -156,74 +160,101 @@ describe("admin API client auth headers", () => {
     expect(headers.get("content-type")).toBe("application/json");
   });
 
-  it("reads and mutates persisted topics through the Admin API", async () => {
+  it("lists topics from the authenticated Admin topics endpoint", async () => {
     vi.stubEnv("VITE_ADMIN_TOKEN", " topic-token ");
     const fetchMock = vi.fn(async (input: unknown, init?: RequestInit) => {
+      void input;
+      void init;
+      return jsonResponse({
+        topics: [
+          {
+            id: "editorial",
+            title: "编辑精选",
+            description: "Homepage curation",
+          },
+        ],
+      });
+    });
+    vi.stubGlobal("fetch", fetchMock);
+
+    const result = await createApiClient("http://api.test/api").listTopics();
+
+    expect(result).toEqual([
+      {
+        id: "editorial",
+        title: "编辑精选",
+        description: "Homepage curation",
+      },
+    ]);
+    const [url, init] = fetchMock.mock.calls[0] ?? [];
+    expect(url).toBe("http://api.test/api/topics");
+    expect(init?.method).toBeUndefined();
+    const headers = new Headers(init?.headers);
+    expect(headers.get("authorization")).toBe("Bearer topic-token");
+  });
+
+  it("creates, updates, and deletes topics through Admin CRUD endpoints", async () => {
+    const fetchMock = vi.fn(async (input: unknown, init?: RequestInit) => {
       const url = String(input);
-      if (url.endsWith("/topics") && !init?.method) {
-        return jsonResponse({ topics: [{ id: "editorial", title: "编辑精选" }] });
-      }
-      if (url.endsWith("/topics") && init?.method === "POST") {
+      if (init?.method === "DELETE") return jsonResponse(undefined, 204);
+      if (url.endsWith("/topics")) {
         return jsonResponse(
           {
             topic: {
-              id: "travel",
-              title: "旅行专题",
-              description: "旅拍合集",
+              id: "street",
+              title: "街头",
+              description: "Street frames",
             },
           },
           201,
         );
       }
-      if (url.endsWith("/topics/travel") && init?.method === "PATCH") {
-        return jsonResponse({
-          topic: {
-            id: "travel",
-            title: "旅行专题更新",
-            description: "更新说明",
-          },
-        });
-      }
-      return jsonResponse(undefined, 204);
+      return jsonResponse({
+        topic: {
+          id: "topic/one",
+          title: "专题一",
+          description: "Updated description",
+        },
+      });
     });
     vi.stubGlobal("fetch", fetchMock);
     const client = createApiClient("http://api.test/api");
 
-    await expect(client.listTopics()).resolves.toEqual([
-      { id: "editorial", title: "编辑精选" },
-    ]);
-    await expect(
-      client.createTopic({
-        id: " travel ",
-        title: " 旅行专题 ",
-        description: " 旅拍合集 ",
-      }),
-    ).resolves.toMatchObject({ id: "travel", title: "旅行专题" });
-    await expect(
-      client.updateTopic("travel", {
-        title: "旅行专题更新",
-        description: "更新说明",
-      }),
-    ).resolves.toMatchObject({ id: "travel", title: "旅行专题更新" });
-    await expect(client.deleteTopic("travel")).resolves.toBeUndefined();
-
-    expect(fetchMock).toHaveBeenCalledTimes(4);
-    expect(fetchMock.mock.calls.map(([url]) => url)).toEqual([
-      "http://api.test/api/topics",
-      "http://api.test/api/topics",
-      "http://api.test/api/topics/travel",
-      "http://api.test/api/topics/travel",
-    ]);
-    const createBody = JSON.parse(
-      String(fetchMock.mock.calls[1]?.[1]?.body),
-    ) as Record<string, string>;
-    expect(createBody).toEqual({
-      id: "travel",
-      title: "旅行专题",
-      description: "旅拍合集",
+    const created = await client.createTopic({
+      id: " street ",
+      title: " 街头 ",
+      description: " Street frames ",
     });
-    const headers = new Headers(fetchMock.mock.calls[2]?.[1]?.headers);
-    expect(headers.get("authorization")).toBe("Bearer topic-token");
+    const updated = await client.updateTopic("topic/one", {
+      title: "专题一",
+      description: "Updated description",
+    });
+    await client.deleteTopic("old topic");
+
+    expect(created.title).toBe("街头");
+    expect(updated.description).toBe("Updated description");
+    expect(fetchMock).toHaveBeenCalledTimes(3);
+
+    const [createUrl, createInit] = fetchMock.mock.calls[0] ?? [];
+    expect(createUrl).toBe("http://api.test/api/topics");
+    expect(createInit?.method).toBe("POST");
+    expect(JSON.parse(String(createInit?.body))).toEqual({
+      id: "street",
+      title: "街头",
+      description: "Street frames",
+    });
+
+    const [updateUrl, updateInit] = fetchMock.mock.calls[1] ?? [];
+    expect(updateUrl).toBe("http://api.test/api/topics/topic%2Fone");
+    expect(updateInit?.method).toBe("PATCH");
+    expect(JSON.parse(String(updateInit?.body))).toEqual({
+      title: "专题一",
+      description: "Updated description",
+    });
+
+    const [deleteUrl, deleteInit] = fetchMock.mock.calls[2] ?? [];
+    expect(deleteUrl).toBe("http://api.test/api/topics/old%20topic");
+    expect(deleteInit?.method).toBe("DELETE");
   });
 
   it("normalizes server photo assets and EXIF aliases for admin filters", () => {
@@ -257,5 +288,21 @@ describe("admin API client auth headers", () => {
     expect(normalized.exif?.lens).toBe("RF 50mm");
     expect(normalized.exif?.shutter).toBe("1/250");
     expect(normalized.exif?.focalLength).toBe("50mm");
+  });
+
+  it("normalizes topic envelopes for Admin topic forms", () => {
+    expect(
+      normalizeTopicForAdmin({
+        topic: {
+          id: " editorial ",
+          title: " 编辑精选 ",
+          description: " Homepage curation ",
+        },
+      }),
+    ).toEqual({
+      id: "editorial",
+      title: "编辑精选",
+      description: "Homepage curation",
+    });
   });
 });

@@ -122,7 +122,11 @@ textarea {
   border-radius: 0;
   padding: 14px;
   background:
-    linear-gradient(180deg, rgba(255, 253, 248, 0.98), rgba(235, 231, 223, 0.92)),
+    linear-gradient(
+      180deg,
+      rgba(255, 253, 248, 0.98),
+      rgba(235, 231, 223, 0.92)
+    ),
     repeating-linear-gradient(
       135deg,
       rgba(20, 20, 20, 0.04) 0 1px,
