@@ -11,6 +11,8 @@ import {
   groupByMonth,
   normalizePayload,
   tabLabels,
+  topicCover,
+  withThumbnailDisplayQuery,
 } from "./gallery";
 import type { TopicSummary } from "./gallery";
 import type {
