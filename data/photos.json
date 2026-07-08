@@ -50,8 +50,6 @@
       "takenAt": "2026-07-08T09:57:30.285Z",
       "asset": {
         "original": "https://cdn.ai4love.cn/tmp/2026/07/1783504645766-597ada82-9fba-4153-9f80-693674f26f31-p7125052_2_focusstacking.jpg",
-        "thumbnail": "https://cdn.ai4love.cn/tmp/2026/07/1783504645766-597ada82-9fba-4153-9f80-693674f26f31-p7125052_2_focusstacking.jpg",
-        "preview": "https://cdn.ai4love.cn/tmp/2026/07/1783504645766-597ada82-9fba-4153-9f80-693674f26f31-p7125052_2_focusstacking.jpg",
         "alt": "P7125052 2 focusstacking"
       }
     },
@@ -62,8 +60,6 @@
       "takenAt": "2026-07-07T08:18:14.741Z",
       "asset": {
         "original": "https://devcdn.ai4love.cn/tmp/2026/07/1783412289556-4c961f97-1104-474e-be13-cac144325b98-pa280840.jpg",
-        "thumbnail": "https://devcdn.ai4love.cn/tmp/2026/07/1783412289556-4c961f97-1104-474e-be13-cac144325b98-pa280840.jpg",
-        "preview": "https://devcdn.ai4love.cn/tmp/2026/07/1783412289556-4c961f97-1104-474e-be13-cac144325b98-pa280840.jpg",
         "alt": "PA280840"
       }
     },
@@ -74,8 +70,6 @@
       "takenAt": "2026-07-07T08:13:09.623Z",
       "asset": {
         "original": "https://devcdn.ai4love.cn/tmp/2026/07/1783411988275-3566da5c-0685-4ca2-b36b-39003b0b5730-pa210107.jpg",
-        "thumbnail": "https://devcdn.ai4love.cn/tmp/2026/07/1783411988275-3566da5c-0685-4ca2-b36b-39003b0b5730-pa210107.jpg",
-        "preview": "https://devcdn.ai4love.cn/tmp/2026/07/1783411988275-3566da5c-0685-4ca2-b36b-39003b0b5730-pa210107.jpg",
         "alt": "PA210107"
       }
     },
@@ -90,8 +84,6 @@
       "location": "Shanghai",
       "asset": {
         "original": "photo-1519501025264-65ba15a82390?auto=format&fit=crop&w=1800&q=82",
-        "thumbnail": "photo-1519501025264-65ba15a82390?auto=format&fit=crop&w=720&q=70",
-        "preview": "photo-1519501025264-65ba15a82390?auto=format&fit=crop&w=1200&q=78",
         "alt": "雨夜城市路口与霓虹倒影",
         "width": 1800,
         "height": 1200
@@ -117,8 +109,6 @@
       "location": "Huangshan",
       "asset": {
         "original": "photo-1501785888041-af3ef285b470?auto=format&fit=crop&w=1800&q=82",
-        "thumbnail": "photo-1501785888041-af3ef285b470?auto=format&fit=crop&w=720&q=70",
-        "preview": "photo-1501785888041-af3ef285b470?auto=format&fit=crop&w=1200&q=78",
         "alt": "晨雾中的山脊和日出光线",
         "width": 1800,
         "height": 1201
@@ -144,8 +134,6 @@
       "location": "Studio",
       "asset": {
         "original": "photo-1494438639946-1ebd1d20bf85?auto=format&fit=crop&w=1800&q=82",
-        "thumbnail": "photo-1494438639946-1ebd1d20bf85?auto=format&fit=crop&w=720&q=70",
-        "preview": "photo-1494438639946-1ebd1d20bf85?auto=format&fit=crop&w=1200&q=78",
         "alt": "窗边静物与柔和光线",
         "width": 1800,
         "height": 1350
@@ -171,8 +159,6 @@
       "location": "Hangzhou",
       "asset": {
         "original": "photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=1500&q=82",
-        "thumbnail": "photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=720&q=70",
-        "preview": "photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=1100&q=78",
         "alt": "窗边自然光人像",
         "width": 1500,
         "height": 1875
@@ -198,8 +184,6 @@
       "location": "Chongqing",
       "asset": {
         "original": "photo-1493246507139-91e8fad9978e?auto=format&fit=crop&w=1800&q=82",
-        "thumbnail": "photo-1493246507139-91e8fad9978e?auto=format&fit=crop&w=720&q=70",
-        "preview": "photo-1493246507139-91e8fad9978e?auto=format&fit=crop&w=1200&q=78",
         "alt": "城市高架桥下的几何阴影",
         "width": 1800,
         "height": 1200
@@ -225,8 +209,6 @@
       "location": "Yunnan",
       "asset": {
         "original": "photo-1500530855697-b586d89ba3ee?auto=format&fit=crop&w=1800&q=82",
-        "thumbnail": "photo-1500530855697-b586d89ba3ee?auto=format&fit=crop&w=720&q=70",
-        "preview": "photo-1500530855697-b586d89ba3ee?auto=format&fit=crop&w=1200&q=78",
         "alt": "湖面和远山的安静风景",
         "width": 1800,
         "height": 1200
@@ -252,8 +234,6 @@
       "location": "Home",
       "asset": {
         "original": "photo-1516979187457-637abb4f9353?auto=format&fit=crop&w=1800&q=82",
-        "thumbnail": "photo-1516979187457-637abb4f9353?auto=format&fit=crop&w=720&q=70",
-        "preview": "photo-1516979187457-637abb4f9353?auto=format&fit=crop&w=1200&q=78",
         "alt": "旧书和纸张纹理特写",
         "width": 1800,
         "height": 1200
@@ -279,8 +259,6 @@
       "location": "Studio",
       "asset": {
         "original": "photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=1500&q=82",
-        "thumbnail": "photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=720&q=70",
-        "preview": "photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=1100&q=78",
         "alt": "暗背景侧脸人像",
         "width": 1500,
         "height": 1875
@@ -304,8 +282,6 @@
       "takenAt": "2025-07-13T10:29:41.000Z",
       "asset": {
         "original": "https://cdn.ai4love.cn/tmp/2026/07/1783504650310-8149b227-9fb3-4aa8-9818-1dee53db415e-p7135648.jpg",
-        "thumbnail": "https://cdn.ai4love.cn/tmp/2026/07/1783504650310-8149b227-9fb3-4aa8-9818-1dee53db415e-p7135648.jpg",
-        "preview": "https://cdn.ai4love.cn/tmp/2026/07/1783504650310-8149b227-9fb3-4aa8-9818-1dee53db415e-p7135648.jpg",
         "alt": "P7135648"
       },
       "exif": {
@@ -328,8 +304,6 @@
       "takenAt": "2025-07-12T11:10:10.000Z",
       "asset": {
         "original": "https://cdn.ai4love.cn/tmp/2026/07/1783504638930-ce70dd8d-2846-42ae-9ff9-c017c24c09f0-p7125247.jpg",
-        "thumbnail": "https://cdn.ai4love.cn/tmp/2026/07/1783504638930-ce70dd8d-2846-42ae-9ff9-c017c24c09f0-p7125247.jpg",
-        "preview": "https://cdn.ai4love.cn/tmp/2026/07/1783504638930-ce70dd8d-2846-42ae-9ff9-c017c24c09f0-p7125247.jpg",
         "alt": "P7125247"
       },
       "exif": {
@@ -352,8 +326,6 @@
       "takenAt": "2025-07-12T10:45:25.000Z",
       "asset": {
         "original": "https://cdn.ai4love.cn/tmp/2026/07/1783504640795-d1276ecc-2e18-4213-88e5-590fc4dd8b79-p7125222.jpg",
-        "thumbnail": "https://cdn.ai4love.cn/tmp/2026/07/1783504640795-d1276ecc-2e18-4213-88e5-590fc4dd8b79-p7125222.jpg",
-        "preview": "https://cdn.ai4love.cn/tmp/2026/07/1783504640795-d1276ecc-2e18-4213-88e5-590fc4dd8b79-p7125222.jpg",
         "alt": "P7125222"
       },
       "exif": {
@@ -375,8 +347,6 @@
       "takenAt": "2025-07-11T14:05:00.000Z",
       "asset": {
         "original": "https://cdn.ai4love.cn/tmp/2026/07/1783504632559-607acff4-939f-4687-94c6-6b3032cc8ab1-p7114946.jpg",
-        "thumbnail": "https://cdn.ai4love.cn/tmp/2026/07/1783504632559-607acff4-939f-4687-94c6-6b3032cc8ab1-p7114946.jpg",
-        "preview": "https://cdn.ai4love.cn/tmp/2026/07/1783504632559-607acff4-939f-4687-94c6-6b3032cc8ab1-p7114946.jpg",
         "alt": "P7114946"
       },
       "exif": {
@@ -398,8 +368,6 @@
       "takenAt": "2025-07-11T13:45:13.000Z",
       "asset": {
         "original": "https://cdn.ai4love.cn/tmp/2026/07/1783504625033-9277e76d-d120-4175-addc-40ce29b73274-p7114865-hdr.jpg",
-        "thumbnail": "https://cdn.ai4love.cn/tmp/2026/07/1783504625033-9277e76d-d120-4175-addc-40ce29b73274-p7114865-hdr.jpg",
-        "preview": "https://cdn.ai4love.cn/tmp/2026/07/1783504625033-9277e76d-d120-4175-addc-40ce29b73274-p7114865-hdr.jpg",
         "alt": "P7114865 HDR"
       },
       "exif": {
@@ -421,8 +389,6 @@
       "takenAt": "2025-07-11T13:34:44.000Z",
       "asset": {
         "original": "https://cdn.ai4love.cn/tmp/2026/07/1783504617771-9ff37e1a-f34d-48f4-a4cd-076cfc8f45ae-p7114833-hdr.jpg",
-        "thumbnail": "https://cdn.ai4love.cn/tmp/2026/07/1783504617771-9ff37e1a-f34d-48f4-a4cd-076cfc8f45ae-p7114833-hdr.jpg",
-        "preview": "https://cdn.ai4love.cn/tmp/2026/07/1783504617771-9ff37e1a-f34d-48f4-a4cd-076cfc8f45ae-p7114833-hdr.jpg",
         "alt": "P7114833 HDR"
       },
       "exif": {
@@ -442,8 +408,6 @@
       "takenAt": "2025-06-07T21:21:42.000Z",
       "asset": {
         "original": "https://devcdn.ai4love.cn/tmp/2026/07/1783413362278-5f5268d6-7add-401f-a1f8-75313475d554-p6080890.jpg",
-        "thumbnail": "https://devcdn.ai4love.cn/tmp/2026/07/1783413362278-5f5268d6-7add-401f-a1f8-75313475d554-p6080890.jpg",
-        "preview": "https://devcdn.ai4love.cn/tmp/2026/07/1783413362278-5f5268d6-7add-401f-a1f8-75313475d554-p6080890.jpg",
         "alt": "P6080890"
       },
       "exif": {
@@ -464,8 +428,6 @@
       "takenAt": "2024-01-12T09:46:03.000Z",
       "asset": {
         "original": "https://devcdn.ai4love.cn/tmp/2026/07/1783444920518-121b6ad8-2800-4ece-88be-16c7b0f992b1-p1120511.jpg",
-        "thumbnail": "https://devcdn.ai4love.cn/tmp/2026/07/1783444920518-121b6ad8-2800-4ece-88be-16c7b0f992b1-p1120511.jpg",
-        "preview": "https://devcdn.ai4love.cn/tmp/2026/07/1783444920518-121b6ad8-2800-4ece-88be-16c7b0f992b1-p1120511.jpg",
         "alt": "P1120511"
       },
       "exif": {
@@ -486,8 +448,6 @@
       "takenAt": "2024-01-12T09:35:51.000Z",
       "asset": {
         "original": "https://cdn.ai4love.cn/tmp/2026/07/1783493020287-23e29e57-b201-482b-b485-6cf0848e9a52-p1120464.jpg",
-        "thumbnail": "https://cdn.ai4love.cn/tmp/2026/07/1783493020287-23e29e57-b201-482b-b485-6cf0848e9a52-p1120464.jpg",
-        "preview": "https://cdn.ai4love.cn/tmp/2026/07/1783493020287-23e29e57-b201-482b-b485-6cf0848e9a52-p1120464.jpg",
         "alt": "P1120464"
       },
       "exif": {

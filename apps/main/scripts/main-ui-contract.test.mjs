@@ -364,13 +364,13 @@ test("display-only thumbnail reduction does not affect modal preview quality", (
   assert.match(gallerySource, /export const withPreviewQualityDisplayQuery =/);
   assert.match(
     gallerySource,
-    /thumbnail:\s*resolveDisplayAssetUrl\([\s\S]*?urls\?\.thumbnail/,
+    /const resolveUrls =[\s\S]*?const original = resolveDisplayAssetUrl\(urls\?\.original \?\? asset\.original\);[\s\S]*?thumbnail: original,[\s\S]*?preview: original/,
   );
+  assert.doesNotMatch(gallerySource, /asset\.thumbnail/);
+  assert.doesNotMatch(gallerySource, /asset\.preview/);
+  assert.doesNotMatch(gallerySource, /urls\?\.thumbnail/);
+  assert.doesNotMatch(gallerySource, /urls\?\.preview/);
   assert.doesNotMatch(gallerySource, /thumbnail:\s*withThumbnailDisplayQuery/);
-  assert.match(
-    gallerySource,
-    /preview:\s*resolveDisplayAssetUrl\([\s\S]*?urls\?\.preview/,
-  );
   assert.match(
     mainSource,
     /src=\{withThumbnailDisplayQuery\(photo\.urls\.thumbnail\)\}/,
