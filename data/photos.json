@@ -44,14 +44,10 @@
     {
       "id": "bd623c99-8f07-4abf-9bb4-58adb316a5cd",
       "title": "P7125052 2 focusstacking",
-      "topicIds": [
-        "新疆2025"
-      ],
+      "topicIds": ["新疆2025"],
       "takenAt": "2026-07-08T09:57:30.285Z",
       "asset": {
         "original": "https://cdn.ai4love.cn/tmp/2026/07/1783504645766-597ada82-9fba-4153-9f80-693674f26f31-p7125052_2_focusstacking.jpg",
-        "thumbnail": "https://cdn.ai4love.cn/tmp/2026/07/1783504645766-597ada82-9fba-4153-9f80-693674f26f31-p7125052_2_focusstacking.jpg",
-        "preview": "https://cdn.ai4love.cn/tmp/2026/07/1783504645766-597ada82-9fba-4153-9f80-693674f26f31-p7125052_2_focusstacking.jpg",
         "alt": "P7125052 2 focusstacking"
       }
     },
@@ -62,8 +58,6 @@
       "takenAt": "2026-07-07T08:18:14.741Z",
       "asset": {
         "original": "https://devcdn.ai4love.cn/tmp/2026/07/1783412289556-4c961f97-1104-474e-be13-cac144325b98-pa280840.jpg",
-        "thumbnail": "https://devcdn.ai4love.cn/tmp/2026/07/1783412289556-4c961f97-1104-474e-be13-cac144325b98-pa280840.jpg",
-        "preview": "https://devcdn.ai4love.cn/tmp/2026/07/1783412289556-4c961f97-1104-474e-be13-cac144325b98-pa280840.jpg",
         "alt": "PA280840"
       }
     },
@@ -74,8 +68,6 @@
       "takenAt": "2026-07-07T08:13:09.623Z",
       "asset": {
         "original": "https://devcdn.ai4love.cn/tmp/2026/07/1783411988275-3566da5c-0685-4ca2-b36b-39003b0b5730-pa210107.jpg",
-        "thumbnail": "https://devcdn.ai4love.cn/tmp/2026/07/1783411988275-3566da5c-0685-4ca2-b36b-39003b0b5730-pa210107.jpg",
-        "preview": "https://devcdn.ai4love.cn/tmp/2026/07/1783411988275-3566da5c-0685-4ca2-b36b-39003b0b5730-pa210107.jpg",
         "alt": "PA210107"
       }
     },
@@ -83,15 +75,11 @@
       "id": "city-001",
       "title": "雨后路口",
       "description": "雨水让路面变成镜面，车灯在蓝调时刻留下短暂轨迹。",
-      "topicIds": [
-        "city-night"
-      ],
+      "topicIds": ["city-night"],
       "takenAt": "2026-07-02T20:18:00Z",
       "location": "Shanghai",
       "asset": {
         "original": "photo-1519501025264-65ba15a82390?auto=format&fit=crop&w=1800&q=82",
-        "thumbnail": "photo-1519501025264-65ba15a82390?auto=format&fit=crop&w=720&q=70",
-        "preview": "photo-1519501025264-65ba15a82390?auto=format&fit=crop&w=1200&q=78",
         "alt": "雨夜城市路口与霓虹倒影",
         "width": 1800,
         "height": 1200
@@ -110,15 +98,11 @@
       "id": "nature-001",
       "title": "晨雾山脊",
       "description": "太阳越过山脊前，雾气把远处层次压成柔和的灰蓝色。",
-      "topicIds": [
-        "mountain-light"
-      ],
+      "topicIds": ["mountain-light"],
       "takenAt": "2026-06-23T05:42:00Z",
       "location": "Huangshan",
       "asset": {
         "original": "photo-1501785888041-af3ef285b470?auto=format&fit=crop&w=1800&q=82",
-        "thumbnail": "photo-1501785888041-af3ef285b470?auto=format&fit=crop&w=720&q=70",
-        "preview": "photo-1501785888041-af3ef285b470?auto=format&fit=crop&w=1200&q=78",
         "alt": "晨雾中的山脊和日出光线",
         "width": 1800,
         "height": 1201
@@ -137,15 +121,11 @@
       "id": "life-001",
       "title": "窗边器皿",
       "description": "午后斜光落在玻璃和陶瓷上，留下轻微的暖色边缘。",
-      "topicIds": [
-        "quiet-life"
-      ],
+      "topicIds": ["quiet-life"],
       "takenAt": "2026-06-05T14:12:00Z",
       "location": "Studio",
       "asset": {
         "original": "photo-1494438639946-1ebd1d20bf85?auto=format&fit=crop&w=1800&q=82",
-        "thumbnail": "photo-1494438639946-1ebd1d20bf85?auto=format&fit=crop&w=720&q=70",
-        "preview": "photo-1494438639946-1ebd1d20bf85?auto=format&fit=crop&w=1200&q=78",
         "alt": "窗边静物与柔和光线",
         "width": 1800,
         "height": 1350
@@ -164,15 +144,11 @@
       "id": "portrait-001",
       "title": "窗帘后的光",
       "description": "用半透明窗帘打散直射光，让面部轮廓保持柔和。",
-      "topicIds": [
-        "portrait-study"
-      ],
+      "topicIds": ["portrait-study"],
       "takenAt": "2026-05-18T16:30:00Z",
       "location": "Hangzhou",
       "asset": {
         "original": "photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=1500&q=82",
-        "thumbnail": "photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=720&q=70",
-        "preview": "photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=1100&q=78",
         "alt": "窗边自然光人像",
         "width": 1500,
         "height": 1875
@@ -191,15 +167,11 @@
       "id": "city-002",
       "title": "高架下",
       "description": "高架桥把天空切开，行人从几何阴影里穿过。",
-      "topicIds": [
-        "city-night"
-      ],
+      "topicIds": ["city-night"],
       "takenAt": "2026-04-26T18:46:00Z",
       "location": "Chongqing",
       "asset": {
         "original": "photo-1493246507139-91e8fad9978e?auto=format&fit=crop&w=1800&q=82",
-        "thumbnail": "photo-1493246507139-91e8fad9978e?auto=format&fit=crop&w=720&q=70",
-        "preview": "photo-1493246507139-91e8fad9978e?auto=format&fit=crop&w=1200&q=78",
         "alt": "城市高架桥下的几何阴影",
         "width": 1800,
         "height": 1200
@@ -218,15 +190,11 @@
       "id": "nature-002",
       "title": "湖面风线",
       "description": "风经过湖面留下细小纹理，远山像低饱和度的背景板。",
-      "topicIds": [
-        "mountain-light"
-      ],
+      "topicIds": ["mountain-light"],
       "takenAt": "2026-03-11T09:10:00Z",
       "location": "Yunnan",
       "asset": {
         "original": "photo-1500530855697-b586d89ba3ee?auto=format&fit=crop&w=1800&q=82",
-        "thumbnail": "photo-1500530855697-b586d89ba3ee?auto=format&fit=crop&w=720&q=70",
-        "preview": "photo-1500530855697-b586d89ba3ee?auto=format&fit=crop&w=1200&q=78",
         "alt": "湖面和远山的安静风景",
         "width": 1800,
         "height": 1200
@@ -245,15 +213,11 @@
       "id": "life-002",
       "title": "旧书页",
       "description": "纸张纤维与手写批注，是时间可见的一部分。",
-      "topicIds": [
-        "quiet-life"
-      ],
+      "topicIds": ["quiet-life"],
       "takenAt": "2026-02-14T11:03:00Z",
       "location": "Home",
       "asset": {
         "original": "photo-1516979187457-637abb4f9353?auto=format&fit=crop&w=1800&q=82",
-        "thumbnail": "photo-1516979187457-637abb4f9353?auto=format&fit=crop&w=720&q=70",
-        "preview": "photo-1516979187457-637abb4f9353?auto=format&fit=crop&w=1200&q=78",
         "alt": "旧书和纸张纹理特写",
         "width": 1800,
         "height": 1200
@@ -272,15 +236,11 @@
       "id": "portrait-002",
       "title": "侧脸练习",
       "description": "使用暗背景突出轮廓，保留眼神方向上的留白。",
-      "topicIds": [
-        "portrait-study"
-      ],
+      "topicIds": ["portrait-study"],
       "takenAt": "2026-01-20T19:24:00Z",
       "location": "Studio",
       "asset": {
         "original": "photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=1500&q=82",
-        "thumbnail": "photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=720&q=70",
-        "preview": "photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=1100&q=78",
         "alt": "暗背景侧脸人像",
         "width": 1500,
         "height": 1875
@@ -298,14 +258,10 @@
     {
       "id": "aa95acdf-1ae8-4bca-9dd7-87ac192f0a7d",
       "title": "P7135648",
-      "topicIds": [
-        "新疆2025"
-      ],
+      "topicIds": ["新疆2025"],
       "takenAt": "2025-07-13T10:29:41.000Z",
       "asset": {
         "original": "https://cdn.ai4love.cn/tmp/2026/07/1783504650310-8149b227-9fb3-4aa8-9818-1dee53db415e-p7135648.jpg",
-        "thumbnail": "https://cdn.ai4love.cn/tmp/2026/07/1783504650310-8149b227-9fb3-4aa8-9818-1dee53db415e-p7135648.jpg",
-        "preview": "https://cdn.ai4love.cn/tmp/2026/07/1783504650310-8149b227-9fb3-4aa8-9818-1dee53db415e-p7135648.jpg",
         "alt": "P7135648"
       },
       "exif": {
@@ -322,14 +278,10 @@
     {
       "id": "2e1d3cae-e53d-4b06-82a7-dde0a06fa933",
       "title": "P7125247",
-      "topicIds": [
-        "新疆2025"
-      ],
+      "topicIds": ["新疆2025"],
       "takenAt": "2025-07-12T11:10:10.000Z",
       "asset": {
         "original": "https://cdn.ai4love.cn/tmp/2026/07/1783504638930-ce70dd8d-2846-42ae-9ff9-c017c24c09f0-p7125247.jpg",
-        "thumbnail": "https://cdn.ai4love.cn/tmp/2026/07/1783504638930-ce70dd8d-2846-42ae-9ff9-c017c24c09f0-p7125247.jpg",
-        "preview": "https://cdn.ai4love.cn/tmp/2026/07/1783504638930-ce70dd8d-2846-42ae-9ff9-c017c24c09f0-p7125247.jpg",
         "alt": "P7125247"
       },
       "exif": {
@@ -346,14 +298,10 @@
     {
       "id": "0d718d6b-2ef5-4a4d-b5b0-617bb7a6f18e",
       "title": "P7125222",
-      "topicIds": [
-        "新疆2025"
-      ],
+      "topicIds": ["新疆2025"],
       "takenAt": "2025-07-12T10:45:25.000Z",
       "asset": {
         "original": "https://cdn.ai4love.cn/tmp/2026/07/1783504640795-d1276ecc-2e18-4213-88e5-590fc4dd8b79-p7125222.jpg",
-        "thumbnail": "https://cdn.ai4love.cn/tmp/2026/07/1783504640795-d1276ecc-2e18-4213-88e5-590fc4dd8b79-p7125222.jpg",
-        "preview": "https://cdn.ai4love.cn/tmp/2026/07/1783504640795-d1276ecc-2e18-4213-88e5-590fc4dd8b79-p7125222.jpg",
         "alt": "P7125222"
       },
       "exif": {
@@ -369,14 +317,10 @@
     {
       "id": "d9bb85d4-10ae-40ab-a7c7-9070bdef3dd4",
       "title": "P7114946",
-      "topicIds": [
-        "新疆2025"
-      ],
+      "topicIds": ["新疆2025"],
       "takenAt": "2025-07-11T14:05:00.000Z",
       "asset": {
         "original": "https://cdn.ai4love.cn/tmp/2026/07/1783504632559-607acff4-939f-4687-94c6-6b3032cc8ab1-p7114946.jpg",
-        "thumbnail": "https://cdn.ai4love.cn/tmp/2026/07/1783504632559-607acff4-939f-4687-94c6-6b3032cc8ab1-p7114946.jpg",
-        "preview": "https://cdn.ai4love.cn/tmp/2026/07/1783504632559-607acff4-939f-4687-94c6-6b3032cc8ab1-p7114946.jpg",
         "alt": "P7114946"
       },
       "exif": {
@@ -392,14 +336,10 @@
     {
       "id": "73fb9fd9-6ce9-489d-a89c-bd34601653f7",
       "title": "P7114865 HDR",
-      "topicIds": [
-        "新疆2025"
-      ],
+      "topicIds": ["新疆2025"],
       "takenAt": "2025-07-11T13:45:13.000Z",
       "asset": {
         "original": "https://cdn.ai4love.cn/tmp/2026/07/1783504625033-9277e76d-d120-4175-addc-40ce29b73274-p7114865-hdr.jpg",
-        "thumbnail": "https://cdn.ai4love.cn/tmp/2026/07/1783504625033-9277e76d-d120-4175-addc-40ce29b73274-p7114865-hdr.jpg",
-        "preview": "https://cdn.ai4love.cn/tmp/2026/07/1783504625033-9277e76d-d120-4175-addc-40ce29b73274-p7114865-hdr.jpg",
         "alt": "P7114865 HDR"
       },
       "exif": {
@@ -415,14 +355,10 @@
     {
       "id": "0fefdbdb-24e0-4106-8724-5f415435e0d9",
       "title": "P7114833 HDR",
-      "topicIds": [
-        "新疆2025"
-      ],
+      "topicIds": ["新疆2025"],
       "takenAt": "2025-07-11T13:34:44.000Z",
       "asset": {
         "original": "https://cdn.ai4love.cn/tmp/2026/07/1783504617771-9ff37e1a-f34d-48f4-a4cd-076cfc8f45ae-p7114833-hdr.jpg",
-        "thumbnail": "https://cdn.ai4love.cn/tmp/2026/07/1783504617771-9ff37e1a-f34d-48f4-a4cd-076cfc8f45ae-p7114833-hdr.jpg",
-        "preview": "https://cdn.ai4love.cn/tmp/2026/07/1783504617771-9ff37e1a-f34d-48f4-a4cd-076cfc8f45ae-p7114833-hdr.jpg",
         "alt": "P7114833 HDR"
       },
       "exif": {
@@ -442,8 +378,6 @@
       "takenAt": "2025-06-07T21:21:42.000Z",
       "asset": {
         "original": "https://devcdn.ai4love.cn/tmp/2026/07/1783413362278-5f5268d6-7add-401f-a1f8-75313475d554-p6080890.jpg",
-        "thumbnail": "https://devcdn.ai4love.cn/tmp/2026/07/1783413362278-5f5268d6-7add-401f-a1f8-75313475d554-p6080890.jpg",
-        "preview": "https://devcdn.ai4love.cn/tmp/2026/07/1783413362278-5f5268d6-7add-401f-a1f8-75313475d554-p6080890.jpg",
         "alt": "P6080890"
       },
       "exif": {
@@ -464,8 +398,6 @@
       "takenAt": "2024-01-12T09:46:03.000Z",
       "asset": {
         "original": "https://devcdn.ai4love.cn/tmp/2026/07/1783444920518-121b6ad8-2800-4ece-88be-16c7b0f992b1-p1120511.jpg",
-        "thumbnail": "https://devcdn.ai4love.cn/tmp/2026/07/1783444920518-121b6ad8-2800-4ece-88be-16c7b0f992b1-p1120511.jpg",
-        "preview": "https://devcdn.ai4love.cn/tmp/2026/07/1783444920518-121b6ad8-2800-4ece-88be-16c7b0f992b1-p1120511.jpg",
         "alt": "P1120511"
       },
       "exif": {
@@ -486,8 +418,6 @@
       "takenAt": "2024-01-12T09:35:51.000Z",
       "asset": {
         "original": "https://cdn.ai4love.cn/tmp/2026/07/1783493020287-23e29e57-b201-482b-b485-6cf0848e9a52-p1120464.jpg",
-        "thumbnail": "https://cdn.ai4love.cn/tmp/2026/07/1783493020287-23e29e57-b201-482b-b485-6cf0848e9a52-p1120464.jpg",
-        "preview": "https://cdn.ai4love.cn/tmp/2026/07/1783493020287-23e29e57-b201-482b-b485-6cf0848e9a52-p1120464.jpg",
         "alt": "P1120464"
       },
       "exif": {

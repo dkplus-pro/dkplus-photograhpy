@@ -307,10 +307,11 @@ test("topics tab opens a secondary virtual topic detail page", () => {
     cssBlock(".topic-detail__actions button"),
     /border-radius:\s*999px;/,
   );
-  assert.match(cssBlock(".topic-card__copy em"), /display:\s*-webkit-box;/);
-  assert.match(cssBlock(".topic-card__copy em"), /overflow:\s*hidden;/);
+  const topicDescriptionStyles = cssBlocks(".topic-card__copy em").join("\n");
+  assert.match(topicDescriptionStyles, /display:\s*-webkit-box;/);
+  assert.match(topicDescriptionStyles, /overflow:\s*hidden;/);
   assert.match(
-    cssBlock(".topic-card__copy em"),
+    topicDescriptionStyles,
     /-webkit-line-clamp:\s*2;/,
   );
 });
@@ -364,13 +365,13 @@ test("display-only thumbnail reduction does not affect modal preview quality", (
   assert.match(gallerySource, /export const withPreviewQualityDisplayQuery =/);
   assert.match(
     gallerySource,
-    /thumbnail:\s*resolveDisplayAssetUrl\([\s\S]*?urls\?\.thumbnail/,
+    /const resolveUrls =[\s\S]*?const original = resolveDisplayAssetUrl\(urls\?\.original \?\? asset\.original\);[\s\S]*?thumbnail: original,[\s\S]*?preview: original/,
   );
+  assert.doesNotMatch(gallerySource, /asset\.thumbnail/);
+  assert.doesNotMatch(gallerySource, /asset\.preview/);
+  assert.doesNotMatch(gallerySource, /urls\?\.thumbnail/);
+  assert.doesNotMatch(gallerySource, /urls\?\.preview/);
   assert.doesNotMatch(gallerySource, /thumbnail:\s*withThumbnailDisplayQuery/);
-  assert.match(
-    gallerySource,
-    /preview:\s*resolveDisplayAssetUrl\([\s\S]*?urls\?\.preview/,
-  );
   assert.match(
     mainSource,
     /src=\{withThumbnailDisplayQuery\(photo\.urls\.thumbnail\)\}/,

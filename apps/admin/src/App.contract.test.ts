@@ -46,27 +46,62 @@ describe("admin gallery list contract", () => {
     expect(appSource).toContain("scroll={{ x: 1260 }}");
     expect(appSource).not.toContain("y: 560");
     expect(appSource).toContain("pagination={{");
+    expect(appSource).toContain("const adminPageSizeOptions = [10, 20, 50]");
+    expect(appSource).toContain(
+      "const [photoPageSize, setPhotoPageSize] = useState(10)",
+    );
+    expect(appSource).toContain(
+      "const [topicPageSize, setTopicPageSize] = useState(10)",
+    );
+    expect(appSource).toContain("pageSize: photoPageSize");
+    expect(appSource).toContain("pageSize: topicPageSize");
+    expect(appSource).toContain("sizeCanChange: true");
+    expect(appSource).toContain("sizeOptions: adminPageSizeOptions");
+    expect(appSource).toContain(
+      "onPageSizeChange: (size) => setPhotoPageSize(size)",
+    );
+    expect(appSource).toContain(
+      "onPageSizeChange: (size) => setTopicPageSize(size)",
+    );
     expect(appSource).toContain("setPreviewPhoto(photo)");
     expect(appSource).toContain("isEditorOpen");
     expect(appSource).toContain("isUploadOpen");
   });
 
-  it("documents the redesigned stacked editor modal contract", () => {
+  it("documents the compact stacked editor and upload modal contract", () => {
     expect(appSource).toContain('className="editor-modal"');
     expect(appSource).toContain('className="editor-shell"');
     expect(appSource).toContain('aria-label="图片上传与预览"');
     expect(appSource).toContain('aria-label="图片元数据"');
     expect(appSource).toContain("EXIF 状态");
     expect(appSource).toContain("等待选择本地图片后读取。");
-    expect(appSource).toContain("上方确认图片与 EXIF");
-    expect(appSource).toContain("保存时继续沿用现有上传与持久化流程");
+    expect(appSource).toContain("visible={isUploadOpen}");
+    expect(appSource).toContain('className="preview-card"');
+    expect(appSource).not.toContain("上方确认图片与 EXIF");
+    expect(appSource).not.toContain("保存时继续沿用现有上传与持久化流程");
+    expect(appSource).not.toContain("新增记录必须选择本地图片");
+    expect(appSource).not.toContain("先选择文件并在本地读取 EXIF");
+    expect(styles).not.toContain(".editor-hero");
+    expect(styles).not.toContain(".upload-hint");
     expect(styles).toContain(".editor-upload-card");
     expect(styles).toContain(".editor-metadata-card");
     expect(styles).toContain(".editor-exif-status");
+    expect(styles).toContain("min-height: 220px;");
+    expect(styles).toContain("max-height: 220px;");
+    expect(styles).toContain("grid-template-columns: 56px minmax(0, 1fr);");
     expect(styles).toMatch(
       /\.editor-form\s*\{[\s\S]*?grid-template-columns:\s*1fr;[\s\S]*?align-items:\s*stretch;/,
     );
     expect(styles).not.toMatch(/grid-template-columns:\s*minmax\(280px/);
+  });
+
+  it("allows relevant modals to close with mask clicks and Escape", () => {
+    const modalProps = appSource.match(/maskClosable/g) ?? [];
+    const escapeProps = appSource.match(/escToExit/g) ?? [];
+
+    expect(modalProps.length).toBeGreaterThanOrEqual(5);
+    expect(escapeProps.length).toBeGreaterThanOrEqual(5);
+    expect(appSource).not.toContain("maskClosable={false}");
   });
 
   it("centers dense table cells and keeps unified neutral hover and focus tones", () => {

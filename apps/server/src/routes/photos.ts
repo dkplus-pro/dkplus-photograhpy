@@ -1,7 +1,7 @@
 import Router from "@koa/router";
 import multer from "@koa/multer";
 import type Koa from "koa";
-import { AppError } from "../errors.js";
+import { AppError, isAppError } from "../errors.js";
 import { extractExif } from "../services/exif.js";
 import { PhotoStore } from "../services/photo-store.js";
 import {
@@ -14,6 +14,22 @@ import {
   validateTopicInput,
 } from "../services/validation.js";
 import type { ExifMetadata, PhotoInput } from "../types/gallery.js";
+
+type BulkUploadItem = {
+  title?: unknown;
+  description?: unknown;
+  topicId?: unknown;
+  tags?: unknown;
+  takenAt?: unknown;
+  exif?: unknown;
+};
+
+type BulkUploadFailure = {
+  index: number;
+  fileName: string;
+  code: string;
+  message: string;
+};
 
 const upload = multer({
   storage: multer.memoryStorage(),
@@ -43,6 +59,39 @@ function field(value: unknown): string | undefined {
     return value[0].trim();
   }
   return undefined;
+}
+
+function itemField(
+  value: unknown,
+  path: string,
+): string | undefined {
+  if (value === undefined || value === null || value === "") {
+    return undefined;
+  }
+  if (typeof value !== "string") {
+    throw new AppError(400, "UPLOAD_INVALID_ITEM", `${path} must be a string`);
+  }
+  return value.trim() || undefined;
+}
+
+function tags(value: unknown, path: string): string[] | undefined {
+  if (value === undefined || value === null || value === "") {
+    return undefined;
+  }
+  if (typeof value === "string") {
+    return value
+      .split(",")
+      .map((tag) => tag.trim())
+      .filter(Boolean);
+  }
+  if (Array.isArray(value) && value.every((entry) => typeof entry === "string")) {
+    return value.map((entry) => entry.trim()).filter(Boolean);
+  }
+  throw new AppError(
+    400,
+    "UPLOAD_INVALID_ITEM",
+    `${path} must be a comma-separated string or string array`,
+  );
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -131,6 +180,30 @@ function parseClientExif(value: unknown): ExifMetadata | undefined {
   }
 }
 
+function parseInlineClientExif(
+  value: unknown,
+  path: string,
+): ExifMetadata | undefined {
+  if (value === undefined || value === null || value === "") {
+    return undefined;
+  }
+  if (typeof value === "string") {
+    try {
+      return normalizeClientExif(JSON.parse(value));
+    } catch (error) {
+      if (error instanceof AppError) {
+        throw error;
+      }
+      throw new AppError(
+        400,
+        "UPLOAD_INVALID_EXIF",
+        `${path} must be valid JSON`,
+      );
+    }
+  }
+  return normalizeClientExif(value);
+}
+
 function mergeExif(
   serverExif: ExifMetadata,
   clientExif: ExifMetadata | undefined,
@@ -139,6 +212,98 @@ function mergeExif(
   return Object.values(merged).some((entry) => entry !== undefined)
     ? merged
     : undefined;
+}
+
+function parseBulkItems(
+  value: unknown,
+  expectedCount: number,
+): BulkUploadItem[] | undefined {
+  const raw = field(value);
+  if (!raw) {
+    return undefined;
+  }
+
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(raw);
+  } catch {
+    throw new AppError(400, "UPLOAD_INVALID_ITEMS", "items must be valid JSON");
+  }
+
+  if (!Array.isArray(parsed)) {
+    throw new AppError(
+      400,
+      "UPLOAD_INVALID_ITEMS",
+      "items must be a JSON array",
+    );
+  }
+  if (parsed.length !== expectedCount) {
+    throw new AppError(
+      400,
+      "UPLOAD_INVALID_ITEMS",
+      "items length must match uploaded file count",
+    );
+  }
+
+  return parsed.map((item, index) => {
+    if (!isRecord(item)) {
+      throw new AppError(
+        400,
+        "UPLOAD_INVALID_ITEMS",
+        `items[${index}] must be an object`,
+      );
+    }
+    return item;
+  });
+}
+
+async function createUploadedPhoto(
+  file: UploadedFile,
+  {
+    store,
+    uploads,
+    title,
+    description,
+    topicId,
+    tags: tagList,
+    takenAt,
+    clientExif,
+  }: {
+    store: PhotoStore;
+    uploads: UploadService;
+    title?: string;
+    description?: string;
+    topicId?: string;
+    tags?: string[];
+    takenAt?: string;
+    clientExif?: ExifMetadata;
+  },
+) {
+  const stored = await uploads.store(file);
+  const exif = mergeExif(await extractExif(stored.buffer), clientExif);
+  const input: PhotoInput = {
+    title: title ?? file.originalname,
+    description,
+    topicId,
+    tags: tagList,
+    takenAt: takenAt ?? exif?.capturedAt,
+    image: stored.image,
+    exif,
+  };
+  return store.create(input);
+}
+
+function bulkFailure(
+  index: number,
+  file: UploadedFile,
+  error: unknown,
+): BulkUploadFailure {
+  return {
+    index,
+    fileName: file.originalname,
+    code: isAppError(error) ? error.code : "UPLOAD_FAILED",
+    message: error instanceof Error ? error.message : "Upload failed",
+  };
 }
 
 export function createPhotosRouter(
@@ -234,6 +399,59 @@ export function createPhotosRouter(
     ctx.body = { export: await store.exportToJson() };
   });
 
+  router.post("/uploads/bulk", upload.any(), async (ctx) => {
+    const incoming = files(ctx);
+    if (incoming.length === 0) {
+      throw new AppError(
+        400,
+        "UPLOAD_REQUIRED",
+        "Provide one or more multipart image files",
+      );
+    }
+
+    const form = body(ctx) as Record<string, unknown>;
+    const itemInputs = parseBulkItems(form.items, incoming.length);
+    const sharedClientExif = itemInputs ? undefined : parseClientExif(form.exif);
+    const created = [];
+    const failed: BulkUploadFailure[] = [];
+
+    for (const [index, file] of incoming.entries()) {
+      const item = itemInputs?.[index];
+      try {
+        created.push(
+          await createUploadedPhoto(file, {
+            store,
+            uploads,
+            title: item
+              ? itemField(item.title, `items[${index}].title`)
+              : field(form.title),
+            description: item
+              ? itemField(item.description, `items[${index}].description`)
+              : field(form.description),
+            topicId: item
+              ? itemField(item.topicId, `items[${index}].topicId`)
+              : field(form.topicId),
+            tags: item
+              ? tags(item.tags, `items[${index}].tags`)
+              : tags(field(form.tags), "tags"),
+            takenAt: item
+              ? itemField(item.takenAt, `items[${index}].takenAt`)
+              : field(form.takenAt),
+            clientExif: item
+              ? parseInlineClientExif(item.exif, `items[${index}].exif`)
+              : sharedClientExif,
+          }),
+        );
+      } catch (error) {
+        failed.push(bulkFailure(index, file, error));
+      }
+    }
+
+    const exported = created.length ? await store.exportToJson() : undefined;
+    ctx.status = failed.length ? (created.length ? 207 : 400) : 201;
+    ctx.body = { photos: created, failed, export: exported };
+  });
+
   router.post("/uploads", upload.any(), async (ctx) => {
     const incoming = files(ctx);
     if (incoming.length === 0) {
@@ -257,30 +475,36 @@ export function createPhotosRouter(
 
     const created = [];
     for (const file of incoming) {
-      const stored = await uploads.store(file);
-      const exif = mergeExif(await extractExif(stored.buffer), clientExif);
-      const input: PhotoInput = {
-        title: photoId
-          ? field(form.title)
-          : (field(form.title) ?? file.originalname),
-        description: field(form.description),
-        topicId: field(form.topicId),
-        tags: field(form.tags)
-          ?.split(",")
-          .map((tag) => tag.trim())
-          .filter(Boolean),
-        takenAt: field(form.takenAt) ?? exif?.capturedAt,
-        image: stored.image,
-        exif,
-      };
       if (photoId) {
+        const stored = await uploads.store(file);
+        const exif = mergeExif(await extractExif(stored.buffer), clientExif);
+        const input: PhotoInput = {
+          title: field(form.title),
+          description: field(form.description),
+          topicId: field(form.topicId),
+          tags: tags(field(form.tags), "tags"),
+          takenAt: field(form.takenAt) ?? exif?.capturedAt,
+          image: stored.image,
+          exif,
+        };
         const photo = await store.update(photoId, input);
         const exported = await store.exportToJson();
         ctx.status = 200;
         ctx.body = { photo, export: exported };
         return;
       }
-      created.push(await store.create(input));
+      created.push(
+        await createUploadedPhoto(file, {
+          store,
+          uploads,
+          title: field(form.title) ?? file.originalname,
+          description: field(form.description),
+          topicId: field(form.topicId),
+          tags: tags(field(form.tags), "tags"),
+          takenAt: field(form.takenAt),
+          clientExif,
+        }),
+      );
     }
 
     const exported = await store.exportToJson();

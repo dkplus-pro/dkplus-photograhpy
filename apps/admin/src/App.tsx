@@ -151,6 +151,7 @@ const currentAdminSection = (): AdminSection =>
 const randomId = () => `${Date.now().toString(36)}-${crypto.randomUUID()}`;
 
 const allFilterValue = "all";
+const adminPageSizeOptions = [10, 20, 50];
 
 const uniqueSorted = (values: Array<string | undefined>): string[] =>
   [
@@ -193,6 +194,8 @@ function App() {
   const [isEditorOpen, setIsEditorOpen] = useState(false);
   const [isUploadOpen, setIsUploadOpen] = useState(false);
   const [isTopicEditorOpen, setIsTopicEditorOpen] = useState(false);
+  const [photoPageSize, setPhotoPageSize] = useState(10);
+  const [topicPageSize, setTopicPageSize] = useState(10);
   const [messages, setMessages] = useState<ToastMessage[]>([]);
   const [confirmAction, setConfirmAction] = useState<{
     title: string;
@@ -1081,10 +1084,11 @@ function App() {
                           ),
                       }}
                       pagination={{
-                        pageSize: 12,
+                        pageSize: photoPageSize,
                         size: "small",
                         sizeCanChange: true,
-                        sizeOptions: [12, 24, 48],
+                        sizeOptions: adminPageSizeOptions,
+                        onPageSizeChange: (size) => setPhotoPageSize(size),
                         showTotal: (total, range) =>
                           `显示 ${range[0]}-${range[1]}，共 ${total} 条`,
                       }}
@@ -1163,8 +1167,11 @@ function App() {
                       }
                       scroll={{ x: 760 }}
                       pagination={{
-                        pageSize: 12,
+                        pageSize: topicPageSize,
                         size: "small",
+                        sizeCanChange: true,
+                        sizeOptions: adminPageSizeOptions,
+                        onPageSizeChange: (size) => setTopicPageSize(size),
                         showTotal: (total, range) =>
                           `显示 ${range[0]}-${range[1]}，共 ${total} 条`,
                       }}
@@ -1188,30 +1195,11 @@ function App() {
               confirmLoading={isSaving}
               okText="保存"
               cancelText="取消"
-              maskClosable={false}
+              maskClosable
+              escToExit
               unmountOnExit
             >
               <div className="editor-shell" aria-label="图片编辑器">
-                <header className="editor-hero">
-                  <p className="editor-hero__kicker">Editorial upload desk</p>
-                  <h2>
-                    {editingId ? "校订图片与专题信息" : "创建一条新的图片记录"}
-                  </h2>
-                  <p>
-                    上方确认图片与 EXIF
-                    状态，下方补充标题、专题和描述；保存时继续沿用现有上传与持久化流程。
-                  </p>
-                </header>
-
-                <Alert
-                  type="info"
-                  content={
-                    editingId
-                      ? "如需替换图片，请选择新的本地图片；不选择文件时仅保存文字与专题。"
-                      : "新增图片需要先选择本地图片，保存时会上传到 /api/uploads。"
-                  }
-                />
-
                 <div
                   className="editor-form"
                   role="group"
@@ -1249,11 +1237,6 @@ function App() {
                         )}
                       </Space>
                     </div>
-                    <p className="editor-helper">
-                      {editingId
-                        ? "保持原图或选择新文件替换；替换后会重新读取本地 EXIF。"
-                        : "新增记录必须选择本地图片，系统会先生成预览并读取 EXIF。"}
-                    </p>
                     <input
                       ref={editorFileInputRef}
                       className="hidden-file-input"
@@ -1360,12 +1343,10 @@ function App() {
               okText="上传暂存文件"
               cancelText="关闭"
               okButtonProps={{ disabled: previews.length === 0 }}
-              maskClosable={false}
+              maskClosable
+              escToExit
             >
               <div className="upload-panel">
-                <p className="upload-hint">
-                  先选择文件并在本地读取 EXIF，确认后统一提交到 /api/uploads。
-                </p>
                 <label className="upload-topic-select">
                   <span>当前专题（可选）</span>
                   <Select
@@ -1444,6 +1425,8 @@ function App() {
               onCancel={() => setPreviewPhoto(null)}
               footer={null}
               className="image-preview-modal"
+              maskClosable
+              escToExit
               unmountOnExit
             >
               {previewPhoto && (
@@ -1473,7 +1456,8 @@ function App() {
               confirmLoading={isSaving}
               okText="保存"
               cancelText="取消"
-              maskClosable={false}
+              maskClosable
+              escToExit
               unmountOnExit
             >
               <div className="topic-form" aria-label="专题资料表单">
@@ -1516,6 +1500,8 @@ function App() {
               okText="确认删除"
               cancelText="取消"
               okButtonProps={{ status: "danger" }}
+              maskClosable
+              escToExit
             >
               <p>{confirmAction?.body}</p>
             </Modal>
