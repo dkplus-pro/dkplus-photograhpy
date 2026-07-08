@@ -89,15 +89,15 @@ export const compareNewest = (
 
 export const groupByMonth = (photos: ResolvedPhoto[]) => {
   const groups = new Map<string, ResolvedPhoto[]>();
-  photos.forEach((photo) => {
+  for (const photo of photos) {
     const key = formatMonthKey(photo.takenAt);
-    const items = groups.get(key);
-    if (items) {
-      items.push(photo);
+    const group = groups.get(key);
+    if (group) {
+      group.push(photo);
     } else {
       groups.set(key, [photo]);
     }
-  });
+  }
   return [...groups.entries()].map(([month, items]) => ({
     month,
     label: formatMonthLabel(month),
