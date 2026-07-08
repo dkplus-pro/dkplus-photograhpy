@@ -1,13 +1,25 @@
-import React, { startTransition, useEffect, useMemo, useState } from "react";
+import React, {
+  useDeferredValue,
+  useEffect,
+  useMemo,
+  useState,
+  useTransition,
+} from "react";
 import { createRoot } from "react-dom/client";
 import {
+  buildTopicSummaries,
   groupByMonth,
   normalizePayload,
   tabLabels,
-  topicCover,
-  withThumbnailDisplayQuery,
 } from "./gallery";
-import type { GalleryPayload, GridStyle, ResolvedPhoto, TabKey } from "./types";
+import type { TopicSummary } from "./gallery";
+import type {
+  GalleryPayload,
+  GridStyle,
+  ResolvedPhoto,
+  TabKey,
+  Topic,
+} from "./types";
 import { useVirtualRows } from "./useVirtualRows";
 import "./styles.css";
 
@@ -19,6 +31,37 @@ const apiBaseUrl = (import.meta.env.VITE_API_BASE_URL ?? "/api").replace(
 const galleryDataUrl = import.meta.env.DEV
   ? `${apiBaseUrl}/gallery`
   : staticDataUrl;
+
+type AppRoute = {
+  tab: TabKey;
+  topicKey?: string;
+};
+
+const routeTabs = new Set<TabKey>(["latest", "topics", "timeline"]);
+
+const parseRouteHash = (hash: string): AppRoute => {
+  const path = hash.replace(/^#\/?/, "").replace(/^\/+/, "");
+  const [tabSegment, topicSegment] = path.split("/");
+  if (tabSegment === "topics") {
+    return {
+      tab: "topics",
+      topicKey: topicSegment ? decodeURIComponent(topicSegment) : undefined,
+    };
+  }
+  if (routeTabs.has(tabSegment as TabKey)) {
+    return { tab: tabSegment as TabKey };
+  }
+  return { tab: "latest" };
+};
+
+const routeToHash = (route: AppRoute): string =>
+  `#/${route.tab}${
+    route.tab === "topics" && route.topicKey
+      ? `/${encodeURIComponent(route.topicKey)}`
+      : ""
+  }`;
+
+const topicRouteKey = (topic: Topic): string => topic.slug ?? topic.id;
 
 const useGallery = () => {
   const [data, setData] = useState<GalleryPayload | null>(null);
@@ -170,19 +213,15 @@ const TopicGrid = ({
   onSelectTopic,
 }: {
   summaries: TopicSummary[];
-  onSelectTopic: (topicId: string) => void;
+  onSelectTopic: (topic: Topic) => void;
 }) => (
   <div className="topic-grid" aria-label="专题列表">
-    {data.topics.map((topic) => {
-      const cover = topicCover(topic, data.photos);
-      const count = data.photos.filter((photo) =>
-        photo.topicIds.includes(topic.id),
-      ).length;
+    {summaries.map(({ topic, cover, count }) => {
       return (
         <button
           className="topic-card"
           key={topic.id}
-          onClick={() => onSelectTopic(topic.id)}
+          onClick={() => onSelectTopic(topic)}
           disabled={!cover}
           aria-label={`查看专题：${topic.title}`}
         >
@@ -378,40 +417,59 @@ const PhotoModal = ({
 
 const App = () => {
   const { data, error } = useGallery();
-  const [tab, setTab] = useState<TabKey>("latest");
-  const [selectedTopicId, setSelectedTopicId] = useState<string | null>(null);
+  const [route, setRoute] = useState<AppRoute>(() =>
+    parseRouteHash(window.location.hash),
+  );
+  const [isRoutePending, startRouteTransition] = useTransition();
+  const deferredRoute = useDeferredValue(route);
   const [activePhoto, setActivePhoto] = useState<ResolvedPhoto | null>(null);
-
   const topicSummaries = useMemo(
-    () => (data ? buildTopicSummaries(data) : []),
+    () => (data ? buildTopicSummaries(data.topics, data.photos) : []),
     [data],
   );
-  const topicSummaryById = useMemo(
-    () =>
-      new Map(topicSummaries.map((summary) => [summary.topic.id, summary])),
-    [topicSummaries],
-  );
-  const selectedTopicSummary = selectedTopicId
-    ? topicSummaryById.get(selectedTopicId)
-    : undefined;
+  const selectedTopicSummary = useMemo(() => {
+    if (deferredRoute.tab !== "topics" || !deferredRoute.topicKey) {
+      return undefined;
+    }
+    return topicSummaries.find(
+      ({ topic }) =>
+        topic.id === deferredRoute.topicKey ||
+        topic.slug === deferredRoute.topicKey,
+    );
+  }, [deferredRoute.tab, deferredRoute.topicKey, topicSummaries]);
   const selectedTopic = selectedTopicSummary?.topic;
   const topicPhotos = selectedTopicSummary?.photos ?? [];
   const modalPhotos =
-    data && tab === "topics" && selectedTopic
+    data && deferredRoute.tab === "topics" && selectedTopic
       ? topicPhotos
       : (data?.photos ?? []);
-  const selectTab = (key: TabKey) => {
-    startTransition(() => {
-      setTab(key);
-      if (key !== "topics") setSelectedTopicId(null);
-    });
+
+  useEffect(() => {
+    const syncRoute = () => {
+      const nextRoute = parseRouteHash(window.location.hash);
+      startRouteTransition(() => setRoute(nextRoute));
+    };
+    window.addEventListener("hashchange", syncRoute);
+    window.addEventListener("popstate", syncRoute);
+    return () => {
+      window.removeEventListener("hashchange", syncRoute);
+      window.removeEventListener("popstate", syncRoute);
+    };
+  }, []);
+
+  const navigateToRoute = (nextRoute: AppRoute) => {
+    const hash = routeToHash(nextRoute);
+    startRouteTransition(() => setRoute(nextRoute));
+    if (window.location.hash === hash) return;
+    window.history.pushState(
+      null,
+      "",
+      `${window.location.pathname}${window.location.search}${hash}`,
+    );
   };
-  const selectTopic = (topicId: string) => {
-    startTransition(() => setSelectedTopicId(topicId));
-  };
-  const clearSelectedTopic = () => {
-    startTransition(() => setSelectedTopicId(null));
-  };
+  const selectTab = (key: TabKey) => navigateToRoute({ tab: key });
+  const selectTopic = (topic: Topic) =>
+    navigateToRoute({ tab: "topics", topicKey: topicRouteKey(topic) });
 
   if (error) {
     return (
@@ -437,7 +495,7 @@ const App = () => {
     <>
       <header className="hero">
         <nav className="topbar" aria-label="站点导航">
-          <a href="#gallery" className="brand">
+          <a href="#/latest" className="brand">
             DKPlus Photography
           </a>
           <span>
@@ -446,15 +504,15 @@ const App = () => {
         </nav>
       </header>
 
-      <main id="gallery" className="shell">
+      <main id="gallery" className="shell" aria-busy={isRoutePending}>
         <section className="controls" aria-label="图库筛选">
           <div className="tabs" role="tablist" aria-label="图库标签">
             {(Object.keys(tabLabels) as TabKey[]).map((key) => (
               <button
                 key={key}
                 role="tab"
-                aria-selected={tab === key}
-                className={tab === key ? "active" : ""}
+                aria-selected={route.tab === key}
+                className={route.tab === key ? "active" : ""}
                 onClick={() => selectTab(key)}
               >
                 {tabLabels[key]}
@@ -463,25 +521,25 @@ const App = () => {
           </div>
         </section>
 
-        {tab === "latest" && (
+        {deferredRoute.tab === "latest" && (
           <VirtualPhotoGrid
             photos={data.photos}
             style="square"
             onOpen={setActivePhoto}
           />
         )}
-        {tab === "topics" &&
+        {deferredRoute.tab === "topics" &&
           (selectedTopic ? (
             <TopicDetail
               topic={selectedTopic}
               photos={topicPhotos}
-              onBack={clearSelectedTopic}
+              onBack={() => navigateToRoute({ tab: "topics" })}
               onOpen={setActivePhoto}
             />
           ) : (
             <TopicGrid summaries={topicSummaries} onSelectTopic={selectTopic} />
           ))}
-        {tab === "timeline" && (
+        {deferredRoute.tab === "timeline" && (
           <Timeline photos={data.photos} onOpen={setActivePhoto} />
         )}
       </main>
