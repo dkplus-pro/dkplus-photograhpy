@@ -100,10 +100,6 @@ textarea {
 }
 
 .admin-shell {
-  display: grid;
-  grid-template-columns: 232px minmax(0, 1fr);
-  gap: 18px;
-  align-items: start;
   width: min(1480px, calc(100% - 32px));
   margin: 0 auto;
   padding: 24px 0 40px;
@@ -111,7 +107,7 @@ textarea {
 
 .admin-layout {
   display: grid;
-  grid-template-columns: 220px minmax(0, 1fr);
+  grid-template-columns: minmax(200px, 220px) minmax(0, 1fr);
   gap: 20px;
   align-items: start;
 }
@@ -121,6 +117,7 @@ textarea {
   top: 24px;
   display: grid;
   gap: 16px;
+  min-width: 0;
   border: 1px solid var(--line);
   border-top: 4px solid var(--ink);
   padding: 16px;
@@ -163,12 +160,15 @@ textarea {
 }
 
 .admin-menu .arco-menu-inner {
+  display: grid;
+  gap: 8px;
   padding: 0;
 }
 
 .admin-menu .arco-menu-item {
+  min-height: 44px;
   height: auto;
-  margin: 0 0 8px;
+  margin: 0;
   border: 1px solid var(--line);
   border-radius: 0;
   padding: 10px 12px;
@@ -1113,6 +1113,20 @@ textarea {
 
   .admin-sidebar {
     position: static;
+    grid-template-columns: minmax(180px, 0.7fr) minmax(260px, 1fr);
+    gap: 14px;
+    align-items: center;
+  }
+
+  .admin-sidebar__brand {
+    border-right: 1px solid var(--line);
+    border-bottom: 0;
+    padding-right: 16px;
+    padding-bottom: 0;
+  }
+
+  .admin-menu .arco-menu-inner {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
   .admin-header,
@@ -1136,8 +1150,25 @@ textarea {
     padding-top: 16px;
   }
 
-  .sidebar-menu {
+  .admin-sidebar {
     grid-template-columns: 1fr;
+    padding: 14px;
+  }
+
+  .admin-sidebar__brand {
+    border-right: 0;
+    border-bottom: 1px solid var(--line);
+    padding-right: 0;
+    padding-bottom: 12px;
+  }
+
+  .admin-menu .arco-menu-inner {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .admin-menu .arco-menu-item {
+    justify-content: center;
+    text-align: center;
   }
 
   .stats-grid,

@@ -13,7 +13,7 @@ const displayUrlSource = readFileSync(
 );
 const columnsSource = appSource.slice(
   appSource.indexOf("const columns"),
-  appSource.indexOf("return ("),
+  appSource.indexOf("const topicColumns"),
 );
 
 describe("admin gallery list contract", () => {
@@ -140,8 +140,24 @@ describe("admin gallery list contract", () => {
     expect(appSource).toContain("api.updateTopic");
     expect(appSource).toContain("api.deleteTopic");
     expect(appSource).toContain("先移除该专题下的图片关联后再删除");
+    expect(appSource).toContain(
+      "const sectionRoutes: Record<AdminSection, string>",
+    );
+    expect(appSource).toContain('photos: "#/photos"');
+    expect(appSource).toContain('topics: "#/topics"');
+    expect(appSource).toContain(
+      'window.addEventListener("hashchange", syncSectionFromRoute)',
+    );
+    expect(appSource).toContain(
+      "onClickMenuItem={(key) => navigateToSection(key as AdminSection)}",
+    );
     expect(styles).toContain(".admin-layout");
     expect(styles).toContain(".admin-sidebar");
+    expect(styles).toContain(".admin-menu .arco-menu-inner");
+    expect(styles).toContain(
+      "grid-template-columns: repeat(2, minmax(0, 1fr));",
+    );
+    expect(styles).toContain("min-height: 44px;");
     expect(styles).toContain(".topic-form");
   });
 });

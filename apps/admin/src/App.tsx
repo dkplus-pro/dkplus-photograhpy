@@ -140,6 +140,21 @@ const emptyTopicDraft: TopicDraft = { id: "", title: "", description: "" };
 const emptyTopicPayload: TopicPayload = { title: "", description: "" };
 type AdminSection = "photos" | "topics";
 
+const sectionRoutes: Record<AdminSection, string> = {
+  photos: "#/photos",
+  topics: "#/topics",
+};
+
+const parseAdminSection = (hash: string): AdminSection => {
+  const normalized = hash.replace(/^#\/?/, "").split(/[?#]/)[0];
+  return normalized === "topics" ? "topics" : "photos";
+};
+
+const currentAdminSection = (): AdminSection =>
+  typeof window === "undefined"
+    ? "photos"
+    : parseAdminSection(window.location.hash);
+
 const normalizeTopicId = (value: string): string =>
   value
     .normalize("NFKC")
@@ -166,7 +181,9 @@ const uniqueSorted = (values: Array<string | undefined>): string[] =>
 function App() {
   const [photos, setPhotos] = useState<PhotoRecord[]>([]);
   const [topics, setTopics] = useState<TopicRecord[]>([]);
-  const [activeSection, setActiveSection] = useState<AdminSection>("photos");
+  const [activeSection, setActiveSection] = useState<AdminSection>(() =>
+    currentAdminSection(),
+  );
   const [selectedIds, setSelectedIds] = useState<Set<string>>(() => new Set());
   const [payload, setPayload] = useState<PhotoPayload>(emptyPayload);
   const [topicDraft, setTopicDraft] = useState<TopicDraft>(emptyTopicDraft);
@@ -237,6 +254,36 @@ function App() {
   useEffect(() => {
     void refresh();
   }, []);
+
+  useEffect(() => {
+    const syncSectionFromRoute = () => {
+      setActiveSection(currentAdminSection());
+    };
+
+    if (!window.location.hash) {
+      window.history.replaceState(null, "", sectionRoutes.photos);
+    }
+
+    window.addEventListener("hashchange", syncSectionFromRoute);
+    return () => {
+      window.removeEventListener("hashchange", syncSectionFromRoute);
+    };
+  }, []);
+
+  useEffect(() => {
+    document.title = `${activeSection === "photos" ? "图片管理" : "专题管理"} · DKPlus Admin`;
+  }, [activeSection]);
+
+  const navigateToSection = (section: AdminSection) => {
+    if (
+      section === activeSection &&
+      window.location.hash === sectionRoutes[section]
+    ) {
+      return;
+    }
+
+    window.location.hash = sectionRoutes[section];
+  };
 
   useEffect(() => {
     previewsRef.current = previews;
@@ -933,7 +980,7 @@ function App() {
             <Menu
               className="admin-menu"
               selectedKeys={[activeSection]}
-              onClickMenuItem={(key) => setActiveSection(key as AdminSection)}
+              onClickMenuItem={(key) => navigateToSection(key as AdminSection)}
             >
               <MenuItem key="photos">图片管理</MenuItem>
               <MenuItem key="topics">专题管理</MenuItem>
