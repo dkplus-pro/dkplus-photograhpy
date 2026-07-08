@@ -190,7 +190,10 @@ test("main tabs and topic detail are backed by GitHub Pages-safe hash routes", (
   assert.match(mainSource, /const routeToHash =/);
   assert.match(mainSource, /#\/\$\{route\.tab\}/);
   assert.match(mainSource, /window\.location\.hash/);
-  assert.match(mainSource, /window\.addEventListener\("hashchange", syncRoute\)/);
+  assert.match(
+    mainSource,
+    /window\.addEventListener\("hashchange", syncRoute\)/,
+  );
   assert.match(mainSource, /window\.addEventListener\("popstate", syncRoute\)/);
   assert.match(mainSource, /window\.history\.pushState/);
   assert.match(mainSource, /topicRouteKey\(topic\)/);
@@ -204,14 +207,20 @@ test("topic and timeline derived data are precomputed without repeated render sc
   assert.match(gallerySource, /export const buildTopicSummaries =/);
   assert.match(gallerySource, /summary\.photos\.push\(photo\)/);
   assert.match(gallerySource, /summary\.cover = photo/);
-  assert.match(gallerySource, /photosById\.get\(summary\.topic\.coverPhotoId\)/);
+  assert.match(
+    gallerySource,
+    /photosById\.get\(summary\.topic\.coverPhotoId\)/,
+  );
   assert.match(gallerySource, /export const groupByMonth =/);
   assert.match(gallerySource, /items\.push\(photo\)/);
   assert.doesNotMatch(gallerySource, /groups\.set\(key,\s*\[\.\.\./);
 });
 
 test("display-only thumbnail reduction does not affect modal preview quality", () => {
-  assert.match(gallerySource, /const listThumbnailQuery = "imageMogr2\/thumbnail\/800x"/);
+  assert.match(
+    gallerySource,
+    /const listThumbnailQuery = "imageMogr2\/thumbnail\/800x"/,
+  );
   assert.match(gallerySource, /export const reduceListThumbnailQuality =/);
   assert.match(
     gallerySource,
