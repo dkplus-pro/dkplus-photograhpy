@@ -1430,6 +1430,8 @@ function App() {
               onCancel={() => setPreviewPhoto(null)}
               footer={null}
               className="image-preview-modal"
+              maskClosable
+              escToExit
               unmountOnExit
             >
               {previewPhoto && (
@@ -1459,7 +1461,8 @@ function App() {
               confirmLoading={isSaving}
               okText="保存"
               cancelText="取消"
-              maskClosable={false}
+              maskClosable
+              escToExit
               unmountOnExit
             >
               <div className="topic-form" aria-label="专题资料表单">
@@ -1502,6 +1505,8 @@ function App() {
               okText="确认删除"
               cancelText="取消"
               okButtonProps={{ status: "danger" }}
+              maskClosable
+              escToExit
             >
               <p>{confirmAction?.body}</p>
             </Modal>
