@@ -70,6 +70,130 @@ describe("admin API client auth headers", () => {
     expect(headers.get("content-type")).toBeNull();
   });
 
+  it("uploads staged files through the authenticated bulk endpoint", async () => {
+    vi.stubEnv("VITE_ADMIN_TOKEN", " bulk-token ");
+    const previews: UploadPreview[] = [
+      makePreview({
+        cameraMake: "Canon",
+        cameraModel: "R5",
+      }),
+      {
+        ...makePreview({
+          cameraMake: "Sony",
+          cameraModel: "A7R V",
+        }),
+        id: "preview-2",
+        file: new File(["jpeg"], "street-frame.jpg", {
+          type: "image/jpeg",
+        }),
+        previewUrl: "blob:preview-2",
+        title: " Street frame ",
+        topicId: "street",
+        description: " Second bulk upload ",
+      },
+    ];
+    const fetchMock = vi.fn(async (input: unknown, init?: RequestInit) => {
+      void input;
+      void init;
+      return jsonResponse(
+        {
+          photos: [
+            photo,
+            {
+              id: "photo-2",
+              title: "Street frame",
+              image: { url: "/uploads/street-frame.jpg" },
+              topicId: "street",
+              exif: {
+                cameraBrand: "Sony",
+                cameraModel: "A7R V",
+              },
+            },
+          ],
+          failed: [],
+          export: {
+            exportFile: "/tmp/photos.json",
+            generatedAt: "2026-07-08T00:00:00.000Z",
+            photoCount: 2,
+            topicCount: 1,
+          },
+        },
+        201,
+      );
+    });
+    vi.stubGlobal("fetch", fetchMock);
+
+    const result = await createApiClient("http://api.test/api").uploadPhotos(
+      previews,
+    );
+
+    expect(fetchMock).toHaveBeenCalledOnce();
+    const [url, init] = fetchMock.mock.calls[0] ?? [];
+    expect(url).toBe("http://api.test/api/uploads/bulk");
+    expect(init?.method).toBe("POST");
+    expect(init?.body).toBeInstanceOf(FormData);
+    const body = init?.body as FormData;
+    expect(body.getAll("files")).toHaveLength(2);
+    expect(body.get("file")).toBeNull();
+    expect(JSON.parse(String(body.get("items")))).toEqual([
+      {
+        title: "Uploaded frame",
+        exif: previews[0]?.exif,
+      },
+      {
+        title: "Street frame",
+        description: "Second bulk upload",
+        topicId: "street",
+        exif: previews[1]?.exif,
+      },
+    ]);
+
+    const headers = new Headers(init?.headers);
+    expect(headers.get("authorization")).toBe("Bearer bulk-token");
+    expect(headers.get("content-type")).toBeNull();
+    expect(result.photos).toHaveLength(2);
+    expect(result.photos[1]?.imageUrl).toBe("/uploads/street-frame.jpg");
+    expect(result.photos[1]?.exif?.cameraMake).toBe("Sony");
+    expect(result.failed).toEqual([]);
+    expect(result.export?.photoCount).toBe(2);
+  });
+
+  it("returns structured bulk failures from total-failure responses", async () => {
+    const fetchMock = vi.fn(async (input: unknown, init?: RequestInit) => {
+      void input;
+      void init;
+      return jsonResponse(
+        {
+          photos: [],
+          failed: [
+            {
+              index: 0,
+              fileName: "frame.txt",
+              code: "UPLOAD_UNSUPPORTED_TYPE",
+              message: "Only image uploads are supported",
+            },
+          ],
+        },
+        400,
+      );
+    });
+    vi.stubGlobal("fetch", fetchMock);
+
+    const result = await createApiClient("http://api.test/api").uploadPhotos([
+      makePreview(),
+    ]);
+
+    expect(result.photos).toEqual([]);
+    expect(result.failed).toEqual([
+      {
+        index: 0,
+        fileName: "frame.txt",
+        code: "UPLOAD_UNSUPPORTED_TYPE",
+        message: "Only image uploads are supported",
+      },
+    ]);
+  });
+
   it("normalizes EXIF aliases on uploaded photo responses", async () => {
     const fetchMock = vi.fn(async (input: unknown, init?: RequestInit) => {
       void input;
