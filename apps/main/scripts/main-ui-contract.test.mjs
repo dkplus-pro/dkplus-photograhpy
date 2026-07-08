@@ -185,7 +185,10 @@ test("main tabs and topic detail are backed by GitHub Pages-safe hash routes", (
   assert.match(mainSource, /const routeToHash =/);
   assert.match(mainSource, /#\/\$\{route\.tab\}/);
   assert.match(mainSource, /window\.location\.hash/);
-  assert.match(mainSource, /window\.addEventListener\("hashchange", syncRoute\)/);
+  assert.match(
+    mainSource,
+    /window\.addEventListener\("hashchange", syncRoute\)/,
+  );
   assert.match(mainSource, /window\.addEventListener\("popstate", syncRoute\)/);
   assert.match(mainSource, /window\.history\.pushState/);
   assert.match(mainSource, /route\.topicId/);
