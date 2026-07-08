@@ -151,6 +151,7 @@ const currentAdminSection = (): AdminSection =>
 const randomId = () => `${Date.now().toString(36)}-${crypto.randomUUID()}`;
 
 const allFilterValue = "all";
+const adminPageSizeOptions = [10, 20, 50];
 
 const uniqueSorted = (values: Array<string | undefined>): string[] =>
   [
@@ -193,6 +194,8 @@ function App() {
   const [isEditorOpen, setIsEditorOpen] = useState(false);
   const [isUploadOpen, setIsUploadOpen] = useState(false);
   const [isTopicEditorOpen, setIsTopicEditorOpen] = useState(false);
+  const [photoPageSize, setPhotoPageSize] = useState(10);
+  const [topicPageSize, setTopicPageSize] = useState(10);
   const [messages, setMessages] = useState<ToastMessage[]>([]);
   const [confirmAction, setConfirmAction] = useState<{
     title: string;
