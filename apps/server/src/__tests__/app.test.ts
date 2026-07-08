@@ -413,6 +413,146 @@ test("multipart upload stores local file, creates SQLite photo, and auto-exports
   }
 });
 
+test("bulk upload creates multiple photos with per-file metadata and auto-export", async () => {
+  const { config, root } = await makeConfig();
+  try {
+    const app = createApp(config).callback();
+    const capturedAt = "2026-07-08T09:30:00.000Z";
+    const response = await request(app)
+      .post("/api/uploads/bulk")
+      .set("Authorization", "Bearer test-token")
+      .field(
+        "items",
+        JSON.stringify([
+          {
+            title: "Bulk frame A",
+            description: "First bulk upload",
+            topicId: "editorial",
+            tags: ["bulk", "first"],
+            exif: {
+              cameraMake: "Sony",
+              cameraModel: "A7R V",
+              capturedAt,
+            },
+          },
+          {
+            title: "Bulk frame B",
+            description: "Second bulk upload",
+            tags: "bulk, second",
+          },
+        ]),
+      )
+      .attach("files", Buffer.from([0xff, 0xd8, 0xff, 0xd9]), {
+        filename: "bulk-a.jpg",
+        contentType: "image/jpeg",
+      })
+      .attach("files", Buffer.from([0xff, 0xd8, 0xff, 0xd9]), {
+        filename: "bulk-b.jpg",
+        contentType: "image/jpeg",
+      })
+      .expect(201);
+
+    assert.equal(response.body.photos.length, 2);
+    assert.deepEqual(response.body.failed, []);
+    assert.equal(response.body.export.photoCount, 2);
+    assert.equal(response.body.photos[0].title, "Bulk frame A");
+    assert.equal(response.body.photos[0].topicId, "editorial");
+    assert.deepEqual(response.body.photos[0].tags, ["bulk", "first"]);
+    assert.equal(response.body.photos[0].takenAt, capturedAt);
+    assert.deepEqual(response.body.photos[0].exif, {
+      cameraBrand: "Sony",
+      cameraModel: "A7R V",
+      capturedAt,
+    });
+    assert.equal(response.body.photos[1].title, "Bulk frame B");
+    assert.deepEqual(response.body.photos[1].tags, ["bulk", "second"]);
+
+    const listed = await authed(request(app).get("/api/photos")).expect(200);
+    assert.equal(listed.body.photos.length, 2);
+
+    const exported = await readClientExport(config.exportFile);
+    assert.equal(exported.photos.length, 2);
+    assert.equal(
+      exported.photos[0]?.asset?.original?.startsWith("http") ?? false,
+      true,
+    );
+    assertNoClientInternals(exported);
+  } finally {
+    await rm(root, { recursive: true, force: true });
+  }
+});
+
+test("bulk upload reports partial and total failures without losing successes", async () => {
+  const { config, root } = await makeConfig();
+  try {
+    const app = createApp(config).callback();
+    const partial = await request(app)
+      .post("/api/uploads/bulk")
+      .set("Authorization", "Bearer test-token")
+      .field(
+        "items",
+        JSON.stringify([
+          { title: "Bulk valid frame" },
+          { title: "Bulk invalid document" },
+        ]),
+      )
+      .attach("files", Buffer.from([0xff, 0xd8, 0xff, 0xd9]), {
+        filename: "bulk-valid.jpg",
+        contentType: "image/jpeg",
+      })
+      .attach("files", Buffer.from("not an image"), {
+        filename: "bulk-invalid.txt",
+        contentType: "text/plain",
+      })
+      .expect(207);
+
+    assert.equal(partial.body.photos.length, 1);
+    assert.equal(partial.body.photos[0].title, "Bulk valid frame");
+    assert.equal(partial.body.failed.length, 1);
+    assert.deepEqual(partial.body.failed[0], {
+      index: 1,
+      fileName: "bulk-invalid.txt",
+      code: "UPLOAD_UNSUPPORTED_TYPE",
+      message: "Only image uploads are supported",
+    });
+    assert.equal(partial.body.export.photoCount, 1);
+
+    const exported = await readClientExport(config.exportFile);
+    assert.equal(exported.photos.length, 1);
+    assert.equal(exported.photos[0]?.title, "Bulk valid frame");
+    assertNoClientInternals(exported);
+  } finally {
+    await rm(root, { recursive: true, force: true });
+  }
+
+  const { config: totalConfig, root: totalRoot } = await makeConfig();
+  try {
+    const app = createApp(totalConfig).callback();
+    const total = await request(app)
+      .post("/api/uploads/bulk")
+      .set("Authorization", "Bearer test-token")
+      .attach("files", Buffer.from("not an image"), {
+        filename: "bulk-total-failure.txt",
+        contentType: "text/plain",
+      })
+      .expect(400);
+
+    assert.deepEqual(total.body.photos, []);
+    assert.deepEqual(total.body.failed, [
+      {
+        index: 0,
+        fileName: "bulk-total-failure.txt",
+        code: "UPLOAD_UNSUPPORTED_TYPE",
+        message: "Only image uploads are supported",
+      },
+    ]);
+    assert.equal("export" in total.body, false);
+    await assertExportFileMissing(totalConfig.exportFile);
+  } finally {
+    await rm(totalRoot, { recursive: true, force: true });
+  }
+});
+
 test("multipart upload persists Admin EXIF JSON for create and replacement", async () => {
   const { config, root } = await makeConfig();
   try {
