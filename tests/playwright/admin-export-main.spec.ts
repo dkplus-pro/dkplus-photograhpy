@@ -708,6 +708,7 @@ test("Main topics tab opens a virtual detail page with scoped modal navigation",
     topicIds: string[],
     takenAt: string,
     fill: string,
+    assetOverride: Record<string, unknown> = {},
   ) => ({
     id,
     title,
@@ -721,7 +722,15 @@ test("Main topics tab opens a virtual detail page with scoped modal navigation",
       alt: title,
       width: 800,
       height: 800,
+      ...assetOverride,
     },
+  });
+
+  await page.route("https://cdn.example.test/**", async (route) => {
+    await route.fulfill({
+      contentType: "image/svg+xml",
+      body: "<svg xmlns='http://www.w3.org/2000/svg' width='800' height='800'><rect width='800' height='800' fill='#222222'/></svg>",
+    });
   });
 
   await page.route("**/api/gallery", async (route) => {
@@ -757,6 +766,14 @@ test("Main topics tab opens a virtual detail page with scoped modal navigation",
             ["editorial"],
             "2029-01-01T00:00:00.000Z",
             "222222",
+            {
+              original:
+                "https://cdn.example.test/images/editorial-a-original.jpg",
+              thumbnail:
+                "https://cdn.example.test/images/editorial-a-thumb.jpg?token=thumb#thumb",
+              preview:
+                "https://cdn.example.test/images/editorial-a-preview.jpg?token=preview#preview",
+            },
           ),
           makePhoto(
             "editorial-b",
@@ -778,6 +795,79 @@ test("Main topics tab opens a virtual detail page with scoped modal navigation",
   });
 
   await page.setViewportSize({ width: 1280, height: 720 });
+  await page.goto(`${mainBaseUrl}#/latest`);
+  await expect(page.getByRole("tab", { name: "最新" })).toHaveAttribute(
+    "aria-selected",
+    "true",
+  );
+  await expect(page.locator(".photo-card").first()).toBeVisible();
+
+  await page.goto(`${mainBaseUrl}#/topics`);
+  await expect(page.getByRole("tab", { name: "专题" })).toHaveAttribute(
+    "aria-selected",
+    "true",
+  );
+  await expect(
+    page.getByRole("button", { name: "查看专题：编辑精选" }),
+  ).toBeVisible();
+
+  await page.goto(`${mainBaseUrl}#/timeline`);
+  await expect(page.getByRole("tab", { name: "时间轴" })).toHaveAttribute(
+    "aria-selected",
+    "true",
+  );
+  await expect(page.locator(".timeline")).toBeVisible();
+
+  await page.goto(`${mainBaseUrl}#/topics/editorial`);
+  await expect(page.getByRole("tab", { name: "专题" })).toHaveAttribute(
+    "aria-selected",
+    "true",
+  );
+  await expect(
+    page.getByRole("heading", { name: "编辑精选", level: 1 }),
+  ).toBeVisible();
+  await expect(page.getByText("专题 / 编辑精选")).toBeVisible();
+  await expect(
+    page.getByRole("button", { name: "查看图片：旅行样片" }),
+  ).toHaveCount(0);
+
+  const routedCard = page.getByRole("button", { name: "查看图片：编辑样片 A" });
+  await expect(routedCard).toBeVisible();
+  const cardThumbnailSrc = await routedCard.locator("img").getAttribute("src");
+  expect(cardThumbnailSrc).toContain(
+    "editorial-a-thumb.jpg?token=thumb&imageMogr2/thumbnail/800x#thumb",
+  );
+  await routedCard.click();
+  const modalPreviewSrc = await page
+    .locator(".modal__image-wrap img")
+    .getAttribute("src");
+  expect(modalPreviewSrc).toContain(
+    "editorial-a-preview.jpg?token=preview#preview",
+  );
+  expect(modalPreviewSrc).not.toContain("imageMogr2");
+  await page.getByRole("button", { name: "关闭", exact: true }).click();
+
+  await page.getByRole("button", { name: "返回专题列表" }).click();
+  await expect(page).toHaveURL(/#\/topics$/);
+  await page.getByRole("tab", { name: "时间轴" }).click();
+  await expect(page).toHaveURL(/#\/timeline$/);
+  await page.goBack();
+  await expect(page).toHaveURL(/#\/topics$/);
+  await expect(
+    page.getByRole("button", { name: "查看专题：旅行专题" }),
+  ).toBeVisible();
+  await page.goForward();
+  await expect(page).toHaveURL(/#\/timeline$/);
+
+  await page.goto(`${mainBaseUrl}#/topics/missing`);
+  await expect(page.getByRole("tab", { name: "专题" })).toHaveAttribute(
+    "aria-selected",
+    "true",
+  );
+  await expect(
+    page.getByRole("button", { name: "查看专题：编辑精选" }),
+  ).toBeVisible();
+
   await page.goto(mainBaseUrl);
   await page.getByRole("tab", { name: "专题" }).click();
   await page.getByRole("button", { name: "查看专题：编辑精选" }).click();
