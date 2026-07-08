@@ -7,8 +7,15 @@ import type {
 } from "./types";
 
 const fallbackCdnBaseUrl = "https://images.unsplash.com";
+const listThumbnailQuery = "imageMogr2/thumbnail/800x";
 const isAbsoluteUrl = (value: string): boolean =>
   /^[a-z][a-z\d+.-]*:/i.test(value) || value.startsWith("//");
+const isHttpUrl = (value: string): boolean =>
+  /^https?:\/\//i.test(value) || value.startsWith("//");
+const hasSkippedListThumbnailProtocol = (value: string): boolean =>
+  /^(?:data|blob):/i.test(value);
+const hasListThumbnailTransform = (value: string): boolean =>
+  /(?:^|[?&#])imageMogr2(?:\/|%2F)/i.test(value);
 
 const trimSlashes = (value: string): string => value.replace(/^\/+|\/+$/g, "");
 
@@ -24,6 +31,34 @@ export const resolveDisplayAssetUrl = (value: string): string => {
     queryIndex >= 0 ? withoutHash.slice(0, queryIndex) : withoutHash;
   const query = queryIndex >= 0 ? withoutHash.slice(queryIndex) : "";
   return `${fallbackCdnBaseUrl}/${trimSlashes(pathname)}${query}${hash}`;
+};
+
+const isUnsplashImageUrl = (value: string): boolean => {
+  const candidate = value.startsWith("//") ? `https:${value}` : value;
+  try {
+    return new URL(candidate).hostname === "images.unsplash.com";
+  } catch {
+    return false;
+  }
+};
+
+export const reduceListThumbnailQuality = (value: string): string => {
+  const raw = value.trim();
+  if (
+    !raw ||
+    !isHttpUrl(raw) ||
+    hasSkippedListThumbnailProtocol(raw) ||
+    hasListThumbnailTransform(raw) ||
+    isUnsplashImageUrl(raw)
+  ) {
+    return value;
+  }
+
+  const hashIndex = raw.indexOf("#");
+  const hash = hashIndex >= 0 ? raw.slice(hashIndex) : "";
+  const withoutHash = hashIndex >= 0 ? raw.slice(0, hashIndex) : raw;
+  const separator = withoutHash.includes("?") ? "&" : "?";
+  return `${withoutHash}${separator}${listThumbnailQuery}${hash}`;
 };
 
 export const tabLabels = {
@@ -54,17 +89,20 @@ export const compareNewest = (
 
 export const groupByMonth = (photos: ResolvedPhoto[]) => {
   const groups = new Map<string, ResolvedPhoto[]>();
-  [...photos].sort(compareNewest).forEach((photo) => {
+  photos.forEach((photo) => {
     const key = formatMonthKey(photo.takenAt);
-    groups.set(key, [...(groups.get(key) ?? []), photo]);
+    const items = groups.get(key);
+    if (items) {
+      items.push(photo);
+    } else {
+      groups.set(key, [photo]);
+    }
   });
-  return [...groups.entries()]
-    .sort(([left], [right]) => right.localeCompare(left))
-    .map(([month, items]) => ({
-      month,
-      label: formatMonthLabel(month),
-      photos: items,
-    }));
+  return [...groups.entries()].map(([month, items]) => ({
+    month,
+    label: formatMonthLabel(month),
+    photos: items,
+  }));
 };
 
 export const topicCover = (
@@ -73,6 +111,41 @@ export const topicCover = (
 ): ResolvedPhoto | undefined =>
   photos.find((photo) => photo.id === topic.coverPhotoId) ??
   photos.find((photo) => photo.topicIds.includes(topic.id));
+
+export interface TopicSummary {
+  topic: Topic;
+  cover?: ResolvedPhoto;
+  count: number;
+  photos: ResolvedPhoto[];
+}
+
+export const buildTopicSummaries = (
+  topics: Topic[],
+  photos: ResolvedPhoto[],
+): TopicSummary[] => {
+  const summariesById = new Map<string, TopicSummary>();
+  for (const topic of topics) {
+    summariesById.set(topic.id, {
+      topic,
+      count: 0,
+      photos: [],
+    });
+  }
+
+  for (const photo of photos) {
+    for (const topicId of photo.topicIds) {
+      const summary = summariesById.get(topicId);
+      if (!summary) continue;
+      summary.count += 1;
+      summary.photos.push(photo);
+      if (!summary.cover || photo.id === summary.topic.coverPhotoId) {
+        summary.cover = photo;
+      }
+    }
+  }
+
+  return topics.map((topic) => summariesById.get(topic.id)!).filter(Boolean);
+};
 
 type RawExif = ExifData;
 
@@ -154,8 +227,8 @@ const resolveUrls = (
   urls?: Partial<ResolvedPhoto["urls"]>,
 ): ResolvedPhoto["urls"] => ({
   original: resolveDisplayAssetUrl(urls?.original ?? asset.original),
-  thumbnail: resolveDisplayAssetUrl(
-    urls?.thumbnail ?? asset.thumbnail ?? asset.original,
+  thumbnail: reduceListThumbnailQuality(
+    resolveDisplayAssetUrl(urls?.thumbnail ?? asset.thumbnail ?? asset.original),
   ),
   preview: resolveDisplayAssetUrl(
     urls?.preview ?? asset.preview ?? asset.thumbnail ?? asset.original,
