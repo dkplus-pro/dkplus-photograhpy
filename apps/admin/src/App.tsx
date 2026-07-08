@@ -219,6 +219,7 @@ function App() {
 
   const refresh = async () => {
     setIsLoading(true);
+    setIsTopicLoading(true);
     try {
       const [records, topicRecords] = await Promise.all([
         api.listPhotos(),
@@ -232,24 +233,13 @@ function App() {
       pushMessage(
         "info",
         `API 暂不可用，正在显示演示数据。${
-          photoResult.reason instanceof Error ? photoResult.reason.message : ""
+          error instanceof Error ? error.message : ""
         }`.trim(),
       );
+    } finally {
+      setIsLoading(false);
+      setIsTopicLoading(false);
     }
-
-    if (topicResult.status === "fulfilled") {
-      setManagedTopics(topicResult.value);
-    } else {
-      pushMessage(
-        "info",
-        `专题 API 暂不可用，专题管理将显示从图片推导的专题。${
-          topicResult.reason instanceof Error ? topicResult.reason.message : ""
-        }`.trim(),
-      );
-    }
-
-    setIsLoading(false);
-    setIsTopicLoading(false);
   };
 
   useEffect(() => {
@@ -279,14 +269,11 @@ function App() {
     }
     for (const photo of photos) {
       if (photo.topicId) {
-        upsertTopic({
-          id: photo.topicId,
-          title: photo.topicTitle || photo.topicId,
-        });
+        map.set(photo.topicId, photo.topicTitle || photo.topicId);
       }
       for (const topicId of photo.topicIds ?? []) {
         if (!map.has(topicId)) {
-          upsertTopic({ id: topicId, title: topicId });
+          map.set(topicId, topicId);
         }
       }
     }
@@ -667,91 +654,6 @@ function App() {
         );
         setSelectedIds(new Set());
         pushMessage("success", "已删除所选记录");
-      },
-    });
-  };
-
-  const openCreateTopicEditor = () => {
-    setEditingTopicId(null);
-    setManagedTopicDraft(emptyTopicDraft);
-    setIsTopicEditorOpen(true);
-  };
-
-  const editTopic = (topic: TopicRecord) => {
-    setEditingTopicId(topic.id);
-    setManagedTopicDraft({
-      id: topic.id,
-      title: topic.title,
-      description: topic.description || "",
-    });
-    setIsTopicEditorOpen(true);
-  };
-
-  const resetTopicEditor = () => {
-    setEditingTopicId(null);
-    setManagedTopicDraft(emptyTopicDraft);
-    setIsTopicEditorOpen(false);
-  };
-
-  const saveTopic = async () => {
-    const title = managedTopicDraft.title.trim();
-    const topicId =
-      editingTopicId ?? normalizeTopicId(managedTopicDraft.id || title);
-    const description = managedTopicDraft.description.trim();
-
-    if (!title || !topicId) {
-      pushMessage("error", "请填写专题标题，或补充可用的专题 ID。");
-      return;
-    }
-
-    setIsTopicSaving(true);
-    try {
-      const savedTopic = editingTopicId
-        ? await api.updateTopic(editingTopicId, { title, description })
-        : await api.createTopic({ id: topicId, title, description });
-      upsertManagedTopic(savedTopic);
-      setCustomTopics((current) =>
-        current.filter(([id]) => id !== savedTopic.id),
-      );
-      setTopicFilter(savedTopic.id);
-      resetTopicEditor();
-      pushMessage("success", `专题“${savedTopic.title}”已保存。`);
-    } catch (error) {
-      pushMessage(
-        "error",
-        error instanceof Error ? error.message : "保存专题失败",
-      );
-    } finally {
-      setIsTopicSaving(false);
-    }
-  };
-
-  const requestDeleteTopic = (topic: TopicRecord) => {
-    const usageCount = topicUsage.get(topic.id) ?? 0;
-    if (usageCount > 0) {
-      pushMessage(
-        "error",
-        `专题“${topic.title}”仍关联 ${usageCount} 张图片，请先调整图片专题后再删除。`,
-      );
-      return;
-    }
-
-    setConfirmAction({
-      title: "删除专题",
-      body: `确认删除专题“${topic.title}”？此操作只删除专题记录，不会修改图片。`,
-      async onConfirm() {
-        await api.deleteTopic(topic.id);
-        setManagedTopics((current) =>
-          current.filter((item) => item.id !== topic.id),
-        );
-        setCustomTopics((current) => current.filter(([id]) => id !== topic.id));
-        if (topicFilter === topic.id) setTopicFilter(allFilterValue);
-        setPayload((current) =>
-          current.topicId === topic.id
-            ? { ...current, topicId: "", topicTitle: "" }
-            : current,
-        );
-        pushMessage("success", "专题已删除");
       },
     });
   };

@@ -30,10 +30,6 @@ export interface ApiClient {
   updatePhoto: (id: string, payload: PhotoPayload) => Promise<PhotoRecord>;
   deletePhoto: (id: string) => Promise<void>;
   batchDelete: (ids: string[]) => Promise<void>;
-  listTopics: () => Promise<TopicRecord[]>;
-  createTopic: (payload: TopicPayload) => Promise<TopicRecord>;
-  updateTopic: (id: string, payload: TopicPayload) => Promise<TopicRecord>;
-  deleteTopic: (id: string) => Promise<void>;
   exportGallery: () => Promise<ExportResult>;
   uploadPhoto: (
     preview: UploadPreview,
@@ -231,14 +227,11 @@ const unwrapPhotos = (
   return (value.photos ?? value.data ?? []).map(normalizePhotoForAdmin);
 };
 
-const normalizeTopicForAdmin = (input: ServerTopicEnvelope): TopicRecord =>
-  "topic" in input ? input.topic : input;
-
 const unwrapTopics = (
-  value: TopicRecord[] | { topics?: TopicRecord[]; data?: TopicRecord[] },
+  value: ServerTopicEnvelope[] | { topics?: ServerTopicEnvelope[]; data?: ServerTopicEnvelope[] },
 ): TopicRecord[] => {
-  if (Array.isArray(value)) return value;
-  return value.topics ?? value.data ?? [];
+  if (Array.isArray(value)) return value.map(normalizeTopicForAdmin);
+  return (value.topics ?? value.data ?? []).map(normalizeTopicForAdmin);
 };
 
 export const createApiClient = (
@@ -312,38 +305,6 @@ export const createApiClient = (
     await requestJson<void>(baseUrl, "/photos/batch-delete", {
       method: "POST",
       body: JSON.stringify({ ids }),
-    });
-  },
-  async listTopics() {
-    return unwrapTopics(
-      await requestJson<
-        TopicRecord[] | { topics?: TopicRecord[]; data?: TopicRecord[] }
-      >(baseUrl, "/topics"),
-    );
-  },
-  async createTopic(payload) {
-    return normalizeTopicForAdmin(
-      await requestJson<ServerTopicEnvelope>(baseUrl, "/topics", {
-        method: "POST",
-        body: JSON.stringify(toServerTopicPayload(payload)),
-      }),
-    );
-  },
-  async updateTopic(id, payload) {
-    return normalizeTopicForAdmin(
-      await requestJson<ServerTopicEnvelope>(
-        baseUrl,
-        `/topics/${encodeURIComponent(id)}`,
-        {
-          method: "PATCH",
-          body: JSON.stringify(toServerTopicPayload(payload)),
-        },
-      ),
-    );
-  },
-  async deleteTopic(id) {
-    await requestJson<void>(baseUrl, `/topics/${encodeURIComponent(id)}`, {
-      method: "DELETE",
     });
   },
   async exportGallery() {
