@@ -319,6 +319,12 @@ img {
   font-style: normal;
   line-height: 1.5;
 }
+.topic-card__copy em {
+  display: -webkit-box;
+  overflow: hidden;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
 .topic-detail {
   display: grid;
   gap: 24px;

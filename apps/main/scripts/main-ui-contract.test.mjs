@@ -307,6 +307,12 @@ test("topics tab opens a secondary virtual topic detail page", () => {
     cssBlock(".topic-detail__actions button"),
     /border-radius:\s*999px;/,
   );
+  assert.match(cssBlock(".topic-card__copy em"), /display:\s*-webkit-box;/);
+  assert.match(cssBlock(".topic-card__copy em"), /overflow:\s*hidden;/);
+  assert.match(
+    cssBlock(".topic-card__copy em"),
+    /-webkit-line-clamp:\s*2;/,
+  );
 });
 
 test("main tabs and topic detail are backed by GitHub Pages-safe hash routes", () => {
