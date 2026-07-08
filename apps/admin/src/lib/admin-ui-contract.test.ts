@@ -113,19 +113,20 @@ describe("admin gallery list contract", () => {
       /src=\{withAdminPreviewDisplayUrl\([\s\S]*?previewPhoto\.imageUrl \|\|[\s\S]*?previewPhoto\.image\?\.url \|\|[\s\S]*?previewPhoto\.thumbnailUrl/,
     );
     expect(displayUrlSource).toContain("imageMogr2/thumbnail/100x");
-    expect(displayUrlSource).toContain("imageMogr2/quality/25");
+    expect(displayUrlSource).toContain("imageMogr2/quality/10");
     expect(displayUrlSource).toContain("/^(data|blob):/i");
   });
 
-  it("supports creating a new topic from admin photo flows", () => {
-    expect(appSource).toContain("api.createTopic");
-    expect(appSource).toContain("topicDraft");
-    expect(appSource).toContain("normalizeTopicId");
-    expect(appSource).toContain('aria-label="新增专题"');
-    expect(appSource).toContain('placeholder="专题名称，如：编辑精选"');
-    expect(appSource).toContain('placeholder="专题 ID（可选，自动生成）"');
-    expect(appSource).toContain("setTopicFilter(created.id)");
-    expect(appSource).toContain("请先选择或新增专题，再按当前专题选择图片。");
+  it("keeps admin photo flows limited to existing optional topics", () => {
+    expect(appSource).toContain("selectTopic");
+    expect(appSource).toContain('placeholder="选择已有专题（可选）"');
+    expect(appSource).toContain("请先选择已有专题，再按当前专题选择图片。");
+    expect(appSource).not.toContain("topicDraft");
+    expect(appSource).not.toContain("normalizeTopicId");
+    expect(appSource).not.toContain('aria-label="新增专题"');
+    expect(appSource).not.toContain('placeholder="专题名称，如：编辑精选"');
+    expect(appSource).not.toContain('placeholder="专题 ID（可选，自动生成）"');
+    expect(appSource).not.toContain("setTopicFilter(created.id)");
     expect(appSource).not.toContain("untitled-topic");
   });
 

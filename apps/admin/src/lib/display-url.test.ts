@@ -16,13 +16,13 @@ describe("admin display URL transforms", () => {
     );
   });
 
-  it("adds low quality previews while preserving query and hash", () => {
+  it("adds quality 10 previews while preserving query and hash", () => {
     expect(
       withAdminPreviewDisplayUrl(
         "https://cdn.example.test/photo.jpg?token=preview#large",
       ),
     ).toBe(
-      "https://cdn.example.test/photo.jpg?token=preview&imageMogr2/quality/25#large",
+      "https://cdn.example.test/photo.jpg?token=preview&imageMogr2/quality/10#large",
     );
   });
 
