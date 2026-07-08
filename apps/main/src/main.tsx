@@ -487,6 +487,7 @@ const App = () => {
                 type="checkbox"
                 role="switch"
                 aria-label="省流模式"
+                aria-checked={dataSaverEnabled}
                 checked={dataSaverEnabled}
                 onChange={(event) =>
                   setDataSaverEnabled(event.currentTarget.checked)
