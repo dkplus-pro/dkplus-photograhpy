@@ -45,10 +45,8 @@ const parseRouteHash = (hash: string): AppRoute => {
   const path = hash.replace(/^#\/?/, "").replace(/^\/+/, "");
   const [tabSegment, topicSegment] = path.split("/");
   if (tabSegment === "topics") {
-    return {
-      tab: "topics",
-      topicKey: topicSegment ? safeDecodeRouteSegment(topicSegment) : undefined,
-    };
+    const topicKey = topicSegment ? safeDecodeRouteSegment(topicSegment) : "";
+    return topicKey ? { tab: "topics", topicKey } : { tab: "topics" };
   }
   if (routeTabs.has(tabSegment as TabKey)) {
     return { tab: tabSegment as TabKey };
