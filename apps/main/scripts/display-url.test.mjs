@@ -30,7 +30,9 @@ test.after(async () => {
 
 test("display imageMogr2 helpers preserve query/hash and keep preview quality opt-in", () => {
   assert.equal(
-    withThumbnailDisplayQuery("https://cdn.example.com/thumb.jpg?existing=1#card"),
+    withThumbnailDisplayQuery(
+      "https://cdn.example.com/thumb.jpg?existing=1#card",
+    ),
     "https://cdn.example.com/thumb.jpg?existing=1&imageMogr2/thumbnail/800x#card",
   );
   assert.equal(
