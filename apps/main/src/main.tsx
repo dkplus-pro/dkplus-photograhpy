@@ -1,11 +1,6 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { startTransition, useEffect, useMemo, useState } from "react";
 import { createRoot } from "react-dom/client";
-import {
-  groupByMonth,
-  normalizePayload,
-  tabLabels,
-  topicCover,
-} from "./gallery";
+import { groupByMonth, normalizePayload, tabLabels } from "./gallery";
 import type { GalleryPayload, GridStyle, ResolvedPhoto, TabKey } from "./types";
 import { useVirtualRows } from "./useVirtualRows";
 import "./styles.css";
@@ -55,6 +50,46 @@ const formatAperture = (value?: number | string) => {
   return typeof value === "string" && value.startsWith("f/")
     ? value
     : `f/${value}`;
+};
+
+type TopicSummary = {
+  topic: GalleryPayload["topics"][number];
+  count: number;
+  photos: ResolvedPhoto[];
+  cover: ResolvedPhoto | undefined;
+};
+
+const buildTopicSummaries = (data: GalleryPayload): TopicSummary[] => {
+  const photoById = new Map<string, ResolvedPhoto>();
+  const photosByTopic = new Map<string, ResolvedPhoto[]>();
+  const firstPhotoByTopic = new Map<string, ResolvedPhoto>();
+
+  for (const photo of data.photos) {
+    photoById.set(photo.id, photo);
+    for (const topicId of photo.topicIds) {
+      const topicPhotos = photosByTopic.get(topicId);
+      if (topicPhotos) {
+        topicPhotos.push(photo);
+      } else {
+        photosByTopic.set(topicId, [photo]);
+      }
+      if (!firstPhotoByTopic.has(topicId)) {
+        firstPhotoByTopic.set(topicId, photo);
+      }
+    }
+  }
+
+  return data.topics.map((topic) => {
+    const photos = photosByTopic.get(topic.id) ?? [];
+    return {
+      topic,
+      count: photos.length,
+      photos,
+      cover:
+        (topic.coverPhotoId ? photoById.get(topic.coverPhotoId) : undefined) ??
+        firstPhotoByTopic.get(topic.id),
+    };
+  });
 };
 
 const PhotoCard = ({
@@ -125,43 +160,37 @@ const VirtualPhotoGrid = ({
 };
 
 const TopicGrid = ({
-  data,
+  summaries,
   onSelectTopic,
 }: {
-  data: GalleryPayload;
+  summaries: TopicSummary[];
   onSelectTopic: (topicId: string) => void;
 }) => (
   <div className="topic-grid" aria-label="专题列表">
-    {data.topics.map((topic) => {
-      const cover = topicCover(topic, data.photos);
-      const count = data.photos.filter((photo) =>
-        photo.topicIds.includes(topic.id),
-      ).length;
-      return (
-        <button
-          className="topic-card"
-          key={topic.id}
-          onClick={() => onSelectTopic(topic.id)}
-          disabled={!cover}
-          aria-label={`查看专题：${topic.title}`}
-        >
-          {cover ? (
-            <img
-              src={cover.urls.thumbnail}
-              alt={cover.asset.alt ?? topic.title}
-              loading="lazy"
-            />
-          ) : (
-            <span className="topic-card__empty" />
-          )}
-          <span className="topic-card__copy">
-            <strong>{topic.title}</strong>
-            <small>{count} 张作品</small>
-            <em>{topic.description}</em>
-          </span>
-        </button>
-      );
-    })}
+    {summaries.map(({ topic, cover, count }) => (
+      <button
+        className="topic-card"
+        key={topic.id}
+        onClick={() => onSelectTopic(topic.id)}
+        disabled={!cover}
+        aria-label={`查看专题：${topic.title}`}
+      >
+        {cover ? (
+          <img
+            src={cover.urls.thumbnail}
+            alt={cover.asset.alt ?? topic.title}
+            loading="lazy"
+          />
+        ) : (
+          <span className="topic-card__empty" />
+        )}
+        <span className="topic-card__copy">
+          <strong>{topic.title}</strong>
+          <small>{count} 张作品</small>
+          <em>{topic.description}</em>
+        </span>
+      </button>
+    ))}
   </div>
 );
 
@@ -340,26 +369,36 @@ const App = () => {
   const [tab, setTab] = useState<TabKey>("latest");
   const [selectedTopicId, setSelectedTopicId] = useState<string | null>(null);
   const [activePhoto, setActivePhoto] = useState<ResolvedPhoto | null>(null);
-  const selectedTopic =
-    data && selectedTopicId
-      ? data.topics.find((topic) => topic.id === selectedTopicId)
-      : undefined;
-  const topicPhotos = useMemo(
-    () =>
-      data && selectedTopicId
-        ? data.photos.filter((photo) =>
-            photo.topicIds.includes(selectedTopicId),
-          )
-        : [],
-    [data, selectedTopicId],
+
+  const topicSummaries = useMemo(
+    () => (data ? buildTopicSummaries(data) : []),
+    [data],
   );
+  const topicSummaryById = useMemo(
+    () =>
+      new Map(topicSummaries.map((summary) => [summary.topic.id, summary])),
+    [topicSummaries],
+  );
+  const selectedTopicSummary = selectedTopicId
+    ? topicSummaryById.get(selectedTopicId)
+    : undefined;
+  const selectedTopic = selectedTopicSummary?.topic;
+  const topicPhotos = selectedTopicSummary?.photos ?? [];
   const modalPhotos =
     data && tab === "topics" && selectedTopic
       ? topicPhotos
       : (data?.photos ?? []);
   const selectTab = (key: TabKey) => {
-    setTab(key);
-    if (key !== "topics") setSelectedTopicId(null);
+    startTransition(() => {
+      setTab(key);
+      if (key !== "topics") setSelectedTopicId(null);
+    });
+  };
+  const selectTopic = (topicId: string) => {
+    startTransition(() => setSelectedTopicId(topicId));
+  };
+  const clearSelectedTopic = () => {
+    startTransition(() => setSelectedTopicId(null));
   };
 
   if (error) {
@@ -424,11 +463,11 @@ const App = () => {
             <TopicDetail
               topic={selectedTopic}
               photos={topicPhotos}
-              onBack={() => setSelectedTopicId(null)}
+              onBack={clearSelectedTopic}
               onOpen={setActivePhoto}
             />
           ) : (
-            <TopicGrid data={data} onSelectTopic={setSelectedTopicId} />
+            <TopicGrid summaries={topicSummaries} onSelectTopic={selectTopic} />
           ))}
         {tab === "timeline" && (
           <Timeline photos={data.photos} onOpen={setActivePhoto} />
