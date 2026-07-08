@@ -14,6 +14,39 @@
   --focus: #332f29;
   --focus-ring: rgba(20, 20, 20, 0.32);
   --danger: #a32121;
+  --arco-theme-primary: #141414;
+  --arco-theme-primary-hover: #000000;
+  --arco-theme-primary-soft: #e8e1d4;
+  --arcoblue-1: 247, 243, 234;
+  --arcoblue-2: 238, 232, 220;
+  --arcoblue-3: 217, 209, 194;
+  --arcoblue-4: 140, 131, 118;
+  --arcoblue-5: 52, 52, 52;
+  --arcoblue-6: 20, 20, 20;
+  --arcoblue-7: 5, 5, 5;
+  --arcoblue-8: 0, 0, 0;
+  --arcoblue-9: 0, 0, 0;
+  --arcoblue-10: 0, 0, 0;
+  --primary-1: var(--arcoblue-1);
+  --primary-2: var(--arcoblue-2);
+  --primary-3: var(--arcoblue-3);
+  --primary-4: var(--arcoblue-4);
+  --primary-5: var(--arcoblue-5);
+  --primary-6: var(--arcoblue-6);
+  --primary-7: var(--arcoblue-7);
+  --primary-8: var(--arcoblue-8);
+  --primary-9: var(--arcoblue-9);
+  --primary-10: var(--arcoblue-10);
+  --link-1: var(--arcoblue-1);
+  --link-2: var(--arcoblue-2);
+  --link-3: var(--arcoblue-3);
+  --link-4: var(--arcoblue-4);
+  --link-5: var(--arcoblue-5);
+  --link-6: var(--arcoblue-6);
+  --link-7: var(--arcoblue-7);
+  --link-8: var(--arcoblue-8);
+  --link-9: var(--arcoblue-9);
+  --link-10: var(--arcoblue-10);
   --color-primary-1: #f7f3ea;
   --color-primary-2: #eee8dc;
   --color-primary-3: #d9d1c2;
@@ -21,6 +54,10 @@
   --color-primary-5: var(--ink-soft);
   --color-primary-6: var(--ink);
   --color-primary-7: #050505;
+  --color-primary-light-1: rgba(20, 20, 20, 0.08);
+  --color-primary-light-2: rgba(20, 20, 20, 0.16);
+  --color-primary-light-3: rgba(20, 20, 20, 0.28);
+  --color-primary-light-4: rgba(20, 20, 20, 0.42);
   --color-link-6: var(--ink);
   color: var(--ink);
   background: var(--paper);
@@ -321,7 +358,7 @@ textarea {
 }
 
 .editor-modal .arco-modal {
-  width: min(1040px, calc(100vw - 32px));
+  width: min(860px, calc(100vw - 32px));
 }
 
 .editor-shell {
@@ -391,9 +428,9 @@ textarea {
 
 .editor-form {
   display: grid;
-  grid-template-columns: minmax(280px, 0.92fr) minmax(340px, 1.08fr);
-  gap: 16px;
-  align-items: start;
+  grid-template-columns: 1fr;
+  gap: 18px;
+  align-items: stretch;
 }
 
 .editor-form label {
@@ -433,8 +470,6 @@ textarea {
 }
 
 .editor-upload-card {
-  position: sticky;
-  top: 16px;
   background:
     linear-gradient(
       180deg,
@@ -829,14 +864,6 @@ textarea {
   .toolbar {
     display: grid;
     grid-template-columns: 1fr;
-  }
-
-  .editor-form {
-    grid-template-columns: 1fr;
-  }
-
-  .editor-upload-card {
-    position: static;
   }
 
   .toolbar-actions {

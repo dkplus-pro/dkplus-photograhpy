@@ -15,7 +15,10 @@ import {
   Tag,
   Typography,
 } from "@arco-design/web-react";
-import type { TableColumnProps } from "@arco-design/web-react";
+import type {
+  ConfigProviderProps,
+  TableColumnProps,
+} from "@arco-design/web-react";
 import zhCN from "@arco-design/web-react/es/locale/zh-CN";
 
 import { createApiClient } from "./lib/api";
@@ -37,6 +40,12 @@ import type {
 const api = createApiClient();
 const TextArea = Input.TextArea;
 const { Text } = Typography;
+
+const arcoTheme: ConfigProviderProps["theme"] = {
+  primaryColor: "#141414",
+  infoColor: "#343434",
+  dangerColor: "#a32121",
+};
 
 const demoPhotos: PhotoRecord[] = [
   {
@@ -669,7 +678,7 @@ function App() {
   ];
 
   return (
-    <ConfigProvider locale={zhCN}>
+    <ConfigProvider locale={zhCN} theme={arcoTheme}>
       <main className="admin-shell">
         {messages.length > 0 && (
           <div className="toast-stack" role="status" aria-live="polite">
@@ -789,7 +798,7 @@ function App() {
           className="table-card"
           bordered={false}
           title="图片列表"
-          extra={<Tag color="arcoblue">{filteredPhotos.length} 条结果</Tag>}
+          extra={<Tag>{filteredPhotos.length} 条结果</Tag>}
         >
           <Spin loading={isLoading} style={{ width: "100%" }}>
             <Table<PhotoRecord>
@@ -857,8 +866,8 @@ function App() {
                 {editingId ? "校订图片与专题信息" : "创建一条新的图片记录"}
               </h2>
               <p>
-                左侧确认图片与 EXIF
-                状态，右侧补充标题、专题和描述；保存时继续沿用现有上传与持久化流程。
+                上方确认图片与 EXIF
+                状态，下方补充标题、专题和描述；保存时继续沿用现有上传与持久化流程。
               </p>
             </header>
 

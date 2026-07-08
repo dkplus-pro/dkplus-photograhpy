@@ -46,7 +46,7 @@ describe("admin gallery list contract", () => {
     expect(appSource).toMatch(/scroll=\{\{\s*x:\s*1260\s*\}\}/);
   });
 
-  it("keeps the redesigned editor modal as upload preview plus metadata panes", () => {
+  it("keeps the redesigned editor modal as stacked upload preview plus metadata sections", () => {
     expect(appSource).toContain('className="editor-modal"');
     expect(appSource).toContain('className="editor-upload-card"');
     expect(appSource).toContain('className="editor-metadata-card"');
@@ -60,8 +60,9 @@ describe("admin gallery list contract", () => {
     expect(styles).toContain(".editor-hero");
     expect(styles).toContain(".editor-exif-status");
     expect(styles).toMatch(
-      /\.editor-form\s*\{[\s\S]*?grid-template-columns:\s*minmax\(280px,\s*0\.92fr\)\s*minmax\(340px,\s*1\.08fr\);/,
+      /\.editor-form\s*\{[\s\S]*?grid-template-columns:\s*1fr;[\s\S]*?align-items:\s*stretch;/,
     );
+    expect(styles).not.toMatch(/grid-template-columns:\s*minmax\(280px/);
   });
 
   it("centers dense table content and keeps unified neutral hover and focus tones", () => {
@@ -74,6 +75,10 @@ describe("admin gallery list contract", () => {
     expect(styles).toContain("--hover-wash: #e8e1d4;");
     expect(styles).toContain("--focus: #332f29;");
     expect(styles).toContain("--focus-ring: rgba(20, 20, 20, 0.32);");
+    expect(appSource).toContain("const arcoTheme");
+    expect(appSource).toContain('primaryColor: "#141414"');
+    expect(appSource).toContain("theme={arcoTheme}");
+    expect(styles).toContain("--arcoblue-6: 20, 20, 20;");
     expect(styles).toContain("--color-primary-6: var(--ink);");
     expect(styles).toContain(".photos-table .arco-empty");
     expect(styles).toContain(

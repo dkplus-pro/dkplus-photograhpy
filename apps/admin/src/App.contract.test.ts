@@ -47,20 +47,22 @@ describe("admin gallery list contract", () => {
     expect(appSource).toContain("isUploadOpen");
   });
 
-  it("documents the redesigned two-pane editor modal contract", () => {
+  it("documents the redesigned stacked editor modal contract", () => {
     expect(appSource).toContain('className="editor-modal"');
     expect(appSource).toContain('className="editor-shell"');
     expect(appSource).toContain('aria-label="图片上传与预览"');
     expect(appSource).toContain('aria-label="图片元数据"');
     expect(appSource).toContain("EXIF 状态");
     expect(appSource).toContain("等待选择本地图片后读取。");
+    expect(appSource).toContain("上方确认图片与 EXIF");
     expect(appSource).toContain("保存时继续沿用现有上传与持久化流程");
     expect(styles).toContain(".editor-upload-card");
     expect(styles).toContain(".editor-metadata-card");
     expect(styles).toContain(".editor-exif-status");
     expect(styles).toMatch(
-      /\.editor-form\s*\{[\s\S]*?grid-template-columns:\s*minmax\(280px,\s*0\.92fr\)\s*minmax\(340px,\s*1\.08fr\);/,
+      /\.editor-form\s*\{[\s\S]*?grid-template-columns:\s*1fr;[\s\S]*?align-items:\s*stretch;/,
     );
+    expect(styles).not.toMatch(/grid-template-columns:\s*minmax\(280px/);
   });
 
   it("centers dense table cells and keeps unified neutral hover and focus tones", () => {
@@ -73,6 +75,10 @@ describe("admin gallery list contract", () => {
     expect(styles).toContain("--hover-wash: #e8e1d4;");
     expect(styles).toContain("--focus: #332f29;");
     expect(styles).toContain("--focus-ring: rgba(20, 20, 20, 0.32);");
+    expect(appSource).toContain("const arcoTheme");
+    expect(appSource).toContain('primaryColor: "#141414"');
+    expect(appSource).toContain("theme={arcoTheme}");
+    expect(styles).toContain("--arcoblue-6: 20, 20, 20;");
     expect(styles).toContain("--color-primary-6: var(--ink);");
     expect(styles).toContain(
       ".toolbar :where(.arco-input-inner-wrapper, .arco-select-view):focus-within",

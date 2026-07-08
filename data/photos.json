@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-07-07T17:22:04.846Z",
+  "generatedAt": "2026-07-08T06:43:42.017Z",
   "topics": [
     {
       "id": "city-night",
@@ -63,9 +63,7 @@
       "id": "city-001",
       "title": "雨后路口",
       "description": "雨水让路面变成镜面，车灯在蓝调时刻留下短暂轨迹。",
-      "topicIds": [
-        "city-night"
-      ],
+      "topicIds": ["city-night"],
       "takenAt": "2026-07-02T20:18:00Z",
       "location": "Shanghai",
       "asset": {
@@ -90,9 +88,7 @@
       "id": "nature-001",
       "title": "晨雾山脊",
       "description": "太阳越过山脊前，雾气把远处层次压成柔和的灰蓝色。",
-      "topicIds": [
-        "mountain-light"
-      ],
+      "topicIds": ["mountain-light"],
       "takenAt": "2026-06-23T05:42:00Z",
       "location": "Huangshan",
       "asset": {
@@ -117,9 +113,7 @@
       "id": "life-001",
       "title": "窗边器皿",
       "description": "午后斜光落在玻璃和陶瓷上，留下轻微的暖色边缘。",
-      "topicIds": [
-        "quiet-life"
-      ],
+      "topicIds": ["quiet-life"],
       "takenAt": "2026-06-05T14:12:00Z",
       "location": "Studio",
       "asset": {
@@ -144,9 +138,7 @@
       "id": "portrait-001",
       "title": "窗帘后的光",
       "description": "用半透明窗帘打散直射光，让面部轮廓保持柔和。",
-      "topicIds": [
-        "portrait-study"
-      ],
+      "topicIds": ["portrait-study"],
       "takenAt": "2026-05-18T16:30:00Z",
       "location": "Hangzhou",
       "asset": {
@@ -171,9 +163,7 @@
       "id": "city-002",
       "title": "高架下",
       "description": "高架桥把天空切开，行人从几何阴影里穿过。",
-      "topicIds": [
-        "city-night"
-      ],
+      "topicIds": ["city-night"],
       "takenAt": "2026-04-26T18:46:00Z",
       "location": "Chongqing",
       "asset": {
@@ -198,9 +188,7 @@
       "id": "nature-002",
       "title": "湖面风线",
       "description": "风经过湖面留下细小纹理，远山像低饱和度的背景板。",
-      "topicIds": [
-        "mountain-light"
-      ],
+      "topicIds": ["mountain-light"],
       "takenAt": "2026-03-11T09:10:00Z",
       "location": "Yunnan",
       "asset": {
@@ -225,9 +213,7 @@
       "id": "life-002",
       "title": "旧书页",
       "description": "纸张纤维与手写批注，是时间可见的一部分。",
-      "topicIds": [
-        "quiet-life"
-      ],
+      "topicIds": ["quiet-life"],
       "takenAt": "2026-02-14T11:03:00Z",
       "location": "Home",
       "asset": {
@@ -252,9 +238,7 @@
       "id": "portrait-002",
       "title": "侧脸练习",
       "description": "使用暗背景突出轮廓，保留眼神方向上的留白。",
-      "topicIds": [
-        "portrait-study"
-      ],
+      "topicIds": ["portrait-study"],
       "takenAt": "2026-01-20T19:24:00Z",
       "location": "Studio",
       "asset": {
@@ -317,6 +301,28 @@
         "shutterSpeed": "1/50s",
         "focalLength": "8",
         "capturedAt": "2024-01-12T09:46:03.000Z"
+      }
+    },
+    {
+      "id": "cc0ee873-547f-4f4a-8eab-50888fc3dd91",
+      "title": "P1120464",
+      "topicIds": [],
+      "takenAt": "2024-01-12T09:35:51.000Z",
+      "asset": {
+        "original": "https://cdn.ai4love.cn/tmp/2026/07/1783493020287-23e29e57-b201-482b-b485-6cf0848e9a52-p1120464.jpg",
+        "thumbnail": "https://cdn.ai4love.cn/tmp/2026/07/1783493020287-23e29e57-b201-482b-b485-6cf0848e9a52-p1120464.jpg",
+        "preview": "https://cdn.ai4love.cn/tmp/2026/07/1783493020287-23e29e57-b201-482b-b485-6cf0848e9a52-p1120464.jpg",
+        "alt": "P1120464"
+      },
+      "exif": {
+        "cameraBrand": "OLYMPUS CORPORATION",
+        "cameraModel": "E-M1MarkIII",
+        "lens": "OLYMPUS M.8-25mm F4.0",
+        "iso": 200,
+        "aperture": "f/6.3",
+        "shutterSpeed": "1s",
+        "focalLength": "25",
+        "capturedAt": "2024-01-12T09:35:51.000Z"
       }
     }
   ]

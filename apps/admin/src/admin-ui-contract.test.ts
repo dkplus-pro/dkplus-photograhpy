@@ -59,7 +59,7 @@ describe("admin list UI contract", () => {
     );
   });
 
-  it("uses a two-pane editorial image editor with visible helpers and EXIF status", () => {
+  it("uses a stacked editorial image editor with visible helpers and EXIF status", () => {
     expect(appSource).toContain('className="editor-modal"');
     expect(appSource).toContain('className="editor-shell"');
     expect(appSource).toContain('className="editor-upload-card"');
@@ -72,13 +72,11 @@ describe("admin list UI contract", () => {
     expect(appSource).toContain("专题会同步写入主专题字段");
     expect(styles).toContain(".editor-modal .arco-modal");
     expect(styles).toMatch(
-      /\.editor-form\s*\{[\s\S]*?grid-template-columns:\s*minmax\(280px,\s*0\.92fr\)\s*minmax\(340px,\s*1\.08fr\);/,
+      /\.editor-form\s*\{[\s\S]*?grid-template-columns:\s*1fr;[\s\S]*?align-items:\s*stretch;/,
     );
     expect(styles).toContain(".editor-exif-status");
     expect(styles).toContain(".editor-metadata-card");
-    expect(styles).toMatch(
-      /@media \(max-width: 920px\)[\s\S]*?\.editor-form\s*\{[\s\S]*?grid-template-columns:\s*1fr;/,
-    );
+    expect(styles).not.toMatch(/grid-template-columns:\s*minmax\(280px/);
   });
 
   it("keeps dense accessible gallery styling with unified neutral hover and focus tones", () => {
@@ -88,6 +86,10 @@ describe("admin list UI contract", () => {
     expect(styles).toContain("--hover-wash: #e8e1d4;");
     expect(styles).toContain("--focus: #332f29;");
     expect(styles).toContain("--focus-ring: rgba(20, 20, 20, 0.32);");
+    expect(appSource).toContain("const arcoTheme");
+    expect(appSource).toContain('primaryColor: "#141414"');
+    expect(appSource).toContain("theme={arcoTheme}");
+    expect(styles).toContain("--arcoblue-6: 20, 20, 20;");
     expect(styles).toContain("--color-primary-6: var(--ink);");
     expect(styles).toContain(
       ".toolbar :where(.arco-input-inner-wrapper, .arco-select-view):focus-within",
