@@ -228,7 +228,9 @@ const unwrapPhotos = (
 };
 
 const unwrapTopics = (
-  value: ServerTopicEnvelope[] | { topics?: ServerTopicEnvelope[]; data?: ServerTopicEnvelope[] },
+  value:
+    | ServerTopicEnvelope[]
+    | { topics?: ServerTopicEnvelope[]; data?: ServerTopicEnvelope[] },
 ): TopicRecord[] => {
   if (Array.isArray(value)) return value.map(normalizeTopicForAdmin);
   return (value.topics ?? value.data ?? []).map(normalizeTopicForAdmin);
