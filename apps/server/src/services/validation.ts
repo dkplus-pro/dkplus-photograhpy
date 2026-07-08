@@ -1,5 +1,10 @@
 import { AppError } from "../errors.js";
-import type { PhotoAsset, PhotoImage, PhotoInput } from "../types/gallery.js";
+import type {
+  PhotoAsset,
+  PhotoImage,
+  PhotoInput,
+  TopicInput,
+} from "../types/gallery.js";
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
@@ -22,6 +27,19 @@ function readString(
   return value.trim();
 }
 
+function readOptionalTrimmedString(
+  value: unknown,
+  field: string,
+): string | undefined {
+  if (value === undefined || value === null) {
+    return undefined;
+  }
+  if (typeof value !== "string") {
+    throw new AppError(400, "VALIDATION_ERROR", `${field} must be a string`);
+  }
+  return value.trim();
+}
+
 function readStringArray(value: unknown, field: string): string[] | undefined {
   if (value === undefined || value === null) {
     return undefined;
@@ -34,6 +52,17 @@ function readStringArray(value: unknown, field: string): string[] | undefined {
     );
   }
   return value.map((item) => item.trim()).filter(Boolean);
+}
+
+function readInteger(value: unknown, field: string): number | undefined {
+  if (value === undefined || value === null || value === "") {
+    return undefined;
+  }
+  const numeric = Number(value);
+  if (!Number.isInteger(numeric)) {
+    throw new AppError(400, "VALIDATION_ERROR", `${field} must be an integer`);
+  }
+  return numeric;
 }
 
 function readDate(value: unknown, field: string): string | undefined {
@@ -140,6 +169,36 @@ export function validatePhotoInput(
         : undefined),
     asset,
     exif: isRecord(value.exif) ? { ...value.exif } : undefined,
+  };
+}
+
+export function validateTopicInput(
+  value: unknown,
+  options: { requireTitle?: boolean } = {},
+): TopicInput {
+  if (!isRecord(value)) {
+    throw new AppError(
+      400,
+      "VALIDATION_ERROR",
+      "request body must be an object",
+    );
+  }
+
+  const title = readOptionalTrimmedString(value.title, "title");
+  if (options.requireTitle && !title) {
+    throw new AppError(400, "VALIDATION_ERROR", "title is required");
+  }
+  if (value.title !== undefined && !title) {
+    throw new AppError(400, "VALIDATION_ERROR", "title is required");
+  }
+
+  return {
+    id: readString(value.id, "id"),
+    title,
+    description: readOptionalTrimmedString(value.description, "description"),
+    slug: readString(value.slug, "slug"),
+    coverPhotoId: readString(value.coverPhotoId, "coverPhotoId"),
+    sortOrder: readInteger(value.sortOrder, "sortOrder"),
   };
 }
 
