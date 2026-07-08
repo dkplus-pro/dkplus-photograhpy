@@ -169,13 +169,13 @@ const uniqueSorted = (values: Array<string | undefined>): string[] =>
 function App() {
   const [activePage, setActivePage] = useState<AdminPage>("photos");
   const [photos, setPhotos] = useState<PhotoRecord[]>([]);
-  const [managedTopics, setManagedTopics] = useState<TopicRecord[]>([]);
+  const [topics, setTopics] = useState<TopicRecord[]>([]);
+  const [activeSection, setActiveSection] = useState<AdminSection>("photos");
   const [selectedIds, setSelectedIds] = useState<Set<string>>(() => new Set());
   const [payload, setPayload] = useState<PhotoPayload>(emptyPayload);
-  const [customTopics, setCustomTopics] = useState<TopicOption[]>([]);
   const [topicDraft, setTopicDraft] = useState<TopicDraft>(emptyTopicDraft);
-  const [managedTopicDraft, setManagedTopicDraft] =
-    useState<TopicDraft>(emptyTopicDraft);
+  const [topicPayload, setTopicPayload] =
+    useState<TopicPayload>(emptyTopicPayload);
   const [editingTopicId, setEditingTopicId] = useState<string | null>(null);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [previews, setPreviews] = useState<UploadPreview[]>([]);
@@ -219,16 +219,16 @@ function App() {
 
   const refresh = async () => {
     setIsLoading(true);
-    setIsTopicLoading(true);
-    const [photoResult, topicResult] = await Promise.allSettled([
-      api.listPhotos(),
-      api.listTopics(),
-    ]);
-
-    if (photoResult.status === "fulfilled") {
-      setPhotos(photoResult.value);
-    } else {
+    try {
+      const [records, topicRecords] = await Promise.all([
+        api.listPhotos(),
+        api.listTopics(),
+      ]);
+      setPhotos(records);
+      setTopics(topicRecords);
+    } catch (error) {
       setPhotos(demoPhotos);
+      setTopics(demoTopics);
       pushMessage(
         "info",
         `API 暂不可用，正在显示演示数据。${
@@ -272,37 +272,11 @@ function App() {
     [],
   );
 
-  const topicUsage = useMemo(() => {
-    const map = new Map<string, number>();
-    for (const photo of photos) {
-      for (const topicId of [photo.topicId, ...(photo.topicIds ?? [])]) {
-        const normalizedTopicId = topicId?.trim();
-        if (!normalizedTopicId) continue;
-        map.set(normalizedTopicId, (map.get(normalizedTopicId) ?? 0) + 1);
-      }
+  const topicOptions = useMemo(() => {
+    const map = new Map<string, string>();
+    for (const topic of topics) {
+      map.set(topic.id, topic.title || topic.id);
     }
-    return map;
-  }, [photos]);
-
-  const topicRows = useMemo<TopicRecord[]>(() => {
-    const map = new Map<string, TopicRecord>();
-    const upsertTopic = (topic: TopicRecord) => {
-      const id = topic.id.trim();
-      if (!id) return;
-      map.set(id, {
-        ...map.get(id),
-        ...topic,
-        id,
-        title: topic.title?.trim() || map.get(id)?.title || id,
-        description:
-          topic.description?.trim() || map.get(id)?.description || undefined,
-      });
-    };
-
-    for (const topic of managedTopics) {
-      upsertTopic(topic);
-    }
-
     for (const photo of photos) {
       if (photo.topicId) {
         upsertTopic({
@@ -316,20 +290,8 @@ function App() {
         }
       }
     }
-
-    for (const [id, title] of customTopics) {
-      upsertTopic({ id, title: title || id });
-    }
-
-    return [...map.values()].sort((a, b) =>
-      a.title.localeCompare(b.title, "zh-CN"),
-    );
-  }, [customTopics, managedTopics, photos]);
-
-  const topics = useMemo<TopicOption[]>(
-    () => topicRows.map((topic) => [topic.id, topic.title]),
-    [topicRows],
-  );
+    return [...map.entries()].sort((a, b) => a[1].localeCompare(b[1], "zh-CN"));
+  }, [photos, topics]);
 
   const cameraBrands = useMemo(
     () => uniqueSorted(photos.map((photo) => photo.exif?.cameraMake)),
@@ -367,13 +329,20 @@ function App() {
   const stagedSummary = useMemo(() => summarizeUpload(previews), [previews]);
   const visibleCount = filteredPhotos.length;
   const topicCount = topics.length;
-  const usedTopicCount = [...topicUsage.values()].filter(
-    (count) => count > 0,
-  ).length;
-  const topicReferenceCount = [...topicUsage.values()].reduce(
-    (sum, count) => sum + count,
-    0,
-  );
+  const topicUsageById = useMemo(() => {
+    const usage = new Map<string, number>();
+    for (const photo of photos) {
+      const ids = new Set(
+        [photo.topicId, ...(photo.topicIds ?? [])].filter(
+          (id): id is string => Boolean(id),
+        ),
+      );
+      for (const id of ids) {
+        usage.set(id, (usage.get(id) ?? 0) + 1);
+      }
+    }
+    return usage;
+  }, [photos]);
   const editingPhoto = useMemo(
     () => photos.find((photo) => photo.id === editingId) ?? null,
     [editingId, photos],
@@ -396,17 +365,8 @@ function App() {
   };
 
   const selectTopic = (topicId: string) => {
-    const topicTitle = topics.find(([id]) => id === topicId)?.[1] || "";
+    const topicTitle = topicOptions.find(([id]) => id === topicId)?.[1] || "";
     setPayload((current) => ({ ...current, topicId, topicTitle }));
-  };
-
-  const upsertManagedTopic = (topic: TopicRecord) => {
-    setManagedTopics((current) => {
-      const withoutDuplicate = current.filter((item) => item.id !== topic.id);
-      return [...withoutDuplicate, topic].sort((a, b) =>
-        a.title.localeCompare(b.title, "zh-CN"),
-      );
-    });
   };
 
   const createTopicFromDraft = async () => {
@@ -418,30 +378,35 @@ function App() {
       return;
     }
 
+    setIsSaving(true);
     try {
-      const createdTopic = await api.createTopic({
+      const created = await api.createTopic({
         id: topicId,
         title,
         description: topicDraft.description,
       });
-      upsertManagedTopic(createdTopic);
-    } catch (error) {
-      setCustomTopics((current) => {
-        const withoutDuplicate = current.filter(([id]) => id !== topicId);
-        return [...withoutDuplicate, [topicId, title]];
+      setTopics((current) => {
+        const withoutDuplicate = current.filter((topic) => topic.id !== created.id);
+        return [...withoutDuplicate, created].sort((a, b) =>
+          a.title.localeCompare(b.title, "zh-CN"),
+        );
       });
+      setPayload((current) => ({
+        ...current,
+        topicId: created.id,
+        topicTitle: created.title,
+      }));
+      setTopicFilter(created.id);
+      setTopicDraft(emptyTopicDraft);
+      pushMessage("success", `已新增专题“${created.title}”，并设为当前专题。`);
+    } catch (error) {
       pushMessage(
-        "info",
-        `专题 API 暂不可用，已作为本地专题继续图片流程。${
-          error instanceof Error ? error.message : ""
-        }`.trim(),
+        "error",
+        error instanceof Error ? error.message : "创建专题失败",
       );
+    } finally {
+      setIsSaving(false);
     }
-
-    setPayload((current) => ({ ...current, topicId, topicTitle: title }));
-    setTopicFilter(topicId);
-    setTopicDraft(emptyTopicDraft);
-    pushMessage("success", `已新增专题“${title}”，并设为当前专题。`);
   };
 
   const withTopicTitle = (
@@ -456,7 +421,7 @@ function App() {
 
     const normalizedTopicTitle =
       topicTitle?.trim() ||
-      topics.find(([id]) => id === normalizedTopicId)?.[1] ||
+      topicOptions.find(([id]) => id === normalizedTopicId)?.[1] ||
       photo.topicTitle ||
       normalizedTopicId;
     const topicIds = photo.topicIds?.includes(normalizedTopicId)
@@ -473,6 +438,15 @@ function App() {
 
   const withSelectedTopic = (photo: PhotoRecord): PhotoRecord =>
     withTopicTitle(photo, payload.topicId, payload.topicTitle);
+
+  const topicTitleForPhoto = (photo: PhotoRecord): string =>
+    topicOptions.find(
+      ([id]) => id === (photo.topicId || photo.topicIds?.[0] || ""),
+    )?.[1] ||
+    photo.topicTitle ||
+    photo.topicId ||
+    photo.topicIds?.[0] ||
+    "未分组";
 
   const resetEditor = () => {
     setEditingId(null);
@@ -624,7 +598,7 @@ function App() {
       for (const preview of previews) {
         const result = await api.uploadPhoto(preview);
         const previewTopicTitle =
-          topics.find(([id]) => id === preview.topicId)?.[1] || "";
+          topicOptions.find(([id]) => id === preview.topicId)?.[1] || "";
         if (result.photo) {
           uploaded.push(
             withTopicTitle(result.photo, preview.topicId, previewTopicTitle),
@@ -793,6 +767,92 @@ function App() {
     }
   };
 
+  const openCreateTopicEditor = () => {
+    setEditingTopicId(null);
+    setTopicPayload(emptyTopicPayload);
+    setIsTopicEditorOpen(true);
+    setActiveSection("topics");
+  };
+
+  const editTopic = (topic: TopicRecord) => {
+    setEditingTopicId(topic.id);
+    setTopicPayload({
+      title: topic.title,
+      description: topic.description ?? "",
+    });
+    setIsTopicEditorOpen(true);
+  };
+
+  const resetTopicEditor = () => {
+    setEditingTopicId(null);
+    setTopicPayload(emptyTopicPayload);
+    setIsTopicEditorOpen(false);
+  };
+
+  const saveTopic = async () => {
+    const title = topicPayload.title.trim();
+    if (!title) {
+      pushMessage("error", "请填写专题标题。");
+      return;
+    }
+
+    setIsSaving(true);
+    try {
+      const saved = editingTopicId
+        ? await api.updateTopic(editingTopicId, {
+            title,
+            description: topicPayload.description ?? "",
+          })
+        : await api.createTopic({
+            title,
+            description: topicPayload.description ?? "",
+          });
+      setTopics((current) => {
+        const withoutCurrent = current.filter((topic) => topic.id !== saved.id);
+        return [...withoutCurrent, saved].sort((a, b) =>
+          a.title.localeCompare(b.title, "zh-CN"),
+        );
+      });
+      pushMessage(
+        "success",
+        editingTopicId ? "专题已更新" : `专题“${saved.title}”已创建`,
+      );
+      resetTopicEditor();
+    } catch (error) {
+      pushMessage(
+        "error",
+        error instanceof Error ? error.message : "保存专题失败",
+      );
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const requestDeleteTopic = (topic: TopicRecord) => {
+    const usageCount = topicUsageById.get(topic.id) ?? 0;
+    if (usageCount > 0) {
+      pushMessage("error", "该专题仍有关联图片，请先移除图片专题后再删除。");
+      return;
+    }
+    setConfirmAction({
+      title: "删除专题",
+      body: `确认删除“${topic.title}”？此操作只移除专题记录，不会修改图片或导出文件。`,
+      async onConfirm() {
+        await api.deleteTopic(topic.id);
+        setTopics((current) =>
+          current.filter((record) => record.id !== topic.id),
+        );
+        if (topicFilter === topic.id) {
+          setTopicFilter(allFilterValue);
+        }
+        if (payload.topicId === topic.id) {
+          setPayload((current) => ({ ...current, topicId: "", topicTitle: "" }));
+        }
+        pushMessage("success", "专题已删除");
+      },
+    });
+  };
+
   const takenAtValue = (photo: PhotoRecord): string =>
     photo.takenAt ?? photo.exif?.capturedAt ?? photo.createdAt ?? "";
 
@@ -842,7 +902,7 @@ function App() {
       width: 130,
       align: "center",
       render: (_value, photo) =>
-        photo.topicTitle || photo.topicId || photo.topicIds?.[0] || "未分组",
+        topicTitleForPhoto(photo),
     },
     {
       title: "型号",
@@ -894,38 +954,31 @@ function App() {
 
   const topicColumns: TableColumnProps<TopicRecord>[] = [
     {
-      title: "专题名称",
+      title: "专题",
       dataIndex: "title",
-      width: 260,
+      width: 220,
       render: (_value, topic) => (
         <div className="topic-title-cell">
           <strong>{topic.title}</strong>
-          <Text type="secondary">{topic.description || "暂无专题描述"}</Text>
+          <Text type="secondary">{topic.id}</Text>
         </div>
       ),
     },
     {
-      title: "专题 ID",
-      dataIndex: "id",
-      width: 180,
+      title: "描述",
+      dataIndex: "description",
       render: (_value, topic) => (
-        <Tag>{topic.slug ? `${topic.id} / ${topic.slug}` : topic.id}</Tag>
+        <Text className="topic-description-cell">
+          {topic.description || "暂无描述"}
+        </Text>
       ),
     },
     {
-      title: "图片数",
-      dataIndex: "id",
-      width: 110,
+      title: "关联图片",
+      key: "usage",
+      width: 120,
       align: "center",
-      render: (_value, topic) => topicUsage.get(topic.id) ?? 0,
-    },
-    {
-      title: "更新时间",
-      dataIndex: "updatedAt",
-      width: 150,
-      align: "center",
-      render: (_value, topic) =>
-        formatDate(topic.updatedAt ?? topic.createdAt ?? ""),
+      render: (_value, topic) => topicUsageById.get(topic.id) ?? 0,
     },
     {
       title: "操作",
@@ -933,7 +986,7 @@ function App() {
       width: 170,
       align: "center",
       render: (_value, topic) => {
-        const usageCount = topicUsage.get(topic.id) ?? 0;
+        const usageCount = topicUsageById.get(topic.id) ?? 0;
         return (
           <Space size="mini">
             <Button size="mini" type="outline" onClick={() => editTopic(topic)}>
@@ -944,7 +997,9 @@ function App() {
               status="danger"
               type="outline"
               disabled={usageCount > 0}
-              title={usageCount > 0 ? "仍有关联图片，不能删除" : "删除专题"}
+              title={
+                usageCount > 0 ? "先移除该专题下的图片关联后再删除" : undefined
+              }
               onClick={() => requestDeleteTopic(topic)}
             >
               删除
@@ -1042,22 +1097,72 @@ function App() {
             )}
           </header>
 
-          {activePage === "photos" ? (
-            <>
-              <section className="stats-grid" aria-label="图片统计">
-                <Card bordered={false}>
-                  <Statistic title="图片记录" value={photos.length} />
-                </Card>
-                <Card bordered={false}>
-                  <Statistic title="筛选结果" value={visibleCount} />
-                </Card>
-                <Card bordered={false}>
-                  <Statistic title="专题数量" value={topicCount} />
-                </Card>
-                <Card bordered={false}>
-                  <Statistic title="已选择" value={selectedCount} />
-                </Card>
-              </section>
+        <Card className="toolbar-card" bordered={false}>
+          <div className="toolbar">
+            <Input
+              allowClear
+              aria-label="按标题筛选"
+              value={titleFilter}
+              onChange={setTitleFilter}
+              placeholder="按标题筛选"
+            />
+            <Select
+              aria-label="按品牌筛选"
+              value={brandFilter}
+              onChange={(value) => setBrandFilter(String(value))}
+              options={[
+                { label: "全部品牌", value: "all" },
+                ...cameraBrands.map((brand) => ({
+                  label: brand,
+                  value: brand,
+                })),
+              ]}
+            />
+            <Select
+              aria-label="按机型筛选"
+              value={modelFilter}
+              onChange={(value) => setModelFilter(String(value))}
+              options={[
+                { label: "全部机型", value: "all" },
+                ...cameraModels.map((model) => ({
+                  label: model,
+                  value: model,
+                })),
+              ]}
+            />
+            <Select
+              aria-label="按专题筛选"
+              value={topicFilter}
+              onChange={(value) => setTopicFilter(String(value))}
+              options={[
+                { label: "全部专题", value: allFilterValue },
+                ...topicOptions.map(([id, title]) => ({
+                  label: title,
+                  value: id,
+                })),
+              ]}
+            />
+            <Space wrap className="toolbar-actions">
+              <Button type="primary" onClick={openCreateEditor}>
+                新增图片
+              </Button>
+              <Button
+                status="danger"
+                disabled={selectedCount === 0}
+                onClick={requestBatchDelete}
+              >
+                删除所选
+              </Button>
+              <Button
+                type="outline"
+                loading={isExporting}
+                onClick={() => void exportToClient()}
+              >
+                导出到客户端
+              </Button>
+            </Space>
+          </div>
+        </Card>
 
               <Card className="toolbar-card" bordered={false}>
                 <div className="toolbar">
@@ -1126,11 +1231,126 @@ function App() {
                 </div>
               </Card>
 
-              <Card
-                className="table-card"
-                bordered={false}
-                title="图片列表"
-                extra={<Tag>{filteredPhotos.length} 条结果</Tag>}
+              <section className="editor-metadata-card" aria-label="图片元数据">
+                <div className="editor-metadata-card__heading">
+                  <span className="editor-section-label">Step 02</span>
+                  <strong>元数据</strong>
+                  <p>用清晰标题、专题和说明帮助前台图库检索与分组。</p>
+                </div>
+
+                <label>
+                  <span>标题（可选）</span>
+                  <Input
+                    value={payload.title || ""}
+                    onChange={(value) =>
+                      setPayload({ ...payload, title: value })
+                    }
+                    placeholder="例如：雨后街角"
+                  />
+                  <small>留空时会使用文件名或记录 ID 作为后台识别文本。</small>
+                </label>
+
+                <label>
+                  <span>专题（可选）</span>
+                  <Select
+                    allowClear
+                    showSearch
+                    value={payload.topicId || undefined}
+                    placeholder="选择已有专题，或先在下方新增"
+                    onChange={(value) =>
+                      selectTopic(typeof value === "string" ? value : "")
+                    }
+                    options={topicOptions.map(([id, title]) => ({
+                      label: `${title} (${id})`,
+                      value: id,
+                    }))}
+                  />
+                  <small>
+                    专题会同步写入主专题字段，并保留既有 topicIds 兼容。
+                  </small>
+                  <div className="topic-create-row" aria-label="新增专题">
+                    <Input
+                      value={topicDraft.title}
+                      onChange={(value) =>
+                        setTopicDraft((current) => ({
+                          ...current,
+                          title: value,
+                        }))
+                      }
+                      placeholder="专题名称，如：编辑精选"
+                    />
+                    <Input
+                      value={topicDraft.id}
+                      onChange={(value) =>
+                        setTopicDraft((current) => ({ ...current, id: value }))
+                      }
+                      placeholder="专题 ID（可选，自动生成）"
+                    />
+                    <Button
+                      type="outline"
+                      loading={isSaving}
+                      onClick={() => void createTopicFromDraft()}
+                    >
+                      创建专题
+                    </Button>
+                  </div>
+                </label>
+
+                <label>
+                  <span>描述（可选）</span>
+                  <TextArea
+                    value={payload.description || ""}
+                    onChange={(value) =>
+                      setPayload({ ...payload, description: value })
+                    }
+                    placeholder="简短说明这张图片的内容"
+                    autoSize={{ minRows: 4, maxRows: 6 }}
+                  />
+                  <small>建议记录场景、项目或发布备注，便于后续编辑。</small>
+                </label>
+              </section>
+            </div>
+          </div>
+        </Modal>
+
+        <Modal
+          title="上传图片"
+          visible={isUploadOpen}
+          onCancel={() => setIsUploadOpen(false)}
+          onOk={() => void uploadStaged()}
+          confirmLoading={isSaving}
+          okText="上传暂存文件"
+          cancelText="关闭"
+          okButtonProps={{ disabled: previews.length === 0 }}
+          maskClosable={false}
+        >
+          <div className="upload-panel">
+            <p className="upload-hint">
+              先选择文件并在本地读取 EXIF，确认后统一提交到 /api/uploads。
+            </p>
+            <label className="upload-topic-select">
+              <span>当前专题（可选）</span>
+              <Select
+                allowClear
+                showSearch
+                value={payload.topicId || undefined}
+                placeholder="选择已有专题，或在新增图片里创建专题"
+                onChange={(value) =>
+                  selectTopic(typeof value === "string" ? value : "")
+                }
+                options={topicOptions.map(([id, title]) => ({
+                  label: `${title} (${id})`,
+                  value: id,
+                }))}
+              />
+            </label>
+            <Space wrap>
+              <Button onClick={() => quickFileInputRef.current?.click()}>
+                快速选择
+              </Button>
+              <Button
+                type="primary"
+                onClick={() => topicFileInputRef.current?.click()}
               >
                 <Spin loading={isLoading} style={{ width: "100%" }}>
                   <Table<PhotoRecord>
