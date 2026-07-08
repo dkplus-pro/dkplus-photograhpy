@@ -7,9 +7,9 @@ import type {
 } from "./types";
 
 const fallbackCdnBaseUrl = "https://images.unsplash.com";
+const thumbnailDisplayQuery = "imageMogr2/thumbnail/800x";
 const isAbsoluteUrl = (value: string): boolean =>
   /^[a-z][a-z\d+.-]*:/i.test(value) || value.startsWith("//");
-
 const trimSlashes = (value: string): string => value.replace(/^\/+|\/+$/g, "");
 
 export const resolveDisplayAssetUrl = (value: string): string => {
@@ -24,6 +24,39 @@ export const resolveDisplayAssetUrl = (value: string): string => {
     queryIndex >= 0 ? withoutHash.slice(0, queryIndex) : withoutHash;
   const query = queryIndex >= 0 ? withoutHash.slice(queryIndex) : "";
   return `${fallbackCdnBaseUrl}/${trimSlashes(pathname)}${query}${hash}`;
+};
+
+const isUnsplashUrl = (value: string): boolean => {
+  try {
+    const parsed = new URL(value.startsWith("//") ? `https:${value}` : value);
+    return parsed.hostname === "images.unsplash.com";
+  } catch {
+    return false;
+  }
+};
+
+export const withThumbnailDisplayQuery = (value: string): string => {
+  const raw = value.trim();
+  if (
+    !raw ||
+    /^(data|blob):/i.test(raw) ||
+    !/^(https?:)?\/\//i.test(raw) ||
+    raw.includes("imageMogr2") ||
+    isUnsplashUrl(raw)
+  ) {
+    return value;
+  }
+
+  const hashIndex = raw.indexOf("#");
+  const hash = hashIndex >= 0 ? raw.slice(hashIndex) : "";
+  const withoutHash = hashIndex >= 0 ? raw.slice(0, hashIndex) : raw;
+  const separator = withoutHash.includes("?")
+    ? withoutHash.endsWith("?") || withoutHash.endsWith("&")
+      ? ""
+      : "&"
+    : "?";
+
+  return `${withoutHash}${separator}${thumbnailDisplayQuery}${hash}`;
 };
 
 export const tabLabels = {
@@ -54,17 +87,20 @@ export const compareNewest = (
 
 export const groupByMonth = (photos: ResolvedPhoto[]) => {
   const groups = new Map<string, ResolvedPhoto[]>();
-  [...photos].sort(compareNewest).forEach((photo) => {
+  for (const photo of photos) {
     const key = formatMonthKey(photo.takenAt);
-    groups.set(key, [...(groups.get(key) ?? []), photo]);
-  });
-  return [...groups.entries()]
-    .sort(([left], [right]) => right.localeCompare(left))
-    .map(([month, items]) => ({
-      month,
-      label: formatMonthLabel(month),
-      photos: items,
-    }));
+    const group = groups.get(key);
+    if (group) {
+      group.push(photo);
+    } else {
+      groups.set(key, [photo]);
+    }
+  }
+  return [...groups.entries()].map(([month, items]) => ({
+    month,
+    label: formatMonthLabel(month),
+    photos: items,
+  }));
 };
 
 export const topicCover = (
@@ -73,6 +109,50 @@ export const topicCover = (
 ): ResolvedPhoto | undefined =>
   photos.find((photo) => photo.id === topic.coverPhotoId) ??
   photos.find((photo) => photo.topicIds.includes(topic.id));
+
+export interface TopicSummary {
+  topic: Topic;
+  cover?: ResolvedPhoto;
+  count: number;
+  photos: ResolvedPhoto[];
+}
+
+export const buildTopicSummaries = (
+  topics: Topic[],
+  photos: ResolvedPhoto[],
+): TopicSummary[] => {
+  const summariesById = new Map<string, TopicSummary>();
+  const photosById = new Map<string, ResolvedPhoto>();
+  for (const topic of topics) {
+    summariesById.set(topic.id, {
+      topic,
+      count: 0,
+      photos: [],
+    });
+  }
+
+  for (const photo of photos) {
+    photosById.set(photo.id, photo);
+    for (const topicId of photo.topicIds) {
+      const summary = summariesById.get(topicId);
+      if (!summary) continue;
+      summary.count += 1;
+      summary.photos.push(photo);
+      if (!summary.cover || photo.id === summary.topic.coverPhotoId) {
+        summary.cover = photo;
+      }
+    }
+  }
+
+  for (const summary of summariesById.values()) {
+    const explicitCover = summary.topic.coverPhotoId
+      ? photosById.get(summary.topic.coverPhotoId)
+      : undefined;
+    if (explicitCover) summary.cover = explicitCover;
+  }
+
+  return topics.map((topic) => summariesById.get(topic.id)!).filter(Boolean);
+};
 
 type RawExif = ExifData;
 

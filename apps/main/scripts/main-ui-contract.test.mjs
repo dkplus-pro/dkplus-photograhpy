@@ -6,6 +6,10 @@ import { fileURLToPath } from "node:url";
 
 const dirname = path.dirname(fileURLToPath(import.meta.url));
 const styles = readFileSync(path.join(dirname, "../src/styles.css"), "utf8");
+const gallerySource = readFileSync(
+  path.join(dirname, "../src/gallery.ts"),
+  "utf8",
+);
 const mainSource = readFileSync(path.join(dirname, "../src/main.tsx"), "utf8");
 const virtualRows = readFileSync(
   path.join(dirname, "../src/useVirtualRows.ts"),
@@ -84,6 +88,8 @@ test("main list thumbnails use display-only Tencent thumbnail query", () => {
 
 test("main virtual rows are measured from the grid container", () => {
   assert.match(virtualRows, /containerRef\s*=\s*useRef/);
+  assert.match(virtualRows, /useSyncExternalStore/);
+  assert.match(virtualRows, /subscribeViewport/);
   assert.match(virtualRows, /getBoundingClientRect\(\)/);
   assert.match(virtualRows, /viewport\.scrollY\s*-\s*container\.top/);
   assert.match(
@@ -149,18 +155,17 @@ test("tab and topic changes are scheduled as non-urgent route transitions", () =
 });
 
 test("topics tab opens a secondary virtual topic detail page", () => {
-  assert.match(mainSource, /selectedTopicId/);
+  assert.match(mainSource, /buildTopicSummaries/);
+  assert.match(mainSource, /selectedTopicSummary/);
   assert.match(mainSource, /const TopicDetail =/);
-  assert.match(mainSource, /onSelectTopic\(topic\.id\)/);
+  assert.match(mainSource, /onSelectTopic\(topic\)/);
   assert.match(mainSource, /onSelectTopic=\{selectTopic\}/);
   assert.doesNotMatch(
     mainSource,
     /onClick=\{\(\) => cover && onOpen\(cover\)\}/,
   );
-  assert.match(
-    mainSource,
-    /data\.photos\.filter\([\s\S]*?photo\.topicIds\.includes\(selectedTopicId\)/,
-  );
+  assert.doesNotMatch(mainSource, /data\.photos\.filter/);
+  assert.doesNotMatch(mainSource, /topicCover\(topic,\s*data\.photos\)/);
   assert.match(
     mainSource,
     /<VirtualPhotoGrid[\s\S]*?photos=\{photos\}[\s\S]*?style="square"/,
@@ -168,7 +173,7 @@ test("topics tab opens a secondary virtual topic detail page", () => {
   assert.match(mainSource, /<TopicDetail[\s\S]*?photos=\{topicPhotos\}/);
   assert.match(
     mainSource,
-    /data && tab === "topics" && selectedTopic[\s\S]*?\? topicPhotos[\s\S]*?: \(data\?\.photos \?\? \[\]\)/,
+    /data && deferredRoute\.tab === "topics" && selectedTopic[\s\S]*?\? topicPhotos[\s\S]*?: \(data\?\.photos \?\? \[\]\)/,
   );
   assert.match(
     cssBlock(".topic-detail__header"),
@@ -191,10 +196,51 @@ test("main tabs and topic detail are backed by GitHub Pages-safe hash routes", (
   );
   assert.match(mainSource, /window\.addEventListener\("popstate", syncRoute\)/);
   assert.match(mainSource, /window\.history\.pushState/);
-  assert.match(mainSource, /route\.topicId/);
-  assert.match(mainSource, /encodeURIComponent\(route\.topicId\)/);
-  assert.match(mainSource, /parseRouteHash\(window\.location\.hash\)/);
-  assert.match(mainSource, /navigateToRoute\(\{ tab: "topics", topicId \}\)/);
+  assert.match(mainSource, /topicRouteKey\(topic\)/);
+  assert.match(mainSource, /safeDecodeRouteSegment/);
+  assert.match(mainSource, /topicSummaryByRouteKey/);
+  assert.match(mainSource, /topicSummaryById\.get\(deferredRoute\.topicKey\)/);
+  assert.match(mainSource, /useTransition/);
+  assert.match(mainSource, /useDeferredValue/);
+});
+
+test("topic and timeline derived data are precomputed without repeated render scans", () => {
+  assert.match(gallerySource, /export const buildTopicSummaries =/);
+  assert.match(gallerySource, /summary\.photos\.push\(photo\)/);
+  assert.match(gallerySource, /summary\.cover = photo/);
+  assert.match(
+    gallerySource,
+    /photosById\.get\(summary\.topic\.coverPhotoId\)/,
+  );
+  assert.match(gallerySource, /export const groupByMonth =/);
+  assert.match(gallerySource, /group\.push\(photo\)/);
+  assert.doesNotMatch(gallerySource, /groups\.set\(key,\s*\[\.\.\./);
+});
+
+test("display-only thumbnail reduction does not affect modal preview quality", () => {
+  assert.match(
+    gallerySource,
+    /const thumbnailDisplayQuery = "imageMogr2\/thumbnail\/800x"/,
+  );
+  assert.match(gallerySource, /export const withThumbnailDisplayQuery =/);
+  assert.match(
+    gallerySource,
+    /thumbnail:\s*resolveDisplayAssetUrl\([\s\S]*?urls\?\.thumbnail/,
+  );
+  assert.doesNotMatch(gallerySource, /thumbnail:\s*withThumbnailDisplayQuery/);
+  assert.match(
+    gallerySource,
+    /preview:\s*resolveDisplayAssetUrl\([\s\S]*?urls\?\.preview/,
+  );
+  assert.match(
+    mainSource,
+    /src=\{withThumbnailDisplayQuery\(photo\.urls\.thumbnail\)\}/,
+  );
+  assert.match(mainSource, /src=\{active\.urls\.preview\}/);
+  assert.doesNotMatch(
+    mainSource,
+    /withThumbnailDisplayQuery\(active\.urls\.preview\)/,
+  );
 });
 
 test("modal navigation is vertically centered in the image pane", () => {
