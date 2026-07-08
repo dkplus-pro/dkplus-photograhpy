@@ -11,7 +11,6 @@ import {
   groupByMonth,
   normalizePayload,
   tabLabels,
-  topicCover,
   withThumbnailDisplayQuery,
 } from "./gallery";
 import type { TopicSummary } from "./gallery";
@@ -45,8 +44,9 @@ const parseRouteHash = (hash: string): AppRoute => {
   const path = hash.replace(/^#\/?/, "").replace(/^\/+/, "");
   const [tabSegment, topicSegment] = path.split("/");
   if (tabSegment === "topics") {
-    const topicKey = topicSegment ? safeDecodeRouteSegment(topicSegment) : "";
-    return topicKey ? { tab: "topics", topicKey } : { tab: "topics" };
+    return topicSegment
+      ? { tab: "topics", topicKey: safeDecodeRouteSegment(topicSegment) }
+      : { tab: "topics" };
   }
   if (routeTabs.has(tabSegment as TabKey)) {
     return { tab: tabSegment as TabKey };
@@ -107,46 +107,6 @@ const formatAperture = (value?: number | string) => {
   return typeof value === "string" && value.startsWith("f/")
     ? value
     : `f/${value}`;
-};
-
-type TopicSummary = {
-  topic: GalleryPayload["topics"][number];
-  count: number;
-  photos: ResolvedPhoto[];
-  cover: ResolvedPhoto | undefined;
-};
-
-const buildTopicSummaries = (data: GalleryPayload): TopicSummary[] => {
-  const photoById = new Map<string, ResolvedPhoto>();
-  const photosByTopic = new Map<string, ResolvedPhoto[]>();
-  const firstPhotoByTopic = new Map<string, ResolvedPhoto>();
-
-  for (const photo of data.photos) {
-    photoById.set(photo.id, photo);
-    for (const topicId of photo.topicIds) {
-      const topicPhotos = photosByTopic.get(topicId);
-      if (topicPhotos) {
-        topicPhotos.push(photo);
-      } else {
-        photosByTopic.set(topicId, [photo]);
-      }
-      if (!firstPhotoByTopic.has(topicId)) {
-        firstPhotoByTopic.set(topicId, photo);
-      }
-    }
-  }
-
-  return data.topics.map((topic) => {
-    const photos = photosByTopic.get(topic.id) ?? [];
-    return {
-      topic,
-      count: photos.length,
-      photos,
-      cover:
-        (topic.coverPhotoId ? photoById.get(topic.coverPhotoId) : undefined) ??
-        firstPhotoByTopic.get(topic.id),
-    };
-  });
 };
 
 const PhotoCard = ({
@@ -439,8 +399,19 @@ const App = () => {
     () => new Map(topicSummaries.map((summary) => [summary.topic.id, summary])),
     [topicSummaries],
   );
-  const selectedTopicSummary = selectedTopicId
-    ? topicSummaryById.get(selectedTopicId)
+  const topicSummaryByRouteKey = useMemo(
+    () =>
+      new Map(
+        topicSummaries.map((summary) => [
+          topicRouteKey(summary.topic),
+          summary,
+        ]),
+      ),
+    [topicSummaries],
+  );
+  const selectedTopicSummary = deferredRoute.topicKey
+    ? (topicSummaryByRouteKey.get(deferredRoute.topicKey) ??
+      topicSummaryById.get(deferredRoute.topicKey))
     : undefined;
   const selectedTopic = selectedTopicSummary?.topic;
   const topicPhotos = selectedTopicSummary?.photos ?? [];

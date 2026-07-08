@@ -10,12 +10,6 @@ const fallbackCdnBaseUrl = "https://images.unsplash.com";
 const thumbnailDisplayQuery = "imageMogr2/thumbnail/800x";
 const isAbsoluteUrl = (value: string): boolean =>
   /^[a-z][a-z\d+.-]*:/i.test(value) || value.startsWith("//");
-const isHttpUrl = (value: string): boolean => /^https?:\/\//i.test(value);
-const hasSkippedListThumbnailProtocol = (value: string): boolean =>
-  /^(?:data|blob):/i.test(value);
-const hasListThumbnailTransform = (value: string): boolean =>
-  /(?:^|[?&#])imageMogr2(?:\/|%2F)/i.test(value);
-
 const trimSlashes = (value: string): string => value.replace(/^\/+|\/+$/g, "");
 
 export const resolveDisplayAssetUrl = (value: string): string => {
@@ -240,10 +234,8 @@ const resolveUrls = (
   urls?: Partial<ResolvedPhoto["urls"]>,
 ): ResolvedPhoto["urls"] => ({
   original: resolveDisplayAssetUrl(urls?.original ?? asset.original),
-  thumbnail: reduceListThumbnailQuality(
-    resolveDisplayAssetUrl(
-      urls?.thumbnail ?? asset.thumbnail ?? asset.original,
-    ),
+  thumbnail: resolveDisplayAssetUrl(
+    urls?.thumbnail ?? asset.thumbnail ?? asset.original,
   ),
   preview: resolveDisplayAssetUrl(
     urls?.preview ?? asset.preview ?? asset.thumbnail ?? asset.original,

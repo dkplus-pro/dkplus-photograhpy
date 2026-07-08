@@ -11,10 +11,6 @@ const gallerySource = readFileSync(
   "utf8",
 );
 const mainSource = readFileSync(path.join(dirname, "../src/main.tsx"), "utf8");
-const gallerySource = readFileSync(
-  path.join(dirname, "../src/gallery.ts"),
-  "utf8",
-);
 const virtualRows = readFileSync(
   path.join(dirname, "../src/useVirtualRows.ts"),
   "utf8",
@@ -103,20 +99,19 @@ test("main virtual rows are measured from the grid container", () => {
 });
 
 test("main tab rendering precomputes topic stats before render branches", () => {
-  assert.match(mainSource, /const buildTopicSummaries =/);
-  assert.match(mainSource, /const photoById = new Map/);
-  assert.match(mainSource, /const photosByTopic = new Map/);
-  assert.match(mainSource, /topicPhotos\.push\(photo\)/);
-  assert.match(mainSource, /firstPhotoByTopic\.set\(topicId, photo\)/);
+  assert.match(gallerySource, /export const buildTopicSummaries =/);
+  assert.match(gallerySource, /const photosById = new Map/);
+  assert.match(gallerySource, /summary\.photos\.push\(photo\)/);
+  assert.match(
+    gallerySource,
+    /photosById\.get\(summary\.topic\.coverPhotoId\)/,
+  );
   assert.match(mainSource, /const topicSummaryById = useMemo/);
   assert.match(
     mainSource,
     /const topicPhotos = selectedTopicSummary\?\.photos \?\? \[\]/,
   );
-  assert.doesNotMatch(
-    mainSource,
-    /data\.photos\.filter\([\s\S]*?photo\.topicIds\.includes\(selectedTopicId\)/,
-  );
+  assert.doesNotMatch(mainSource, /data\.photos\.filter/);
 });
 
 test("timeline grouping and virtual rows avoid duplicated hot-path work", () => {
@@ -141,16 +136,21 @@ test("timeline grouping and virtual rows avoid duplicated hot-path work", () => 
   );
 });
 
-test("tab and topic changes are scheduled as non-urgent transitions", () => {
-  assert.match(mainSource, /startTransition/);
-  assert.match(mainSource, /startTransition\(\(\) => \{\s*setTab\(key\);/);
+test("tab and topic changes are scheduled as non-urgent route transitions", () => {
+  assert.match(mainSource, /useTransition/);
+  assert.match(mainSource, /const navigateToRoute =/);
   assert.match(
     mainSource,
-    /startTransition\(\(\) => setSelectedTopicId\(topicId\)\)/,
+    /startRouteTransition\(\(\) => setRoute\(nextRoute\)\)/,
   );
   assert.match(
     mainSource,
-    /startTransition\(\(\) => setSelectedTopicId\(null\)\)/,
+    /const selectTab = \(key: TabKey\) => navigateToRoute\(\{ tab: key \}\)/,
+  );
+  assert.match(mainSource, /const selectTopic = \(topic: Topic\) =>/);
+  assert.match(
+    mainSource,
+    /onBack=\{\(\) => navigateToRoute\(\{ tab: "topics" \}\)\}/,
   );
 });
 
@@ -197,8 +197,9 @@ test("main tabs and topic detail are backed by GitHub Pages-safe hash routes", (
   assert.match(mainSource, /window\.addEventListener\("popstate", syncRoute\)/);
   assert.match(mainSource, /window\.history\.pushState/);
   assert.match(mainSource, /topicRouteKey\(topic\)/);
-  assert.match(mainSource, /topic\.slug === deferredRoute\.topicKey/);
-  assert.match(mainSource, /topic\.id === deferredRoute\.topicKey/);
+  assert.match(mainSource, /safeDecodeRouteSegment/);
+  assert.match(mainSource, /topicSummaryByRouteKey/);
+  assert.match(mainSource, /topicSummaryById\.get\(deferredRoute\.topicKey\)/);
   assert.match(mainSource, /useTransition/);
   assert.match(mainSource, /useDeferredValue/);
 });
@@ -212,27 +213,34 @@ test("topic and timeline derived data are precomputed without repeated render sc
     /photosById\.get\(summary\.topic\.coverPhotoId\)/,
   );
   assert.match(gallerySource, /export const groupByMonth =/);
-  assert.match(gallerySource, /items\.push\(photo\)/);
+  assert.match(gallerySource, /group\.push\(photo\)/);
   assert.doesNotMatch(gallerySource, /groups\.set\(key,\s*\[\.\.\./);
 });
 
 test("display-only thumbnail reduction does not affect modal preview quality", () => {
   assert.match(
     gallerySource,
-    /const listThumbnailQuery = "imageMogr2\/thumbnail\/800x"/,
+    /const thumbnailDisplayQuery = "imageMogr2\/thumbnail\/800x"/,
   );
-  assert.match(gallerySource, /export const reduceListThumbnailQuality =/);
+  assert.match(gallerySource, /export const withThumbnailDisplayQuery =/);
   assert.match(
     gallerySource,
-    /thumbnail:\s*reduceListThumbnailQuality\([\s\S]*?resolveDisplayAssetUrl/,
+    /thumbnail:\s*resolveDisplayAssetUrl\([\s\S]*?urls\?\.thumbnail/,
   );
+  assert.doesNotMatch(gallerySource, /thumbnail:\s*withThumbnailDisplayQuery/);
   assert.match(
     gallerySource,
     /preview:\s*resolveDisplayAssetUrl\([\s\S]*?urls\?\.preview/,
   );
-  assert.match(mainSource, /src=\{photo\.urls\.thumbnail\}/);
+  assert.match(
+    mainSource,
+    /src=\{withThumbnailDisplayQuery\(photo\.urls\.thumbnail\)\}/,
+  );
   assert.match(mainSource, /src=\{active\.urls\.preview\}/);
-  assert.doesNotMatch(mainSource, /active\.urls\.thumbnail/);
+  assert.doesNotMatch(
+    mainSource,
+    /withThumbnailDisplayQuery\(active\.urls\.preview\)/,
+  );
 });
 
 test("modal navigation is vertically centered in the image pane", () => {

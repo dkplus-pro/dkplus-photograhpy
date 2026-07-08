@@ -12,12 +12,6 @@ export interface VirtualRow<T> {
   top: number;
 }
 
-interface ViewportState {
-  width: number;
-  height: number;
-  scrollY: number;
-}
-
 const getColumns = (width: number): number => {
   if (width >= 1280) return 4;
   if (width >= 860) return 3;
@@ -41,7 +35,7 @@ let viewportSnapshot = readViewport();
 let viewportFrame = 0;
 const viewportSubscribers = new Set<() => void>();
 
-const publishViewport = () => {
+const scheduleViewportUpdate = () => {
   cancelAnimationFrame(viewportFrame);
   viewportFrame = requestAnimationFrame(() => {
     const next = readViewport();
@@ -60,16 +54,20 @@ const publishViewport = () => {
 const subscribeViewport = (notify: () => void) => {
   viewportSubscribers.add(notify);
   if (viewportSubscribers.size === 1) {
-    publishViewport();
-    window.addEventListener("resize", publishViewport, { passive: true });
-    window.addEventListener("scroll", publishViewport, { passive: true });
+    scheduleViewportUpdate();
+    window.addEventListener("resize", scheduleViewportUpdate, {
+      passive: true,
+    });
+    window.addEventListener("scroll", scheduleViewportUpdate, {
+      passive: true,
+    });
   }
   return () => {
     viewportSubscribers.delete(notify);
     if (!viewportSubscribers.size) {
       cancelAnimationFrame(viewportFrame);
-      window.removeEventListener("resize", publishViewport);
-      window.removeEventListener("scroll", publishViewport);
+      window.removeEventListener("resize", scheduleViewportUpdate);
+      window.removeEventListener("scroll", scheduleViewportUpdate);
     }
   };
 };
