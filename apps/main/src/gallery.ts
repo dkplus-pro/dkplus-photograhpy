@@ -10,8 +10,7 @@ const fallbackCdnBaseUrl = "https://images.unsplash.com";
 const thumbnailDisplayQuery = "imageMogr2/thumbnail/800x";
 const isAbsoluteUrl = (value: string): boolean =>
   /^[a-z][a-z\d+.-]*:/i.test(value) || value.startsWith("//");
-const isHttpUrl = (value: string): boolean =>
-  /^https?:\/\//i.test(value) || value.startsWith("//");
+const isHttpUrl = (value: string): boolean => /^https?:\/\//i.test(value);
 const hasSkippedListThumbnailProtocol = (value: string): boolean =>
   /^(?:data|blob):/i.test(value);
 const hasListThumbnailTransform = (value: string): boolean =>
@@ -129,6 +128,7 @@ export const buildTopicSummaries = (
   photos: ResolvedPhoto[],
 ): TopicSummary[] => {
   const summariesById = new Map<string, TopicSummary>();
+  const photosById = new Map<string, ResolvedPhoto>();
   for (const topic of topics) {
     summariesById.set(topic.id, {
       topic,
@@ -138,6 +138,7 @@ export const buildTopicSummaries = (
   }
 
   for (const photo of photos) {
+    photosById.set(photo.id, photo);
     for (const topicId of photo.topicIds) {
       const summary = summariesById.get(topicId);
       if (!summary) continue;
@@ -147,6 +148,13 @@ export const buildTopicSummaries = (
         summary.cover = photo;
       }
     }
+  }
+
+  for (const summary of summariesById.values()) {
+    const explicitCover = summary.topic.coverPhotoId
+      ? photosById.get(summary.topic.coverPhotoId)
+      : undefined;
+    if (explicitCover) summary.cover = explicitCover;
   }
 
   return topics.map((topic) => summariesById.get(topic.id)!).filter(Boolean);

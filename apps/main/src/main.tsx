@@ -45,13 +45,21 @@ const parseRouteHash = (hash: string): AppRoute => {
   if (tabSegment === "topics") {
     return {
       tab: "topics",
-      topicKey: topicSegment ? decodeURIComponent(topicSegment) : undefined,
+      topicKey: topicSegment ? safeDecodeRouteSegment(topicSegment) : undefined,
     };
   }
   if (routeTabs.has(tabSegment as TabKey)) {
     return { tab: tabSegment as TabKey };
   }
   return { tab: "latest" };
+};
+
+const safeDecodeRouteSegment = (value: string): string => {
+  try {
+    return decodeURIComponent(value);
+  } catch {
+    return value;
+  }
 };
 
 const routeToHash = (route: AppRoute): string =>
