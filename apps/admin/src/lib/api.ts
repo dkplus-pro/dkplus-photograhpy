@@ -20,6 +20,19 @@ export interface ExportResult {
   topicCount: number;
 }
 
+export interface UploadFailure {
+  index: number;
+  fileName: string;
+  code: string;
+  message: string;
+}
+
+export interface UploadBulkResult {
+  photos: PhotoRecord[];
+  failed: UploadFailure[];
+  export?: ExportResult;
+}
+
 export interface ApiClient {
   listPhotos: () => Promise<PhotoRecord[]>;
   listTopics: () => Promise<TopicRecord[]>;
@@ -35,6 +48,7 @@ export interface ApiClient {
     preview: UploadPreview,
     photoId?: string,
   ) => Promise<UploadResult>;
+  uploadPhotos: (previews: UploadPreview[]) => Promise<UploadBulkResult>;
 }
 
 const normalizeBaseUrl = (baseUrl: string): string =>
@@ -73,6 +87,11 @@ type ServerUploadResult = Omit<UploadResult, "exif" | "photo"> & {
   photo?: ServerPhoto;
   photos?: ServerPhoto[];
 };
+type ServerUploadBulkResult = {
+  photos?: ServerPhoto[];
+  failed?: UploadFailure[];
+  export?: ExportResult;
+};
 
 const isAbsoluteUrl = (value: string): boolean =>
   /^[a-z][a-z\d+.-]*:/i.test(value) || value.startsWith("//");
@@ -101,6 +120,13 @@ const toServerTopicPayload = (payload: TopicPayload) => ({
   id: payload.id?.trim() || undefined,
   title: payload.title.trim(),
   description: payload.description?.trim() ?? "",
+});
+
+const toBulkUploadItem = (preview: UploadPreview) => ({
+  title: preview.title.trim() || undefined,
+  description: preview.description.trim() || undefined,
+  topicId: preview.topicId.trim() || undefined,
+  exif: preview.exif,
 });
 
 const readAdminToken = (): string | undefined => {
@@ -218,6 +244,49 @@ const requestJson = async <T>(
 
   if (response.status === 204) return undefined as T;
   return (await response.json()) as T;
+};
+
+const hasBulkFailures = (value: unknown): value is ServerUploadBulkResult =>
+  Boolean(
+    value &&
+      typeof value === "object" &&
+      Array.isArray((value as { failed?: unknown }).failed),
+  );
+
+const requestBulkUploadJson = async (
+  baseUrl: string,
+  path: string,
+  init?: RequestInit,
+): Promise<ServerUploadBulkResult> => {
+  const response = await fetch(`${normalizeBaseUrl(baseUrl)}${path}`, {
+    ...init,
+    headers: buildHeaders(init),
+  });
+
+  let parsedBody: unknown;
+  try {
+    parsedBody = await response.json();
+  } catch {
+    parsedBody = undefined;
+  }
+
+  if (!response.ok) {
+    if (hasBulkFailures(parsedBody)) return parsedBody;
+
+    let message = `${response.status} ${response.statusText}`;
+    const body = parsedBody as
+      | { error?: string | { message?: string }; message?: string }
+      | undefined;
+    if (body) {
+      message =
+        typeof body.error === "string"
+          ? body.error
+          : (body.error?.message ?? body.message ?? message);
+    }
+    throw new Error(message);
+  }
+
+  return (parsedBody ?? {}) as ServerUploadBulkResult;
 };
 
 const unwrapPhotos = (
@@ -340,6 +409,23 @@ export const createApiClient = (
         : result.photos?.[0]
           ? normalizePhotoForAdmin(result.photos[0])
           : undefined,
+    };
+  },
+  async uploadPhotos(previews) {
+    const body = new FormData();
+    for (const preview of previews) {
+      body.append("files", preview.file);
+    }
+    body.append("items", JSON.stringify(previews.map(toBulkUploadItem)));
+
+    const result = await requestBulkUploadJson(baseUrl, "/uploads/bulk", {
+      method: "POST",
+      body,
+    });
+    return {
+      photos: (result.photos ?? []).map(normalizePhotoForAdmin),
+      failed: result.failed ?? [],
+      export: result.export,
     };
   },
 });

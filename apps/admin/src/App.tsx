@@ -565,19 +565,40 @@ function App() {
     if (!previews.length) return;
     setIsSaving(true);
     try {
-      const uploaded: PhotoRecord[] = [];
-      for (const preview of previews) {
-        const result = await api.uploadPhoto(preview);
+      const result = await api.uploadPhotos(previews);
+      const failedIndices = new Set(
+        result.failed.map((failure) => failure.index),
+      );
+      let sourceIndex = 0;
+      const uploaded = result.photos.map((photo) => {
+        while (failedIndices.has(sourceIndex)) sourceIndex += 1;
+        const preview = previews[sourceIndex];
+        sourceIndex += 1;
         const previewTopicTitle =
-          topicOptions.find(([id]) => id === preview.topicId)?.[1] || "";
-        if (result.photo) {
-          uploaded.push(
-            withTopicTitle(result.photo, preview.topicId, previewTopicTitle),
-          );
-        }
-      }
+          topicOptions.find(([id]) => id === preview?.topicId)?.[1] || "";
+        return withTopicTitle(photo, preview?.topicId, previewTopicTitle);
+      });
+
       if (uploaded.length) setPhotos((current) => [...uploaded, ...current]);
-      pushMessage("success", `已上传 ${previews.length} 个文件`);
+      if (result.failed.length) {
+        const remainingPreviews = previews.filter((preview, index) => {
+          const shouldKeep = failedIndices.has(index);
+          if (!shouldKeep) URL.revokeObjectURL(preview.previewUrl);
+          return shouldKeep;
+        });
+        previewsRef.current = remainingPreviews;
+        setPreviews(remainingPreviews);
+        pushMessage(
+          uploaded.length ? "info" : "error",
+          uploaded.length
+            ? `已上传 ${uploaded.length} 个文件，${result.failed.length} 个失败，可调整后重试。`
+            : `上传失败：${result.failed[0]?.message || "请检查文件后重试"}`,
+        );
+        if (!remainingPreviews.length) setIsUploadOpen(false);
+        return;
+      }
+
+      pushMessage("success", `已上传 ${uploaded.length} 个文件`);
       clearPreviews();
       setIsUploadOpen(false);
     } catch (error) {
