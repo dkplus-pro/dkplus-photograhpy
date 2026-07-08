@@ -24,6 +24,10 @@ import zhCN from "@arco-design/web-react/es/locale/zh-CN";
 import { createApiClient } from "./lib/api";
 import { extractExif } from "./lib/exif";
 import {
+  withAdminPreviewDisplayUrl,
+  withAdminThumbnailDisplayUrl,
+} from "./lib/display-url";
+import {
   exifLine,
   formatDate,
   imageSummary,
@@ -280,8 +284,9 @@ function App() {
   );
   const editorImageUrl =
     editorPreview?.previewUrl ||
-    editingPhoto?.thumbnailUrl ||
-    editingPhoto?.imageUrl ||
+    withAdminPreviewDisplayUrl(
+      editingPhoto?.imageUrl || editingPhoto?.thumbnailUrl || editingPhoto?.image?.url,
+    ) ||
     "";
 
   const replaceEditorPreview = (nextPreview: UploadPreview | null) => {
@@ -604,7 +609,7 @@ function App() {
               aria-label={`放大预览：${photoTitle(photo)}`}
             >
               <img
-                src={photo.thumbnailUrl || photo.imageUrl}
+                src={withAdminThumbnailDisplayUrl(photo.thumbnailUrl || photo.imageUrl)}
                 alt={photoTitle(photo)}
                 loading="lazy"
               />
@@ -1124,11 +1129,11 @@ function App() {
           {previewPhoto && (
             <div className="image-preview-modal__body">
               <img
-                src={
+                src={withAdminPreviewDisplayUrl(
                   previewPhoto.imageUrl ||
-                  previewPhoto.thumbnailUrl ||
-                  previewPhoto.image?.url
-                }
+                    previewPhoto.thumbnailUrl ||
+                    previewPhoto.image?.url,
+                )}
                 alt={photoTitle(previewPhoto)}
               />
               <div className="rich-lines">

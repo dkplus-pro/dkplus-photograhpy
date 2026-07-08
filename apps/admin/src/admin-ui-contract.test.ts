@@ -110,6 +110,17 @@ describe("admin list UI contract", () => {
     expect(styles).not.toMatch(/radial-gradient\([\s\S]*rgba\(20, 201, 201/);
   });
 
+  it("uses display-only image transforms for admin thumbnails and previews", () => {
+    expect(appSource).toContain("withAdminThumbnailDisplayUrl");
+    expect(appSource).toContain("withAdminPreviewDisplayUrl");
+    expect(columnsSource).toContain(
+      "src={withAdminThumbnailDisplayUrl(photo.thumbnailUrl || photo.imageUrl)}",
+    );
+    expect(appSource).toContain("imageMogr2/thumbnail/100x");
+    expect(appSource).toContain("imageMogr2/quality/25");
+    expect(appSource).toContain("/^(data|blob):/i");
+  });
+
   it("supports creating a new topic from admin photo flows", () => {
     expect(appSource).toContain("customTopics");
     expect(appSource).toContain("topicDraft");
