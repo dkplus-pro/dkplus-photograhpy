@@ -37,16 +37,20 @@ const galleryDataUrl = import.meta.env.DEV
 type AppRoute = {
   tab: TabKey;
   topicKey?: string;
+  photoId?: string;
 };
 
 const routeTabs = new Set<TabKey>(["latest", "topics", "timeline"]);
 
 const parseRouteHash = (hash: string): AppRoute => {
   const path = hash.replace(/^#\/?/, "").replace(/^\/+/, "");
-  const [tabSegment, topicSegment] = path.split("/");
+  const [tabSegment, detailSegment] = path.split("/");
+  if (tabSegment === "photo" && detailSegment) {
+    return { tab: "latest", photoId: safeDecodeRouteSegment(detailSegment) };
+  }
   if (tabSegment === "topics") {
-    return topicSegment
-      ? { tab: "topics", topicKey: safeDecodeRouteSegment(topicSegment) }
+    return detailSegment
+      ? { tab: "topics", topicKey: safeDecodeRouteSegment(detailSegment) }
       : { tab: "topics" };
   }
   if (routeTabs.has(tabSegment as TabKey)) {
@@ -63,14 +67,27 @@ const safeDecodeRouteSegment = (value: string): string => {
   }
 };
 
-const routeToHash = (route: AppRoute): string =>
-  `#/${route.tab}${
+const routeToHash = (route: AppRoute): string => {
+  if (route.photoId) {
+    return `#/photo/${encodeURIComponent(route.photoId)}`;
+  }
+  return `#/${route.tab}${
     route.tab === "topics" && route.topicKey
       ? `/${encodeURIComponent(route.topicKey)}`
       : ""
   }`;
+};
 
 const topicRouteKey = (topic: Topic): string => topic.slug ?? topic.id;
+
+const preventImageSave = (event: React.MouseEvent<HTMLImageElement>) => {
+  event.preventDefault();
+};
+
+const galleryRouteWithoutPhoto = (route: AppRoute): AppRoute =>
+  route.tab === "topics" && route.topicKey
+    ? { tab: "topics", topicKey: route.topicKey }
+    : { tab: route.tab };
 
 const useGallery = () => {
   const [data, setData] = useState<GalleryPayload | null>(null);
@@ -130,6 +147,8 @@ const PhotoCard = ({
       loading="lazy"
       width={photo.asset.width}
       height={photo.asset.height}
+      draggable={false}
+      onContextMenu={preventImageSave}
     />
     <span className="photo-card__meta">
       <strong>{photo.title}</strong>
@@ -199,6 +218,8 @@ const TopicGrid = ({
               src={withThumbnailDisplayQuery(cover.urls.thumbnail)}
               alt={cover.asset.alt ?? topic.title}
               loading="lazy"
+              draggable={false}
+              onContextMenu={preventImageSave}
             />
           ) : (
             <span className="topic-card__empty" />
@@ -347,7 +368,12 @@ const PhotoModal = ({
       />
       <article className="modal__panel">
         <div className="modal__image-wrap">
-          <img src={previewUrl} alt={active.asset.alt ?? active.title} />
+          <img
+            src={previewUrl}
+            alt={active.asset.alt ?? active.title}
+            draggable={false}
+            onContextMenu={preventImageSave}
+          />
           <button
             className="modal__nav modal__nav--prev"
             onClick={() => selectOffset(-1)}
@@ -393,7 +419,6 @@ const App = () => {
   );
   const [isRoutePending, startRouteTransition] = useTransition();
   const deferredRoute = useDeferredValue(route);
-  const [activePhoto, setActivePhoto] = useState<ResolvedPhoto | null>(null);
   const [dataSaverEnabled, setDataSaverEnabled] = useState(false);
   const topicSummaries = useMemo(
     () => (data ? buildTopicSummaries(data.topics, data.photos) : []),
@@ -419,10 +444,17 @@ const App = () => {
     : undefined;
   const selectedTopic = selectedTopicSummary?.topic;
   const topicPhotos = selectedTopicSummary?.photos ?? [];
+  const photoById = useMemo(
+    () => new Map((data?.photos ?? []).map((photo) => [photo.id, photo])),
+    [data],
+  );
   const modalPhotos =
-    data && deferredRoute.tab === "topics" && selectedTopic
+    data && route.tab === "topics" && selectedTopic
       ? topicPhotos
       : (data?.photos ?? []);
+  const activePhoto = route.photoId
+    ? (photoById.get(route.photoId) ?? null)
+    : null;
 
   useEffect(() => {
     const syncRoute = () => {
@@ -450,6 +482,10 @@ const App = () => {
   const selectTab = (key: TabKey) => navigateToRoute({ tab: key });
   const selectTopic = (topic: Topic) =>
     navigateToRoute({ tab: "topics", topicKey: topicRouteKey(topic) });
+  const openPhotoRoute = (photo: ResolvedPhoto) =>
+    navigateToRoute({ ...galleryRouteWithoutPhoto(route), photoId: photo.id });
+  const closePhotoRoute = () =>
+    navigateToRoute(galleryRouteWithoutPhoto(route));
 
   if (error) {
     return (
@@ -523,7 +559,7 @@ const App = () => {
           <VirtualPhotoGrid
             photos={data.photos}
             style="square"
-            onOpen={setActivePhoto}
+            onOpen={openPhotoRoute}
           />
         )}
         {deferredRoute.tab === "topics" &&
@@ -532,13 +568,13 @@ const App = () => {
               topic={selectedTopic}
               photos={topicPhotos}
               onBack={() => navigateToRoute({ tab: "topics" })}
-              onOpen={setActivePhoto}
+              onOpen={openPhotoRoute}
             />
           ) : (
             <TopicGrid summaries={topicSummaries} onSelectTopic={selectTopic} />
           ))}
         {deferredRoute.tab === "timeline" && (
-          <Timeline photos={data.photos} onOpen={setActivePhoto} />
+          <Timeline photos={data.photos} onOpen={openPhotoRoute} />
         )}
       </main>
 
@@ -546,8 +582,8 @@ const App = () => {
         photos={modalPhotos}
         active={activePhoto}
         dataSaverEnabled={dataSaverEnabled}
-        onClose={() => setActivePhoto(null)}
-        onSelect={setActivePhoto}
+        onClose={closePhotoRoute}
+        onSelect={openPhotoRoute}
       />
     </>
   );

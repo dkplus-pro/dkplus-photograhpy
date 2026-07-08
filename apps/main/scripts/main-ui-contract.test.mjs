@@ -122,6 +122,42 @@ test("main list thumbnails use display-only Tencent thumbnail query", () => {
   );
 });
 
+test("main photo detail opens as a hash route and images block context-menu saves", () => {
+  assert.match(mainSource, /photoId\?: string/);
+  assert.match(mainSource, /tabSegment === "photo" && detailSegment/);
+  assert.match(
+    mainSource,
+    /return `#\/photo\/\$\{encodeURIComponent\(route\.photoId\)\}`/,
+  );
+  assert.match(
+    mainSource,
+    /const preventImageSave = \(event: React\.MouseEvent<HTMLImageElement>\)/,
+  );
+  assert.match(mainSource, /event\.preventDefault\(\)/);
+  assert.match(
+    mainSource,
+    /const openPhotoRoute = \(photo: ResolvedPhoto\) =>/,
+  );
+  assert.match(
+    mainSource,
+    /navigateToRoute\(\{ \.\.\.galleryRouteWithoutPhoto\(route\), photoId: photo\.id \}\)/,
+  );
+  assert.match(
+    mainSource,
+    /const closePhotoRoute = \(\) =>\s*navigateToRoute\(galleryRouteWithoutPhoto\(route\)\)/,
+  );
+  assert.match(mainSource, /activePhoto = route\.photoId/);
+  assert.match(mainSource, /onClose=\{closePhotoRoute\}/);
+  assert.match(mainSource, /onSelect=\{openPhotoRoute\}/);
+  assert.equal(mainSource.match(/draggable=\{false\}/g)?.length, 3);
+  assert.equal(
+    mainSource.match(/onContextMenu=\{preventImageSave\}/g)?.length,
+    3,
+  );
+  assert.match(cssBlock("img"), /user-select:\s*none;/);
+  assert.match(cssBlock("img"), /-webkit-user-drag:\s*none;/);
+});
+
 test("main virtual rows are measured from the grid container", () => {
   assert.match(virtualRows, /containerRef\s*=\s*useRef/);
   assert.match(virtualRows, /useSyncExternalStore/);
@@ -209,7 +245,7 @@ test("topics tab opens a secondary virtual topic detail page", () => {
   assert.match(mainSource, /<TopicDetail[\s\S]*?photos=\{topicPhotos\}/);
   assert.match(
     mainSource,
-    /data && deferredRoute\.tab === "topics" && selectedTopic[\s\S]*?\? topicPhotos[\s\S]*?: \(data\?\.photos \?\? \[\]\)/,
+    /data && route\.tab === "topics" && selectedTopic[\s\S]*?\? topicPhotos[\s\S]*?: \(data\?\.photos \?\? \[\]\)/,
   );
   assert.match(
     cssBlock(".topic-detail__header"),
@@ -225,6 +261,10 @@ test("main tabs and topic detail are backed by GitHub Pages-safe hash routes", (
   assert.match(mainSource, /const parseRouteHash =/);
   assert.match(mainSource, /const routeToHash =/);
   assert.match(mainSource, /#\/\$\{route\.tab\}/);
+  assert.match(
+    mainSource,
+    /#\/photo\/\$\{encodeURIComponent\(route\.photoId\)\}/,
+  );
   assert.match(mainSource, /window\.location\.hash/);
   assert.match(
     mainSource,

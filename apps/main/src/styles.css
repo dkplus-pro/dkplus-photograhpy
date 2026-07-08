@@ -44,6 +44,8 @@ a:focus-visible {
 img {
   display: block;
   max-width: 100%;
+  user-select: none;
+  -webkit-user-drag: none;
 }
 
 .hero {
