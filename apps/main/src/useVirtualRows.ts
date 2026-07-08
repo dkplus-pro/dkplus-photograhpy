@@ -1,10 +1,4 @@
-import {
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-  useSyncExternalStore,
-} from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 
 export interface VirtualRow<T> {
   index: number;
@@ -19,61 +13,6 @@ const getColumns = (width: number): number => {
   return 1;
 };
 
-type ViewportSnapshot = {
-  width: number;
-  height: number;
-  scrollY: number;
-};
-
-const readViewport = (): ViewportSnapshot => ({
-  width: window.innerWidth,
-  height: window.innerHeight,
-  scrollY: window.scrollY,
-});
-
-let viewportSnapshot = readViewport();
-let viewportFrame = 0;
-const viewportSubscribers = new Set<() => void>();
-
-const scheduleViewportUpdate = () => {
-  cancelAnimationFrame(viewportFrame);
-  viewportFrame = requestAnimationFrame(() => {
-    const next = readViewport();
-    if (
-      next.width === viewportSnapshot.width &&
-      next.height === viewportSnapshot.height &&
-      next.scrollY === viewportSnapshot.scrollY
-    ) {
-      return;
-    }
-    viewportSnapshot = next;
-    viewportSubscribers.forEach((notify) => notify());
-  });
-};
-
-const subscribeViewport = (notify: () => void) => {
-  viewportSubscribers.add(notify);
-  if (viewportSubscribers.size === 1) {
-    scheduleViewportUpdate();
-    window.addEventListener("resize", scheduleViewportUpdate, {
-      passive: true,
-    });
-    window.addEventListener("scroll", scheduleViewportUpdate, {
-      passive: true,
-    });
-  }
-  return () => {
-    viewportSubscribers.delete(notify);
-    if (!viewportSubscribers.size) {
-      cancelAnimationFrame(viewportFrame);
-      window.removeEventListener("resize", scheduleViewportUpdate);
-      window.removeEventListener("scroll", scheduleViewportUpdate);
-    }
-  };
-};
-
-const getViewportSnapshot = () => viewportSnapshot;
-
 export const useVirtualRows = <T>(
   items: T[],
   rowHeight?: number,
@@ -81,15 +20,37 @@ export const useVirtualRows = <T>(
   overscan = 5,
 ) => {
   const containerRef = useRef<HTMLDivElement | null>(null);
-  const viewport = useSyncExternalStore(
-    subscribeViewport,
-    getViewportSnapshot,
-    getViewportSnapshot,
-  );
+  const [viewport, setViewport] = useState({
+    width: window.innerWidth,
+    height: window.innerHeight,
+    scrollY: window.scrollY,
+  });
   const [container, setContainer] = useState({
     width: window.innerWidth,
     top: 0,
   });
+
+  useEffect(() => {
+    let frame = 0;
+    const update = () => {
+      cancelAnimationFrame(frame);
+      frame = requestAnimationFrame(() => {
+        setViewport({
+          width: window.innerWidth,
+          height: window.innerHeight,
+          scrollY: window.scrollY,
+        });
+      });
+    };
+    update();
+    window.addEventListener("resize", update, { passive: true });
+    window.addEventListener("scroll", update, { passive: true });
+    return () => {
+      cancelAnimationFrame(frame);
+      window.removeEventListener("resize", update);
+      window.removeEventListener("scroll", update);
+    };
+  }, []);
 
   useEffect(() => {
     const element = containerRef.current;
@@ -110,9 +71,11 @@ export const useVirtualRows = <T>(
 
     const observer = new ResizeObserver(update);
     observer.observe(element);
+    window.addEventListener("resize", update, { passive: true });
     return () => {
       cancelAnimationFrame(frame);
       observer.disconnect();
+      window.removeEventListener("resize", update);
     };
   }, []);
 
