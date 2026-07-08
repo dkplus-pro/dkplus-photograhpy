@@ -899,6 +899,110 @@ test("Main topics tab opens a virtual detail page with scoped modal navigation",
   ).toBeVisible();
 });
 
+test("Main hash routes restore tabs/topic detail and thumbnails stay display-only", async ({
+  page,
+}) => {
+  const photos = [
+    {
+      id: "editorial-route-a",
+      title: "路由样片 A",
+      description: "Route fixture with COS thumbnail query",
+      topicIds: ["editorial"],
+      takenAt: "2031-01-02T00:00:00.000Z",
+      asset: {
+        original: "https://cdn.example.com/original-a.jpg",
+        thumbnail: "https://cdn.example.com/thumb-a.jpg?existing=1#card",
+        preview: "https://cdn.example.com/preview-a.jpg?full=1#modal",
+        alt: "路由样片 A",
+        width: 800,
+        height: 800,
+      },
+    },
+    {
+      id: "editorial-route-b",
+      title: "路由样片 B",
+      description: "Second topic fixture",
+      topicIds: ["editorial"],
+      takenAt: "2030-01-01T00:00:00.000Z",
+      asset: {
+        original: "https://cdn.example.com/original-b.jpg",
+        thumbnail: "https://cdn.example.com/thumb-b.jpg",
+        preview: "https://cdn.example.com/preview-b.jpg",
+        alt: "路由样片 B",
+        width: 800,
+        height: 800,
+      },
+    },
+  ];
+
+  await page.route("**/api/gallery", async (route) => {
+    await route.fulfill({
+      contentType: "application/json",
+      body: JSON.stringify({
+        generatedAt: "2026-07-07T00:00:00.000Z",
+        topics: [
+          {
+            id: "editorial",
+            title: "编辑精选",
+            description: "Hash route topic",
+            slug: "featured",
+            sortOrder: 1,
+          },
+        ],
+        photos,
+      }),
+    });
+  });
+
+  await page.goto(`${mainBaseUrl}#/topics`);
+  await expect(page.getByRole("tab", { name: "专题" })).toHaveAttribute(
+    "aria-selected",
+    "true",
+  );
+
+  await page.getByRole("button", { name: "查看专题：编辑精选" }).click();
+  await expect(page).toHaveURL(/#\/topics\/featured$/);
+  await expect(
+    page.getByRole("heading", { name: "编辑精选", level: 1 }),
+  ).toBeVisible();
+
+  await page.reload();
+  await expect(
+    page.getByRole("heading", { name: "编辑精选", level: 1 }),
+  ).toBeVisible();
+  await expect(page.getByText("2 张作品")).toBeVisible();
+
+  await page.getByRole("button", { name: "返回专题列表" }).click();
+  await expect(page).toHaveURL(/#\/topics$/);
+
+  await page.getByRole("tab", { name: "时间轴" }).click();
+  await expect(page).toHaveURL(/#\/timeline$/);
+  await page.reload();
+  await expect(page.getByRole("tab", { name: "时间轴" })).toHaveAttribute(
+    "aria-selected",
+    "true",
+  );
+
+  await page.getByRole("tab", { name: "最新" }).click();
+  await expect(page).toHaveURL(/#\/latest$/);
+  const cardImageSrc = await page
+    .locator(".photo-card img")
+    .first()
+    .getAttribute("src");
+  expect(cardImageSrc).toContain(
+    "https://cdn.example.com/thumb-a.jpg?existing=1&imageMogr2/thumbnail/800x#card",
+  );
+
+  await page.getByRole("button", { name: "查看图片：路由样片 A" }).click();
+  const modalImageSrc = await page
+    .locator(".modal__image-wrap img")
+    .getAttribute("src");
+  expect(modalImageSrc).toBe(
+    "https://cdn.example.com/preview-a.jpg?full=1#modal",
+  );
+  expect(modalImageSrc).not.toContain("imageMogr2");
+});
+
 test("Main modal navigation buttons are vertically centered and switch photos", async ({
   page,
   request,
