@@ -778,6 +778,63 @@ test("Main topics tab opens a virtual detail page with scoped modal navigation",
   });
 
   await page.setViewportSize({ width: 1280, height: 720 });
+  await page.goto(`${mainBaseUrl}#/latest`);
+  await expect(page.getByRole("tab", { name: "最新" })).toHaveAttribute(
+    "aria-selected",
+    "true",
+  );
+  await expect(page.locator(".photo-card").first()).toBeVisible();
+
+  await page.goto(`${mainBaseUrl}#/topics`);
+  await expect(page.getByRole("tab", { name: "专题" })).toHaveAttribute(
+    "aria-selected",
+    "true",
+  );
+  await expect(
+    page.getByRole("button", { name: "查看专题：编辑精选" }),
+  ).toBeVisible();
+
+  await page.goto(`${mainBaseUrl}#/timeline`);
+  await expect(page.getByRole("tab", { name: "时间轴" })).toHaveAttribute(
+    "aria-selected",
+    "true",
+  );
+  await expect(page.locator(".timeline")).toBeVisible();
+
+  await page.goto(`${mainBaseUrl}#/topics/editorial`);
+  await expect(page.getByRole("tab", { name: "专题" })).toHaveAttribute(
+    "aria-selected",
+    "true",
+  );
+  await expect(
+    page.getByRole("heading", { name: "编辑精选", level: 1 }),
+  ).toBeVisible();
+  await expect(page.getByText("专题 / 编辑精选")).toBeVisible();
+  await expect(
+    page.getByRole("button", { name: "查看图片：旅行样片" }),
+  ).toHaveCount(0);
+
+  await page.getByRole("button", { name: "返回专题列表" }).click();
+  await expect(page).toHaveURL(/#\/topics$/);
+  await page.getByRole("tab", { name: "时间轴" }).click();
+  await expect(page).toHaveURL(/#\/timeline$/);
+  await page.goBack();
+  await expect(page).toHaveURL(/#\/topics$/);
+  await expect(
+    page.getByRole("button", { name: "查看专题：旅行专题" }),
+  ).toBeVisible();
+  await page.goForward();
+  await expect(page).toHaveURL(/#\/timeline$/);
+
+  await page.goto(`${mainBaseUrl}#/topics/missing`);
+  await expect(page.getByRole("tab", { name: "专题" })).toHaveAttribute(
+    "aria-selected",
+    "true",
+  );
+  await expect(
+    page.getByRole("button", { name: "查看专题：编辑精选" }),
+  ).toBeVisible();
+
   await page.goto(mainBaseUrl);
   await page.getByRole("tab", { name: "专题" }).click();
   await page.getByRole("button", { name: "查看专题：编辑精选" }).click();

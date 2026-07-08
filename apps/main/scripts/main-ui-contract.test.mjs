@@ -152,7 +152,7 @@ test("topics tab opens a secondary virtual topic detail page", () => {
   assert.match(mainSource, /selectedTopicId/);
   assert.match(mainSource, /const TopicDetail =/);
   assert.match(mainSource, /onSelectTopic\(topic\.id\)/);
-  assert.match(mainSource, /onSelectTopic=\{setSelectedTopicId\}/);
+  assert.match(mainSource, /onSelectTopic=\{selectTopic\}/);
   assert.doesNotMatch(
     mainSource,
     /onClick=\{\(\) => cover && onOpen\(cover\)\}/,
@@ -178,6 +178,20 @@ test("topics tab opens a secondary virtual topic detail page", () => {
     cssBlock(".topic-detail__actions button"),
     /border-radius:\s*999px;/,
   );
+});
+
+test("main tabs and topic detail are backed by GitHub Pages-safe hash routes", () => {
+  assert.match(mainSource, /const parseRouteHash =/);
+  assert.match(mainSource, /const routeToHash =/);
+  assert.match(mainSource, /#\/\$\{route\.tab\}/);
+  assert.match(mainSource, /window\.location\.hash/);
+  assert.match(mainSource, /window\.addEventListener\("hashchange", syncRoute\)/);
+  assert.match(mainSource, /window\.addEventListener\("popstate", syncRoute\)/);
+  assert.match(mainSource, /window\.history\.pushState/);
+  assert.match(mainSource, /route\.topicId/);
+  assert.match(mainSource, /encodeURIComponent\(route\.topicId\)/);
+  assert.match(mainSource, /parseRouteHash\(window\.location\.hash\)/);
+  assert.match(mainSource, /navigateToRoute\(\{ tab: "topics", topicId \}\)/);
 });
 
 test("modal navigation is vertically centered in the image pane", () => {

@@ -19,6 +19,41 @@ const galleryDataUrl = import.meta.env.DEV
   ? `${apiBaseUrl}/gallery`
   : staticDataUrl;
 
+type AppRoute = {
+  tab: TabKey;
+  topicId?: string;
+};
+
+const routeTabs = new Set<TabKey>(["latest", "topics", "timeline"]);
+
+const safeDecodeRouteSegment = (value: string): string => {
+  try {
+    return decodeURIComponent(value);
+  } catch {
+    return value;
+  }
+};
+
+const parseRouteHash = (hash: string): AppRoute => {
+  const path = hash.replace(/^#\/?/, "").replace(/^\/+/, "");
+  const [tabSegment, topicSegment] = path.split("/");
+  if (tabSegment === "topics") {
+    const topicId = topicSegment ? safeDecodeRouteSegment(topicSegment) : "";
+    return topicId ? { tab: "topics", topicId } : { tab: "topics" };
+  }
+  if (routeTabs.has(tabSegment as TabKey)) {
+    return { tab: tabSegment as TabKey };
+  }
+  return { tab: "latest" };
+};
+
+const routeToHash = (route: AppRoute): string =>
+  `#/${route.tab}${
+    route.tab === "topics" && route.topicId
+      ? `/${encodeURIComponent(route.topicId)}`
+      : ""
+  }`;
+
 const useGallery = () => {
   const [data, setData] = useState<GalleryPayload | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -337,9 +372,12 @@ const PhotoModal = ({
 
 const App = () => {
   const { data, error } = useGallery();
-  const [tab, setTab] = useState<TabKey>("latest");
-  const [selectedTopicId, setSelectedTopicId] = useState<string | null>(null);
+  const [route, setRoute] = useState<AppRoute>(() =>
+    parseRouteHash(window.location.hash),
+  );
   const [activePhoto, setActivePhoto] = useState<ResolvedPhoto | null>(null);
+  const tab = route.tab;
+  const selectedTopicId = tab === "topics" ? (route.topicId ?? null) : null;
   const selectedTopic =
     data && selectedTopicId
       ? data.topics.find((topic) => topic.id === selectedTopicId)
@@ -357,10 +395,30 @@ const App = () => {
     data && tab === "topics" && selectedTopic
       ? topicPhotos
       : (data?.photos ?? []);
-  const selectTab = (key: TabKey) => {
-    setTab(key);
-    if (key !== "topics") setSelectedTopicId(null);
+
+  useEffect(() => {
+    const syncRoute = () => setRoute(parseRouteHash(window.location.hash));
+    window.addEventListener("hashchange", syncRoute);
+    window.addEventListener("popstate", syncRoute);
+    return () => {
+      window.removeEventListener("hashchange", syncRoute);
+      window.removeEventListener("popstate", syncRoute);
+    };
+  }, []);
+
+  const navigateToRoute = (nextRoute: AppRoute) => {
+    setRoute(nextRoute);
+    const hash = routeToHash(nextRoute);
+    if (window.location.hash === hash) return;
+    window.history.pushState(
+      null,
+      "",
+      `${window.location.pathname}${window.location.search}${hash}`,
+    );
   };
+  const selectTab = (key: TabKey) => navigateToRoute({ tab: key });
+  const selectTopic = (topicId: string) =>
+    navigateToRoute({ tab: "topics", topicId });
 
   if (error) {
     return (
@@ -386,7 +444,7 @@ const App = () => {
     <>
       <header className="hero">
         <nav className="topbar" aria-label="站点导航">
-          <a href="#gallery" className="brand">
+          <a href="#/latest" className="brand">
             DKPlus Photography
           </a>
           <span>
@@ -424,11 +482,11 @@ const App = () => {
             <TopicDetail
               topic={selectedTopic}
               photos={topicPhotos}
-              onBack={() => setSelectedTopicId(null)}
+              onBack={() => navigateToRoute({ tab: "topics" })}
               onOpen={setActivePhoto}
             />
           ) : (
-            <TopicGrid data={data} onSelectTopic={setSelectedTopicId} />
+            <TopicGrid data={data} onSelectTopic={selectTopic} />
           ))}
         {tab === "timeline" && (
           <Timeline photos={data.photos} onOpen={setActivePhoto} />
