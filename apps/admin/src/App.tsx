@@ -130,13 +130,6 @@ const emptyPayload: PhotoPayload = {
   topicTitle: "",
 };
 
-type TopicDraft = {
-  id: string;
-  title: string;
-  description: string;
-};
-
-const emptyTopicDraft: TopicDraft = { id: "", title: "", description: "" };
 const emptyTopicPayload: TopicPayload = { title: "", description: "" };
 type AdminSection = "photos" | "topics";
 
@@ -154,16 +147,6 @@ const currentAdminSection = (): AdminSection =>
   typeof window === "undefined"
     ? "photos"
     : parseAdminSection(window.location.hash);
-
-const normalizeTopicId = (value: string): string =>
-  value
-    .normalize("NFKC")
-    .trim()
-    .toLowerCase()
-    .replace(/[\s/_]+/g, "-")
-    .replace(/[^\p{L}\p{N}-]+/gu, "")
-    .replace(/-+/g, "-")
-    .replace(/^-|-$/g, "");
 
 const randomId = () => `${Date.now().toString(36)}-${crypto.randomUUID()}`;
 
@@ -186,7 +169,6 @@ function App() {
   );
   const [selectedIds, setSelectedIds] = useState<Set<string>>(() => new Set());
   const [payload, setPayload] = useState<PhotoPayload>(emptyPayload);
-  const [topicDraft, setTopicDraft] = useState<TopicDraft>(emptyTopicDraft);
   const [topicPayload, setTopicPayload] =
     useState<TopicPayload>(emptyTopicPayload);
   const [editingTopicId, setEditingTopicId] = useState<string | null>(null);
@@ -395,48 +377,6 @@ function App() {
     setPayload((current) => ({ ...current, topicId, topicTitle }));
   };
 
-  const createTopicFromDraft = async () => {
-    const title = topicDraft.title.trim();
-    const topicId = normalizeTopicId(topicDraft.id || title);
-
-    if (!title || !topicId) {
-      pushMessage("error", "请填写专题名称，或补充可用的专题 ID。");
-      return;
-    }
-
-    setIsSaving(true);
-    try {
-      const created = await api.createTopic({
-        id: topicId,
-        title,
-        description: topicDraft.description,
-      });
-      setTopics((current) => {
-        const withoutDuplicate = current.filter(
-          (topic) => topic.id !== created.id,
-        );
-        return [...withoutDuplicate, created].sort((a, b) =>
-          a.title.localeCompare(b.title, "zh-CN"),
-        );
-      });
-      setPayload((current) => ({
-        ...current,
-        topicId: created.id,
-        topicTitle: created.title,
-      }));
-      setTopicFilter(created.id);
-      setTopicDraft(emptyTopicDraft);
-      pushMessage("success", `已新增专题“${created.title}”，并设为当前专题。`);
-    } catch (error) {
-      pushMessage(
-        "error",
-        error instanceof Error ? error.message : "创建专题失败",
-      );
-    } finally {
-      setIsSaving(false);
-    }
-  };
-
   const withTopicTitle = (
     photo: PhotoRecord,
     topicId?: string,
@@ -588,7 +528,7 @@ function App() {
   ) => {
     if (!files?.length) return;
     if (mode === "topic" && !payload.topicId?.trim()) {
-      pushMessage("error", "请先选择或新增专题，再按当前专题选择图片。");
+      pushMessage("error", "请先选择已有专题，再按当前专题选择图片。");
       return;
     }
     const staged = await Promise.all(
@@ -1378,7 +1318,7 @@ function App() {
                         allowClear
                         showSearch
                         value={payload.topicId || undefined}
-                        placeholder="选择已有专题，或先在下方新增"
+                        placeholder="选择已有专题（可选）"
                         onChange={(value) =>
                           selectTopic(typeof value === "string" ? value : "")
                         }
@@ -1390,35 +1330,6 @@ function App() {
                       <small>
                         专题会同步写入主专题字段，并保留既有 topicIds 兼容。
                       </small>
-                      <div className="topic-create-row" aria-label="新增专题">
-                        <Input
-                          value={topicDraft.title}
-                          onChange={(value) =>
-                            setTopicDraft((current) => ({
-                              ...current,
-                              title: value,
-                            }))
-                          }
-                          placeholder="专题名称，如：编辑精选"
-                        />
-                        <Input
-                          value={topicDraft.id}
-                          onChange={(value) =>
-                            setTopicDraft((current) => ({
-                              ...current,
-                              id: value,
-                            }))
-                          }
-                          placeholder="专题 ID（可选，自动生成）"
-                        />
-                        <Button
-                          type="outline"
-                          loading={isSaving}
-                          onClick={() => void createTopicFromDraft()}
-                        >
-                          创建专题
-                        </Button>
-                      </div>
                     </label>
 
                     <label>
@@ -1461,7 +1372,7 @@ function App() {
                     allowClear
                     showSearch
                     value={payload.topicId || undefined}
-                    placeholder="选择已有专题，或在新增图片里创建专题"
+                    placeholder="选择已有专题（可选）"
                     onChange={(value) =>
                       selectTopic(typeof value === "string" ? value : "")
                     }

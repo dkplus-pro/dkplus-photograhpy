@@ -1,5 +1,5 @@
 const adminThumbnailDisplayTransform = "imageMogr2/thumbnail/100x";
-const adminPreviewDisplayTransform = "imageMogr2/quality/25";
+const adminPreviewDisplayTransform = "imageMogr2/quality/10";
 
 const shouldSkipDisplayTransform = (value: string): boolean =>
   !value || /^(data|blob):/i.test(value) || /imageMogr2/i.test(value);
