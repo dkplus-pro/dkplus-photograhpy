@@ -2226,7 +2226,7 @@ function App() {
                         loading={isBrandLogoUploading}
                         onClick={() => brandLogoFileInputRef.current?.click()}
                       >
-                        上传 Logo 图片
+                        上传 Logo 文件
                       </Button>
                     </Space>
                   </div>
