@@ -244,6 +244,93 @@ test("topic CRUD persists in SQLite and explicit export includes current topics"
   }
 });
 
+test("brand CRUD persists multiple logos and uploaded EXIF auto-syncs camera brand", async () => {
+  const { config, root } = await makeConfig();
+  try {
+    const app = createApp(config).callback();
+
+    const created = await authed(request(app).post("/api/brands"))
+      .send({
+        id: "canon",
+        name: "Canon",
+        aliases: ["Canon Inc."],
+        logoUrls: [
+          "https://cdn.example/canon-white.svg",
+          "https://cdn.example/canon-white.svg",
+          "https://cdn.example/canon-black.svg",
+        ],
+      })
+      .expect(201);
+    assert.equal(created.body.brand.id, "canon");
+    assert.deepEqual(created.body.brand.logoUrls, [
+      "https://cdn.example/canon-white.svg",
+      "https://cdn.example/canon-black.svg",
+    ]);
+    assert.equal(created.body.brand.logos.length, 2);
+
+    const updated = await authed(request(app).patch("/api/brands/canon"))
+      .send({
+        name: "Canon",
+        title: "Canon / 佳能",
+        aliases: ["Canon Inc.", "佳能"],
+        logoUrls: ["https://cdn.example/canon-red.svg"],
+      })
+      .expect(200);
+    assert.equal(updated.body.brand.title, "Canon / 佳能");
+    assert.deepEqual(updated.body.brand.aliases, ["Canon Inc.", "佳能"]);
+    assert.deepEqual(updated.body.brand.logoUrls, [
+      "https://cdn.example/canon-red.svg",
+    ]);
+
+    const uploadedLogo = await request(app)
+      .post("/api/brands/canon/logos")
+      .set("Authorization", "Bearer test-token")
+      .attach("files", Buffer.from([0xff, 0xd8, 0xff, 0xd9]), {
+        filename: "canon-logo.jpg",
+        contentType: "image/jpeg",
+      })
+      .expect(201);
+    assert.equal(uploadedLogo.body.brand.logoUrls.length, 2);
+    assert.match(
+      uploadedLogo.body.logos[0].url,
+      /^http:\/\/cdn\.test\/uploads\//,
+    );
+
+    const sonyUpload = await request(app)
+      .post("/api/uploads")
+      .set("Authorization", "Bearer test-token")
+      .field("title", "Sony EXIF upload")
+      .field(
+        "exif",
+        JSON.stringify({
+          cameraMake: "Sony",
+          cameraModel: "A7R V",
+        }),
+      )
+      .attach("files", Buffer.from([0xff, 0xd8, 0xff, 0xd9]), {
+        filename: "sony-frame.jpg",
+        contentType: "image/jpeg",
+      })
+      .expect(201);
+    assert.equal(sonyUpload.body.photos[0].exif.cameraBrand, "Sony");
+
+    const publicBrands = await request(app).get("/api/brands").expect(200);
+    const publicSony = publicBrands.body.brands.find(
+      (brand: { id: string }) => brand.id === "sony",
+    );
+    assert.ok(publicSony, "EXIF upload auto-created a Sony brand");
+    assert.equal(publicSony.name, "Sony");
+    assert.deepEqual(publicSony.logoUrls, []);
+
+    const deleted = await authed(request(app).delete("/api/brands/canon"))
+      .send({})
+      .expect(200);
+    assert.equal(deleted.body.deleted.id, "canon");
+  } finally {
+    await rm(root, { recursive: true, force: true });
+  }
+});
+
 test("existing JSON seeds an empty database and is rewritten only by explicit export", async () => {
   const { config, root } = await makeConfig();
   const seedJson = `${JSON.stringify(

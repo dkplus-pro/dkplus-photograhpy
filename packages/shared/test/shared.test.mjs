@@ -6,6 +6,7 @@ import {
   groupPhotosByMonth,
   resolveCdnUrl,
   resolvePhotoAssetUrls,
+  validateCameraBrand,
   validateGalleryData,
 } from "../dist/index.js";
 
@@ -101,4 +102,31 @@ test("resolves relative asset keys against CDN config", () => {
     resolved.urls.preview,
     "https://cdn.example.com/thumbs/night%20001.jpg",
   );
+});
+
+test("validates camera brand records with multiple logo URLs", () => {
+  const result = validateCameraBrand({
+    id: "sony",
+    name: "Sony",
+    aliases: ["Sony Corporation", "索尼"],
+    logos: [
+      {
+        url: "/logos/sony-white.svg",
+        storage: "local",
+        size: 1024,
+      },
+      {
+        url: "https://cdn.example.com/sony-black.svg",
+        storage: "remote",
+      },
+    ],
+    logoUrls: [
+      "/logos/sony-white.svg",
+      "https://cdn.example.com/sony-black.svg",
+    ],
+  });
+
+  assert.equal(result.ok, true);
+  assert.equal(result.data.logoUrls.length, 2);
+  assert.equal(result.data.logos[0].storage, "local");
 });
