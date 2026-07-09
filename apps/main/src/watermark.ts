@@ -42,6 +42,7 @@ const outputMinWidth = 1200;
 const outputMaxWidth = 2400;
 const workerTimeoutMs = 4200;
 const watermarkMetadataSpacer = "  ";
+const watermarkSecondarySpacer = "     ";
 const watermarkPrimaryFontFamily =
   'Futura, "Futura PT", "Avenir Next", Avenir, ui-sans-serif, system-ui, sans-serif';
 const watermarkFontFamily =
@@ -255,7 +256,7 @@ const drawWatermarkComposition = async (
     .join(watermarkMetadataSpacer);
   const secondRow = [input.model, input.lens]
     .filter(Boolean)
-    .join(watermarkMetadataSpacer);
+    .join(watermarkSecondarySpacer);
 
   context.textAlign = "left";
   context.textBaseline = "middle";
@@ -323,6 +324,7 @@ const paletteForTone = (tone) => tone === "black" ? {
   strip: "rgba(250, 250, 250, 0.92)", stripFade: "rgba(250, 250, 250, 0)", text: "#09090b", muted: "rgba(9, 9, 11, 0.7)", logoBackground: "#09090b", logoText: "#fafafa"
 };
 const watermarkMetadataSpacer = "  ";
+const watermarkSecondarySpacer = "     ";
 const watermarkPrimaryFontFamily = 'Futura, "Futura PT", "Avenir Next", Avenir, ui-sans-serif, system-ui, sans-serif';
 const watermarkFontFamily = '"Fira Code", "Fira Sans", ui-sans-serif, system-ui, sans-serif';
 const watermarkFont = (size, weight = 600, family = watermarkFontFamily) => weight + ' ' + Math.round(size) + 'px ' + family;
@@ -417,7 +419,7 @@ self.onmessage = async (event) => {
     const primarySize = clamp(width * 0.018, 20, 42);
     const secondarySize = clamp(width * 0.014, 15, 30);
     const firstRow = [input.focalLength, input.exposure].filter(Boolean).join(watermarkMetadataSpacer);
-    const secondRow = [input.model, input.lens].filter(Boolean).join(watermarkMetadataSpacer);
+    const secondRow = [input.model, input.lens].filter(Boolean).join(watermarkSecondarySpacer);
     context.textAlign = "left";
     context.textBaseline = "middle";
     if (firstRow) {

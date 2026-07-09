@@ -420,6 +420,7 @@ test("main top menu exposes works and canvas watermark export contracts", () => 
     /input\.title|input\.date|titleSize|brandLabel|const logoSize|separatorX|palette\.separator|watermarkSignature/,
   );
   assert.match(watermarkSource, /const watermarkMetadataSpacer = "  "/);
+  assert.match(watermarkSource, /const watermarkSecondarySpacer = "     "/);
   assert.match(
     watermarkSource,
     /const watermarkPrimaryFontFamily =[\s\S]*?Futura,[\s\S]*?"Futura PT"/,
@@ -434,7 +435,7 @@ test("main top menu exposes works and canvas watermark export contracts", () => 
   );
   assert.match(
     watermarkSource,
-    /const secondRow = \[input\.model, input\.lens\][\s\S]*?\.join\(watermarkMetadataSpacer\)/,
+    /const secondRow = \[input\.model, input\.lens\][\s\S]*?\.join\(watermarkSecondarySpacer\)/,
   );
   assert.match(
     watermarkSource,
@@ -483,7 +484,7 @@ test("watermark export renders metadata-only output with optional logo and fade 
   );
   assert.match(
     watermarkSource,
-    /const secondRow = \[input\.model, input\.lens\][\s\S]*?\.join\(watermarkMetadataSpacer\)/,
+    /const secondRow = \[input\.model, input\.lens\][\s\S]*?\.join\(watermarkSecondarySpacer\)/,
   );
 
   const gradientCalls =
