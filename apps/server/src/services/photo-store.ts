@@ -242,9 +242,15 @@ function mergePhoto(input: PhotoInput, existing?: PhotoRecord): PhotoRecord {
     throw new AppError(400, "VALIDATION_ERROR", "image.url is required");
   }
 
-  const topicId = input.topicId ?? existing?.topicId;
-  const topicIds =
-    input.topicIds ?? (topicId ? [topicId] : (existing?.topicIds ?? []));
+  const hasTopicIds = input.topicIds !== undefined;
+  const topicIds = hasTopicIds
+    ? (input.topicIds ?? [])
+    : input.topicId
+      ? [input.topicId]
+      : (existing?.topicIds ?? []);
+  const topicId = hasTopicIds
+    ? (input.topicId ?? topicIds[0])
+    : (input.topicId ?? existing?.topicId);
   const mergedImage: PhotoImage = {
     url: image.url,
     key: image.key ?? existing?.image.key,

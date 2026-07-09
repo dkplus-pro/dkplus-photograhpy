@@ -74,7 +74,9 @@ export const imageSummary = (photo: PhotoRecord): string => {
 export const summarizeUpload = (previews: UploadPreview[]): string => {
   if (previews.length === 0) return "未暂存文件";
   const topics = new Set(
-    previews.map((preview) => preview.topicId).filter(Boolean),
+    previews
+      .flatMap((preview) => [preview.topicId, ...(preview.topicIds ?? [])])
+      .filter(Boolean),
   );
   return `${previews.length} 个文件已暂存${
     topics.size ? `，覆盖 ${topics.size} 个专题` : ""

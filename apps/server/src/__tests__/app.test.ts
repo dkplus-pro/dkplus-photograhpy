@@ -428,6 +428,7 @@ test("bulk upload creates multiple photos with per-file metadata and auto-export
             title: "Bulk frame A",
             description: "First bulk upload",
             topicId: "editorial",
+            topicIds: ["editorial", "street"],
             tags: ["bulk", "first"],
             exif: {
               cameraMake: "Sony",
@@ -457,6 +458,7 @@ test("bulk upload creates multiple photos with per-file metadata and auto-export
     assert.equal(response.body.export.photoCount, 2);
     assert.equal(response.body.photos[0].title, "Bulk frame A");
     assert.equal(response.body.photos[0].topicId, "editorial");
+    assert.deepEqual(response.body.photos[0].topicIds, ["editorial", "street"]);
     assert.deepEqual(response.body.photos[0].tags, ["bulk", "first"]);
     assert.equal(response.body.photos[0].takenAt, capturedAt);
     assert.deepEqual(response.body.photos[0].exif, {
@@ -472,8 +474,12 @@ test("bulk upload creates multiple photos with per-file metadata and auto-export
 
     const exported = await readClientExport(config.exportFile);
     assert.equal(exported.photos.length, 2);
+    const exportedBulkA = exported.photos.find(
+      (photo) => photo.title === "Bulk frame A",
+    );
+    assert.deepEqual(exportedBulkA?.topicIds, ["editorial", "street"]);
     assert.equal(
-      exported.photos[0]?.asset?.original?.startsWith("http") ?? false,
+      exportedBulkA?.asset?.original?.startsWith("http") ?? false,
       true,
     );
     assertNoClientInternals(exported);

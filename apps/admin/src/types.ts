@@ -44,6 +44,7 @@ export interface PhotoPayload {
   description?: string;
   topicId?: string;
   topicTitle?: string;
+  topicIds?: string[];
   status?: PhotoStatus;
   imageUrl?: string;
   exif?: PhotoExif;
@@ -72,6 +73,7 @@ export interface UploadPreview {
   previewUrl: string;
   title: string;
   topicId: string;
+  topicIds: string[];
   description: string;
   exif: PhotoExif;
   error?: string;

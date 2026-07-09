@@ -128,6 +128,7 @@ const emptyPayload: PhotoPayload = {
   description: "",
   topicId: "",
   topicTitle: "",
+  topicIds: [],
 };
 
 const emptyTopicPayload: TopicPayload = { title: "", description: "" };
@@ -161,6 +162,21 @@ const uniqueSorted = (values: Array<string | undefined>): string[] =>
         .filter((value): value is string => Boolean(value)),
     ),
   ].sort((left, right) => left.localeCompare(right, "zh-CN"));
+
+const normalizeTopicIds = (values: Array<string | undefined>): string[] => [
+  ...new Set(
+    values
+      .map((value) => value?.trim())
+      .filter((value): value is string => Boolean(value)),
+  ),
+];
+
+const selectValuesToTopicIds = (value: unknown): string[] => {
+  if (Array.isArray(value)) {
+    return normalizeTopicIds(value.map((entry) => String(entry)));
+  }
+  return value === undefined || value === null ? [] : [String(value)];
+};
 
 function App() {
   const [photos, setPhotos] = useState<PhotoRecord[]>([]);
@@ -292,12 +308,17 @@ function App() {
       map.set(topic.id, topic.title || topic.id);
     }
     for (const photo of photos) {
-      if (photo.topicId) {
-        map.set(photo.topicId, photo.topicTitle || photo.topicId);
-      }
-      for (const topicId of photo.topicIds ?? []) {
+      for (const topicId of normalizeTopicIds([
+        photo.topicId,
+        ...(photo.topicIds ?? []),
+      ])) {
         if (!map.has(topicId)) {
-          map.set(topicId, topicId);
+          map.set(
+            topicId,
+            topicId === photo.topicId
+              ? photo.topicTitle || photo.topicId
+              : topicId,
+          );
         }
       }
     }
@@ -317,9 +338,10 @@ function App() {
   const filteredPhotos = useMemo(() => {
     const normalizedTitle = titleFilter.trim().toLowerCase();
     return photos.filter((photo) => {
-      const topicIds = [photo.topicId, ...(photo.topicIds ?? [])].filter(
-        Boolean,
-      );
+      const topicIds = normalizeTopicIds([
+        photo.topicId,
+        ...(photo.topicIds ?? []),
+      ]);
       const brand = photo.exif?.cameraMake?.trim() || "";
       const model = photo.exif?.cameraModel?.trim() || "";
       const matchesTopic =
@@ -344,9 +366,7 @@ function App() {
     const usage = new Map<string, number>();
     for (const photo of photos) {
       const ids = new Set(
-        [photo.topicId, ...(photo.topicIds ?? [])].filter((id): id is string =>
-          Boolean(id),
-        ),
+        normalizeTopicIds([photo.topicId, ...(photo.topicIds ?? [])]),
       );
       for (const id of ids) {
         usage.set(id, (usage.get(id) ?? 0) + 1);
@@ -375,49 +395,55 @@ function App() {
     setEditorPreview(nextPreview);
   };
 
-  const selectTopic = (topicId: string) => {
-    const topicTitle = topicOptions.find(([id]) => id === topicId)?.[1] || "";
-    setPayload((current) => ({ ...current, topicId, topicTitle }));
+  const titleForTopicId = (topicId: string): string =>
+    topicOptions.find(([id]) => id === topicId)?.[1] || topicId;
+
+  const topicIdsForPhoto = (photo: PhotoRecord): string[] =>
+    normalizeTopicIds([...(photo.topicIds ?? []), photo.topicId]);
+
+  const selectTopics = (topicIds: string[]) => {
+    const normalizedTopicIds = normalizeTopicIds(topicIds);
+    const primaryTopicId = normalizedTopicIds[0] || "";
+    setPayload((current) => ({
+      ...current,
+      topicId: primaryTopicId,
+      topicTitle: primaryTopicId ? titleForTopicId(primaryTopicId) : "",
+      topicIds: normalizedTopicIds,
+    }));
   };
 
-  const withTopicTitle = (
+  const withTopicTitles = (
     photo: PhotoRecord,
-    topicId?: string,
-    topicTitle?: string,
+    topicIds = topicIdsForPhoto(photo),
   ): PhotoRecord => {
-    const normalizedTopicId =
-      topicId?.trim() || photo.topicId || photo.topicIds?.[0] || "";
+    const normalizedTopicIds = normalizeTopicIds(topicIds);
+    const primaryTopicId = normalizedTopicIds[0] || "";
 
-    if (!normalizedTopicId) return photo;
-
-    const normalizedTopicTitle =
-      topicTitle?.trim() ||
-      topicOptions.find(([id]) => id === normalizedTopicId)?.[1] ||
-      photo.topicTitle ||
-      normalizedTopicId;
-    const topicIds = photo.topicIds?.includes(normalizedTopicId)
-      ? photo.topicIds
-      : [normalizedTopicId, ...(photo.topicIds ?? [])];
+    if (!primaryTopicId) {
+      return {
+        ...photo,
+        topicId: undefined,
+        topicTitle: undefined,
+        topicIds: [],
+      };
+    }
 
     return {
       ...photo,
-      topicId: normalizedTopicId,
-      topicTitle: normalizedTopicTitle,
-      topicIds,
+      topicId: primaryTopicId,
+      topicTitle: titleForTopicId(primaryTopicId),
+      topicIds: normalizedTopicIds,
     };
   };
 
-  const withSelectedTopic = (photo: PhotoRecord): PhotoRecord =>
-    withTopicTitle(photo, payload.topicId, payload.topicTitle);
+  const withSelectedTopics = (photo: PhotoRecord): PhotoRecord =>
+    withTopicTitles(
+      photo,
+      normalizeTopicIds([...(payload.topicIds ?? []), payload.topicId]),
+    );
 
-  const topicTitleForPhoto = (photo: PhotoRecord): string =>
-    topicOptions.find(
-      ([id]) => id === (photo.topicId || photo.topicIds?.[0] || ""),
-    )?.[1] ||
-    photo.topicTitle ||
-    photo.topicId ||
-    photo.topicIds?.[0] ||
-    "未分组";
+  const topicLabelForIds = (topicIds: string[]): string =>
+    normalizeTopicIds(topicIds).map(titleForTopicId).join("、") || "未指定专题";
 
   const resetEditor = () => {
     setEditingId(null);
@@ -434,12 +460,15 @@ function App() {
   };
 
   const editPhoto = (photo: PhotoRecord) => {
+    const topicIds = topicIdsForPhoto(photo);
+    const primaryTopicId = topicIds[0] || "";
     setEditingId(photo.id);
     setPayload({
       title: photo.title || "",
       description: photo.description || "",
-      topicId: photo.topicId || photo.topicIds?.[0] || "",
-      topicTitle: photo.topicTitle || "",
+      topicId: primaryTopicId,
+      topicTitle: primaryTopicId ? titleForTopicId(primaryTopicId) : "",
+      topicIds,
       exif: photo.exif,
     });
     replaceEditorPreview(null);
@@ -449,12 +478,20 @@ function App() {
   const savePhoto = async () => {
     setIsSaving(true);
     try {
+      const cleanTopicIds = normalizeTopicIds([
+        ...(payload.topicIds ?? []),
+        payload.topicId,
+      ]);
+      const cleanPrimaryTopicId = cleanTopicIds[0] || "";
       const cleanPayload: PhotoPayload = {
         ...payload,
         title: payload.title?.trim(),
         description: payload.description?.trim(),
-        topicId: payload.topicId?.trim(),
-        topicTitle: payload.topicTitle?.trim(),
+        topicIds: cleanTopicIds,
+        topicId: cleanPrimaryTopicId,
+        topicTitle: cleanPrimaryTopicId
+          ? titleForTopicId(cleanPrimaryTopicId)
+          : "",
       };
 
       if (!editingId && !editorPreview) {
@@ -471,13 +508,14 @@ function App() {
                   title: cleanPayload.title || editorPreview.title,
                   description: cleanPayload.description || "",
                   topicId: cleanPayload.topicId || "",
+                  topicIds: cleanPayload.topicIds ?? [],
                 },
                 editingId,
               )
             ).photo
           : await api.updatePhoto(editingId, cleanPayload);
         if (!updated) throw new Error("图片更新后没有返回记录。");
-        const updatedWithTopic = withSelectedTopic(updated);
+        const updatedWithTopic = withSelectedTopics(updated);
         setPhotos((current) =>
           current.map((photo) =>
             photo.id === editingId ? updatedWithTopic : photo,
@@ -490,10 +528,11 @@ function App() {
           title: cleanPayload.title || editorPreview.title,
           description: cleanPayload.description || "",
           topicId: cleanPayload.topicId || "",
+          topicIds: cleanPayload.topicIds ?? [],
         });
         const created = result.photo;
         if (!created) throw new Error("上传后没有返回图片记录。");
-        setPhotos((current) => [withSelectedTopic(created), ...current]);
+        setPhotos((current) => [withSelectedTopics(created), ...current]);
         pushMessage("success", "图片记录已创建");
       }
       resetEditor();
@@ -510,6 +549,10 @@ function App() {
   const stageEditorFile = async (files: FileList | null) => {
     const file = files?.[0];
     if (!file) return;
+    const selectedTopicIds = normalizeTopicIds([
+      ...(payload.topicIds ?? []),
+      payload.topicId,
+    ]);
     const preview: UploadPreview = {
       id: randomId(),
       file,
@@ -517,7 +560,8 @@ function App() {
       title:
         payload.title?.trim() ||
         file.name.replace(/\.[^.]+$/, "").replace(/[-_]+/g, " "),
-      topicId: payload.topicId?.trim() || "",
+      topicId: selectedTopicIds[0] || "",
+      topicIds: selectedTopicIds,
       description: payload.description?.trim() || "",
       exif: await extractExif(file),
     };
@@ -530,8 +574,12 @@ function App() {
     mode: "quick" | "topic",
   ) => {
     if (!files?.length) return;
-    if (mode === "topic" && !payload.topicId?.trim()) {
-      pushMessage("error", "请先选择已有专题，再按当前专题选择图片。");
+    const selectedTopicIds = normalizeTopicIds([
+      ...(payload.topicIds ?? []),
+      payload.topicId,
+    ]);
+    if (mode === "topic" && selectedTopicIds.length === 0) {
+      pushMessage("error", "请先选择至少一个专题，再按当前专题选择图片。");
       return;
     }
     const staged = await Promise.all(
@@ -540,10 +588,8 @@ function App() {
         file,
         previewUrl: URL.createObjectURL(file),
         title: file.name.replace(/\.[^.]+$/, "").replace(/[-_]+/g, " "),
-        topicId:
-          mode === "topic"
-            ? payload.topicId?.trim() || ""
-            : payload.topicId?.trim() || "",
+        topicId: selectedTopicIds[0] || "",
+        topicIds: selectedTopicIds,
         description: payload.description?.trim() || "",
         exif: await extractExif(file),
       })),
@@ -574,9 +620,7 @@ function App() {
         while (failedIndices.has(sourceIndex)) sourceIndex += 1;
         const preview = previews[sourceIndex];
         sourceIndex += 1;
-        const previewTopicTitle =
-          topicOptions.find(([id]) => id === preview?.topicId)?.[1] || "";
-        return withTopicTitle(photo, preview?.topicId, previewTopicTitle);
+        return withTopicTitles(photo, preview?.topicIds ?? []);
       });
 
       if (uploaded.length) setPhotos((current) => [...uploaded, ...current]);
@@ -752,12 +796,25 @@ function App() {
         if (topicFilter === topic.id) {
           setTopicFilter(allFilterValue);
         }
-        if (payload.topicId === topic.id) {
-          setPayload((current) => ({
-            ...current,
-            topicId: "",
-            topicTitle: "",
-          }));
+        if (
+          normalizeTopicIds([
+            ...(payload.topicIds ?? []),
+            payload.topicId,
+          ]).includes(topic.id)
+        ) {
+          setPayload((current) => {
+            const nextTopicIds = normalizeTopicIds([
+              ...(current.topicIds ?? []),
+              current.topicId,
+            ]).filter((topicId) => topicId !== topic.id);
+            const primaryTopicId = nextTopicIds[0] || "";
+            return {
+              ...current,
+              topicIds: nextTopicIds,
+              topicId: primaryTopicId,
+              topicTitle: primaryTopicId ? titleForTopicId(primaryTopicId) : "",
+            };
+          });
         }
         pushMessage("success", "专题已删除");
       },
@@ -810,9 +867,20 @@ function App() {
     {
       title: "专题",
       dataIndex: "topicTitle",
-      width: 130,
+      width: 190,
       align: "center",
-      render: (_value, photo) => topicTitleForPhoto(photo),
+      render: (_value, photo) => {
+        const topicIds = topicIdsForPhoto(photo);
+        return topicIds.length ? (
+          <Space size="mini" wrap className="topic-tags">
+            {topicIds.map((topicId) => (
+              <Tag key={topicId}>{titleForTopicId(topicId)}</Tag>
+            ))}
+          </Space>
+        ) : (
+          "未分组"
+        );
+      },
     },
     {
       title: "型号",
@@ -1157,7 +1225,11 @@ function App() {
                   <Card bordered={false}>
                     <Statistic
                       title="未关联专题"
-                      value={photos.filter((photo) => !photo.topicId).length}
+                      value={
+                        photos.filter(
+                          (photo) => topicIdsForPhoto(photo).length === 0,
+                        ).length
+                      }
                     />
                   </Card>
                 </section>
@@ -1317,14 +1389,15 @@ function App() {
                     </label>
 
                     <label>
-                      <span>专题（可选）</span>
+                      <span>专题（可多选）</span>
                       <Select
                         allowClear
+                        mode="multiple"
                         showSearch
-                        value={payload.topicId || undefined}
-                        placeholder="选择已有专题（可选）"
+                        value={payload.topicIds ?? []}
+                        placeholder="选择一个或多个专题（可选）"
                         onChange={(value) =>
-                          selectTopic(typeof value === "string" ? value : "")
+                          selectTopics(selectValuesToTopicIds(value))
                         }
                         options={topicOptions.map(([id, title]) => ({
                           label: `${title} (${id})`,
@@ -1332,7 +1405,7 @@ function App() {
                         }))}
                       />
                       <small>
-                        专题会同步写入主专题字段，并保留既有 topicIds 兼容。
+                        可同时关联多个专题；第一个专题会同步到兼容字段。
                       </small>
                     </label>
 
@@ -1369,14 +1442,15 @@ function App() {
             >
               <div className="upload-panel">
                 <label className="upload-topic-select">
-                  <span>当前专题（可选）</span>
+                  <span>当前专题（可多选）</span>
                   <Select
                     allowClear
+                    mode="multiple"
                     showSearch
-                    value={payload.topicId || undefined}
-                    placeholder="选择已有专题（可选）"
+                    value={payload.topicIds ?? []}
+                    placeholder="选择一个或多个专题（可选）"
                     onChange={(value) =>
-                      selectTopic(typeof value === "string" ? value : "")
+                      selectTopics(selectValuesToTopicIds(value))
                     }
                     options={topicOptions.map(([id, title]) => ({
                       label: `${title} (${id})`,
@@ -1428,7 +1502,7 @@ function App() {
                         <img src={preview.previewUrl} alt="" loading="lazy" />
                         <div>
                           <strong>{preview.title}</strong>
-                          <span>{preview.topicId || "未指定专题"}</span>
+                          <span>{topicLabelForIds(preview.topicIds)}</span>
                           <small>{exifLine(preview.exif)}</small>
                         </div>
                       </article>

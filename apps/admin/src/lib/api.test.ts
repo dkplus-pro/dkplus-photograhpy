@@ -29,6 +29,7 @@ function makePreview(exif: UploadPreview["exif"] = {}): UploadPreview {
     previewUrl: "blob:preview-1",
     title: "Uploaded frame",
     topicId: "",
+    topicIds: [],
     description: "",
     exif,
   };
@@ -89,6 +90,7 @@ describe("admin API client auth headers", () => {
         previewUrl: "blob:preview-2",
         title: " Street frame ",
         topicId: "street",
+        topicIds: ["street", "editorial"],
         description: " Second bulk upload ",
       },
     ];
@@ -144,6 +146,7 @@ describe("admin API client auth headers", () => {
         title: "Street frame",
         description: "Second bulk upload",
         topicId: "street",
+        topicIds: ["street", "editorial"],
         exif: previews[1]?.exif,
       },
     ]);

@@ -156,11 +156,11 @@ describe("admin gallery list contract", () => {
   });
 
   it("keeps admin photo flows limited to existing optional topics", () => {
-    expect(appSource).toContain("selectTopic");
-    expect(appSource).toContain('placeholder="选择已有专题（可选）"');
-    expect(appSource).toContain("请先选择已有专题，再按当前专题选择图片。");
+    expect(appSource).toContain("selectTopics");
+    expect(appSource).toContain('placeholder="选择一个或多个专题（可选）"');
+    expect(appSource).toContain("请先选择至少一个专题，再按当前专题选择图片。");
     expect(appSource).not.toContain("topicDraft");
-    expect(appSource).not.toContain("normalizeTopicId");
+    expect(appSource).toContain('mode="multiple"');
     expect(appSource).not.toContain('aria-label="新增专题"');
     expect(appSource).not.toContain('placeholder="专题名称，如：编辑精选"');
     expect(appSource).not.toContain('placeholder="专题 ID（可选，自动生成）"');

@@ -72,7 +72,7 @@ describe("admin gallery list contract", () => {
     expect(appSource).toContain('aria-label="图片元数据"');
     expect(appSource).toContain("EXIF 状态");
     expect(appSource).toContain("选择新文件后会刷新 EXIF");
-    expect(appSource).toContain("专题会同步写入主专题字段");
+    expect(appSource).toContain("可同时关联多个专题");
     expect(appSource).not.toContain("新增记录必须选择本地图片");
     expect(appSource).not.toContain("先选择文件并在本地读取 EXIF");
     expect(styles).toContain(".editor-modal .arco-modal");
@@ -146,11 +146,11 @@ describe("admin gallery list contract", () => {
   });
 
   it("keeps admin photo flows limited to existing optional topics", () => {
-    expect(appSource).toContain("selectTopic");
-    expect(appSource).toContain('placeholder="选择已有专题（可选）"');
-    expect(appSource).toContain("请先选择已有专题，再按当前专题选择图片。");
+    expect(appSource).toContain("selectTopics");
+    expect(appSource).toContain('placeholder="选择一个或多个专题（可选）"');
+    expect(appSource).toContain("请先选择至少一个专题，再按当前专题选择图片。");
     expect(appSource).not.toContain("topicDraft");
-    expect(appSource).not.toContain("normalizeTopicId");
+    expect(appSource).toContain('mode="multiple"');
     expect(appSource).not.toContain('aria-label="新增专题"');
     expect(appSource).not.toContain('placeholder="专题名称，如：编辑精选"');
     expect(appSource).not.toContain('placeholder="专题 ID（可选，自动生成）"');

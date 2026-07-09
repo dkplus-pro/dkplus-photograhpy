@@ -19,6 +19,7 @@ type BulkUploadItem = {
   title?: unknown;
   description?: unknown;
   topicId?: unknown;
+  topicIds?: unknown;
   tags?: unknown;
   takenAt?: unknown;
   exif?: unknown;
@@ -69,6 +70,64 @@ function itemField(value: unknown, path: string): string | undefined {
     throw new AppError(400, "UPLOAD_INVALID_ITEM", `${path} must be a string`);
   }
   return value.trim() || undefined;
+}
+
+function stringArray(value: unknown, path: string): string[] | undefined {
+  if (value === undefined || value === null || value === "") {
+    return undefined;
+  }
+  if (Array.isArray(value)) {
+    if (value.every((entry) => typeof entry === "string")) {
+      return [...new Set(value.map((entry) => entry.trim()).filter(Boolean))];
+    }
+    throw new AppError(
+      400,
+      "UPLOAD_INVALID_ITEM",
+      `${path} must be a string array`,
+    );
+  }
+  if (typeof value === "string") {
+    const raw = value.trim();
+    if (!raw) return undefined;
+    if (raw.startsWith("[")) {
+      try {
+        return stringArray(JSON.parse(raw) as unknown, path);
+      } catch {
+        throw new AppError(
+          400,
+          "UPLOAD_INVALID_ITEM",
+          `${path} must be a JSON string array`,
+        );
+      }
+    }
+    return [
+      ...new Set(
+        raw
+          .split(",")
+          .map((entry) => entry.trim())
+          .filter(Boolean),
+      ),
+    ];
+  }
+  throw new AppError(
+    400,
+    "UPLOAD_INVALID_ITEM",
+    `${path} must be a comma-separated string or string array`,
+  );
+}
+
+function topicIds(
+  value: unknown,
+  path: string,
+  fallbackTopicId?: string,
+): string[] | undefined {
+  const parsed = stringArray(value, path) ?? [];
+  const ids = [
+    ...new Set(
+      [...(parsed ?? []), fallbackTopicId].filter(Boolean) as string[],
+    ),
+  ];
+  return ids.length ? ids : undefined;
 }
 
 function tags(value: unknown, path: string): string[] | undefined {
@@ -265,6 +324,7 @@ async function createUploadedPhoto(
     title,
     description,
     topicId,
+    topicIds: topicIdList,
     tags: tagList,
     takenAt,
     clientExif,
@@ -274,6 +334,7 @@ async function createUploadedPhoto(
     title?: string;
     description?: string;
     topicId?: string;
+    topicIds?: string[];
     tags?: string[];
     takenAt?: string;
     clientExif?: ExifMetadata;
@@ -285,6 +346,7 @@ async function createUploadedPhoto(
     title: title ?? file.originalname,
     description,
     topicId,
+    topicIds: topicIdList ?? (topicId ? [topicId] : undefined),
     tags: tagList,
     takenAt: takenAt ?? exif?.capturedAt,
     image: stored.image,
@@ -420,6 +482,12 @@ export function createPhotosRouter(
     for (const [index, file] of incoming.entries()) {
       const item = itemInputs?.[index];
       try {
+        const parsedTopicId = item
+          ? itemField(item.topicId, `items[${index}].topicId`)
+          : field(form.topicId);
+        const parsedTopicIds = item
+          ? topicIds(item.topicIds, `items[${index}].topicIds`, parsedTopicId)
+          : topicIds(form.topicIds, "topicIds", parsedTopicId);
         created.push(
           await createUploadedPhoto(file, {
             store,
@@ -430,9 +498,8 @@ export function createPhotosRouter(
             description: item
               ? itemField(item.description, `items[${index}].description`)
               : field(form.description),
-            topicId: item
-              ? itemField(item.topicId, `items[${index}].topicId`)
-              : field(form.topicId),
+            topicId: parsedTopicId ?? parsedTopicIds?.[0],
+            topicIds: parsedTopicIds,
             tags: item
               ? tags(item.tags, `items[${index}].tags`)
               : tags(field(form.tags), "tags"),
@@ -467,6 +534,8 @@ export function createPhotosRouter(
     const form = body(ctx) as Record<string, unknown>;
     const photoId = field(form.photoId);
     const clientExif = parseClientExif(form.exif);
+    const parsedTopicId = field(form.topicId);
+    const parsedTopicIds = topicIds(form.topicIds, "topicIds", parsedTopicId);
     if (photoId && incoming.length !== 1) {
       throw new AppError(
         400,
@@ -483,7 +552,8 @@ export function createPhotosRouter(
         const input: PhotoInput = {
           title: field(form.title),
           description: field(form.description),
-          topicId: field(form.topicId),
+          topicId: parsedTopicId ?? parsedTopicIds?.[0],
+          topicIds: parsedTopicIds,
           tags: tags(field(form.tags), "tags"),
           takenAt: field(form.takenAt) ?? exif?.capturedAt,
           image: stored.image,
@@ -501,7 +571,8 @@ export function createPhotosRouter(
           uploads,
           title: field(form.title) ?? file.originalname,
           description: field(form.description),
-          topicId: field(form.topicId),
+          topicId: parsedTopicId ?? parsedTopicIds?.[0],
+          topicIds: parsedTopicIds,
           tags: tags(field(form.tags), "tags"),
           takenAt: field(form.takenAt),
           clientExif,

@@ -103,18 +103,36 @@ const resolveDisplayUrl = (value?: string): string | undefined => {
   return `https://images.unsplash.com/${raw.replace(/^\/+/, "")}`;
 };
 
-const toServerPayload = (payload: PhotoPayload) => ({
-  title: payload.title,
-  description: payload.description,
-  topicId: payload.topicId,
-  image: payload.imageUrl
-    ? {
-        url: payload.imageUrl,
-        storage: "remote",
-      }
-    : undefined,
-  exif: payload.exif,
-});
+const normalizeTopicIds = (values: Array<string | undefined>): string[] => [
+  ...new Set(
+    values
+      .map((value) => value?.trim())
+      .filter((value): value is string => Boolean(value)),
+  ),
+];
+
+const topicIdsFromPayload = (payload: PhotoPayload): string[] =>
+  normalizeTopicIds([...(payload.topicIds ?? []), payload.topicId]);
+
+const topicIdsFromPreview = (preview: UploadPreview): string[] =>
+  normalizeTopicIds([...(preview.topicIds ?? []), preview.topicId]);
+
+const toServerPayload = (payload: PhotoPayload) => {
+  const topicIds = topicIdsFromPayload(payload);
+  return {
+    title: payload.title,
+    description: payload.description,
+    topicId: topicIds[0],
+    topicIds,
+    image: payload.imageUrl
+      ? {
+          url: payload.imageUrl,
+          storage: "remote",
+        }
+      : undefined,
+    exif: payload.exif,
+  };
+};
 
 const toServerTopicPayload = (payload: TopicPayload) => ({
   id: payload.id?.trim() || undefined,
@@ -122,12 +140,16 @@ const toServerTopicPayload = (payload: TopicPayload) => ({
   description: payload.description?.trim() ?? "",
 });
 
-const toBulkUploadItem = (preview: UploadPreview) => ({
-  title: preview.title.trim() || undefined,
-  description: preview.description.trim() || undefined,
-  topicId: preview.topicId.trim() || undefined,
-  exif: preview.exif,
-});
+const toBulkUploadItem = (preview: UploadPreview) => {
+  const topicIds = topicIdsFromPreview(preview);
+  return {
+    title: preview.title.trim() || undefined,
+    description: preview.description.trim() || undefined,
+    topicId: topicIds[0],
+    topicIds: topicIds.length ? topicIds : undefined,
+    exif: preview.exif,
+  };
+};
 
 const readAdminToken = (): string | undefined => {
   const envToken = import.meta.env.VITE_ADMIN_TOKEN?.trim();
@@ -170,6 +192,10 @@ export const normalizePhotoForAdmin = (
   input: ServerPhotoEnvelope,
 ): PhotoRecord => {
   const source = "photo" in input ? input.photo : input;
+  const topicIds = normalizeTopicIds([
+    source.topicId,
+    ...(source.topicIds ?? []),
+  ]);
   const imageUrl = resolveDisplayUrl(
     source.imageUrl || source.image?.url || source.asset?.original,
   );
@@ -181,7 +207,8 @@ export const normalizePhotoForAdmin = (
   );
   return {
     ...source,
-    topicId: source.topicId ?? source.topicIds?.[0],
+    topicId: source.topicId ?? topicIds[0],
+    topicIds,
     imageUrl: imageUrl ?? "",
     thumbnailUrl,
     exif: normalizeExifForAdmin(source.exif),
@@ -393,7 +420,9 @@ export const createApiClient = (
     if (preview.description.trim()) {
       body.append("description", preview.description.trim());
     }
-    if (preview.topicId.trim()) body.append("topicId", preview.topicId.trim());
+    const topicIds = topicIdsFromPreview(preview);
+    if (topicIds[0]) body.append("topicId", topicIds[0]);
+    if (topicIds.length) body.append("topicIds", JSON.stringify(topicIds));
     body.append("exif", JSON.stringify(preview.exif));
 
     const result = await requestJson<ServerUploadResult>(baseUrl, "/uploads", {

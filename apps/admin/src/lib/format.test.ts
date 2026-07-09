@@ -30,6 +30,7 @@ describe("format helpers", () => {
         previewUrl: "blob:a",
         title: "A",
         topicId: "portraits",
+        topicIds: ["portraits", "editorial"],
         description: "",
         exif: {},
       },
@@ -39,12 +40,13 @@ describe("format helpers", () => {
         previewUrl: "blob:b",
         title: "B",
         topicId: "travel",
+        topicIds: ["travel"],
         description: "",
         exif: {},
       },
     ];
 
-    expect(summarizeUpload(previews)).toBe("2 个文件已暂存，覆盖 2 个专题");
+    expect(summarizeUpload(previews)).toBe("2 个文件已暂存，覆盖 3 个专题");
   });
 
   it("builds a concise EXIF line", () => {
