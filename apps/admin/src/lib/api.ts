@@ -177,19 +177,6 @@ const cleanBrandLogos = (logos: BrandLogoRecord[]): BrandLogoRecord[] =>
 
 const toServerBrandPayload = (payload: BrandPayload) => {
   const logos = cleanBrandLogos(payload.logos);
-  const aliases = normalizeStringList(payload.aliases);
-  const hasAliases = Array.isArray(payload.aliases);
-  const hasLogos = Array.isArray(payload.logos);
-  const hasLogoUrls = Array.isArray(payload.logoUrls) || hasLogos;
-  const logoUrls = [
-    ...new Set([
-      ...logos.map((logo) => logo.url),
-      ...(payload.logoUrls ?? [])
-        .map((url) => url.trim())
-        .filter((url) => Boolean(url)),
-    ]),
-  ];
-  const name = payload.name.trim();
   return {
     id: payload.id?.trim() || undefined,
     name: payload.name.trim(),
@@ -359,7 +346,9 @@ export const normalizeBrandForAdmin = (
     title,
     logos,
     logoUrls: logoUrls?.length ? logoUrls : logos.map((logo) => logo.url),
-    aliases: source.aliases?.filter((alias) => Boolean(alias.trim())),
+    aliases: (source.aliases ?? [])
+      .map((alias) => alias.trim())
+      .filter((alias) => Boolean(alias)),
   };
 };
 
@@ -496,7 +485,8 @@ export const createApiClient = (
   async listBrands() {
     return unwrapBrands(
       await requestJson<
-        ServerBrandEnvelope[] | { brands?: ServerBrandEnvelope[]; data?: ServerBrandEnvelope[] }
+        | ServerBrandEnvelope[]
+        | { brands?: ServerBrandEnvelope[]; data?: ServerBrandEnvelope[] }
       >(baseUrl, "/brands"),
     );
   },

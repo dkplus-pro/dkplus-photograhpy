@@ -1040,42 +1040,6 @@ function App() {
     });
   };
 
-  const uploadBrandLogoFiles = async (files: FileList | null) => {
-    if (!files?.length) return;
-    if (!editingBrandId) {
-      pushMessage("info", "请先保存品牌，再上传 Logo 图片文件。");
-      return;
-    }
-
-    setIsSaving(true);
-    try {
-      const saved = await api.uploadBrandLogos(editingBrandId, Array.from(files));
-      applySavedBrand(saved);
-      setBrandPayload((current) => ({
-        ...current,
-        logoUrls: saved.logoUrls,
-        logos: saved.logos.length
-          ? saved.logos.map((logo) => ({
-              ...logo,
-              id: logo.id ?? logo.key ?? randomId(),
-              label: brandLogoLabel(logo),
-            }))
-          : current.logos,
-      }));
-      pushMessage("success", `已上传 ${files.length} 个品牌 Logo`);
-    } catch (error) {
-      pushMessage(
-        "error",
-        error instanceof Error ? error.message : "上传品牌 Logo 失败",
-      );
-    } finally {
-      setIsSaving(false);
-      if (brandLogoFileInputRef.current) {
-        brandLogoFileInputRef.current.value = "";
-      }
-    }
-  };
-
   const saveBrand = async () => {
     const name = brandPayload.name.trim();
     if (!name) {
@@ -1108,7 +1072,9 @@ function App() {
       applySavedBrand(saved);
       pushMessage(
         "success",
-        editingBrandId ? "品牌已更新" : `品牌“${saved.title || saved.name}”已创建`,
+        editingBrandId
+          ? "品牌已更新"
+          : `品牌“${saved.title || saved.name}”已创建`,
       );
       resetBrandEditor();
     } catch (error) {
@@ -1393,7 +1359,6 @@ function App() {
     },
   ];
 
-
   const brandColumns: TableColumnProps<BrandRecord>[] = [
     {
       title: "品牌",
@@ -1419,10 +1384,14 @@ function App() {
               <figure key={logo.id || `${logo.url}-${index}`}>
                 <img
                   src={withAdminThumbnailDisplayUrl(logo.url) || logo.url}
-                  alt={brandLogoLabel(logo) || `${brand.name} logo ${index + 1}`}
+                  alt={
+                    brandLogoLabel(logo) || `${brand.name} logo ${index + 1}`
+                  }
                   loading="lazy"
                 />
-                <figcaption>{brandLogoLabel(logo) || `Logo ${index + 1}`}</figcaption>
+                <figcaption>
+                  {brandLogoLabel(logo) || `Logo ${index + 1}`}
+                </figcaption>
               </figure>
             ))}
             {logos.length > 4 && <Tag>+{logos.length - 4}</Tag>}
@@ -1814,7 +1783,10 @@ function App() {
                   </Card>
                 </section>
 
-                <Card className="toolbar-card brand-toolbar-card" bordered={false}>
+                <Card
+                  className="toolbar-card brand-toolbar-card"
+                  bordered={false}
+                >
                   <div className="brand-toolbar">
                     <Input
                       allowClear
@@ -1827,7 +1799,10 @@ function App() {
                       <Button type="primary" onClick={openCreateBrandEditor}>
                         新增品牌
                       </Button>
-                      <Button onClick={() => void refresh()} loading={isLoading}>
+                      <Button
+                        onClick={() => void refresh()}
+                        loading={isLoading}
+                      >
                         刷新并同步照片品牌
                       </Button>
                     </Space>
@@ -2204,7 +2179,8 @@ function App() {
                   <span className="editor-section-label">Brand Kit</span>
                   <h2>品牌与 Logo 配置</h2>
                   <p>
-                    名称用于匹配照片 EXIF 相机品牌；Logo 可添加多个黑白或透明底版本，供前台水印导出选择。
+                    名称用于匹配照片 EXIF 相机品牌；Logo
+                    可添加多个黑白或透明底版本，供前台水印导出选择。
                   </p>
                 </section>
                 <label>
@@ -2220,14 +2196,19 @@ function App() {
                     }
                     placeholder="例如：Sony"
                   />
-                  <small>需与上传照片 EXIF 中的相机品牌保持一致，刷新后可自动同步。</small>
+                  <small>
+                    需与上传照片 EXIF 中的相机品牌保持一致，刷新后可自动同步。
+                  </small>
                 </label>
                 <label>
                   <span>显示标题</span>
                   <Input
                     value={brandPayload.title || ""}
                     onChange={(value) =>
-                      setBrandPayload((current) => ({ ...current, title: value }))
+                      setBrandPayload((current) => ({
+                        ...current,
+                        title: value,
+                      }))
                     }
                     placeholder="例如：Sony / 索尼"
                   />
@@ -2246,7 +2227,7 @@ function App() {
                       <Button
                         type="secondary"
                         disabled={!editingBrandId}
-                        loading={isSaving && Boolean(editingBrandId)}
+                        loading={isBrandLogoUploading}
                         onClick={() => brandLogoFileInputRef.current?.click()}
                       >
                         上传 Logo 图片
@@ -2274,7 +2255,10 @@ function App() {
                         <div className="brand-logo-row__preview">
                           {logo.url?.trim() ? (
                             <img
-                              src={withAdminThumbnailDisplayUrl(logo.url) || logo.url}
+                              src={
+                                withAdminThumbnailDisplayUrl(logo.url) ||
+                                logo.url
+                              }
                               alt={brandLogoLabel(logo) || `Logo ${index + 1}`}
                             />
                           ) : (
@@ -2290,7 +2274,9 @@ function App() {
                         />
                         <Input
                           value={logo.url || ""}
-                          onChange={(value) => updateBrandLogo(index, "url", value)}
+                          onChange={(value) =>
+                            updateBrandLogo(index, "url", value)
+                          }
                           placeholder="Logo URL，可为 /uploads/... 或 https://..."
                         />
                         <Button

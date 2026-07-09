@@ -499,10 +499,13 @@ describe("admin API client auth headers", () => {
     await client.deleteBrand("old brand");
 
     expect(listed[0]?.name).toBe("Canon");
-    expect(listed[0]?.logoUrls).toEqual(["/logos/canon.svg"]);
+    expect(listed[0]?.logoUrls).toEqual(["/uploads/brands/canon.svg"]);
     expect(created.aliases).toEqual(["Sony Corporation"]);
-    expect(updated.title).toBe("Sony / 索尼");
-    expect(logoResult.logoUrls).toEqual(["/uploads/sony-logo.jpg"]);
+    expect(updated.title).toBe("Sony Alpha");
+    expect(logoResult.logoUrls).toEqual([
+      "/logos/sony-white.svg",
+      "/uploads/brand-logo.png",
+    ]);
     expect(fetchMock).toHaveBeenCalledTimes(5);
 
     const [listUrl] = fetchMock.mock.calls[0] ?? [];
@@ -514,9 +517,9 @@ describe("admin API client auth headers", () => {
     expect(JSON.parse(String(createInit?.body))).toEqual({
       id: "sony",
       name: "Sony",
-      title: "Sony",
+      title: "Sony / 索尼",
       aliases: ["Sony Corporation"],
-      logos: [],
+      logos: [{ url: "/logos/sony.svg", alt: "White" }],
       logoUrls: ["/logos/sony.svg"],
     });
 
@@ -525,9 +528,12 @@ describe("admin API client auth headers", () => {
     expect(updateInit?.method).toBe("PATCH");
     expect(JSON.parse(String(updateInit?.body))).toEqual({
       name: "Sony",
-      title: "Sony / 索尼",
+      title: "Sony Alpha",
       aliases: ["索尼"],
-      logos: [],
+      logos: [
+        { url: "/logos/sony-white.svg", alt: "White" },
+        { url: "/logos/sony-black.svg", alt: "Black" },
+      ],
       logoUrls: [],
     });
 

@@ -74,8 +74,6 @@ export interface BrandRecord {
   logos: BrandLogoRecord[];
   logoUrls?: string[];
   aliases?: string[];
-  logos: BrandLogoRecord[];
-  logoUrls: string[];
   photoCount?: number;
   createdAt?: string;
   updatedAt?: string;
@@ -107,7 +105,6 @@ export interface TopicPayload {
   description?: string;
 }
 
-
 export interface TopicRecord {
   id: string;
   title: string;
@@ -124,8 +121,6 @@ export interface TopicPayload {
   title: string;
   description?: string;
 }
-
-
 
 export interface TopicRecord {
   id: string;
