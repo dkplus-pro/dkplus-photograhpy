@@ -210,6 +210,10 @@ describe("admin list UI contract", () => {
     expect(appSource).toContain("api.createBrand");
     expect(appSource).toContain("api.updateBrand");
     expect(appSource).toContain("api.deleteBrand");
+    expect(apiSource).toContain("uploadBrandLogos");
+    expect(apiSource).toContain('baseUrl, "/uploads"');
+    expect(apiSource).toContain('body.append("mode", "asset")');
+    expect(apiSource).not.toMatch(/brands\/\$\{encodeURIComponent\(id\)\}\/logos/);
     expect(appSource).toMatch(/brandLogos|logos|logoDrafts/);
     expect(appSource).toMatch(/添加.*Logo|新增.*Logo|addBrandLogo/i);
     expect(appSource).toMatch(/移除.*Logo|删除.*Logo|removeBrandLogo/i);

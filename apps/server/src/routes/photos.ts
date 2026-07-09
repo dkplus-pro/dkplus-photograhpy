@@ -623,7 +623,7 @@ export function createPhotosRouter(
 
     const form = body(ctx) as Record<string, unknown>;
     if (isAssetUpload(form)) {
-      const uploadedAssets = [];
+      const uploadedAssets: BrandLogo[] = [];
       for (const file of incoming) {
         const stored = await uploads.store(file);
         uploadedAssets.push(logoFromStoredFile(file, stored.image));
