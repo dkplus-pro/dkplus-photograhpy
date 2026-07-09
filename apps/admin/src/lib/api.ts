@@ -594,13 +594,19 @@ export const createApiClient = (
   async uploadBrandLogos(id, files) {
     const body = new FormData();
     for (const file of files) body.append("files", file);
-    const uploaded = unwrapUploadAssets(
-      await requestJson<ServerUploadAssetsResult>(baseUrl, "/uploads/assets", {
-        method: "POST",
-        body,
-      }),
-    );
-    return appendBrandLogosViaPatch(baseUrl, id, uploaded);
+    body.append("mode", "asset");
+    body.append("purpose", "brand-logo");
+
+    const result = await requestJson<ServerUploadResult>(baseUrl, "/uploads", {
+      method: "POST",
+      body,
+    });
+    const uploadedLogos = uploadedLogosFromResult(result);
+    if (!uploadedLogos.length) {
+      throw new Error("Upload did not return any logo files");
+    }
+
+    return appendBrandLogosViaBrandUpdate(baseUrl, id, uploadedLogos);
   },
   async createTopic(payload) {
     return normalizeTopicForAdmin(
@@ -628,9 +634,7 @@ export const createApiClient = (
     });
   },
   async addBrandLogo(id, logo) {
-    const [cleanLogo] = cleanBrandLogos([logo]);
-    if (!cleanLogo) throw new Error("Logo URL is required");
-    return appendBrandLogosViaPatch(baseUrl, id, [cleanLogo]);
+    return appendBrandLogosViaBrandUpdate(baseUrl, id, [logo]);
   },
   async createPhoto(payload) {
     return normalizePhotoForAdmin(
