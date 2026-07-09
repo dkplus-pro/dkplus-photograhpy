@@ -209,18 +209,23 @@ describe("admin list UI contract", () => {
     expect(appSource).toContain("api.listBrands");
     expect(appSource).toContain("api.createBrand");
     expect(appSource).toContain("api.updateBrand");
+    expect(appSource).toContain("isDerivedBrandId");
+    expect(appSource).toContain("api.uploadBrandLogos(selectedFiles)");
+    expect(appSource).not.toContain("api.uploadBrandLogos(editingBrandId");
     expect(appSource).toContain("api.deleteBrand");
     expect(apiSource).toContain("uploadBrandLogos");
     expect(apiSource).toContain('baseUrl, "/uploads"');
     expect(apiSource).toContain('body.append("mode", "asset")');
-    expect(apiSource).not.toMatch(/brands\/\$\{encodeURIComponent\(id\)\}\/logos/);
+    expect(apiSource).not.toMatch(
+      /brands\/\$\{encodeURIComponent\(id\)\}\/logos/,
+    );
     expect(appSource).toMatch(/brandLogos|logos|logoDrafts/);
     expect(appSource).toMatch(/添加.*Logo|新增.*Logo|addBrandLogo/i);
     expect(appSource).toMatch(/移除.*Logo|删除.*Logo|removeBrandLogo/i);
     expect(appSource).toContain("上传 Logo 文件");
     expect(appSource).toMatch(/上传图片.*品牌|cameraBrand|auto-sync/i);
     expect(apiSource).toContain('baseUrl, "/uploads/assets"');
-    expect(apiSource).toContain("appendBrandLogosViaPatch");
+    expect(apiSource).not.toContain("appendBrandLogosViaPatch");
     expect(apiSource).not.toContain("/brands/${encodeURIComponent(id)}/logos");
     expect(styles).toContain(".brand-form");
     expect(styles).toMatch(/\.brand-logo|\.brand-card|\.brand-list/);

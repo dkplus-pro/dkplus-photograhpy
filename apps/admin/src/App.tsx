@@ -251,6 +251,9 @@ const brandIdForName = (name: string): string => {
 const photoBrandName = (photo: PhotoRecord): string =>
   photo.exif?.cameraMake?.trim() || "";
 
+const isDerivedBrandId = (id: string | null | undefined): boolean =>
+  Boolean(id?.startsWith("auto-"));
+
 const deriveBrandsFromPhotos = (records: PhotoRecord[]): BrandRecord[] => {
   const metrics = new Map<string, { name: string; count: number }>();
   for (const photo of records) {
@@ -1066,9 +1069,10 @@ function App() {
 
     setIsSaving(true);
     try {
-      const saved = editingBrandId
-        ? await api.updateBrand(editingBrandId, cleanPayload)
-        : await api.createBrand(cleanPayload);
+      const saved =
+        editingBrandId && !isDerivedBrandId(editingBrandId)
+          ? await api.updateBrand(editingBrandId, cleanPayload)
+          : await api.createBrand(cleanPayload);
       applySavedBrand(saved);
       pushMessage(
         "success",
@@ -1090,34 +1094,24 @@ function App() {
   const uploadBrandLogoFiles = async (files: FileList | null) => {
     const selectedFiles = Array.from(files ?? []);
     if (!selectedFiles.length) return;
-    if (!editingBrandId) {
-      pushMessage("error", "请先保存品牌，再上传 Logo 文件。");
-      return;
-    }
-
     setIsBrandLogoUploading(true);
     try {
-      const saved = await api.uploadBrandLogos(editingBrandId, selectedFiles);
-      setBrandPayload((current) => ({
-        ...current,
-        name: saved.name,
-        title: saved.title ?? saved.name,
-        aliases: saved.aliases ?? [],
-        logoUrls: saved.logoUrls ?? [],
-        logos: saved.logos.length ? saved.logos : (current.logos ?? []),
-      }));
-      setBrands((current) =>
-        mergeBrandsWithPhotoBrands(
-          [
-            ...current.filter(
-              (brand) => brand.id !== saved.id && brand.id !== editingBrandId,
-            ),
-            saved,
-          ],
-          photos,
-        ),
+      const uploadedLogos = await api.uploadBrandLogos(selectedFiles);
+      setBrandPayload((current) => {
+        const existingLogos = (current.logos ?? []).filter((logo) =>
+          Boolean(logo.url.trim()),
+        );
+        const logos = [...existingLogos, ...uploadedLogos];
+        return {
+          ...current,
+          logos,
+          logoUrls: logos.map((logo) => logo.url),
+        };
+      });
+      pushMessage(
+        "success",
+        `已上传 ${uploadedLogos.length} 个 Logo 文件，请保存品牌以完成持久化`,
       );
-      pushMessage("success", `已上传 ${selectedFiles.length} 个 Logo 文件`);
     } catch (error) {
       pushMessage(
         "error",
@@ -2226,7 +2220,6 @@ function App() {
                       </Button>
                       <Button
                         type="secondary"
-                        disabled={!editingBrandId}
                         loading={isBrandLogoUploading}
                         onClick={() => brandLogoFileInputRef.current?.click()}
                       >
@@ -2244,11 +2237,10 @@ function App() {
                       void uploadBrandLogoFiles(event.currentTarget.files)
                     }
                   />
-                  {!editingBrandId && (
-                    <Text type="secondary">
-                      保存品牌后可上传图片 Logo；当前可先手动添加 Logo URL。
-                    </Text>
-                  )}
+                  <Text type="secondary">
+                    上传会先写入 Logo
+                    URL；点击保存后通过品牌新增/更新接口持久化。
+                  </Text>
                   {brandPayload.logos.length ? (
                     brandPayload.logos.map((logo, index) => (
                       <div className="brand-logo-row" key={logo.id || index}>
