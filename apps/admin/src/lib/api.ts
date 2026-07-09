@@ -231,6 +231,10 @@ const toServerBrandLogo = (logo: BrandLogoRecord) => ({
 
 const toServerBrandPayload = (payload: BrandPayload) => {
   const logos = cleanBrandLogos(payload.logos);
+  const aliases = normalizeStringList(payload.aliases);
+  const hasAliases = Array.isArray(payload.aliases);
+  const hasLogos = Array.isArray(payload.logos);
+  const hasLogoUrls = Array.isArray(payload.logoUrls) || hasLogos;
   const logoUrls = [
     ...new Set([
       ...logos.map((logo) => logo.url),
@@ -242,13 +246,11 @@ const toServerBrandPayload = (payload: BrandPayload) => {
   const name = payload.name.trim();
   return {
     id: payload.id?.trim() || undefined,
-    name,
-    title: payload.title?.trim() || name,
-    aliases: payload.aliases
-      ?.map((alias) => alias.trim())
-      .filter((alias) => Boolean(alias)),
-    logos: logos.map(toServerBrandLogo),
-    logoUrls,
+    name: payload.name.trim(),
+    title: payload.title?.trim() || undefined,
+    aliases: hasAliases ? aliases : undefined,
+    logoUrls: hasLogoUrls ? logoUrls : undefined,
+    logos: hasLogos ? logos : undefined,
   };
 };
 

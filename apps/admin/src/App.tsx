@@ -2187,32 +2187,52 @@ function App() {
                       <span className="editor-section-label">Logos</span>
                       <strong>多个 Logo</strong>
                     </div>
-                    <Button type="outline" onClick={addBrandLogo}>
-                      添加 Logo
-                    </Button>
+                    <Space className="brand-logo-editor__actions" wrap>
+                      <Button type="outline" onClick={addBrandLogo}>
+                        添加 Logo URL
+                      </Button>
+                      <Button
+                        type="secondary"
+                        loading={isBrandLogoUploading}
+                        disabled={!editingBrandId}
+                        onClick={() => brandLogoFileInputRef.current?.click()}
+                      >
+                        上传 Logo 文件
+                      </Button>
+                    </Space>
                   </div>
-                  {brandPayload.logos.length ? (
-                    brandPayload.logos.map((logo, index) => (
+                  <input
+                    ref={brandLogoFileInputRef}
+                    className="hidden-file-input"
+                    type="file"
+                    accept="image/*,.svg"
+                    multiple
+                    onChange={(event) => {
+                      void uploadBrandLogoFiles(event.currentTarget.files);
+                    }}
+                  />
+                  {(brandPayload.logos ?? []).length ? (
+                    (brandPayload.logos ?? []).map((logo, index) => (
                       <div className="brand-logo-row" key={logo.id || index}>
                         <div className="brand-logo-row__preview">
-                          {logo.url.trim() ? (
+                          {logo.url?.trim() ? (
                             <img
                               src={withAdminThumbnailDisplayUrl(logo.url) || logo.url}
-                              alt={logo.label || `Logo ${index + 1}`}
+                              alt={logo.alt || `Logo ${index + 1}`}
                             />
                           ) : (
                             <span>Logo</span>
                           )}
                         </div>
                         <Input
-                          value={logo.label || ""}
+                          value={logo.alt || ""}
                           onChange={(value) =>
-                            updateBrandLogo(index, "label", value)
+                            updateBrandLogo(index, "alt", value)
                           }
                           placeholder="标签，如：黑色横版"
                         />
                         <Input
-                          value={logo.url}
+                          value={logo.url || ""}
                           onChange={(value) => updateBrandLogo(index, "url", value)}
                           placeholder="Logo URL，可为 /uploads/... 或 https://..."
                         />

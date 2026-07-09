@@ -211,11 +211,12 @@ describe("admin gallery list contract", () => {
     expect(appSource).toContain('品牌与 Logo 配置');
     expect(appSource).toContain('多个 Logo');
     expect(appSource).toContain('添加 Logo');
+    expect(appSource).toContain('上传 Logo 文件');
     expect(appSource).toContain('removeBrandLogo');
     expect(appSource).toContain('api.listBrands');
     expect(appSource).toContain('api.createBrand');
     expect(appSource).toContain('api.updateBrand');
-    expect(apiSource).toContain('addBrandLogo');
+    expect(apiSource).toContain('uploadBrandLogos');
     expect(apiSource).toContain('logoUrls');
     expect(appSource).toContain('api.deleteBrand');
     expect(appSource).toContain('deriveBrandsFromPhotos');
