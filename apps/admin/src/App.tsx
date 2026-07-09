@@ -36,7 +36,7 @@ import {
   summarizeUpload,
 } from "./lib/format";
 import type {
-  BrandLogo,
+  BrandLogoRecord,
   BrandPayload,
   BrandRecord,
   PhotoPayload,
@@ -131,9 +131,11 @@ const demoBrands: BrandRecord[] = [
     id: "sony",
     name: "Sony",
     title: "Sony / 索尼",
-    aliases: ["索尼"],
-    logoUrls: [],
+    aliases: [],
     photoCount: 1,
+    logoUrls: [
+      "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 240 80'%3E%3Crect width='240' height='80' fill='%23141414'/%3E%3Ctext x='120' y='51' font-size='34' fill='%23fffdf8' text-anchor='middle' font-family='Georgia,serif'%3ESONY%3C/text%3E%3C/svg%3E",
+    ],
     logos: [
       {
         id: "sony-wordmark",
@@ -146,9 +148,11 @@ const demoBrands: BrandRecord[] = [
     id: "fujifilm",
     name: "Fujifilm",
     title: "Fujifilm / 富士",
-    aliases: ["富士"],
-    logoUrls: [],
+    aliases: [],
     photoCount: 1,
+    logoUrls: [
+      "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 260 80'%3E%3Crect width='260' height='80' fill='%23fffdf8'/%3E%3Ctext x='130' y='51' font-size='31' fill='%23141414' text-anchor='middle' font-family='Georgia,serif'%3EFUJIFILM%3C/text%3E%3C/svg%3E",
+    ],
     logos: [
       {
         id: "fujifilm-wordmark",
@@ -172,8 +176,8 @@ const emptyBrandPayload: BrandPayload = {
   name: "",
   title: "",
   aliases: [],
-  logoUrls: [],
   logos: [],
+  logoUrls: [],
 };
 type AdminSection = "photos" | "topics" | "brands";
 
@@ -287,7 +291,7 @@ const mergeBrandsWithPhotoBrands = (
       title: brand.title || name,
       aliases: brand.aliases ?? [],
       logos: brand.logos ?? [],
-      logoUrls: brand.logoUrls ?? brand.logos?.map((logo) => logo.url) ?? [],
+      logoUrls: brand.logoUrls ?? (brand.logos ?? []).map((logo) => logo.url),
       photoCount: photoCountByKey.get(key) ?? brand.photoCount ?? 0,
     });
   }
@@ -533,7 +537,7 @@ function App() {
         brand.name,
         brand.title,
         ...(brand.aliases ?? []),
-        ...brand.logos.flatMap((logo) => [logo.alt, logo.url]),
+        ...brand.logos.flatMap((logo) => [logo.label, logo.alt, logo.url]),
       ]
         .filter(Boolean)
         .join(" ")
@@ -953,7 +957,14 @@ function App() {
     }
   };
 
-  const emptyBrandLogo = (): BrandLogo => ({ id: randomId(), url: "", alt: "" });
+  const brandLogoLabel = (logo: BrandLogoRecord): string =>
+    logo.label ?? logo.alt ?? "";
+
+  const emptyBrandLogo = (): BrandLogoRecord => ({
+    id: randomId(),
+    url: "",
+    label: "",
+  });
 
   const openCreateBrandEditor = () => {
     setEditingBrandId(null);
@@ -968,9 +979,13 @@ function App() {
       name: brand.name,
       title: brand.title ?? brand.name,
       aliases: brand.aliases ?? [],
-      logoUrls: brand.logoUrls ?? [],
+      logoUrls: brand.logoUrls ?? brand.logos.map((logo) => logo.url),
       logos: brand.logos.length
-        ? brand.logos.map((logo) => ({ ...logo }))
+        ? brand.logos.map((logo) => ({
+            ...logo,
+            id: logo.id ?? logo.key ?? randomId(),
+            label: brandLogoLabel(logo),
+          }))
         : [emptyBrandLogo()],
     });
     setIsBrandEditorOpen(true);
@@ -979,6 +994,9 @@ function App() {
   const resetBrandEditor = () => {
     setEditingBrandId(null);
     setBrandPayload(emptyBrandPayload);
+    if (brandLogoFileInputRef.current) {
+      brandLogoFileInputRef.current.value = "";
+    }
     setIsBrandEditorOpen(false);
   };
 
@@ -1011,6 +1029,53 @@ function App() {
     }));
   };
 
+  const applySavedBrand = (saved: BrandRecord) => {
+    setBrands((current) => {
+      const withoutCurrent = current.filter(
+        (brand) =>
+          brand.id !== saved.id &&
+          (!editingBrandId || brand.id !== editingBrandId),
+      );
+      return mergeBrandsWithPhotoBrands([...withoutCurrent, saved], photos);
+    });
+  };
+
+  const uploadBrandLogoFiles = async (files: FileList | null) => {
+    if (!files?.length) return;
+    if (!editingBrandId) {
+      pushMessage("info", "请先保存品牌，再上传 Logo 图片文件。");
+      return;
+    }
+
+    setIsSaving(true);
+    try {
+      const saved = await api.uploadBrandLogos(editingBrandId, Array.from(files));
+      applySavedBrand(saved);
+      setBrandPayload((current) => ({
+        ...current,
+        logoUrls: saved.logoUrls,
+        logos: saved.logos.length
+          ? saved.logos.map((logo) => ({
+              ...logo,
+              id: logo.id ?? logo.key ?? randomId(),
+              label: brandLogoLabel(logo),
+            }))
+          : current.logos,
+      }));
+      pushMessage("success", `已上传 ${files.length} 个品牌 Logo`);
+    } catch (error) {
+      pushMessage(
+        "error",
+        error instanceof Error ? error.message : "上传品牌 Logo 失败",
+      );
+    } finally {
+      setIsSaving(false);
+      if (brandLogoFileInputRef.current) {
+        brandLogoFileInputRef.current.value = "";
+      }
+    }
+  };
+
   const saveBrand = async () => {
     const name = brandPayload.name.trim();
     if (!name) {
@@ -1018,25 +1083,19 @@ function App() {
       return;
     }
 
-    const cleanLogos = (brandPayload.logos ?? [])
+    const cleanLogos = brandPayload.logos
       .map((logo) => ({
+        ...logo,
         id: logo.id?.trim() || undefined,
-        url: logo.url?.trim() || "",
-        alt: logo.alt?.trim() || undefined,
-        key: logo.key?.trim() || undefined,
-        fileName: logo.fileName?.trim() || undefined,
-        mimeType: logo.mimeType?.trim() || undefined,
-        size: logo.size,
-        storage: logo.storage,
-        createdAt: logo.createdAt,
+        url: logo.url.trim(),
+        label: brandLogoLabel(logo).trim() || undefined,
+        alt: brandLogoLabel(logo).trim() || undefined,
       }))
       .filter((logo) => Boolean(logo.url));
-
     const cleanPayload: BrandPayload = {
       ...brandPayload,
       name,
       title: brandPayload.title?.trim() || name,
-      aliases: brandPayload.aliases?.map((alias) => alias.trim()).filter(Boolean),
       logos: cleanLogos,
       logoUrls: cleanLogos.map((logo) => logo.url),
     };
@@ -1046,14 +1105,7 @@ function App() {
       const saved = editingBrandId
         ? await api.updateBrand(editingBrandId, cleanPayload)
         : await api.createBrand(cleanPayload);
-      setBrands((current) => {
-        const withoutCurrent = current.filter(
-          (brand) =>
-            brand.id !== saved.id &&
-            (!editingBrandId || brand.id !== editingBrandId),
-        );
-        return mergeBrandsWithPhotoBrands([...withoutCurrent, saved], photos);
-      });
+      applySavedBrand(saved);
       pushMessage(
         "success",
         editingBrandId ? "品牌已更新" : `品牌“${saved.title || saved.name}”已创建`,
@@ -1367,10 +1419,10 @@ function App() {
               <figure key={logo.id || `${logo.url}-${index}`}>
                 <img
                   src={withAdminThumbnailDisplayUrl(logo.url) || logo.url}
-                  alt={logo.alt || `${brand.name} logo ${index + 1}`}
+                  alt={brandLogoLabel(logo) || `${brand.name} logo ${index + 1}`}
                   loading="lazy"
                 />
-                <figcaption>{logo.alt || `Logo ${index + 1}`}</figcaption>
+                <figcaption>{brandLogoLabel(logo) || `Logo ${index + 1}`}</figcaption>
               </figure>
             ))}
             {logos.length > 4 && <Tag>+{logos.length - 4}</Tag>}
@@ -2187,45 +2239,50 @@ function App() {
                       <span className="editor-section-label">Logos</span>
                       <strong>多个 Logo</strong>
                     </div>
-                    <Space className="brand-logo-editor__actions" wrap>
+                    <Space wrap>
                       <Button type="outline" onClick={addBrandLogo}>
-                        添加 Logo URL
+                        添加 Logo
                       </Button>
                       <Button
                         type="secondary"
-                        loading={isBrandLogoUploading}
                         disabled={!editingBrandId}
+                        loading={isSaving && Boolean(editingBrandId)}
                         onClick={() => brandLogoFileInputRef.current?.click()}
                       >
-                        上传 Logo 文件
+                        上传 Logo 图片
                       </Button>
                     </Space>
                   </div>
                   <input
                     ref={brandLogoFileInputRef}
-                    className="hidden-file-input"
+                    className="brand-logo-file-input"
                     type="file"
-                    accept="image/*,.svg"
+                    accept="image/*"
                     multiple
-                    onChange={(event) => {
-                      void uploadBrandLogoFiles(event.currentTarget.files);
-                    }}
+                    onChange={(event) =>
+                      void uploadBrandLogoFiles(event.currentTarget.files)
+                    }
                   />
-                  {(brandPayload.logos ?? []).length ? (
-                    (brandPayload.logos ?? []).map((logo, index) => (
+                  {!editingBrandId && (
+                    <Text type="secondary">
+                      保存品牌后可上传图片 Logo；当前可先手动添加 Logo URL。
+                    </Text>
+                  )}
+                  {brandPayload.logos.length ? (
+                    brandPayload.logos.map((logo, index) => (
                       <div className="brand-logo-row" key={logo.id || index}>
                         <div className="brand-logo-row__preview">
                           {logo.url?.trim() ? (
                             <img
                               src={withAdminThumbnailDisplayUrl(logo.url) || logo.url}
-                              alt={logo.alt || `Logo ${index + 1}`}
+                              alt={brandLogoLabel(logo) || `Logo ${index + 1}`}
                             />
                           ) : (
                             <span>Logo</span>
                           )}
                         </div>
                         <Input
-                          value={logo.alt || ""}
+                          value={brandLogoLabel(logo)}
                           onChange={(value) =>
                             updateBrandLogo(index, "alt", value)
                           }

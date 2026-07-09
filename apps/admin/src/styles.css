@@ -1335,6 +1335,11 @@ textarea {
   gap: 4px;
 }
 
+
+.brand-logo-file-input {
+  display: none;
+}
+
 .brand-logo-row {
   display: grid;
   grid-template-columns: 88px minmax(130px, 0.7fr) minmax(220px, 1fr) auto;
