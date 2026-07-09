@@ -654,6 +654,11 @@ test("Main virtual grid renders the bottom card and modal nav is vertically cent
     page.getByRole("button", { name: "查看图片：底部虚拟样片" }),
   ).toBeVisible();
   await page.getByRole("button", { name: "查看图片：底部虚拟样片" }).click();
+  await expect(
+    page.getByRole("dialog", { name: "底部虚拟样片" }),
+  ).toBeVisible();
+  await expect(page.locator(".modal__nav--prev")).toBeVisible();
+  await expect(page.locator(".modal__nav--next")).toBeVisible();
 
   const centers = await page.evaluate(() => {
     const imageWrap = document.querySelector(".modal__image-wrap");
