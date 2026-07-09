@@ -164,8 +164,10 @@ const toServerTopicPayload = (payload: TopicPayload) => ({
   description: payload.description?.trim() ?? "",
 });
 
-const cleanBrandLogos = (logos: BrandLogoRecord[]): BrandLogoRecord[] =>
-  logos
+const cleanBrandLogos = (
+  logos: BrandLogoRecord[] | undefined,
+): BrandLogoRecord[] =>
+  (logos ?? [])
     .map((logo) => {
       const url = logo.url.trim();
       const alt = (logo.alt ?? logo.label)?.trim() || undefined;

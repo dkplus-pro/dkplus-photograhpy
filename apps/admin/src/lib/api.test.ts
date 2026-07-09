@@ -726,25 +726,26 @@ describe("admin API client auth headers", () => {
       logos: [{ url: uploadedLogoUrl, alt: "Olympus white" }],
       logoUrls: [uploadedLogoUrl],
     });
-    const uploadResult = await client.uploadBrandLogos(created.id, [
+    const uploadedLogos = await client.uploadBrandLogos([
       new File(["svg"], "dark.svg", { type: "image/svg+xml" }),
     ]);
     const saved = await client.updateBrand(created.id, {
-      name: uploadResult.name,
-      title: uploadResult.title,
-      aliases: uploadResult.aliases ?? [],
-      logos: uploadResult.logos,
-      logoUrls: uploadResult.logoUrls ?? [],
+      name: created.name,
+      title: created.title,
+      aliases: created.aliases ?? [],
+      logos: [...created.logos, ...uploadedLogos],
+      logoUrls: [
+        ...(created.logoUrls ?? []),
+        ...uploadedLogos.map((logo) => logo.url),
+      ],
     });
 
     expect(saved.logoUrls).toEqual([uploadedLogoUrl, uploadedDarkLogoUrl]);
     expect(autoEndpointHits).toEqual([]);
-    expect(fetchMock).toHaveBeenCalledTimes(5);
+    expect(fetchMock).toHaveBeenCalledTimes(3);
     expect(fetchMock.mock.calls.map(([url]) => String(url))).toEqual([
       "http://api.test/api/brands",
       "http://api.test/api/uploads/assets",
-      "http://api.test/api/brands/olympus-corporation",
-      "http://api.test/api/brands/olympus-corporation",
       "http://api.test/api/brands/olympus-corporation",
     ]);
     expect(
