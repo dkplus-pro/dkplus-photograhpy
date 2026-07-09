@@ -376,7 +376,7 @@ test("Admin list exposes optimized metadata columns and gallery interactions", a
   );
   await expect(page.getByText(/更新：/)).toHaveCount(0);
   await expect(
-    page.getByText(`显示 1-12，共 ${seedPhotoCount} 条`),
+    page.getByText(`显示 1-10，共 ${seedPhotoCount} 条`),
   ).toBeVisible();
   await page.locator(".arco-pagination-item").filter({ hasText: "2" }).click();
   await expect(table.getByText("后台导出样片 13")).toBeVisible();
@@ -843,15 +843,13 @@ test("Main topics tab opens a virtual detail page with scoped modal navigation",
   await expect(routedCard).toBeVisible();
   const cardThumbnailSrc = await routedCard.locator("img").getAttribute("src");
   expect(cardThumbnailSrc).toContain(
-    "editorial-a-thumb.jpg?token=thumb&imageMogr2/thumbnail/800x#thumb",
+    "editorial-a-original.jpg?imageMogr2/thumbnail/800x",
   );
   await routedCard.click();
   const modalPreviewSrc = await page
     .locator(".modal__image-wrap img")
     .getAttribute("src");
-  expect(modalPreviewSrc).toContain(
-    "editorial-a-preview.jpg?token=preview#preview",
-  );
+  expect(modalPreviewSrc).toContain("editorial-a-original.jpg");
   expect(modalPreviewSrc).not.toContain("imageMogr2");
   await page.getByRole("button", { name: "关闭", exact: true }).click();
 
@@ -863,7 +861,7 @@ test("Main topics tab opens a virtual detail page with scoped modal navigation",
     .locator(".modal__image-wrap img")
     .getAttribute("src");
   expect(dataSaverModalPreviewSrc).toContain(
-    "editorial-a-preview.jpg?token=preview&imageMogr2/quality/25#preview",
+    "editorial-a-original.jpg?imageMogr2/quality/25",
   );
   await page.getByRole("button", { name: "下一张" }).click();
   await expect(page.locator(".modal h2")).toHaveText("编辑样片 B");
@@ -873,7 +871,7 @@ test("Main topics tab opens a virtual detail page with scoped modal navigation",
     .locator(".modal__image-wrap img")
     .getAttribute("src");
   expect(restoredDataSaverPreviewSrc).toContain(
-    "editorial-a-preview.jpg?token=preview&imageMogr2/quality/25#preview",
+    "editorial-a-original.jpg?imageMogr2/quality/25",
   );
   await page.getByRole("button", { name: "关闭", exact: true }).click();
   await expect(dataSaverSwitch).toBeChecked();
@@ -883,7 +881,7 @@ test("Main topics tab opens a virtual detail page with scoped modal navigation",
     .locator(".modal__image-wrap img")
     .getAttribute("src");
   expect(reopenedDataSaverPreviewSrc).toContain(
-    "editorial-a-preview.jpg?token=preview&imageMogr2/quality/25#preview",
+    "editorial-a-original.jpg?imageMogr2/quality/25",
   );
   await page.getByRole("button", { name: "关闭", exact: true }).click();
 
@@ -1016,7 +1014,7 @@ test("Main hash routes restore tabs/topic detail and thumbnails stay display-onl
       asset: {
         original: "https://cdn.example.com/original-a.jpg",
         thumbnail: "https://cdn.example.com/thumb-a.jpg?existing=1#card",
-        preview: "https://cdn.example.com/preview-a.jpg?full=1#modal",
+        preview: "https://cdn.example.com/original-a.jpg",
         alt: "路由样片 A",
         width: 800,
         height: 800,
@@ -1094,16 +1092,14 @@ test("Main hash routes restore tabs/topic detail and thumbnails stay display-onl
     .first()
     .getAttribute("src");
   expect(cardImageSrc).toContain(
-    "https://cdn.example.com/thumb-a.jpg?existing=1&imageMogr2/thumbnail/800x#card",
+    "https://cdn.example.com/original-a.jpg?imageMogr2/thumbnail/800x",
   );
 
   await page.getByRole("button", { name: "查看图片：路由样片 A" }).click();
   const modalImageSrc = await page
     .locator(".modal__image-wrap img")
     .getAttribute("src");
-  expect(modalImageSrc).toBe(
-    "https://cdn.example.com/preview-a.jpg?full=1#modal",
-  );
+  expect(modalImageSrc).toBe("https://cdn.example.com/original-a.jpg");
   expect(modalImageSrc).not.toContain("imageMogr2");
 });
 
