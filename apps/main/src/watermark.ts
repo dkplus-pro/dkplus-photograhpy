@@ -233,15 +233,15 @@ const drawWatermarkComposition = async (
           logoMaxHeight,
           palette,
         );
-    const dividerGap = clamp(paddingX * 0.36, 18, 36);
+    const dividerGap = clamp(paddingX * 0.54, 28, 56);
     const dividerX = logoX + logoWidth + dividerGap;
     context.save();
     context.strokeStyle = palette.muted;
     context.globalAlpha = 0.55;
     context.lineWidth = clamp(canvasWidth * 0.0012, 1, 3);
     context.beginPath();
-    context.moveTo(dividerX, stripY + stripHeight * 0.33);
-    context.lineTo(dividerX, stripY + stripHeight * 0.78);
+    context.moveTo(dividerX, stripY + stripHeight * 0.4);
+    context.lineTo(dividerX, stripY + stripHeight * 0.7);
     context.stroke();
     context.restore();
     textX = dividerX + dividerGap;
@@ -400,15 +400,15 @@ self.onmessage = async (event) => {
       const logoWidth = logoImage
         ? drawAdaptiveLogoImage(context, logoImage, logoX, logoCenterY, logoMaxHeight, logoMaxWidth)
         : drawLogoMark(context, input.logo.mark, logoX, logoCenterY, logoMaxHeight, palette);
-      const dividerGap = clamp(paddingX * 0.36, 18, 36);
+      const dividerGap = clamp(paddingX * 0.54, 28, 56);
       const dividerX = logoX + logoWidth + dividerGap;
       context.save();
       context.strokeStyle = palette.muted;
       context.globalAlpha = 0.55;
       context.lineWidth = clamp(width * 0.0012, 1, 3);
       context.beginPath();
-      context.moveTo(dividerX, stripY + stripHeight * 0.33);
-      context.lineTo(dividerX, stripY + stripHeight * 0.78);
+      context.moveTo(dividerX, stripY + stripHeight * 0.4);
+      context.lineTo(dividerX, stripY + stripHeight * 0.7);
       context.stroke();
       context.restore();
       textX = dividerX + dividerGap;

@@ -470,11 +470,11 @@ test("watermark export renders metadata-only output with optional logo and fade 
   );
   assert.match(
     watermarkSource,
-    /const dividerX = logoX \+ logoWidth \+ dividerGap/,
+    /const dividerGap = clamp\(paddingX \* 0\.54, 28, 56\)[\s\S]*?const dividerX = logoX \+ logoWidth \+ dividerGap/,
   );
   assert.match(
     watermarkSource,
-    /context\.moveTo\(dividerX, stripY \+ stripHeight \* 0\.33\)/,
+    /context\.moveTo\(dividerX, stripY \+ stripHeight \* 0\.4\)/,
   );
   assert.match(watermarkSource, /const watermarkMetadataSpacer = "  "/);
   assert.match(
