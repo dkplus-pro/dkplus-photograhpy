@@ -422,6 +422,10 @@ test("main top menu exposes works and canvas watermark export contracts", () => 
   assert.match(watermarkSource, /const watermarkMetadataSpacer = "     "/);
   assert.match(
     watermarkSource,
+    /const watermarkPrimaryFontFamily =[\s\S]*?Futura,[\s\S]*?"Futura PT"/,
+  );
+  assert.match(
+    watermarkSource,
     /const watermarkFontFamily =[\s\S]*?"Fira Code", "Fira Sans", ui-sans-serif, system-ui, sans-serif/,
   );
   assert.match(
@@ -432,7 +436,10 @@ test("main top menu exposes works and canvas watermark export contracts", () => 
     watermarkSource,
     /const secondRow = \[input\.model, input\.lens\][\s\S]*?\.join\(watermarkMetadataSpacer\)/,
   );
-  assert.match(watermarkSource, /watermarkFont\(primarySize, 700\)/);
+  assert.match(
+    watermarkSource,
+    /watermarkFont\(primarySize, 700, watermarkPrimaryFontFamily\)/,
+  );
   assert.match(watermarkSource, /watermarkFont\(secondarySize, 300\)/);
 });
 
