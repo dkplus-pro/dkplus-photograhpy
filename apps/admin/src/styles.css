@@ -1160,3 +1160,228 @@ textarea {
     transition-duration: 0.001ms !important;
   }
 }
+
+.brand-toolbar {
+  display: grid;
+  grid-template-columns: minmax(260px, 1fr) auto;
+  gap: 10px;
+  align-items: center;
+}
+
+.brand-table-card {
+  display: grid;
+  gap: 12px;
+}
+
+.brand-title-cell {
+  display: grid;
+  gap: 3px;
+  min-width: 0;
+  text-align: left;
+}
+
+.brand-title-cell strong {
+  overflow: hidden;
+  color: var(--ink);
+  font-weight: 700;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.brand-title-cell .arco-typography {
+  overflow: hidden;
+  color: var(--muted);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.brand-logo-strip {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.brand-logo-strip figure {
+  display: grid;
+  justify-items: center;
+  gap: 4px;
+  width: 72px;
+  margin: 0;
+}
+
+.brand-logo-strip img,
+.brand-logo-row__preview img {
+  display: block;
+  width: 72px;
+  height: 38px;
+  border: 1px solid var(--line-strong);
+  background: #fffdf8;
+  object-fit: contain;
+}
+
+.brand-logo-strip figcaption {
+  max-width: 72px;
+  overflow: hidden;
+  color: var(--muted);
+  font-size: 0.72rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.brand-sync-policy {
+  margin-top: 12px;
+}
+
+.brand-editor-modal .arco-modal {
+  width: min(860px, calc(100vw - 32px));
+}
+
+.brand-form {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.brand-form label {
+  display: grid;
+  gap: 7px;
+  color: var(--ink-soft);
+  font-weight: 600;
+}
+
+.brand-form label span {
+  font-size: 0.84rem;
+}
+
+.brand-form label small {
+  color: var(--muted);
+  font-size: 0.82rem;
+  font-weight: 400;
+  line-height: 1.55;
+}
+
+.brand-form__hero {
+  position: relative;
+  display: grid;
+  grid-column: 1 / -1;
+  gap: 8px;
+  border: 1px solid var(--line);
+  border-left: 6px solid var(--ink);
+  padding: 16px 18px;
+  overflow: hidden;
+  background:
+    linear-gradient(90deg, rgba(20, 20, 20, 0.05) 1px, transparent 1px),
+    linear-gradient(180deg, #fffdf8, #f2eee5);
+  background-size:
+    28px 28px,
+    auto;
+}
+
+.brand-form__hero::after {
+  position: absolute;
+  right: 18px;
+  bottom: -20px;
+  color: rgba(20, 20, 20, 0.06);
+  font-family: Georgia, "Noto Sans SC", serif;
+  font-size: 6rem;
+  line-height: 1;
+  content: "LOGO";
+  pointer-events: none;
+}
+
+.brand-form__hero h2,
+.brand-logo-editor__header strong {
+  position: relative;
+  z-index: 1;
+  margin: 0;
+  color: var(--ink);
+  font-family: Georgia, "Noto Sans SC", serif;
+  font-size: clamp(1.25rem, 3vw, 2rem);
+  font-weight: 600;
+  line-height: 1;
+  letter-spacing: -0.055em;
+}
+
+.brand-form__hero p {
+  position: relative;
+  z-index: 1;
+  margin: 0;
+  color: var(--ink-soft);
+  line-height: 1.7;
+}
+
+.brand-logo-editor {
+  display: grid;
+  gap: 10px;
+  border: 1px solid var(--line);
+  border-top: 4px solid var(--ink);
+  padding: 14px;
+  background: rgba(255, 253, 248, 0.96);
+}
+
+.brand-logo-editor__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  border-bottom: 1px solid var(--line);
+  padding-bottom: 12px;
+}
+
+.brand-logo-editor__header div {
+  display: grid;
+  gap: 4px;
+}
+
+.brand-logo-row {
+  display: grid;
+  grid-template-columns: 88px minmax(130px, 0.7fr) minmax(220px, 1fr) auto;
+  gap: 8px;
+  align-items: center;
+  border: 1px solid var(--line);
+  padding: 8px;
+  background: var(--wash);
+}
+
+.brand-logo-row__preview {
+  display: grid;
+  place-items: center;
+  min-height: 48px;
+  border: 1px dashed rgba(20, 20, 20, 0.36);
+  background: var(--panel-solid);
+  color: var(--muted);
+  font-family: "Fira Code", "Noto Sans SC", monospace;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.brand-logo-row__preview img {
+  width: 82px;
+  height: 42px;
+  border: 0;
+}
+
+@media (max-width: 920px) {
+  .brand-toolbar,
+  .brand-logo-row {
+    grid-template-columns: 1fr;
+  }
+
+  .admin-menu .arco-menu-inner {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 560px) {
+  .brand-form {
+    grid-template-columns: 1fr;
+  }
+
+  .admin-menu .arco-menu-inner {
+    grid-template-columns: 1fr;
+  }
+}

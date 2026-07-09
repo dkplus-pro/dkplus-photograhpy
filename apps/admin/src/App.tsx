@@ -1376,6 +1376,7 @@ function App() {
             >
               <MenuItem key="photos">图片管理</MenuItem>
               <MenuItem key="topics">专题管理</MenuItem>
+              <MenuItem key="brands">品牌管理</MenuItem>
             </Menu>
           </aside>
 
@@ -1545,7 +1546,7 @@ function App() {
                   </Spin>
                 </Card>
               </>
-            ) : (
+            ) : activeSection === "topics" ? (
               <>
                 <header className="admin-header" aria-labelledby="page-title">
                   <div>
@@ -1634,6 +1635,119 @@ function App() {
                     className="topic-delete-policy"
                     type="info"
                     content="删除专题前需先移除相关图片的专题关联；专题 CRUD 仅持久化到 SQLite，客户端 JSON 仍通过导出流程生成。"
+                  />
+                </Card>
+              </>
+            ) : (
+              <>
+                <header className="admin-header" aria-labelledby="page-title">
+                  <div>
+                    <p className="eyebrow">DKPlus 图库后台</p>
+                    <h1 id="page-title">品牌管理</h1>
+                  </div>
+                  <Space wrap>
+                    <Button onClick={() => void refresh()} loading={isLoading}>
+                      刷新 API
+                    </Button>
+                    <Button type="primary" onClick={openCreateBrandEditor}>
+                      新增品牌
+                    </Button>
+                    <Button
+                      type="outline"
+                      loading={isExporting}
+                      onClick={() => void exportToClient()}
+                    >
+                      导出到客户端
+                    </Button>
+                  </Space>
+                </header>
+
+                <section
+                  className="stats-grid brand-stats"
+                  aria-label="品牌统计"
+                >
+                  <Card bordered={false}>
+                    <Statistic title="品牌记录" value={brands.length} />
+                  </Card>
+                  <Card bordered={false}>
+                    <Statistic title="照片同步品牌" value={syncedBrandCount} />
+                  </Card>
+                  <Card bordered={false}>
+                    <Statistic title="Logo 数量" value={brandLogoCount} />
+                  </Card>
+                  <Card bordered={false}>
+                    <Statistic
+                      title="未配置 Logo"
+                      value={
+                        brands.filter(
+                          (brand) =>
+                            brand.logos.filter((logo) => logo.url).length === 0,
+                        ).length
+                      }
+                    />
+                  </Card>
+                </section>
+
+                <Card className="toolbar-card brand-toolbar-card" bordered={false}>
+                  <div className="brand-toolbar">
+                    <Input
+                      allowClear
+                      aria-label="按品牌筛选"
+                      value={brandSearch}
+                      onChange={setBrandSearch}
+                      placeholder="按品牌、别名或 Logo 地址筛选"
+                    />
+                    <Space wrap className="toolbar-actions">
+                      <Button type="primary" onClick={openCreateBrandEditor}>
+                        新增品牌
+                      </Button>
+                      <Button onClick={() => void refresh()} loading={isLoading}>
+                        刷新并同步照片品牌
+                      </Button>
+                    </Space>
+                  </div>
+                </Card>
+
+                <Card
+                  className="table-card brand-table-card"
+                  bordered={false}
+                  title="品牌列表"
+                  extra={<Tag>{filteredBrands.length} 条品牌</Tag>}
+                >
+                  <Spin loading={isLoading} style={{ width: "100%" }}>
+                    <Table<BrandRecord>
+                      className="photos-table brands-table"
+                      rowKey="id"
+                      size="mini"
+                      border={{ wrapper: true, cell: true }}
+                      tableLayoutFixed
+                      stripe
+                      columns={brandColumns}
+                      data={filteredBrands}
+                      noDataElement={
+                        <div className="table-empty-state">
+                          <Empty description="暂无品牌，可从照片 EXIF 自动同步或手动新增品牌 Logo" />
+                          <Button size="mini" onClick={openCreateBrandEditor}>
+                            新增品牌
+                          </Button>
+                        </div>
+                      }
+                      scroll={{ x: 910 }}
+                      pagination={{
+                        pageSize: brandPageSize,
+                        size: "small",
+                        sizeCanChange: true,
+                        sizeOptions: adminPageSizeOptions,
+                        onPageSizeChange: (size) => setBrandPageSize(size),
+                        showTotal: (total, range) =>
+                          `显示 ${range[0]}-${range[1]}，共 ${total} 条`,
+                      }}
+                    />
+                  </Spin>
+                  <Alert
+                    className="brand-sync-policy"
+                    type="info"
+                    content="刷新时会读取服务端品牌记录，并把照片 EXIF 中出现但尚未配置的相机品牌补入列表，便于继续补充多个 Logo。"
                   />
                 </Card>
               </>
@@ -1943,6 +2057,104 @@ function App() {
                     autoSize={{ minRows: 4, maxRows: 7 }}
                   />
                 </label>
+              </div>
+            </Modal>
+
+            <Modal
+              title={editingBrandId ? "编辑品牌" : "新增品牌"}
+              visible={isBrandEditorOpen}
+              onCancel={resetBrandEditor}
+              onOk={() => void saveBrand()}
+              confirmLoading={isSaving}
+              okText="保存"
+              cancelText="取消"
+              className="brand-editor-modal"
+              maskClosable
+              escToExit
+              unmountOnExit
+            >
+              <div className="brand-form" aria-label="品牌资料表单">
+                <section className="brand-form__hero">
+                  <span className="editor-section-label">Brand Kit</span>
+                  <h2>品牌与 Logo 配置</h2>
+                  <p>
+                    名称用于匹配照片 EXIF 相机品牌；Logo 可添加多个黑白或透明底版本，供前台水印导出选择。
+                  </p>
+                </section>
+                <label>
+                  <span>品牌名称</span>
+                  <Input
+                    value={brandPayload.name}
+                    onChange={(value) =>
+                      setBrandPayload((current) => ({
+                        ...current,
+                        name: value,
+                        title: current.title || value,
+                      }))
+                    }
+                    placeholder="例如：Sony"
+                  />
+                  <small>需与上传照片 EXIF 中的相机品牌保持一致，刷新后可自动同步。</small>
+                </label>
+                <label>
+                  <span>显示标题</span>
+                  <Input
+                    value={brandPayload.title || ""}
+                    onChange={(value) =>
+                      setBrandPayload((current) => ({ ...current, title: value }))
+                    }
+                    placeholder="例如：Sony / 索尼"
+                  />
+                  <small>用于后台表格和前台水印选择器展示。</small>
+                </label>
+                <section className="brand-logo-editor span-2">
+                  <div className="brand-logo-editor__header">
+                    <div>
+                      <span className="editor-section-label">Logos</span>
+                      <strong>多个 Logo</strong>
+                    </div>
+                    <Button type="outline" onClick={addBrandLogo}>
+                      添加 Logo
+                    </Button>
+                  </div>
+                  {brandPayload.logos.length ? (
+                    brandPayload.logos.map((logo, index) => (
+                      <div className="brand-logo-row" key={logo.id || index}>
+                        <div className="brand-logo-row__preview">
+                          {logo.url.trim() ? (
+                            <img
+                              src={withAdminThumbnailDisplayUrl(logo.url) || logo.url}
+                              alt={logo.label || `Logo ${index + 1}`}
+                            />
+                          ) : (
+                            <span>Logo</span>
+                          )}
+                        </div>
+                        <Input
+                          value={logo.label || ""}
+                          onChange={(value) =>
+                            updateBrandLogo(index, "label", value)
+                          }
+                          placeholder="标签，如：黑色横版"
+                        />
+                        <Input
+                          value={logo.url}
+                          onChange={(value) => updateBrandLogo(index, "url", value)}
+                          placeholder="Logo URL，可为 /uploads/... 或 https://..."
+                        />
+                        <Button
+                          status="danger"
+                          type="outline"
+                          onClick={() => removeBrandLogo(index)}
+                        >
+                          移除
+                        </Button>
+                      </div>
+                    ))
+                  ) : (
+                    <Empty description="尚未添加 Logo，可先保存品牌后再补充" />
+                  )}
+                </section>
               </div>
             </Modal>
 
