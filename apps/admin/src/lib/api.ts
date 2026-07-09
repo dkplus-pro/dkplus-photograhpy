@@ -1,5 +1,5 @@
 import type {
-  BrandLogoRecord,
+  BrandLogo,
   BrandPayload,
   BrandRecord,
   PhotoExif,
@@ -42,7 +42,6 @@ export interface ApiClient {
   listBrands: () => Promise<BrandRecord[]>;
   createBrand: (payload: BrandPayload) => Promise<BrandRecord>;
   updateBrand: (id: string, payload: BrandPayload) => Promise<BrandRecord>;
-  addBrandLogo: (id: string, logo: BrandLogoRecord) => Promise<BrandRecord>;
   deleteBrand: (id: string) => Promise<void>;
   uploadBrandLogos: (id: string, files: File[]) => Promise<BrandRecord>;
   addBrandLogo: (id: string, logo: BrandLogoRecord) => Promise<BrandRecord>;
@@ -170,7 +169,15 @@ const toServerTopicPayload = (payload: TopicPayload) => ({
   description: payload.description?.trim() ?? "",
 });
 
-const cleanBrandLogos = (logos: BrandLogoRecord[]): BrandLogoRecord[] =>
+const normalizeStringList = (values: unknown): string[] => [
+  ...new Set(
+    (Array.isArray(values) ? values : [])
+      .map((value) => (typeof value === "string" ? value.trim() : ""))
+      .filter(Boolean),
+  ),
+];
+
+const cleanBrandLogos = (logos: BrandPayload["logos"] = []): BrandLogo[] =>
   logos
     .map((logo) => {
       const url = logo.url.trim();
@@ -310,7 +317,7 @@ const normalizeBrandLogos = (
 ): BrandLogoRecord[] => {
   const entries = Array.isArray(source) ? source : source ? [source] : [];
   return entries
-    .map((entry, index): BrandLogoRecord | undefined => {
+    .map((entry, index): BrandLogo | undefined => {
       if (typeof entry === "string") {
         const url = entry.trim();
         return url ? { id: `logo-${index + 1}`, url } : undefined;
@@ -327,7 +334,7 @@ const normalizeBrandLogos = (
         ...(alt ? { alt } : {}),
       };
     })
-    .filter((logo): logo is BrandLogoRecord => Boolean(logo));
+    .filter((logo): logo is BrandLogo => Boolean(logo));
 };
 
 export const normalizeBrandForAdmin = (
@@ -578,7 +585,7 @@ export const createApiClient = (
         `/brands/${encodeURIComponent(id)}/logos`,
         {
           method: "POST",
-          body: JSON.stringify(cleanLogo),
+          body,
         },
       ),
     );
