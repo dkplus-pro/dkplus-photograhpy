@@ -1029,6 +1029,12 @@ test("Main top menu opens works and watermark export with a rendered example", a
 
   await page.getByLabel("水印机型").fill("A7R V");
   await page.getByLabel("水印曝光").fill("f/4     1/250s     ISO 100");
+  await expect(page.getByText("固定白字黑底")).toBeVisible();
+  await expect(page.getByLabel("黑字白底")).toHaveCount(0);
+  await expect(page.getByLabel("白字黑底")).toHaveCount(0);
+  expect(
+    await page.locator(".watermark-preview").getAttribute("data-tone"),
+  ).toBeNull();
 
   const logoOptions = await page
     .getByLabel("选择 Logo（可选）")

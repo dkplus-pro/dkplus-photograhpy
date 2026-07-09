@@ -411,7 +411,10 @@ test("main top menu exposes works and canvas watermark export contracts", () => 
     /if \(selectedWatermarkLogo\) input\.logo = selectedWatermarkLogo/,
   );
   assert.match(styles, /\.main-menu__link\.active/);
-  assert.doesNotMatch(styles, /\.watermark-preview\[data-tone=|\.watermark-tone/);
+  assert.doesNotMatch(
+    styles,
+    /\.watermark-preview\[data-tone=|\.watermark-tone/,
+  );
   assert.match(cssBlock(".watermark-preview"), /#18181b/);
 
   assert.match(watermarkSource, /export const renderWatermarkExport =/);
@@ -459,7 +462,10 @@ test("main top menu exposes works and canvas watermark export contracts", () => 
     /const secondRow = \[input\.model, input\.lens\][\s\S]*?\.join\(watermarkSecondarySpacer\)/,
   );
   assert.match(watermarkSource, /const watermarkPalette: Palette =/);
-  assert.doesNotMatch(watermarkSource, /WatermarkTone|paletteForTone|rgba\(250, 250, 250, 0\.92\)/);
+  assert.doesNotMatch(
+    watermarkSource,
+    /WatermarkTone|paletteForTone|rgba\(250, 250, 250, 0\.92\)/,
+  );
   assert.match(
     watermarkSource,
     /watermarkFont\(metadataSize, 400, watermarkPrimaryFontFamily\)/,
@@ -512,11 +518,19 @@ test("watermark export renders metadata-only output with optional logo and fade 
     /const secondRow = \[input\.model, input\.lens\][\s\S]*?\.join\(watermarkSecondarySpacer\)/,
   );
   assert.equal(
-    (watermarkSource.match(/const metadataSize = clamp\((?:canvasWidth|width) \* 0\.018, 20, 42\)/g) ?? []).length,
+    (
+      watermarkSource.match(
+        /const metadataSize = clamp\((?:canvasWidth|width) \* 0\.018, 20, 42\)/g,
+      ) ?? []
+    ).length,
     2,
   );
   assert.equal(
-    (watermarkSource.match(/watermarkFont\(metadataSize, 400, watermarkPrimaryFontFamily\)/g) ?? []).length,
+    (
+      watermarkSource.match(
+        /watermarkFont\(metadataSize, 400, watermarkPrimaryFontFamily\)/g,
+      ) ?? []
+    ).length,
     2,
   );
   assert.equal(
