@@ -50,6 +50,31 @@ export interface PhotoPayload {
   exif?: PhotoExif;
 }
 
+
+export interface BrandLogoRecord {
+  id?: string;
+  url: string;
+  label?: string;
+}
+
+export interface BrandRecord {
+  id: string;
+  name: string;
+  title?: string;
+  logos: BrandLogoRecord[];
+  aliases?: string[];
+  photoCount?: number;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export interface BrandPayload {
+  name: string;
+  title?: string;
+  logos: BrandLogoRecord[];
+  aliases?: string[];
+}
+
 export interface TopicRecord {
   id: string;
   title: string;
