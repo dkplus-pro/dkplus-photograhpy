@@ -389,14 +389,20 @@ test("main top menu exposes works and canvas watermark export contracts", () => 
   );
   assert.match(watermarkSource, /const hasLogo = Boolean\(input\.logo\)/);
   assert.match(watermarkSource, /if \(hasLogo && input\.logo\)/);
-  assert.match(watermarkSource, /const logoMaxHeight = clamp\(stripHeight \* 0\.38/);
+  assert.match(
+    watermarkSource,
+    /const logoMaxHeight = clamp\(stripHeight \* 0\.38/,
+  );
   assert.match(watermarkSource, /const logoWidth = logoImage/);
   assert.match(
     watermarkSource,
     /createLinearGradient\(\s*0,\s*canvasHeight,\s*0,\s*stripY,?\s*\)/,
   );
   assert.match(watermarkSource, /createLinearGradient\(0, height, 0, stripY\)/);
-  assert.doesNotMatch(watermarkSource, /input\.title|input\.date|titleSize|brandLabel|const logoSize/);
+  assert.doesNotMatch(
+    watermarkSource,
+    /input\.title|input\.date|titleSize|brandLabel|const logoSize/,
+  );
   assert.match(watermarkSource, /const separatorX = logoX \+ logoWidth/);
 });
 
@@ -410,7 +416,10 @@ test("watermark export renders metadata-only output with optional logo and fade 
     mainSource,
     /水印标题|aria-label="水印标题"|aria-label="水印日期"|显示日期/,
   );
-  assert.doesNotMatch(watermarkSource, /input\.title|input\.date|DKPLUS PHOTOGRAPHY/);
+  assert.doesNotMatch(
+    watermarkSource,
+    /input\.title|input\.date|DKPLUS PHOTOGRAPHY/,
+  );
   assert.match(
     mainSource,
     /const \[selectedLogoId, setSelectedLogoId\] = useState\("none"\)/,
@@ -418,7 +427,10 @@ test("watermark export renders metadata-only output with optional logo and fade 
   assert.match(mainSource, /const noLogoWatermarkOption[\s\S]*?id: "none"/);
   assert.match(watermarkSource, /logo\?: WatermarkLogoInput \| undefined;/);
   assert.match(watermarkSource, /const hasLogo = Boolean\(input\.logo\)/);
-  assert.match(watermarkSource, /if \(hasLogo && input\.logo\) \{[\s\S]*?drawLogoMark/);
+  assert.match(
+    watermarkSource,
+    /if \(hasLogo && input\.logo\) \{[\s\S]*?drawLogoMark/,
+  );
   assert.match(watermarkSource, /const watermarkSignature = "dkplus"/);
   assert.match(
     watermarkSource,

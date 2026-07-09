@@ -109,13 +109,7 @@ const drawAdaptiveLogoImage = (
   const ratio = Math.min(maxWidth / natural.width, maxHeight / natural.height);
   const drawWidth = natural.width * ratio;
   const drawHeight = natural.height * ratio;
-  context.drawImage(
-    image,
-    x,
-    centerY - drawHeight / 2,
-    drawWidth,
-    drawHeight,
-  );
+  context.drawImage(image, x, centerY - drawHeight / 2, drawWidth, drawHeight);
   return drawWidth;
 };
 
@@ -126,7 +120,7 @@ const drawLogoMark = (
   centerY: number,
   height: number,
   palette: Palette,
-) : number => {
+): number => {
   const horizontalPadding = height * 0.42;
   context.font = watermarkFont(height * 0.36, 700);
   const normalizedMark = fitText(context, mark || "dk+", height * 2.4);
