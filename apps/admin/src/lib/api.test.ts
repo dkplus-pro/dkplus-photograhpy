@@ -563,6 +563,13 @@ describe("admin API client auth headers", () => {
       new File(["jpeg"], "sony-logo.jpg", { type: "image/jpeg" }),
       new File(["png"], "sony-logo-dark.png", { type: "image/png" }),
     ]);
+    const savedAfterUpload = await client.updateBrand("sony", {
+      name: logoResult.name,
+      title: logoResult.title,
+      aliases: logoResult.aliases ?? [],
+      logos: logoResult.logos,
+      logoUrls: logoResult.logoUrls ?? [],
+    });
     await client.deleteBrand("old brand");
 
     expect(listed[0]?.name).toBe("Canon");
@@ -575,7 +582,8 @@ describe("admin API client auth headers", () => {
       "/uploads/brand-logo.png",
       "/uploads/brand-logo-dark.png",
     ]);
-    expect(fetchMock).toHaveBeenCalledTimes(7);
+    expect(savedAfterUpload.logoUrls).toEqual(logoResult.logoUrls);
+    expect(fetchMock).toHaveBeenCalledTimes(8);
 
     const [listUrl] = fetchMock.mock.calls[0] ?? [];
     expect(listUrl).toBe("http://api.test/api/brands");
@@ -631,7 +639,23 @@ describe("admin API client auth headers", () => {
       ],
     });
 
-    const [deleteUrl, deleteInit] = fetchMock.mock.calls[6] ?? [];
+    const [saveAfterUploadUrl, saveAfterUploadInit] =
+      fetchMock.mock.calls[6] ?? [];
+    expect(saveAfterUploadUrl).toBe("http://api.test/api/brands/sony");
+    expect(saveAfterUploadInit?.method).toBe("PATCH");
+    expect(JSON.parse(String(saveAfterUploadInit?.body))).toMatchObject({
+      name: "Sony",
+      title: "Sony Alpha",
+      aliases: ["索尼"],
+      logoUrls: [
+        "/logos/sony-white.svg",
+        "/logos/sony-black.svg",
+        "/uploads/brand-logo.png",
+        "/uploads/brand-logo-dark.png",
+      ],
+    });
+
+    const [deleteUrl, deleteInit] = fetchMock.mock.calls[7] ?? [];
     expect(deleteUrl).toBe("http://api.test/api/brands/old%20brand");
     expect(deleteInit?.method).toBe("DELETE");
     expect(fetchMock.mock.calls.some(([url]) => String(url).includes("/logos")))

@@ -306,20 +306,6 @@ test("brand CRUD persists multiple logos and uploaded EXIF auto-syncs camera bra
       "asset-only uploads must not create photo records",
     );
 
-    const logoPatched = await authed(request(app).patch("/api/brands/canon"))
-      .send({
-        name: "Canon",
-        title: updated.body.brand.title,
-        aliases: updated.body.brand.aliases,
-        logos: [...updated.body.brand.logos, uploadedLogo.body.uploads[0]],
-      })
-      .expect(200);
-    assert.equal(logoPatched.body.brand.logoUrls.length, 2);
-    assert.equal(
-      logoPatched.body.brand.logoUrls[1],
-      uploadedLogo.body.uploads[0].url,
-    );
-
     const photosAfterLogoUpload = await authed(
       request(app).get("/api/photos"),
     ).expect(200);
@@ -331,6 +317,9 @@ test("brand CRUD persists multiple logos and uploaded EXIF auto-syncs camera bra
 
     const logoPatched = await authed(request(app).patch("/api/brands/canon"))
       .send({
+        name: "Canon",
+        title: updated.body.brand.title,
+        aliases: updated.body.brand.aliases,
         logos: [
           ...updated.body.brand.logos,
           ...uploadedLogoAssets.body.uploads,
@@ -338,6 +327,27 @@ test("brand CRUD persists multiple logos and uploaded EXIF auto-syncs camera bra
       })
       .expect(200);
     assert.equal(logoPatched.body.brand.logoUrls.length, 2);
+    assert.equal(
+      logoPatched.body.brand.logoUrls[1],
+      uploadedLogoAssets.body.uploads[0].url,
+    );
+
+    const savedAfterUpload = await authed(
+      request(app).patch("/api/brands/canon"),
+    )
+      .send({
+        name: logoPatched.body.brand.name,
+        title: logoPatched.body.brand.title,
+        aliases: logoPatched.body.brand.aliases,
+        logos: logoPatched.body.brand.logos,
+        logoUrls: logoPatched.body.brand.logoUrls,
+      })
+      .expect(200);
+    assert.deepEqual(
+      savedAfterUpload.body.brand.logoUrls,
+      logoPatched.body.brand.logoUrls,
+      "Admin save after uploaded logo append must persist the uploaded logo",
+    );
 
     const sonyUpload = await request(app)
       .post("/api/uploads")
