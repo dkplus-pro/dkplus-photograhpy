@@ -541,6 +541,524 @@ const PhotoModal = ({
   );
 };
 
+type WatermarkFieldState = {
+  title: string;
+  date: string;
+  model: string;
+  exposure: string;
+  includeDate: boolean;
+  includeModel: boolean;
+  includeExposure: boolean;
+};
+
+type WatermarkLogoOption = WatermarkLogoInput & {
+  id: string;
+  source: "built-in" | "admin" | "camera" | "custom";
+};
+
+type RawBrandLogo = {
+  id?: string;
+  name?: string;
+  title?: string;
+  mark?: string;
+  url?: string;
+  logoUrl?: string;
+  imageUrl?: string;
+  dataUrl?: string;
+};
+
+type RawBrand = {
+  id?: string;
+  name?: string;
+  title?: string;
+  cameraBrand?: string;
+  mark?: string;
+  logoUrl?: string;
+  logoUrls?: string[];
+  imageUrl?: string;
+  dataUrl?: string;
+  logos?: RawBrandLogo[];
+};
+
+const builtInWatermarkLogos: WatermarkLogoOption[] = [
+  {
+    id: "dkplus",
+    name: "dk+ photography",
+    mark: "dk+",
+    source: "built-in",
+  },
+];
+
+const dateInputValue = (value: string): string => {
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "";
+  return date.toISOString().slice(0, 10);
+};
+
+const formatExposure = (photo?: ResolvedPhoto): string => {
+  if (!photo) return "";
+  return [
+    formatAperture(photo.exif?.aperture),
+    photo.exif?.shutterSpeed ?? photo.exif?.shutter,
+    photo.exif?.iso ? `ISO ${photo.exif.iso}` : undefined,
+  ]
+    .filter(Boolean)
+    .join(" · ");
+};
+
+const formatCameraModel = (photo?: ResolvedPhoto): string => {
+  if (!photo) return "";
+  return [photo.exif?.cameraBrand ?? photo.exif?.cameraMake, photo.exif?.cameraModel]
+    .filter(Boolean)
+    .join(" ");
+};
+
+const watermarkFieldsFromPhoto = (photo?: ResolvedPhoto): WatermarkFieldState => ({
+  title: photo?.title ?? "DKPLUS WATERMARK EXAMPLE",
+  date: photo ? dateInputValue(photo.takenAt) : "",
+  model: formatCameraModel(photo),
+  exposure: formatExposure(photo),
+  includeDate: true,
+  includeModel: true,
+  includeExposure: true,
+});
+
+const normalizeLogoMark = (value: string): string => {
+  const normalized = value.trim();
+  if (!normalized) return "dk+";
+  const ascii = normalized.match(/[A-Za-z0-9+]/g)?.join("") ?? "";
+  if (ascii) return ascii.slice(0, 4);
+  return normalized.slice(0, 2);
+};
+
+const compactLogoOption = (
+  id: string,
+  name: string,
+  source: WatermarkLogoOption["source"],
+  logo?: RawBrandLogo | RawBrand,
+): WatermarkLogoOption => ({
+  id,
+  name,
+  mark: logo?.mark ?? normalizeLogoMark(name),
+  url: logo?.url ?? logo?.logoUrl ?? logo?.imageUrl ?? logo?.dataUrl,
+  source,
+});
+
+const normalizeAdminBrandLogos = (payload: unknown): WatermarkLogoOption[] => {
+  const rawBrands = Array.isArray(payload)
+    ? payload
+    : payload &&
+        typeof payload === "object" &&
+        Array.isArray((payload as { brands?: unknown }).brands)
+      ? (payload as { brands: unknown[] }).brands
+      : [];
+  const options: WatermarkLogoOption[] = [];
+  rawBrands.forEach((entry, brandIndex) => {
+    if (!entry || typeof entry !== "object") return;
+    const brand = entry as RawBrand;
+    const brandName =
+      brand.name ?? brand.title ?? brand.cameraBrand ?? `品牌 ${brandIndex + 1}`;
+    const brandId = brand.id ?? `admin-${brandIndex}`;
+    if (Array.isArray(brand.logos) && brand.logos.length) {
+      brand.logos.forEach((logo, logoIndex) => {
+        options.push(
+          compactLogoOption(
+            `${brandId}:${logo.id ?? logoIndex}`,
+            logo.name ?? logo.title ?? brandName,
+            "admin",
+            { ...brand, ...logo },
+          ),
+        );
+      });
+      return;
+    }
+    if (Array.isArray(brand.logoUrls) && brand.logoUrls.length) {
+      brand.logoUrls.forEach((url, logoIndex) => {
+        options.push(
+          compactLogoOption(
+            `${brandId}:url:${logoIndex}`,
+            brandName,
+            "admin",
+            { ...brand, url },
+          ),
+        );
+      });
+      return;
+    }
+    if (brand.logoUrl || brand.imageUrl || brand.dataUrl || brand.mark) {
+      options.push(compactLogoOption(brandId, brandName, "admin", brand));
+    }
+  });
+  return options;
+};
+
+const useAdminBrandLogos = () => {
+  const [logos, setLogos] = useState<WatermarkLogoOption[]>([]);
+
+  useEffect(() => {
+    let active = true;
+    fetch(`${apiBaseUrl}/brands`)
+      .then((response) => (response.ok ? response.json() : null))
+      .then((payload: unknown) => {
+        if (active && payload) {
+          setLogos(normalizeAdminBrandLogos(payload));
+        }
+      })
+      .catch(() => {
+        // The admin brand endpoint is supplied by the coordinated brand task.
+        // Main keeps the export page usable with built-in and camera-derived logos.
+      });
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  return logos;
+};
+
+const deriveCameraBrandLogos = (photos: ResolvedPhoto[]): WatermarkLogoOption[] => {
+  const seen = new Set<string>();
+  const options: WatermarkLogoOption[] = [];
+  for (const photo of photos) {
+    const name = photo.exif?.cameraBrand ?? photo.exif?.cameraMake;
+    if (!name || seen.has(name)) continue;
+    seen.add(name);
+    options.push({
+      id: `camera:${name}`,
+      name,
+      mark: normalizeLogoMark(name),
+      source: "camera",
+    });
+  }
+  return options;
+};
+
+const WatermarkExportPage = ({ photos }: { photos: ResolvedPhoto[] }) => {
+  const adminBrandLogos = useAdminBrandLogos();
+  const photoById = useMemo(
+    () => new Map(photos.map((photo) => [photo.id, photo])),
+    [photos],
+  );
+  const [selectedPhotoId, setSelectedPhotoId] = useState(
+    () => photos[0]?.id ?? "",
+  );
+  const selectedPhoto = photoById.get(selectedPhotoId) ?? photos[0];
+  const [fields, setFields] = useState(() =>
+    watermarkFieldsFromPhoto(selectedPhoto),
+  );
+  const [tone, setTone] = useState<WatermarkTone>("black");
+  const [customLogo, setCustomLogo] = useState<WatermarkLogoOption | null>(null);
+  const [selectedLogoId, setSelectedLogoId] = useState("dkplus");
+  const [rendered, setRendered] = useState<WatermarkRenderResult | null>(null);
+  const [renderError, setRenderError] = useState<string | null>(null);
+  const [isRendering, setIsRendering] = useState(false);
+  const renderedUrlRef = useRef<string | null>(null);
+
+  const logoOptions = useMemo(() => {
+    const merged = [
+      ...builtInWatermarkLogos,
+      ...adminBrandLogos,
+      ...deriveCameraBrandLogos(photos),
+      ...(customLogo ? [customLogo] : []),
+    ];
+    const seen = new Set<string>();
+    return merged.filter((option) => {
+      if (seen.has(option.id)) return false;
+      seen.add(option.id);
+      return true;
+    });
+  }, [adminBrandLogos, customLogo, photos]);
+
+  const selectedLogo =
+    logoOptions.find((option) => option.id === selectedLogoId) ??
+    logoOptions[0] ??
+    builtInWatermarkLogos[0];
+
+  useEffect(() => {
+    if (!selectedPhotoId && photos[0]) {
+      setSelectedPhotoId(photos[0].id);
+      setFields(watermarkFieldsFromPhoto(photos[0]));
+    }
+  }, [photos, selectedPhotoId]);
+
+  useEffect(() => {
+    if (!logoOptions.some((option) => option.id === selectedLogoId)) {
+      setSelectedLogoId(logoOptions[0]?.id ?? "dkplus");
+    }
+  }, [logoOptions, selectedLogoId]);
+
+  const renderInput = useMemo<WatermarkRenderInput | null>(() => {
+    if (!selectedPhoto) return null;
+    return {
+      imageUrl: selectedPhoto.urls.preview,
+      imageWidth: selectedPhoto.asset.width,
+      imageHeight: selectedPhoto.asset.height,
+      title: fields.title,
+      tone,
+      logo: selectedLogo,
+      date: fields.includeDate ? fields.date : undefined,
+      model: fields.includeModel ? fields.model : undefined,
+      exposure: fields.includeExposure ? fields.exposure : undefined,
+    };
+  }, [fields, selectedLogo, selectedPhoto, tone]);
+
+  useEffect(() => {
+    if (!renderInput) return;
+    let active = true;
+    setIsRendering(true);
+    setRenderError(null);
+    renderWatermarkExport(renderInput)
+      .then((result) => {
+        if (!active) {
+          URL.revokeObjectURL(result.url);
+          return;
+        }
+        if (renderedUrlRef.current) {
+          URL.revokeObjectURL(renderedUrlRef.current);
+        }
+        renderedUrlRef.current = result.url;
+        setRendered(result);
+      })
+      .catch((reason: unknown) => {
+        if (!active) return;
+        setRenderError(reason instanceof Error ? reason.message : "水印渲染失败");
+      })
+      .finally(() => {
+        if (active) setIsRendering(false);
+      });
+    return () => {
+      active = false;
+    };
+  }, [renderInput]);
+
+  useEffect(
+    () => () => {
+      if (renderedUrlRef.current) URL.revokeObjectURL(renderedUrlRef.current);
+    },
+    [],
+  );
+
+  const updateField =
+    (key: keyof WatermarkFieldState) =>
+    (event: React.ChangeEvent<HTMLInputElement>) => {
+      const value =
+        event.currentTarget.type === "checkbox"
+          ? event.currentTarget.checked
+          : event.currentTarget.value;
+      setFields((current) => ({ ...current, [key]: value }));
+    };
+
+  const selectPhoto = (event: React.ChangeEvent<HTMLSelectElement>) => {
+    const nextPhoto = photoById.get(event.currentTarget.value);
+    setSelectedPhotoId(event.currentTarget.value);
+    setFields(watermarkFieldsFromPhoto(nextPhoto));
+  };
+
+  const uploadCustomLogo = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.currentTarget.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      const url = String(reader.result ?? "");
+      const option: WatermarkLogoOption = {
+        id: "custom",
+        name: file.name.replace(/\.[^.]+$/, "") || "自定义 Logo",
+        mark: normalizeLogoMark(file.name),
+        url,
+        source: "custom",
+      };
+      setCustomLogo(option);
+      setSelectedLogoId(option.id);
+    };
+    reader.readAsDataURL(file);
+  };
+
+  if (!selectedPhoto) {
+    return (
+      <section className="watermark-page" aria-labelledby="watermark-title">
+        <h1 id="watermark-title">水印导出</h1>
+        <p>暂无可用于示例的作品，请先在后台导出客户端图库。</p>
+      </section>
+    );
+  }
+
+  const statusText = renderError
+    ? `渲染失败：${renderError}`
+    : isRendering
+      ? "正在渲染 Canvas 水印…"
+      : rendered
+        ? `渲染完成 · ${rendered.width}×${rendered.height} · ${rendered.renderer === "worker" ? "Worker 离线渲染" : "主线程回退"}`
+        : "等待渲染";
+
+  return (
+    <section className="watermark-page" aria-labelledby="watermark-title">
+      <div className="watermark-page__intro">
+        <p className="eyebrow">Canvas watermark export</p>
+        <h1 id="watermark-title">水印导出</h1>
+        <p>
+          载入一张示例作品，按测试参考图的底部条形水印输出；可切换黑白字色、品牌
+          Logo、日期、机型和曝光参数。
+        </p>
+      </div>
+
+      <div className="watermark-workbench">
+        <figure className="watermark-preview" data-tone={tone}>
+          {rendered ? (
+            <img src={rendered.url} alt={`${selectedPhoto.title} 水印预览`} />
+          ) : (
+            <div className="watermark-preview__empty">正在生成预览</div>
+          )}
+          <figcaption className="watermark-status" aria-live="polite">
+            {statusText}
+          </figcaption>
+        </figure>
+
+        <form className="watermark-controls" aria-label="水印导出设置">
+          <label>
+            <span>示例作品</span>
+            <select
+              aria-label="选择示例照片"
+              value={selectedPhoto.id}
+              onChange={selectPhoto}
+            >
+              {photos.map((photo) => (
+                <option key={photo.id} value={photo.id}>
+                  {photo.title}
+                </option>
+              ))}
+            </select>
+          </label>
+
+          <label>
+            <span>水印标题</span>
+            <input
+              aria-label="水印标题"
+              value={fields.title}
+              onChange={updateField("title")}
+            />
+          </label>
+
+          <fieldset className="watermark-tone">
+            <legend>黑白样式</legend>
+            <label>
+              <input
+                type="radio"
+                name="watermark-tone"
+                value="black"
+                checked={tone === "black"}
+                onChange={() => setTone("black")}
+              />
+              白字黑底
+            </label>
+            <label>
+              <input
+                type="radio"
+                name="watermark-tone"
+                value="white"
+                checked={tone === "white"}
+                onChange={() => setTone("white")}
+              />
+              黑字白底
+            </label>
+          </fieldset>
+
+          <label>
+            <span>品牌 Logo</span>
+            <select
+              aria-label="选择品牌 Logo"
+              value={selectedLogo.id}
+              onChange={(event) => setSelectedLogoId(event.currentTarget.value)}
+            >
+              {logoOptions.map((option) => (
+                <option key={option.id} value={option.id}>
+                  {option.name}
+                  {option.source === "admin" ? " · 品牌管理" : ""}
+                  {option.source === "camera" ? " · 相机品牌" : ""}
+                  {option.source === "custom" ? " · 自定义" : ""}
+                </option>
+              ))}
+            </select>
+          </label>
+
+          <label>
+            <span>上传自定义 Logo</span>
+            <input
+              aria-label="上传自定义 Logo"
+              type="file"
+              accept="image/svg+xml,image/png,image/jpeg,image/webp"
+              onChange={uploadCustomLogo}
+            />
+          </label>
+
+          <div className="watermark-field-grid">
+            <label>
+              <span>日期</span>
+              <input
+                aria-label="水印日期"
+                type="date"
+                value={fields.date}
+                onChange={updateField("date")}
+              />
+            </label>
+            <label className="watermark-check">
+              <input
+                type="checkbox"
+                checked={fields.includeDate}
+                onChange={updateField("includeDate")}
+              />
+              显示日期
+            </label>
+            <label>
+              <span>机型</span>
+              <input
+                aria-label="水印机型"
+                value={fields.model}
+                onChange={updateField("model")}
+              />
+            </label>
+            <label className="watermark-check">
+              <input
+                type="checkbox"
+                checked={fields.includeModel}
+                onChange={updateField("includeModel")}
+              />
+              显示机型
+            </label>
+            <label>
+              <span>曝光</span>
+              <input
+                aria-label="水印曝光"
+                value={fields.exposure}
+                onChange={updateField("exposure")}
+              />
+            </label>
+            <label className="watermark-check">
+              <input
+                type="checkbox"
+                checked={fields.includeExposure}
+                onChange={updateField("includeExposure")}
+              />
+              显示曝光
+            </label>
+          </div>
+
+          <a
+            className="watermark-download"
+            href={rendered?.url ?? "#"}
+            download={`${selectedPhoto.id}-dkplus-watermark.png`}
+            aria-disabled={!rendered || Boolean(renderError)}
+            onClick={(event) => {
+              if (!rendered || renderError) event.preventDefault();
+            }}
+          >
+            下载带水印图片
+          </a>
+        </form>
+      </div>
+    </section>
+  );
+};
+
 const App = () => {
   const { data, error } = useGallery();
   const [route, setRoute] = useState<AppRoute>(() =>
