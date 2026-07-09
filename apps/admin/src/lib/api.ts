@@ -112,6 +112,11 @@ type ServerUploadBulkResult = {
   failed?: UploadFailure[];
   export?: ExportResult;
 };
+type ServerUploadAssetsResult = {
+  uploads?: ServerBrandLogo[];
+  logos?: ServerBrandLogo[];
+  assets?: ServerBrandLogo[];
+};
 
 const isAbsoluteUrl = (value: string): boolean =>
   /^[a-z][a-z\d+.-]*:/i.test(value) || value.startsWith("//");
@@ -501,6 +506,41 @@ const unwrapBrands = (
   return (value.brands ?? value.data ?? []).map(normalizeBrandForAdmin);
 };
 
+const unwrapUploadAssets = (value: ServerUploadAssetsResult): BrandLogoRecord[] =>
+  normalizeBrandLogos(value.uploads ?? value.logos ?? value.assets);
+
+const appendBrandLogosViaPatch = async (
+  baseUrl: string,
+  id: string,
+  logos: BrandLogoRecord[],
+): Promise<BrandRecord> => {
+  const current = normalizeBrandForAdmin(
+    await requestJson<ServerBrandEnvelope>(
+      baseUrl,
+      `/brands/${encodeURIComponent(id)}`,
+    ),
+  );
+  const nextLogos = [...current.logos, ...logos];
+  return normalizeBrandForAdmin(
+    await requestJson<ServerBrandEnvelope>(
+      baseUrl,
+      `/brands/${encodeURIComponent(id)}`,
+      {
+        method: "PATCH",
+        body: JSON.stringify(
+          toServerBrandPayload({
+            name: current.name,
+            title: current.title,
+            aliases: current.aliases ?? [],
+            logos: nextLogos,
+            logoUrls: nextLogos.map((logo) => logo.url),
+          }),
+        ),
+      },
+    ),
+  );
+};
+
 export const createApiClient = (
   baseUrl = import.meta.env.VITE_API_BASE_URL ?? "/api",
 ): ApiClient => ({
@@ -554,19 +594,13 @@ export const createApiClient = (
   async uploadBrandLogos(id, files) {
     const body = new FormData();
     for (const file of files) body.append("files", file);
-    body.append("mode", "asset");
-    body.append("purpose", "brand-logo");
-
-    const result = await requestJson<ServerUploadResult>(baseUrl, "/uploads", {
-      method: "POST",
-      body,
-    });
-    const uploadedLogos = uploadedLogosFromResult(result);
-    if (!uploadedLogos.length) {
-      throw new Error("Upload did not return any logo files");
-    }
-
-    return appendBrandLogosViaBrandUpdate(baseUrl, id, uploadedLogos);
+    const uploaded = unwrapUploadAssets(
+      await requestJson<ServerUploadAssetsResult>(baseUrl, "/uploads/assets", {
+        method: "POST",
+        body,
+      }),
+    );
+    return appendBrandLogosViaPatch(baseUrl, id, uploaded);
   },
   async createTopic(payload) {
     return normalizeTopicForAdmin(
@@ -594,7 +628,9 @@ export const createApiClient = (
     });
   },
   async addBrandLogo(id, logo) {
-    return appendBrandLogosViaBrandUpdate(baseUrl, id, [logo]);
+    const [cleanLogo] = cleanBrandLogos([logo]);
+    if (!cleanLogo) throw new Error("Logo URL is required");
+    return appendBrandLogosViaPatch(baseUrl, id, [cleanLogo]);
   },
   async createPhoto(payload) {
     return normalizePhotoForAdmin(
