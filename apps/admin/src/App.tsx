@@ -36,6 +36,8 @@ import {
   summarizeUpload,
 } from "./lib/format";
 import type {
+  BrandPayload,
+  BrandRecord,
   PhotoPayload,
   PhotoRecord,
   TopicPayload,
@@ -123,6 +125,35 @@ const demoTopics: TopicRecord[] = [
   },
 ];
 
+const demoBrands: BrandRecord[] = [
+  {
+    id: "sony",
+    name: "Sony",
+    title: "Sony / 索尼",
+    photoCount: 1,
+    logos: [
+      {
+        id: "sony-wordmark",
+        label: "黑底字标",
+        url: "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 240 80'%3E%3Crect width='240' height='80' fill='%23141414'/%3E%3Ctext x='120' y='51' font-size='34' fill='%23fffdf8' text-anchor='middle' font-family='Georgia,serif'%3ESONY%3C/text%3E%3C/svg%3E",
+      },
+    ],
+  },
+  {
+    id: "fujifilm",
+    name: "Fujifilm",
+    title: "Fujifilm / 富士",
+    photoCount: 1,
+    logos: [
+      {
+        id: "fujifilm-wordmark",
+        label: "白底字标",
+        url: "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 260 80'%3E%3Crect width='260' height='80' fill='%23fffdf8'/%3E%3Ctext x='130' y='51' font-size='31' fill='%23141414' text-anchor='middle' font-family='Georgia,serif'%3EFUJIFILM%3C/text%3E%3C/svg%3E",
+      },
+    ],
+  },
+];
+
 const emptyPayload: PhotoPayload = {
   title: "",
   description: "",
@@ -132,16 +163,25 @@ const emptyPayload: PhotoPayload = {
 };
 
 const emptyTopicPayload: TopicPayload = { title: "", description: "" };
-type AdminSection = "photos" | "topics";
+const emptyBrandPayload: BrandPayload = { name: "", title: "", logos: [] };
+type AdminSection = "photos" | "topics" | "brands";
 
 const sectionRoutes: Record<AdminSection, string> = {
   photos: "#/photos",
   topics: "#/topics",
+  brands: "#/brands",
+};
+
+const sectionTitles: Record<AdminSection, string> = {
+  photos: "图片管理",
+  topics: "专题管理",
+  brands: "品牌管理",
 };
 
 const parseAdminSection = (hash: string): AdminSection => {
   const normalized = hash.replace(/^#\/?/, "").split(/[?#]/)[0];
-  return normalized === "topics" ? "topics" : "photos";
+  if (normalized === "topics" || normalized === "brands") return normalized;
+  return "photos";
 };
 
 const currentAdminSection = (): AdminSection =>
@@ -178,9 +218,79 @@ const selectValuesToTopicIds = (value: unknown): string[] => {
   return value === undefined || value === null ? [] : [String(value)];
 };
 
+const brandKey = (value: string | undefined): string =>
+  value?.trim().toLowerCase() || "";
+
+const brandIdForName = (name: string): string => {
+  const ascii = name
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+  if (ascii) return ascii;
+  return `brand-${Array.from(name)
+    .map((char) => char.charCodeAt(0).toString(36))
+    .join("-")}`;
+};
+
+const photoBrandName = (photo: PhotoRecord): string =>
+  photo.exif?.cameraMake?.trim() || "";
+
+const deriveBrandsFromPhotos = (records: PhotoRecord[]): BrandRecord[] => {
+  const metrics = new Map<string, { name: string; count: number }>();
+  for (const photo of records) {
+    const name = photoBrandName(photo);
+    if (!name) continue;
+    const key = brandKey(name);
+    const current = metrics.get(key) ?? { name, count: 0 };
+    metrics.set(key, { ...current, count: current.count + 1 });
+  }
+  return [...metrics.values()].map((metric) => ({
+    id: `auto-${brandIdForName(metric.name)}`,
+    name: metric.name,
+    title: metric.name,
+    logos: [],
+    photoCount: metric.count,
+  }));
+};
+
+const mergeBrandsWithPhotoBrands = (
+  records: BrandRecord[],
+  photoRecords: PhotoRecord[],
+): BrandRecord[] => {
+  const photoBrands = deriveBrandsFromPhotos(photoRecords);
+  const photoCountByKey = new Map(
+    photoBrands.map((brand) => [brandKey(brand.name), brand.photoCount ?? 0]),
+  );
+  const byName = new Map<string, BrandRecord>();
+
+  for (const brand of records) {
+    const name = brand.name || brand.title || brand.id;
+    const key = brandKey(name);
+    if (!key) continue;
+    byName.set(key, {
+      ...brand,
+      name,
+      title: brand.title || name,
+      logos: brand.logos ?? [],
+      photoCount: photoCountByKey.get(key) ?? brand.photoCount ?? 0,
+    });
+  }
+
+  for (const brand of photoBrands) {
+    const key = brandKey(brand.name);
+    if (!byName.has(key)) byName.set(key, brand);
+  }
+
+  return [...byName.values()].sort((left, right) =>
+    (left.title || left.name).localeCompare(right.title || right.name, "zh-CN"),
+  );
+};
+
 function App() {
   const [photos, setPhotos] = useState<PhotoRecord[]>([]);
   const [topics, setTopics] = useState<TopicRecord[]>([]);
+  const [brands, setBrands] = useState<BrandRecord[]>([]);
   const [activeSection, setActiveSection] = useState<AdminSection>(() =>
     currentAdminSection(),
   );
@@ -188,7 +298,10 @@ function App() {
   const [payload, setPayload] = useState<PhotoPayload>(emptyPayload);
   const [topicPayload, setTopicPayload] =
     useState<TopicPayload>(emptyTopicPayload);
+  const [brandPayload, setBrandPayload] =
+    useState<BrandPayload>(emptyBrandPayload);
   const [editingTopicId, setEditingTopicId] = useState<string | null>(null);
+  const [editingBrandId, setEditingBrandId] = useState<string | null>(null);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [previews, setPreviews] = useState<UploadPreview[]>([]);
   const [editorPreview, setEditorPreview] = useState<UploadPreview | null>(
@@ -210,8 +323,11 @@ function App() {
   const [isEditorOpen, setIsEditorOpen] = useState(false);
   const [isUploadOpen, setIsUploadOpen] = useState(false);
   const [isTopicEditorOpen, setIsTopicEditorOpen] = useState(false);
+  const [isBrandEditorOpen, setIsBrandEditorOpen] = useState(false);
   const [photoPageSize, setPhotoPageSize] = useState(10);
   const [topicPageSize, setTopicPageSize] = useState(10);
+  const [brandPageSize, setBrandPageSize] = useState(10);
+  const [brandSearch, setBrandSearch] = useState("");
   const [messages, setMessages] = useState<ToastMessage[]>([]);
   const [confirmAction, setConfirmAction] = useState<{
     title: string;
@@ -236,11 +352,19 @@ function App() {
         api.listPhotos(),
         api.listTopics(),
       ]);
+      let brandRecords: BrandRecord[];
+      try {
+        brandRecords = await api.listBrands();
+      } catch {
+        brandRecords = deriveBrandsFromPhotos(records);
+      }
       setPhotos(records);
       setTopics(topicRecords);
+      setBrands(mergeBrandsWithPhotoBrands(brandRecords, records));
     } catch (error) {
       setPhotos(demoPhotos);
       setTopics(demoTopics);
+      setBrands(mergeBrandsWithPhotoBrands(demoBrands, demoPhotos));
       pushMessage(
         "info",
         `API 暂不可用，正在显示演示数据。${
@@ -272,7 +396,7 @@ function App() {
   }, []);
 
   useEffect(() => {
-    document.title = `${activeSection === "photos" ? "图片管理" : "专题管理"} · DKPlus Admin`;
+    document.title = `${sectionTitles[activeSection]} · DKPlus Admin`;
   }, [activeSection]);
 
   const navigateToSection = (section: AdminSection) => {
