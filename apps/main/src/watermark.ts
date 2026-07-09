@@ -228,16 +228,27 @@ const drawWatermarkComposition = async (
           logoMaxHeight,
           palette,
         );
-    textX = logoX + logoWidth + paddingX * 0.8;
+    const dividerGap = clamp(paddingX * 0.36, 18, 36);
+    const dividerX = logoX + logoWidth + dividerGap;
+    context.save();
+    context.strokeStyle = palette.muted;
+    context.globalAlpha = 0.55;
+    context.lineWidth = clamp(canvasWidth * 0.0012, 1, 3);
+    context.beginPath();
+    context.moveTo(dividerX, stripY + stripHeight * 0.33);
+    context.lineTo(dividerX, stripY + stripHeight * 0.78);
+    context.stroke();
+    context.restore();
+    textX = dividerX + dividerGap;
     textWidth = canvasWidth - textX - paddingX;
   }
 
   const primarySize = clamp(canvasWidth * 0.018, 20, 42);
   const secondarySize = clamp(canvasWidth * 0.014, 15, 30);
-  const firstRow = [input.brand, input.model, input.lens]
+  const firstRow = [input.model, input.lens, input.exposure]
     .filter(Boolean)
     .join(watermarkMetadataSpacer);
-  const secondRow = [input.focalLength, input.exposure]
+  const secondRow = [input.focalLength]
     .filter(Boolean)
     .join(watermarkMetadataSpacer);
 
@@ -383,13 +394,24 @@ self.onmessage = async (event) => {
       const logoWidth = logoImage
         ? drawAdaptiveLogoImage(context, logoImage, logoX, logoCenterY, logoMaxHeight, logoMaxWidth)
         : drawLogoMark(context, input.logo.mark, logoX, logoCenterY, logoMaxHeight, palette);
-      textX = logoX + logoWidth + paddingX * 0.8;
+      const dividerGap = clamp(paddingX * 0.36, 18, 36);
+      const dividerX = logoX + logoWidth + dividerGap;
+      context.save();
+      context.strokeStyle = palette.muted;
+      context.globalAlpha = 0.55;
+      context.lineWidth = clamp(width * 0.0012, 1, 3);
+      context.beginPath();
+      context.moveTo(dividerX, stripY + stripHeight * 0.33);
+      context.lineTo(dividerX, stripY + stripHeight * 0.78);
+      context.stroke();
+      context.restore();
+      textX = dividerX + dividerGap;
       textWidth = width - textX - paddingX;
     }
     const primarySize = clamp(width * 0.018, 20, 42);
     const secondarySize = clamp(width * 0.014, 15, 30);
-    const firstRow = [input.brand, input.model, input.lens].filter(Boolean).join(watermarkMetadataSpacer);
-    const secondRow = [input.focalLength, input.exposure].filter(Boolean).join(watermarkMetadataSpacer);
+    const firstRow = [input.model, input.lens, input.exposure].filter(Boolean).join(watermarkMetadataSpacer);
+    const secondRow = [input.focalLength].filter(Boolean).join(watermarkMetadataSpacer);
     context.textAlign = "left";
     context.textBaseline = "middle";
     if (firstRow) {

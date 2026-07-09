@@ -426,11 +426,11 @@ test("main top menu exposes works and canvas watermark export contracts", () => 
   );
   assert.match(
     watermarkSource,
-    /const firstRow = \[input\.brand, input\.model, input\.lens\][\s\S]*?\.join\(watermarkMetadataSpacer\)/,
+    /const firstRow = \[input\.model, input\.lens, input\.exposure\][\s\S]*?\.join\(watermarkMetadataSpacer\)/,
   );
   assert.match(
     watermarkSource,
-    /const secondRow = \[input\.focalLength, input\.exposure\][\s\S]*?\.join\(watermarkMetadataSpacer\)/,
+    /const secondRow = \[input\.focalLength\][\s\S]*?\.join\(watermarkMetadataSpacer\)/,
   );
   assert.match(watermarkSource, /watermarkFont\(primarySize, 700\)/);
   assert.match(watermarkSource, /watermarkFont\(secondarySize, 300\)/);
@@ -461,14 +461,22 @@ test("watermark export renders metadata-only output with optional logo and fade 
     watermarkSource,
     /if \(hasLogo && input\.logo\) \{[\s\S]*?drawLogoMark/,
   );
-  assert.match(watermarkSource, /const watermarkMetadataSpacer = "     "/);
   assert.match(
     watermarkSource,
-    /const firstRow = \[input\.brand, input\.model, input\.lens\][\s\S]*?\.join\(watermarkMetadataSpacer\)/,
+    /const dividerX = logoX \+ logoWidth \+ dividerGap/,
   );
   assert.match(
     watermarkSource,
-    /const secondRow = \[input\.focalLength, input\.exposure\][\s\S]*?\.join\(watermarkMetadataSpacer\)/,
+    /context\.moveTo\(dividerX, stripY \+ stripHeight \* 0\.33\)/,
+  );
+  assert.match(watermarkSource, /const watermarkMetadataSpacer = "     "/);
+  assert.match(
+    watermarkSource,
+    /const firstRow = \[input\.model, input\.lens, input\.exposure\][\s\S]*?\.join\(watermarkMetadataSpacer\)/,
+  );
+  assert.match(
+    watermarkSource,
+    /const secondRow = \[input\.focalLength\][\s\S]*?\.join\(watermarkMetadataSpacer\)/,
   );
 
   const gradientCalls =
