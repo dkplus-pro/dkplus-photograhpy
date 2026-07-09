@@ -483,11 +483,19 @@ test("main top menu exposes works and canvas watermark export contracts", () => 
   );
   assert.match(
     watermarkSource,
-    /watermarkFont\(metadataSize, 400, watermarkPrimaryFontFamily\)/,
+    /const rowSize = clamp\(canvasWidth \* 0\.017, 19, 38\)/,
   );
-  assert.match(watermarkSource, /watermarkFont\(metadataSize, 300\)/);
+  assert.match(
+    watermarkSource,
+    /const rowSize = clamp\(width \* 0\.017, 19, 38\)/,
+  );
+  assert.match(
+    watermarkSource,
+    /watermarkFont\(rowSize, 400, watermarkPrimaryFontFamily\)/,
+  );
+  assert.match(watermarkSource, /watermarkFont\(rowSize, 300\)/);
   assert.match(watermarkSource, /secondRow \? 0\.48 : 0\.56/);
-  assert.match(watermarkSource, /stripHeight \* 0\.68/);
+  assert.match(watermarkSource, /stripHeight \* 0\.7/);
 });
 
 test("watermark export renders metadata-only output with optional logo and fade overlay", () => {
