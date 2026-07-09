@@ -355,12 +355,22 @@ test("main top menu exposes works and canvas watermark export contracts", () => 
   assert.match(mainSource, /fetch\(`\$\{apiBaseUrl\}\/brands`\)/);
   assert.match(mainSource, /logoUrls/);
   assert.match(mainSource, /deriveCameraBrandLogos/);
+  assert.match(mainSource, /const noLogoWatermarkOption/);
+  assert.match(mainSource, /id: "none"/);
+  assert.match(mainSource, /不使用 Logo/);
+  assert.match(mainSource, /Logo（可选）/);
   assert.match(mainSource, /上传自定义 Logo/);
   assert.match(mainSource, /白字黑底/);
   assert.match(mainSource, /黑字白底/);
   assert.match(mainSource, /显示日期/);
   assert.match(mainSource, /显示机型/);
   assert.match(mainSource, /显示曝光/);
+  assert.match(
+    mainSource,
+    /const formatCameraModel = \(photo\?: ResolvedPhoto\): string =>\s*photo\?\.exif\?\.cameraModel\?\.trim\(\) \?\? "";/,
+  );
+  assert.doesNotMatch(mainSource, /水印标题|fields\.title|input\.title/);
+  assert.match(mainSource, /if \(selectedWatermarkLogo\) input\.logo = selectedWatermarkLogo/);
   assert.match(styles, /\.main-menu__link\.active/);
   assert.match(styles, /\.watermark-preview\[data-tone="black"\]/);
 
@@ -374,6 +384,11 @@ test("main top menu exposes works and canvas watermark export contracts", () => 
     watermarkSource,
     /const stripHeight = clamp\(canvasHeight \* 0\.16/,
   );
+  assert.match(watermarkSource, /const hasLogo = Boolean\(input\.logo\)/);
+  assert.match(watermarkSource, /if \(hasLogo && input\.logo\)/);
+  assert.match(watermarkSource, /createLinearGradient\(\s*0,\s*canvasHeight,\s*0,\s*stripY,?\s*\)/);
+  assert.match(watermarkSource, /createLinearGradient\(0, height, 0, stripY\)/);
+  assert.doesNotMatch(watermarkSource, /input\.title|titleSize|brandLabel/);
   assert.match(watermarkSource, /const separatorX = logoX \+ logoSize/);
 });
 
@@ -522,7 +537,7 @@ test("watermark export page captures required canvas and metadata controls", () 
   assert.match(mainSource, /机型|型号|model/i);
   assert.match(mainSource, /曝光|快门|光圈|exposure/i);
   assert.match(mainSource, /自定义\s*Logo|custom\s*logo/i);
-  assert.match(mainSource, /品牌\s*Logo|brand\s*logo/i);
+  assert.match(mainSource, /Logo（可选）|不使用 Logo|optional\s*logo/i);
   assert.match(mainSource, /示例|example/i);
   assert.match(mainSource, /download|toBlob|toDataURL|导出/i);
 
