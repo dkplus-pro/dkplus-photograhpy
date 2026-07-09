@@ -42,6 +42,7 @@ export interface ApiClient {
   listBrands: () => Promise<BrandRecord[]>;
   createBrand: (payload: BrandPayload) => Promise<BrandRecord>;
   updateBrand: (id: string, payload: BrandPayload) => Promise<BrandRecord>;
+  addBrandLogo: (id: string, logo: BrandLogoRecord) => Promise<BrandRecord>;
   deleteBrand: (id: string) => Promise<void>;
   uploadBrandLogos: (id: string, files: File[]) => Promise<BrandRecord>;
   addBrandLogo: (id: string, logo: BrandLogoRecord) => Promise<BrandRecord>;
