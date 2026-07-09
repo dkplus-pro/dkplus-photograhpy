@@ -5,6 +5,7 @@ export type Brand<TValue, TBrand extends string> = TValue & {
 export type ISODateString = Brand<string, "ISODateString">;
 export type PhotoId = Brand<string, "PhotoId">;
 export type TopicId = Brand<string, "TopicId">;
+export type BrandId = Brand<string, "BrandId">;
 
 export interface ExifData {
   cameraBrand?: string;
@@ -29,6 +30,29 @@ export interface PhotoAsset {
   alt?: string;
   width?: number;
   height?: number;
+}
+
+export interface BrandLogo {
+  url: string;
+  key?: string;
+  fileName?: string;
+  mimeType?: string;
+  size?: number;
+  storage?: "local" | "cos" | "remote";
+  alt?: string;
+  createdAt?: ISODateString;
+}
+
+export interface CameraBrand {
+  id: BrandId;
+  name: string;
+  title?: string;
+  aliases?: string[];
+  logos: BrandLogo[];
+  /** Convenience projection of `logos[].url` for simple selectors. */
+  logoUrls: string[];
+  createdAt?: ISODateString;
+  updatedAt?: ISODateString;
 }
 
 export interface Photo {

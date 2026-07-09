@@ -9,11 +9,12 @@ import {
   type UploadedFile,
 } from "../services/upload-service.js";
 import {
+  validateBrandInput,
   validateIds,
   validatePhotoInput,
   validateTopicInput,
 } from "../services/validation.js";
-import type { ExifMetadata, PhotoInput } from "../types/gallery.js";
+import type { BrandLogo, ExifMetadata, PhotoInput } from "../types/gallery.js";
 
 type BulkUploadItem = {
   title?: unknown;
@@ -368,6 +369,23 @@ function bulkFailure(
   };
 }
 
+function logoFromStoredFile(
+  file: UploadedFile,
+  image: Awaited<ReturnType<UploadService["store"]>>["image"],
+  alt?: string,
+): BrandLogo {
+  return {
+    url: image.url,
+    key: image.key,
+    fileName: image.fileName,
+    mimeType: image.mimeType,
+    size: image.size,
+    storage: image.storage,
+    alt: alt ?? file.originalname,
+    createdAt: new Date().toISOString(),
+  };
+}
+
 export function createPhotosRouter(
   store: PhotoStore,
   uploads: UploadService,
@@ -392,6 +410,65 @@ export function createPhotosRouter(
 
   router.get("/topics/:id", async (ctx) => {
     ctx.body = { topic: await store.getTopic(ctx.params.id) };
+  });
+
+  router.get("/brands", (ctx) => {
+    ctx.body = { brands: store.listBrands() };
+  });
+
+  router.get("/brands/:id", async (ctx) => {
+    ctx.body = { brand: await store.getBrand(ctx.params.id) };
+  });
+
+  router.post("/brands", async (ctx) => {
+    const brand = await store.createBrand(
+      validateBrandInput(body(ctx), { requireName: true }),
+    );
+    ctx.status = 201;
+    ctx.body = { brand };
+  });
+
+  router.put("/brands/:id", async (ctx) => {
+    const brand = await store.updateBrand(
+      ctx.params.id,
+      validateBrandInput(body(ctx)),
+    );
+    ctx.body = { brand };
+  });
+
+  router.patch("/brands/:id", async (ctx) => {
+    const brand = await store.updateBrand(
+      ctx.params.id,
+      validateBrandInput(body(ctx)),
+    );
+    ctx.body = { brand };
+  });
+
+  router.delete("/brands/:id", async (ctx) => {
+    const deleted = await store.deleteBrand(ctx.params.id);
+    ctx.body = { deleted };
+  });
+
+  router.post("/brands/:id/logos", upload.any(), async (ctx) => {
+    const incoming = files(ctx);
+    if (incoming.length === 0) {
+      throw new AppError(
+        400,
+        "UPLOAD_REQUIRED",
+        "Provide one or more multipart image files",
+      );
+    }
+
+    const form = body(ctx) as Record<string, unknown>;
+    const alt = field(form.alt);
+    const logos: BrandLogo[] = [];
+    for (const file of incoming) {
+      const stored = await uploads.store(file);
+      logos.push(logoFromStoredFile(file, stored.image, alt));
+    }
+    const brand = await store.appendBrandLogos(ctx.params.id, logos);
+    ctx.status = 201;
+    ctx.body = { brand, logos };
   });
 
   router.post("/topics", async (ctx) => {

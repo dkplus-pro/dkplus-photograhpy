@@ -90,6 +90,10 @@ export function createApp(config: ServerConfig = loadConfig()): Koa {
   app.use(createLocalUploadsMiddleware(config));
 
   app.use(async (ctx, next) => {
+    if (ctx.method === "GET" && ctx.path === "/api/brands") {
+      ctx.body = { brands: store.listBrands() };
+      return;
+    }
     if (ctx.method === "GET" && ctx.path === "/api/gallery") {
       if (config.env === "production") {
         await next();
