@@ -964,7 +964,7 @@ test("Main top menu opens works and watermark export with a rendered example", a
   await expect(page.getByLabel("水印日期")).toHaveCount(0);
 
   await page.getByLabel("水印机型").fill("A7R V");
-  await page.getByLabel("水印曝光").fill("f/4 · 1/250s · ISO 100");
+  await page.getByLabel("水印曝光").fill("f/4     1/250s     ISO 100");
   await page.getByLabel("黑字白底").check();
   await expect(page.locator(".watermark-preview")).toHaveAttribute(
     "data-tone",

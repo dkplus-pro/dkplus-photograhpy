@@ -542,7 +542,10 @@ const PhotoModal = ({
 };
 
 type WatermarkFieldState = {
+  brand: string;
   model: string;
+  lens: string;
+  focalLength: string;
   exposure: string;
   includeModel: boolean;
   includeExposure: boolean;
@@ -594,6 +597,8 @@ const builtInWatermarkLogos: WatermarkLogoOption[] = [
   },
 ];
 
+const watermarkFieldSpacer = "     ";
+
 const formatExposure = (photo?: ResolvedPhoto): string => {
   if (!photo) return "";
   return [
@@ -602,16 +607,33 @@ const formatExposure = (photo?: ResolvedPhoto): string => {
     photo.exif?.iso ? `ISO ${photo.exif.iso}` : undefined,
   ]
     .filter(Boolean)
-    .join(" · ");
+    .join(watermarkFieldSpacer);
 };
+
+const formatCameraBrand = (photo?: ResolvedPhoto): string =>
+  (photo?.exif?.cameraBrand ?? photo?.exif?.cameraMake)?.trim() ?? "";
 
 const formatCameraModel = (photo?: ResolvedPhoto): string =>
   photo?.exif?.cameraModel?.trim() ?? "";
 
+const formatLensModel = (photo?: ResolvedPhoto): string =>
+  (photo?.exif?.lensModel ?? photo?.exif?.lens)?.trim() ?? "";
+
+const formatFocalLength = (photo?: ResolvedPhoto): string => {
+  const raw = photo?.exif?.focalLengthMm ?? photo?.exif?.focalLength;
+  if (raw === undefined || raw === null) return "";
+  const normalized = String(raw).trim();
+  if (!normalized) return "";
+  return /mm$/i.test(normalized) ? normalized : `${normalized}mm`;
+};
+
 const watermarkFieldsFromPhoto = (
   photo?: ResolvedPhoto,
 ): WatermarkFieldState => ({
+  brand: formatCameraBrand(photo),
   model: formatCameraModel(photo),
+  lens: formatLensModel(photo),
+  focalLength: formatFocalLength(photo),
   exposure: formatExposure(photo),
   includeModel: true,
   includeExposure: true,
@@ -801,9 +823,14 @@ const WatermarkExportPage = ({ photos }: { photos: ResolvedPhoto[] }) => {
     if (selectedPhoto.asset.width) input.imageWidth = selectedPhoto.asset.width;
     if (selectedPhoto.asset.height)
       input.imageHeight = selectedPhoto.asset.height;
-    if (fields.includeModel && fields.model) input.model = fields.model;
-    if (fields.includeExposure && fields.exposure) {
-      input.exposure = fields.exposure;
+    if (fields.includeModel) {
+      if (fields.brand) input.brand = fields.brand;
+      if (fields.model) input.model = fields.model;
+      if (fields.lens) input.lens = fields.lens;
+    }
+    if (fields.includeExposure) {
+      if (fields.focalLength) input.focalLength = fields.focalLength;
+      if (fields.exposure) input.exposure = fields.exposure;
     }
     return input;
   }, [fields, selectedPhoto, selectedWatermarkLogo, tone]);
@@ -905,7 +932,7 @@ const WatermarkExportPage = ({ photos }: { photos: ResolvedPhoto[] }) => {
         <h1 id="watermark-title">水印导出</h1>
         <p>
           载入一张示例作品，按测试参考图的底部渐变水印输出；可切换黑白字色，
-          也可不选择 Logo，仅保留机型、固定签名 dkplus 和曝光参数。
+          也可不选择 Logo，仅保留品牌、机型、镜头、焦段与曝光参数。
         </p>
       </div>
 
@@ -992,11 +1019,27 @@ const WatermarkExportPage = ({ photos }: { photos: ResolvedPhoto[] }) => {
 
           <div className="watermark-field-grid">
             <label>
+              <span>相机品牌</span>
+              <input
+                aria-label="水印相机品牌"
+                value={fields.brand}
+                onChange={updateField("brand")}
+              />
+            </label>
+            <label>
               <span>机型</span>
               <input
                 aria-label="水印机型"
                 value={fields.model}
                 onChange={updateField("model")}
+              />
+            </label>
+            <label>
+              <span>镜头</span>
+              <input
+                aria-label="水印镜头"
+                value={fields.lens}
+                onChange={updateField("lens")}
               />
             </label>
             <label className="watermark-check">
@@ -1005,7 +1048,15 @@ const WatermarkExportPage = ({ photos }: { photos: ResolvedPhoto[] }) => {
                 checked={fields.includeModel}
                 onChange={updateField("includeModel")}
               />
-              显示机型
+              显示设备行
+            </label>
+            <label>
+              <span>焦段</span>
+              <input
+                aria-label="水印焦段"
+                value={fields.focalLength}
+                onChange={updateField("focalLength")}
+              />
             </label>
             <label>
               <span>曝光</span>
@@ -1021,7 +1072,7 @@ const WatermarkExportPage = ({ photos }: { photos: ResolvedPhoto[] }) => {
                 checked={fields.includeExposure}
                 onChange={updateField("includeExposure")}
               />
-              显示曝光
+              显示曝光行
             </label>
           </div>
 

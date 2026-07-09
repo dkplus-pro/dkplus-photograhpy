@@ -363,11 +363,27 @@ test("main top menu exposes works and canvas watermark export contracts", () => 
   assert.match(mainSource, /白字黑底/);
   assert.match(mainSource, /黑字白底/);
   assert.doesNotMatch(mainSource, /aria-label="水印日期"|显示日期/);
-  assert.match(mainSource, /显示机型/);
-  assert.match(mainSource, /显示曝光/);
+  assert.match(mainSource, /显示设备行/);
+  assert.match(mainSource, /显示曝光行/);
+  assert.match(mainSource, /水印相机品牌/);
+  assert.match(mainSource, /水印镜头/);
+  assert.match(mainSource, /水印焦段/);
+  assert.match(mainSource, /const watermarkFieldSpacer = "     "/);
+  assert.match(
+    mainSource,
+    /const formatCameraBrand = \(photo\?: ResolvedPhoto\): string =>/,
+  );
   assert.match(
     mainSource,
     /const formatCameraModel = \(photo\?: ResolvedPhoto\): string =>\s*photo\?\.exif\?\.cameraModel\?\.trim\(\) \?\? "";/,
+  );
+  assert.match(
+    mainSource,
+    /const formatLensModel = \(photo\?: ResolvedPhoto\): string =>/,
+  );
+  assert.match(
+    mainSource,
+    /const formatFocalLength = \(photo\?: ResolvedPhoto\): string =>/,
   );
   assert.doesNotMatch(mainSource, /水印标题|fields\.title|input\.title/);
   assert.match(
@@ -385,18 +401,13 @@ test("main top menu exposes works and canvas watermark export contracts", () => 
   assert.match(watermarkSource, /renderer: "main-thread"/);
   assert.match(
     watermarkSource,
-    /const stripHeight = clamp\(canvasHeight \* 0\.16/,
+    /const stripHeight = clamp\(canvasHeight \* 0\.2, 132, 340\)/,
   );
   assert.match(watermarkSource, /const hasLogo = Boolean\(input\.logo\)/);
   assert.match(watermarkSource, /if \(hasLogo && input\.logo\)/);
   assert.match(
     watermarkSource,
-    /const logoMaxHeight = clamp\(stripHeight \* 0\.38/,
-  );
-  assert.match(watermarkSource, /const logoWidth = logoImage/);
-  assert.match(
-    watermarkSource,
-    /const logoMaxHeight = clamp\(stripHeight \* 0\.38/,
+    /const logoMaxHeight = clamp\(stripHeight \* 0\.45, 48, 132\)/,
   );
   assert.match(watermarkSource, /const logoWidth = logoImage/);
   assert.match(
@@ -406,9 +417,23 @@ test("main top menu exposes works and canvas watermark export contracts", () => 
   assert.match(watermarkSource, /createLinearGradient\(0, height, 0, stripY\)/);
   assert.doesNotMatch(
     watermarkSource,
-    /input\.title|input\.date|titleSize|brandLabel|const logoSize/,
+    /input\.title|input\.date|titleSize|brandLabel|const logoSize|separatorX|palette\.separator|watermarkSignature/,
   );
-  assert.match(watermarkSource, /const separatorX = logoX \+ logoWidth/);
+  assert.match(watermarkSource, /const watermarkMetadataSpacer = "     "/);
+  assert.match(
+    watermarkSource,
+    /const watermarkFontFamily =[\s\S]*?"Fira Code", "Fira Sans", ui-sans-serif, system-ui, sans-serif/,
+  );
+  assert.match(
+    watermarkSource,
+    /const firstRow = \[input\.brand, input\.model, input\.lens\][\s\S]*?\.join\(watermarkMetadataSpacer\)/,
+  );
+  assert.match(
+    watermarkSource,
+    /const secondRow = \[input\.focalLength, input\.exposure\][\s\S]*?\.join\(watermarkMetadataSpacer\)/,
+  );
+  assert.match(watermarkSource, /watermarkFont\(primarySize, 700\)/);
+  assert.match(watermarkSource, /watermarkFont\(secondarySize, 300\)/);
 });
 
 test("watermark export renders metadata-only output with optional logo and fade overlay", () => {
@@ -423,7 +448,7 @@ test("watermark export renders metadata-only output with optional logo and fade 
   );
   assert.doesNotMatch(
     watermarkSource,
-    /input\.title|input\.date|DKPLUS PHOTOGRAPHY/,
+    /input\.title|input\.date|DKPLUS PHOTOGRAPHY|watermarkSignature|separatorX|palette\.separator|·/,
   );
   assert.match(
     mainSource,
@@ -436,10 +461,14 @@ test("watermark export renders metadata-only output with optional logo and fade 
     watermarkSource,
     /if \(hasLogo && input\.logo\) \{[\s\S]*?drawLogoMark/,
   );
-  assert.match(watermarkSource, /const watermarkSignature = "dkplus"/);
+  assert.match(watermarkSource, /const watermarkMetadataSpacer = "     "/);
   assert.match(
     watermarkSource,
-    /const firstRow = \[input\.model, watermarkSignature\][\s\S]*?const secondRow = input\.exposure\?\.trim\(\) \?\? "";/,
+    /const firstRow = \[input\.brand, input\.model, input\.lens\][\s\S]*?\.join\(watermarkMetadataSpacer\)/,
+  );
+  assert.match(
+    watermarkSource,
+    /const secondRow = \[input\.focalLength, input\.exposure\][\s\S]*?\.join\(watermarkMetadataSpacer\)/,
   );
 
   const gradientCalls =
