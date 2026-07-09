@@ -588,32 +588,23 @@ describe("admin API client auth headers", () => {
       logoUrls: [],
     });
 
-    const [uploadUrl, uploadInit] = fetchMock.mock.calls[3] ?? [];
-    expect(uploadUrl).toBe("http://api.test/api/uploads");
-    expect(uploadInit?.body).toBeInstanceOf(FormData);
-    expect((uploadInit?.body as FormData).getAll("files")).toHaveLength(1);
-    expect((uploadInit?.body as FormData).get("mode")).toBe("asset");
-    expect((uploadInit?.body as FormData).get("purpose")).toBe("brand-logo");
+    const [assetUploadUrl, assetUploadInit] = fetchMock.mock.calls[3] ?? [];
+    expect(assetUploadUrl).toBe("http://api.test/api/uploads/assets");
+    expect(assetUploadInit?.method).toBe("POST");
+    expect(assetUploadInit?.body).toBeInstanceOf(FormData);
+    expect((assetUploadInit?.body as FormData).getAll("files")).toHaveLength(2);
 
-    const [getBrandUrl, getBrandInit] = fetchMock.mock.calls[4] ?? [];
-    expect(getBrandUrl).toBe("http://api.test/api/brands/sony");
-    expect(getBrandInit?.method).toBeUndefined();
+    const [readBrandUrl, readBrandInit] = fetchMock.mock.calls[4] ?? [];
+    expect(readBrandUrl).toBe("http://api.test/api/brands/sony");
+    expect(readBrandInit?.method).toBeUndefined();
 
-    const [appendUrl, appendInit] = fetchMock.mock.calls[5] ?? [];
-    expect(appendUrl).toBe("http://api.test/api/brands/sony");
-    expect(appendInit?.method).toBe("PATCH");
-    expect(JSON.parse(String(appendInit?.body))).toEqual({
-      logos: [
-        { url: "/logos/sony-white.svg", alt: "White" },
-        { url: "/logos/sony-black.svg", alt: "Black" },
-        {
-          url: "/uploads/brand-logo.png",
-          fileName: "brand-logo.png",
-          mimeType: "image/png",
-          storage: "local",
-          alt: "brand-logo.png",
-        },
-      ],
+    const [brandPatchUrl, brandPatchInit] = fetchMock.mock.calls[5] ?? [];
+    expect(brandPatchUrl).toBe("http://api.test/api/brands/sony");
+    expect(brandPatchInit?.method).toBe("PATCH");
+    expect(JSON.parse(String(brandPatchInit?.body))).toMatchObject({
+      name: "Sony",
+      title: "Sony Alpha",
+      aliases: ["索尼"],
       logoUrls: [
         "/logos/sony-white.svg",
         "/logos/sony-black.svg",
