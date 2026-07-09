@@ -107,6 +107,24 @@ export interface TopicPayload {
   description?: string;
 }
 
+
+export interface TopicRecord {
+  id: string;
+  title: string;
+  description?: string;
+  slug?: string;
+  coverPhotoId?: string;
+  sortOrder?: number;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export interface TopicPayload {
+  id?: string;
+  title: string;
+  description?: string;
+}
+
 export interface UploadPreview {
   id: string;
   file: File;
