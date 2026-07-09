@@ -960,10 +960,11 @@ test("Main top menu opens works and watermark export with a rendered example", a
   await expect(page.getByRole("heading", { name: "水印导出" })).toBeVisible();
   await expect(page.getByLabel("选择示例照片")).toBeVisible();
   await expect(page.getByLabel("选择品牌 Logo")).toBeVisible();
+  await expect(page.getByLabel("水印标题")).toHaveCount(0);
+  await expect(page.getByLabel("选择品牌 Logo")).toHaveValue("");
 
-  await page.getByLabel("水印标题").fill("PLAYWRIGHT WATERMARK");
   await page.getByLabel("水印日期").fill("2026-07-09");
-  await page.getByLabel("水印机型").fill("Sony A7R V");
+  await page.getByLabel("水印机型").fill("A7R V");
   await page.getByLabel("水印曝光").fill("f/4 · 1/250s · ISO 100");
   await page.getByLabel("黑字白底").check();
   await expect(page.locator(".watermark-preview")).toHaveAttribute(
@@ -975,6 +976,7 @@ test("Main top menu opens works and watermark export with a rendered example", a
     .getByLabel("选择品牌 Logo")
     .locator("option")
     .allTextContents();
+  expect(logoOptions[0]).toContain("不显示 Logo");
   expect(logoOptions.join(" ")).toContain("dk+ photography");
   expect(logoOptions.join(" ")).toMatch(/Sony|Fujifilm/);
 
