@@ -41,7 +41,7 @@ type Palette = {
 const outputMinWidth = 1200;
 const outputMaxWidth = 2400;
 const workerTimeoutMs = 4200;
-const watermarkMetadataSpacer = "     ";
+const watermarkMetadataSpacer = "   ";
 const watermarkPrimaryFontFamily =
   'Futura, "Futura PT", "Avenir Next", Avenir, ui-sans-serif, system-ui, sans-serif';
 const watermarkFontFamily =
@@ -260,7 +260,7 @@ const drawWatermarkComposition = async (
   context.textAlign = "left";
   context.textBaseline = "middle";
   if (firstRow) {
-    context.font = watermarkFont(primarySize, 700, watermarkPrimaryFontFamily);
+    context.font = watermarkFont(primarySize, 400, watermarkPrimaryFontFamily);
     context.fillStyle = palette.text;
     context.fillText(
       fitText(context, firstRow, textWidth),
@@ -322,7 +322,7 @@ const paletteForTone = (tone) => tone === "black" ? {
 } : {
   strip: "rgba(250, 250, 250, 0.92)", stripFade: "rgba(250, 250, 250, 0)", text: "#09090b", muted: "rgba(9, 9, 11, 0.7)", logoBackground: "#09090b", logoText: "#fafafa"
 };
-const watermarkMetadataSpacer = "     ";
+const watermarkMetadataSpacer = "   ";
 const watermarkPrimaryFontFamily = 'Futura, "Futura PT", "Avenir Next", Avenir, ui-sans-serif, system-ui, sans-serif';
 const watermarkFontFamily = '"Fira Code", "Fira Sans", ui-sans-serif, system-ui, sans-serif';
 const watermarkFont = (size, weight = 600, family = watermarkFontFamily) => weight + ' ' + Math.round(size) + 'px ' + family;
@@ -421,7 +421,7 @@ self.onmessage = async (event) => {
     context.textAlign = "left";
     context.textBaseline = "middle";
     if (firstRow) {
-      context.font = watermarkFont(primarySize, 700, watermarkPrimaryFontFamily);
+      context.font = watermarkFont(primarySize, 400, watermarkPrimaryFontFamily);
       context.fillStyle = palette.text;
       context.fillText(fitText(context, firstRow, textWidth), textX, stripY + stripHeight * (secondRow ? 0.48 : 0.56));
     }
