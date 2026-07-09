@@ -253,10 +253,7 @@ function logoFromUrl(url: string): BrandLogo {
   return { url, storage: "remote" };
 }
 
-function normalizeBrandLogos(
-  logos: unknown,
-  logoUrls: unknown,
-): BrandLogo[] {
+function normalizeBrandLogos(logos: unknown, logoUrls: unknown): BrandLogo[] {
   const normalized: BrandLogo[] = [];
   if (Array.isArray(logos)) {
     for (const logo of logos) {
@@ -290,7 +287,9 @@ function normalizeBrandRecord(value: unknown): BrandRecord {
   const source = isRecord(value) ? value : {};
   const now = new Date().toISOString();
   const name =
-    readString(source.name) ?? readString(source.title) ?? readString(source.id);
+    readString(source.name) ??
+    readString(source.title) ??
+    readString(source.id);
   if (!name) {
     throw new AppError(400, "VALIDATION_ERROR", "brand name is required");
   }
@@ -655,10 +654,7 @@ export class PhotoStore {
     return updated;
   }
 
-  async appendBrandLogos(
-    id: string,
-    logos: BrandLogo[],
-  ): Promise<BrandRecord> {
+  async appendBrandLogos(id: string, logos: BrandLogo[]): Promise<BrandRecord> {
     const current = await this.getBrand(id);
     const updated = mergeBrand(
       {
