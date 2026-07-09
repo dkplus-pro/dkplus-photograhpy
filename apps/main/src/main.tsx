@@ -968,7 +968,6 @@ const WatermarkExportPage = ({
     if (!selectedPhoto) return null;
     const input: WatermarkRenderInput = {
       imageUrl: selectedPhoto.urls.preview,
-      tone: "black",
     };
     if (selectedWatermarkLogo) input.logo = selectedWatermarkLogo;
     if (selectedPhoto.asset.width) input.imageWidth = selectedPhoto.asset.width;

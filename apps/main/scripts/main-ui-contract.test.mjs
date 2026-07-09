@@ -392,10 +392,9 @@ test("main top menu exposes works and canvas watermark export contracts", () => 
   assert.match(mainSource, /上传自定义 Logo/);
   assert.match(mainSource, /固定白字黑底/);
   assert.match(mainSource, /data-tone="black"/);
-  assert.match(mainSource, /tone: "black"/);
   assert.doesNotMatch(
     mainSource,
-    /name="watermark-tone"|className="watermark-tone"|setTone|黑字白底/,
+    /name="watermark-tone"|className="watermark-tone"|setTone|tone: "black"|黑字白底/,
   );
   assert.doesNotMatch(mainSource, /aria-label="水印日期"|显示日期/);
   assert.match(mainSource, /显示设备行/);
@@ -483,17 +482,17 @@ test("main top menu exposes works and canvas watermark export contracts", () => 
   );
   assert.match(
     watermarkSource,
-    /const rowSize = clamp\(canvasWidth \* 0\.017, 19, 38\)/,
+    /const metadataSize = clamp\(canvasWidth \* 0\.018, 20, 42\)/,
   );
   assert.match(
     watermarkSource,
-    /const rowSize = clamp\(width \* 0\.017, 19, 38\)/,
+    /const metadataSize = clamp\(width \* 0\.018, 20, 42\)/,
   );
   assert.match(
     watermarkSource,
-    /watermarkFont\(rowSize, 400, watermarkPrimaryFontFamily\)/,
+    /watermarkFont\(metadataSize, 400, watermarkPrimaryFontFamily\)/,
   );
-  assert.match(watermarkSource, /watermarkFont\(rowSize, 300\)/);
+  assert.match(watermarkSource, /watermarkFont\(metadataSize, 300\)/);
   assert.match(watermarkSource, /secondRow \? 0\.48 : 0\.56/);
   assert.match(watermarkSource, /stripHeight \* 0\.7/);
 });
@@ -565,7 +564,11 @@ test("watermark export renders metadata-only output with optional logo and fade 
     2,
   );
   assert.equal(
-    (watermarkSource.match(/stripHeight \* 0\.68/g) ?? []).length,
+    (
+      watermarkSource.match(
+        /context\.fillText\(\s*fitText\(context, secondRow, textWidth\),\s*textX,\s*stripY \+ stripHeight \* 0\.7,?\s*\)/g,
+      ) ?? []
+    ).length,
     2,
   );
 
