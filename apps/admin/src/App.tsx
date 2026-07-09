@@ -1040,6 +1040,54 @@ function App() {
     });
   };
 
+  const saveBrand = async () => {
+    const name = brandPayload.name.trim();
+    if (!name) {
+      pushMessage("error", "请填写品牌名称。");
+      return;
+    }
+
+    const cleanLogos = (brandPayload.logos ?? [])
+      .map((logo) => {
+        const label = brandLogoLabel(logo).trim();
+        return {
+          ...logo,
+          id: logo.id?.trim() || undefined,
+          url: logo.url?.trim() || "",
+          label: label || undefined,
+          alt: label || undefined,
+        };
+      })
+      .filter((logo) => Boolean(logo.url));
+    const cleanPayload: BrandPayload = {
+      ...brandPayload,
+      name,
+      title: brandPayload.title?.trim() || name,
+      logos: cleanLogos,
+      logoUrls: cleanLogos.map((logo) => logo.url),
+    };
+
+    setIsSaving(true);
+    try {
+      const saved = editingBrandId
+        ? await api.updateBrand(editingBrandId, cleanPayload)
+        : await api.createBrand(cleanPayload);
+      applySavedBrand(saved);
+      pushMessage(
+        "success",
+        editingBrandId ? "品牌已更新" : `品牌“${saved.title || saved.name}”已创建`,
+      );
+      resetBrandEditor();
+    } catch (error) {
+      pushMessage(
+        "error",
+        error instanceof Error ? error.message : "保存品牌失败",
+      );
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
   const uploadBrandLogoFiles = async (files: FileList | null) => {
     const selectedFiles = Array.from(files ?? []);
     if (!selectedFiles.length) return;
@@ -2226,7 +2274,7 @@ function App() {
                         loading={isBrandLogoUploading}
                         onClick={() => brandLogoFileInputRef.current?.click()}
                       >
-                        上传 Logo 图片
+                        上传 Logo 文件
                       </Button>
                     </Space>
                   </div>
