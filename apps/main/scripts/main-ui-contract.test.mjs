@@ -374,6 +374,15 @@ test("main top menu exposes works and canvas watermark export contracts", () => 
   assert.match(mainSource, /logoUrls/);
   assert.match(mainSource, /deriveCameraBrandLogos/);
   assert.match(mainSource, /const findMatchingWatermarkLogoId =/);
+  assert.match(mainSource, /const normalizeLogoMatchValue =/);
+  assert.match(mainSource, /fields\?\.brand/);
+  assert.match(mainSource, /selectedPhoto\?\.exif\?\.cameraMake/);
+  assert.match(
+    mainSource,
+    /option\.source === "none" \|\| option\.source === "custom"/,
+  );
+  assert.match(mainSource, /optionValue\.includes\(brandValue\)/);
+  assert.match(mainSource, /brandValue\.includes\(optionValue\)/);
   assert.match(mainSource, /setLogoSelectionTouched\(false\)/);
   assert.match(mainSource, /setSelectedLogoId\(defaultLogoId\)/);
   assert.match(mainSource, /const noLogoWatermarkOption/);
