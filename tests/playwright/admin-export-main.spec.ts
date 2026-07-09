@@ -795,7 +795,7 @@ test("Main topics tab opens a virtual detail page with scoped modal navigation",
   });
 
   await page.setViewportSize({ width: 1280, height: 720 });
-  await page.goto(`${mainBaseUrl}#/latest`);
+  await page.goto(`${mainBaseUrl}#/works/latest`);
   await expect(page.getByRole("tab", { name: "最新" })).toHaveAttribute(
     "aria-selected",
     "true",
@@ -805,7 +805,7 @@ test("Main topics tab opens a virtual detail page with scoped modal navigation",
   await expect(dataSaverSwitch).toBeVisible();
   await expect(dataSaverSwitch).not.toBeChecked();
 
-  await page.goto(`${mainBaseUrl}#/topics`);
+  await page.goto(`${mainBaseUrl}#/works/topics`);
   await expect(page.getByRole("tab", { name: "专题" })).toHaveAttribute(
     "aria-selected",
     "true",
@@ -814,14 +814,14 @@ test("Main topics tab opens a virtual detail page with scoped modal navigation",
     page.getByRole("button", { name: "查看专题：编辑精选" }),
   ).toBeVisible();
 
-  await page.goto(`${mainBaseUrl}#/timeline`);
+  await page.goto(`${mainBaseUrl}#/works/timeline`);
   await expect(page.getByRole("tab", { name: "时间轴" })).toHaveAttribute(
     "aria-selected",
     "true",
   );
   await expect(page.locator(".timeline")).toBeVisible();
 
-  await page.goto(`${mainBaseUrl}#/topics/editorial`);
+  await page.goto(`${mainBaseUrl}#/works/topics/editorial`);
   await expect(page.getByRole("tab", { name: "专题" })).toHaveAttribute(
     "aria-selected",
     "true",
@@ -883,18 +883,18 @@ test("Main topics tab opens a virtual detail page with scoped modal navigation",
   await page.getByRole("button", { name: "关闭", exact: true }).click();
 
   await page.getByRole("button", { name: "返回专题列表" }).click();
-  await expect(page).toHaveURL(/#\/topics$/);
+  await expect(page).toHaveURL(/#\/works\/topics$/);
   await page.getByRole("tab", { name: "时间轴" }).click();
-  await expect(page).toHaveURL(/#\/timeline$/);
+  await expect(page).toHaveURL(/#\/works\/timeline$/);
   await page.goBack();
-  await expect(page).toHaveURL(/#\/topics$/);
+  await expect(page).toHaveURL(/#\/works\/topics$/);
   await expect(
     page.getByRole("button", { name: "查看专题：旅行专题" }),
   ).toBeVisible();
   await page.goForward();
-  await expect(page).toHaveURL(/#\/timeline$/);
+  await expect(page).toHaveURL(/#\/works\/timeline$/);
 
-  await page.goto(`${mainBaseUrl}#/topics/missing`);
+  await page.goto(`${mainBaseUrl}#/works/topics/missing`);
   await expect(page.getByRole("tab", { name: "专题" })).toHaveAttribute(
     "aria-selected",
     "true",
@@ -989,14 +989,14 @@ test("Main hash routes restore tabs/topic detail and thumbnails stay display-onl
     });
   });
 
-  await page.goto(`${mainBaseUrl}#/topics`);
+  await page.goto(`${mainBaseUrl}#/works/topics`);
   await expect(page.getByRole("tab", { name: "专题" })).toHaveAttribute(
     "aria-selected",
     "true",
   );
 
   await page.getByRole("button", { name: "查看专题：编辑精选" }).click();
-  await expect(page).toHaveURL(/#\/topics\/featured$/);
+  await expect(page).toHaveURL(/#\/works\/topics\/featured$/);
   await expect(
     page.getByRole("heading", { name: "编辑精选", level: 1 }),
   ).toBeVisible();
@@ -1008,10 +1008,10 @@ test("Main hash routes restore tabs/topic detail and thumbnails stay display-onl
   await expect(page.getByText("2 张作品")).toBeVisible();
 
   await page.getByRole("button", { name: "返回专题列表" }).click();
-  await expect(page).toHaveURL(/#\/topics$/);
+  await expect(page).toHaveURL(/#\/works\/topics$/);
 
   await page.getByRole("tab", { name: "时间轴" }).click();
-  await expect(page).toHaveURL(/#\/timeline$/);
+  await expect(page).toHaveURL(/#\/works\/timeline$/);
   await page.reload();
   await expect(page.getByRole("tab", { name: "时间轴" })).toHaveAttribute(
     "aria-selected",
@@ -1019,7 +1019,7 @@ test("Main hash routes restore tabs/topic detail and thumbnails stay display-onl
   );
 
   await page.getByRole("tab", { name: "最新" }).click();
-  await expect(page).toHaveURL(/#\/latest$/);
+  await expect(page).toHaveURL(/#\/works\/latest$/);
   const cardImageSrc = await page
     .locator(".photo-card img")
     .first()

@@ -179,7 +179,7 @@ test("exports only the minimal client gallery JSON contract", () => {
   assertNoForbiddenKeys(gallery);
 });
 
-test("source gallery preserves b176cc1 Xinjiang records with a single asset url", () => {
+test("source gallery preserves b176cc1 Xinjiang records and exports a single asset url", () => {
   assert.equal(sourceGallery.topics.length, 5);
   assert.equal(sourceGallery.photos.length, 20);
   assert.equal(
@@ -212,7 +212,7 @@ test("source gallery preserves b176cc1 Xinjiang records with a single asset url"
     ],
   );
 
-  for (const photo of sourceGallery.photos) {
+  for (const photo of normalizeGalleryData(sourceGallery).photos) {
     assertSingleAssetUrl(photo);
   }
 });

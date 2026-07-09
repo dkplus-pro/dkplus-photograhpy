@@ -209,7 +209,7 @@ test("main photo detail opens as a hash route and images block context-menu save
   );
   assert.match(
     mainSource,
-    /activePhoto = route\.page === "works" && route\.photoId/,
+    /const activePhoto =\s*route\.page === "works" && route\.photoId/,
   );
   assert.match(mainSource, /onClose=\{closePhotoRoute\}/);
   assert.match(mainSource, /onSelect=\{openPhotoRoute\}/);
