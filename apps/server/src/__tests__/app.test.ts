@@ -331,7 +331,10 @@ test("brand CRUD persists multiple logos and uploaded EXIF auto-syncs camera bra
 
     const logoPatched = await authed(request(app).patch("/api/brands/canon"))
       .send({
-        logos: [...updated.body.brand.logos, ...uploadedLogoAssets.body.uploads],
+        logos: [
+          ...updated.body.brand.logos,
+          ...uploadedLogoAssets.body.uploads,
+        ],
       })
       .expect(200);
     assert.equal(logoPatched.body.brand.logoUrls.length, 2);

@@ -503,7 +503,9 @@ const unwrapBrands = (
   return (value.brands ?? value.data ?? []).map(normalizeBrandForAdmin);
 };
 
-const unwrapUploadAssets = (value: ServerUploadAssetsResult): BrandLogoRecord[] =>
+const unwrapUploadAssets = (
+  value: ServerUploadAssetsResult,
+): BrandLogoRecord[] =>
   normalizeBrandLogos(value.uploads ?? value.logos ?? value.assets);
 
 const appendBrandLogosViaPatch = async (

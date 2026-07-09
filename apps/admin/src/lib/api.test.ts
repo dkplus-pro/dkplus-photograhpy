@@ -440,8 +440,10 @@ describe("admin API client auth headers", () => {
         });
       }
       if (url.endsWith("/brands/sony") && init?.method === "PATCH") {
-        const payload = JSON.parse(String(init.body));
-        if (payload.logoUrls?.includes("/uploads/brand-logo.png")) {
+        const body = JSON.parse(String(init.body)) as {
+          logos?: Array<{ url: string }>;
+        };
+        if (body.logos?.some((logo) => logo.url.includes("brand-logo"))) {
           return jsonResponse({
             brand: {
               id: "sony",

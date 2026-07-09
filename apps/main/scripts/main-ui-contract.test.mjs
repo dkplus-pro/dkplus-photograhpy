@@ -370,7 +370,10 @@ test("main top menu exposes works and canvas watermark export contracts", () => 
     /const formatCameraModel = \(photo\?: ResolvedPhoto\): string =>\s*photo\?\.exif\?\.cameraModel\?\.trim\(\) \?\? "";/,
   );
   assert.doesNotMatch(mainSource, /水印标题|fields\.title|input\.title/);
-  assert.match(mainSource, /if \(selectedWatermarkLogo\) input\.logo = selectedWatermarkLogo/);
+  assert.match(
+    mainSource,
+    /if \(selectedWatermarkLogo\) input\.logo = selectedWatermarkLogo/,
+  );
   assert.match(styles, /\.main-menu__link\.active/);
   assert.match(styles, /\.watermark-preview\[data-tone="black"\]/);
 
@@ -386,7 +389,10 @@ test("main top menu exposes works and canvas watermark export contracts", () => 
   );
   assert.match(watermarkSource, /const hasLogo = Boolean\(input\.logo\)/);
   assert.match(watermarkSource, /if \(hasLogo && input\.logo\)/);
-  assert.match(watermarkSource, /createLinearGradient\(\s*0,\s*canvasHeight,\s*0,\s*stripY,?\s*\)/);
+  assert.match(
+    watermarkSource,
+    /createLinearGradient\(\s*0,\s*canvasHeight,\s*0,\s*stripY,?\s*\)/,
+  );
   assert.match(watermarkSource, /createLinearGradient\(0, height, 0, stripY\)/);
   assert.doesNotMatch(watermarkSource, /input\.title|titleSize|brandLabel/);
   assert.match(watermarkSource, /const separatorX = logoX \+ logoSize/);
