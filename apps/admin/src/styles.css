@@ -1235,7 +1235,26 @@ textarea {
 }
 
 .brand-editor-modal .arco-modal {
-  width: min(860px, calc(100vw - 32px));
+  width: min(920px, calc(100vw - 32px));
+  max-height: calc(100vh - 40px);
+  margin: 20px auto;
+  overflow: hidden;
+}
+
+.brand-editor-modal .arco-modal-content {
+  display: flex;
+  max-height: calc(100vh - 40px);
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.brand-editor-modal .arco-modal-body {
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+.brand-editor-modal .arco-modal-footer {
+  flex-shrink: 0;
 }
 
 .brand-form {
@@ -1335,19 +1354,23 @@ textarea {
   gap: 4px;
 }
 
-
 .brand-logo-file-input {
   display: none;
 }
 
 .brand-logo-row {
   display: grid;
-  grid-template-columns: 88px minmax(130px, 0.7fr) minmax(220px, 1fr) auto;
+  grid-template-columns: 88px minmax(120px, 0.65fr) minmax(180px, 1fr) auto;
   gap: 8px;
   align-items: center;
+  min-width: 0;
   border: 1px solid var(--line);
   padding: 8px;
   background: var(--wash);
+}
+
+.brand-logo-row .arco-input-inner-wrapper {
+  min-width: 0;
 }
 
 .brand-logo-row__preview {

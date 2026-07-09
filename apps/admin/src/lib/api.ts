@@ -43,8 +43,7 @@ export interface ApiClient {
   createBrand: (payload: BrandPayload) => Promise<BrandRecord>;
   updateBrand: (id: string, payload: BrandPayload) => Promise<BrandRecord>;
   deleteBrand: (id: string) => Promise<void>;
-  uploadBrandLogos: (id: string, files: File[]) => Promise<BrandRecord>;
-  addBrandLogo: (id: string, logo: BrandLogoRecord) => Promise<BrandRecord>;
+  uploadBrandLogos: (files: File[]) => Promise<BrandLogoRecord[]>;
   createTopic: (payload: TopicPayload) => Promise<TopicRecord>;
   updateTopic: (id: string, payload: TopicPayload) => Promise<TopicRecord>;
   deleteTopic: (id: string) => Promise<void>;
@@ -477,38 +476,6 @@ const unwrapUploadAssets = (
 ): BrandLogoRecord[] =>
   normalizeBrandLogos(value.uploads ?? value.logos ?? value.assets);
 
-const appendBrandLogosViaPatch = async (
-  baseUrl: string,
-  id: string,
-  logos: BrandLogoRecord[],
-): Promise<BrandRecord> => {
-  const current = normalizeBrandForAdmin(
-    await requestJson<ServerBrandEnvelope>(
-      baseUrl,
-      `/brands/${encodeURIComponent(id)}`,
-    ),
-  );
-  const nextLogos = [...current.logos, ...logos];
-  return normalizeBrandForAdmin(
-    await requestJson<ServerBrandEnvelope>(
-      baseUrl,
-      `/brands/${encodeURIComponent(id)}`,
-      {
-        method: "PATCH",
-        body: JSON.stringify(
-          toServerBrandPayload({
-            name: current.name,
-            title: current.title,
-            aliases: current.aliases ?? [],
-            logos: nextLogos,
-            logoUrls: nextLogos.map((logo) => logo.url),
-          }),
-        ),
-      },
-    ),
-  );
-};
-
 export const createApiClient = (
   baseUrl = import.meta.env.VITE_API_BASE_URL ?? "/api",
 ): ApiClient => ({
@@ -559,7 +526,7 @@ export const createApiClient = (
       method: "DELETE",
     });
   },
-  async uploadBrandLogos(id, files) {
+  async uploadBrandLogos(files) {
     const body = new FormData();
     for (const file of files) body.append("files", file);
     body.append("mode", "asset");
@@ -575,7 +542,7 @@ export const createApiClient = (
       throw new Error("Upload did not return any logo files");
     }
 
-    return appendBrandLogosViaPatch(baseUrl, id, uploadedLogos);
+    return uploadedLogos;
   },
   async createTopic(payload) {
     return normalizeTopicForAdmin(
@@ -601,9 +568,6 @@ export const createApiClient = (
     await requestJson<void>(baseUrl, `/topics/${encodeURIComponent(id)}`, {
       method: "DELETE",
     });
-  },
-  async addBrandLogo(id, logo) {
-    return appendBrandLogosViaPatch(baseUrl, id, [logo]);
   },
   async createPhoto(payload) {
     return normalizePhotoForAdmin(

@@ -216,9 +216,12 @@ describe("admin gallery list contract", () => {
     expect(appSource).toContain("api.listBrands");
     expect(appSource).toContain("api.createBrand");
     expect(appSource).toContain("api.updateBrand");
+    expect(appSource).toContain("isDerivedBrandId");
+    expect(appSource).toContain("api.uploadBrandLogos(selectedFiles)");
+    expect(appSource).not.toContain("api.uploadBrandLogos(editingBrandId");
     expect(apiSource).toContain("uploadBrandLogos");
     expect(apiSource).toContain('baseUrl, "/uploads/assets"');
-    expect(apiSource).toContain("appendBrandLogosViaPatch");
+    expect(apiSource).not.toContain("appendBrandLogosViaPatch");
     expect(apiSource).not.toContain("/brands/${encodeURIComponent(id)}/logos");
     expect(apiSource).toContain("logoUrls");
     expect(appSource).toContain("api.deleteBrand");
@@ -230,5 +233,8 @@ describe("admin gallery list contract", () => {
     expect(styles).toContain(".brand-logo-row");
     expect(styles).toContain(".brand-form__hero");
     expect(styles).toContain(".brand-editor-modal .arco-modal");
+    expect(styles).toContain("max-height: calc(100vh - 40px);");
+    expect(styles).toContain(".brand-editor-modal .arco-modal-body");
+    expect(styles).toContain("overflow-y: auto;");
   });
 });
