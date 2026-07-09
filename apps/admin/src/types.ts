@@ -54,8 +54,6 @@ export interface BrandLogoRecord {
   /** Local-only key used by the Admin logo row editor. */
   id?: string;
   url: string;
-  /** Admin form label; mapped to the server `alt` field. */
-  label?: string;
   key?: string;
   fileName?: string;
   mimeType?: string;
@@ -72,6 +70,9 @@ export interface BrandRecord {
   id: string;
   name: string;
   title?: string;
+  displayName?: string;
+  logos: BrandLogoRecord[];
+  logoUrls?: string[];
   aliases?: string[];
   logos: BrandLogoRecord[];
   logoUrls: string[];
@@ -89,6 +90,22 @@ export interface BrandPayload {
   logos: BrandLogoRecord[];
 }
 
+export interface TopicRecord {
+  id: string;
+  title: string;
+  description?: string;
+  slug?: string;
+  coverPhotoId?: string;
+  sortOrder?: number;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export interface TopicPayload {
+  id?: string;
+  title: string;
+  description?: string;
+}
 
 export interface UploadPreview {
   id: string;
