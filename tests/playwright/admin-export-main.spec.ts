@@ -934,6 +934,70 @@ test("Main topics tab opens a virtual detail page with scoped modal navigation",
   ).toBeVisible();
 });
 
+test("Main top menu opens works and watermark export with a rendered example", async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 1280, height: 820 });
+  await page.goto(`${mainBaseUrl}#/works/latest`);
+  await expect(page.getByRole("link", { name: "作品" })).toHaveAttribute(
+    "aria-current",
+    "page",
+  );
+  await expect(page.getByRole("tab", { name: "最新" })).toHaveAttribute(
+    "aria-selected",
+    "true",
+  );
+
+  await page.getByRole("link", { name: "水印导出" }).click();
+  await expect(page).toHaveURL(/#\/watermark-export$/);
+  await expect(page.getByRole("link", { name: "水印导出" })).toHaveAttribute(
+    "aria-current",
+    "page",
+  );
+  await expect(page.getByRole("heading", { name: "水印导出" })).toBeVisible();
+  await expect(page.getByLabel("选择示例照片")).toBeVisible();
+  await expect(page.getByLabel("选择品牌 Logo")).toBeVisible();
+
+  await page.getByLabel("水印标题").fill("PLAYWRIGHT WATERMARK");
+  await page.getByLabel("水印日期").fill("2026-07-09");
+  await page.getByLabel("水印机型").fill("Sony A7R V");
+  await page.getByLabel("水印曝光").fill("f/4 · 1/250s · ISO 100");
+  await page.getByLabel("黑字白底").check();
+  await expect(page.locator(".watermark-preview")).toHaveAttribute(
+    "data-tone",
+    "white",
+  );
+
+  const logoOptions = await page
+    .getByLabel("选择品牌 Logo")
+    .locator("option")
+    .allTextContents();
+  expect(logoOptions.join(" ")).toContain("dk+ photography");
+  expect(logoOptions.join(" ")).toMatch(/Sony|Fujifilm/);
+
+  await expect(page.locator(".watermark-preview img")).toBeVisible({
+    timeout: 10_000,
+  });
+  await expect(page.locator(".watermark-status")).toContainText("渲染完成", {
+    timeout: 10_000,
+  });
+  const renderedSrc = await page
+    .locator(".watermark-preview img")
+    .getAttribute("src");
+  expect(renderedSrc).toMatch(/^blob:/);
+  const downloadHref = await page
+    .getByRole("link", { name: "下载带水印图片" })
+    .getAttribute("href");
+  expect(downloadHref).toMatch(/^blob:/);
+
+  await page.getByRole("link", { name: "作品" }).click();
+  await expect(page).toHaveURL(/#\/works\/latest$/);
+  await expect(page.getByRole("tab", { name: "最新" })).toHaveAttribute(
+    "aria-selected",
+    "true",
+  );
+});
+
 test("Main hash routes restore tabs/topic detail and thumbnails stay display-only", async ({
   page,
 }) => {
