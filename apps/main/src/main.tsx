@@ -552,7 +552,7 @@ type WatermarkFieldState = {
 
 type WatermarkLogoOption = WatermarkLogoInput & {
   id: string;
-  source: "built-in" | "admin" | "camera" | "custom";
+  source: "none" | "built-in" | "admin" | "camera" | "custom";
 };
 
 type RawBrandLogo = {
@@ -580,6 +580,13 @@ type RawBrand = {
   logos?: RawBrandLogo[];
 };
 
+const noLogoWatermarkOption: WatermarkLogoOption = {
+  id: "none",
+  name: "不使用 Logo",
+  mark: "",
+  source: "none",
+};
+
 const builtInWatermarkLogos: WatermarkLogoOption[] = [
   {
     id: "dkplus",
@@ -588,6 +595,7 @@ const builtInWatermarkLogos: WatermarkLogoOption[] = [
     source: "built-in",
   },
 ];
+
 const dateInputValue = (value: string): string => {
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return "";
@@ -605,10 +613,8 @@ const formatExposure = (photo?: ResolvedPhoto): string => {
     .join(" · ");
 };
 
-const formatCameraModel = (photo?: ResolvedPhoto): string => {
-  if (!photo) return "";
-  return photo.exif?.cameraModel?.trim() ?? "";
-};
+const formatCameraModel = (photo?: ResolvedPhoto): string =>
+  photo?.exif?.cameraModel?.trim() ?? "";
 
 const watermarkFieldsFromPhoto = (
   photo?: ResolvedPhoto,
@@ -754,7 +760,7 @@ const WatermarkExportPage = ({ photos }: { photos: ResolvedPhoto[] }) => {
   const [customLogo, setCustomLogo] = useState<WatermarkLogoOption | null>(
     null,
   );
-  const [selectedLogoId, setSelectedLogoId] = useState("");
+  const [selectedLogoId, setSelectedLogoId] = useState("none");
   const [rendered, setRendered] = useState<WatermarkRenderResult | null>(null);
   const [renderError, setRenderError] = useState<string | null>(null);
   const [isRendering, setIsRendering] = useState(false);
@@ -762,6 +768,7 @@ const WatermarkExportPage = ({ photos }: { photos: ResolvedPhoto[] }) => {
 
   const logoOptions = useMemo(() => {
     const merged = [
+      noLogoWatermarkOption,
       ...builtInWatermarkLogos,
       ...adminBrandLogos,
       ...deriveCameraBrandLogos(photos),
@@ -775,9 +782,11 @@ const WatermarkExportPage = ({ photos }: { photos: ResolvedPhoto[] }) => {
     });
   }, [adminBrandLogos, customLogo, photos]);
 
-  const selectedLogo = selectedLogoId
-    ? logoOptions.find((option) => option.id === selectedLogoId)
-    : undefined;
+  const selectedLogo =
+    logoOptions.find((option) => option.id === selectedLogoId) ??
+    noLogoWatermarkOption;
+  const selectedWatermarkLogo =
+    selectedLogo.source === "none" ? undefined : selectedLogo;
 
   useEffect(() => {
     if (!selectedPhotoId && photos[0]) {
@@ -787,11 +796,8 @@ const WatermarkExportPage = ({ photos }: { photos: ResolvedPhoto[] }) => {
   }, [photos, selectedPhotoId]);
 
   useEffect(() => {
-    if (
-      selectedLogoId &&
-      !logoOptions.some((option) => option.id === selectedLogoId)
-    ) {
-      setSelectedLogoId("");
+    if (!logoOptions.some((option) => option.id === selectedLogoId)) {
+      setSelectedLogoId(noLogoWatermarkOption.id);
     }
   }, [logoOptions, selectedLogoId]);
 
@@ -801,7 +807,7 @@ const WatermarkExportPage = ({ photos }: { photos: ResolvedPhoto[] }) => {
       imageUrl: selectedPhoto.urls.preview,
       tone,
     };
-    if (selectedLogo) input.logo = selectedLogo;
+    if (selectedWatermarkLogo) input.logo = selectedWatermarkLogo;
     if (selectedPhoto.asset.width) input.imageWidth = selectedPhoto.asset.width;
     if (selectedPhoto.asset.height)
       input.imageHeight = selectedPhoto.asset.height;
@@ -811,7 +817,7 @@ const WatermarkExportPage = ({ photos }: { photos: ResolvedPhoto[] }) => {
       input.exposure = fields.exposure;
     }
     return input;
-  }, [fields, selectedLogo, selectedPhoto, tone]);
+  }, [fields, selectedPhoto, selectedWatermarkLogo, tone]);
 
   useEffect(() => {
     if (!renderInput) return;
@@ -909,8 +915,8 @@ const WatermarkExportPage = ({ photos }: { photos: ResolvedPhoto[] }) => {
         <p className="eyebrow">Canvas watermark export</p>
         <h1 id="watermark-title">水印导出</h1>
         <p>
-          载入一张示例作品，按测试参考图的底部条形水印输出；可切换黑白字色、品牌
-          Logo、日期、机型和曝光参数；不选择 Logo 时画面只保留底部渐隐信息层。
+          载入一张示例作品，按测试参考图的底部渐变水印输出；可切换黑白字色，
+          也可不选择 Logo，仅保留日期、机型和曝光参数。
         </p>
       </div>
 
@@ -980,6 +986,7 @@ const WatermarkExportPage = ({ photos }: { photos: ResolvedPhoto[] }) => {
                   {option.source === "admin" ? " · 品牌管理" : ""}
                   {option.source === "camera" ? " · 相机品牌" : ""}
                   {option.source === "custom" ? " · 自定义" : ""}
+                  {option.source === "none" ? " · 隐藏" : ""}
                 </option>
               ))}
             </select>

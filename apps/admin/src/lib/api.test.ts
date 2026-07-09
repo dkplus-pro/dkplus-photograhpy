@@ -427,29 +427,29 @@ describe("admin API client auth headers", () => {
           201,
         );
       }
+      if (url.endsWith("/brands/sony") && !init?.method) {
+        return jsonResponse({
+          brand: {
+            id: "sony",
+            name: "Sony",
+            title: "Sony Alpha",
+            aliases: ["索尼"],
+            logos: [{ url: "/logos/sony-white.svg", alt: "White" }],
+            logoUrls: ["/logos/sony-white.svg"],
+          },
+        });
+      }
       if (url.endsWith("/brands/sony") && init?.method === "PATCH") {
-        const payload = JSON.parse(String(init.body));
-        if (payload.logoUrls?.includes("/uploads/brand-logo.png")) {
+        const body = JSON.parse(String(init.body)) as { logos?: Array<{ url: string }> };
+        if (body.logos?.some((logo) => logo.url.includes("brand-logo"))) {
           return jsonResponse({
             brand: {
               id: "sony",
               name: "Sony",
               title: "Sony Alpha",
               aliases: ["索尼"],
-              logos: [
-                { url: "/logos/sony-white.svg", alt: "White" },
-                { url: "/logos/sony-black.svg", alt: "Black" },
-                {
-                  url: "/uploads/brand-logo.png",
-                  fileName: "brand-logo.png",
-                  alt: "brand-logo.png",
-                },
-              ],
-              logoUrls: [
-                "/logos/sony-white.svg",
-                "/logos/sony-black.svg",
-                "/uploads/brand-logo.png",
-              ],
+              logos: body.logos,
+              logoUrls: body.logos.map((logo) => logo.url),
             },
           });
         }
@@ -467,36 +467,21 @@ describe("admin API client auth headers", () => {
           },
         });
       }
-      if (url.endsWith("/uploads") && init?.method === "POST") {
+      if (url.endsWith("/uploads/assets") && init?.method === "POST") {
         return jsonResponse(
           {
             uploads: [
               {
                 url: "/uploads/brand-logo.png",
                 fileName: "brand-logo.png",
-                mimeType: "image/png",
-                storage: "local",
                 alt: "brand-logo.png",
               },
+              {
+                url: "/uploads/brand-logo-dark.png",
+                fileName: "brand-logo-dark.png",
+                alt: "brand-logo-dark.png",
+              },
             ],
-          },
-          201,
-        );
-      }
-      if (url.endsWith("/brands/sony") && !init?.method) {
-        return jsonResponse(
-          {
-            brand: {
-              id: "sony",
-              name: "Sony",
-              title: "Sony Alpha",
-              aliases: ["索尼"],
-              logos: [
-                { url: "/logos/sony-white.svg", alt: "White" },
-                { url: "/logos/sony-black.svg", alt: "Black" },
-              ],
-              logoUrls: ["/logos/sony-white.svg", "/logos/sony-black.svg"],
-            },
           },
         );
       }
@@ -531,6 +516,7 @@ describe("admin API client auth headers", () => {
     });
     const logoResult = await client.uploadBrandLogos("sony", [
       new File(["jpeg"], "sony-logo.jpg", { type: "image/jpeg" }),
+      new File(["png"], "sony-logo-dark.png", { type: "image/png" }),
     ]);
     await client.deleteBrand("old brand");
 
@@ -542,6 +528,7 @@ describe("admin API client auth headers", () => {
       "/logos/sony-white.svg",
       "/logos/sony-black.svg",
       "/uploads/brand-logo.png",
+      "/uploads/brand-logo-dark.png",
     ]);
     expect(fetchMock).toHaveBeenCalledTimes(7);
 
@@ -574,39 +561,27 @@ describe("admin API client auth headers", () => {
       logoUrls: [],
     });
 
-    const [uploadUrl, uploadInit] = fetchMock.mock.calls[3] ?? [];
-    expect(uploadUrl).toBe("http://api.test/api/uploads");
-    expect(uploadInit?.body).toBeInstanceOf(FormData);
-    expect((uploadInit?.body as FormData).getAll("files")).toHaveLength(1);
-    expect((uploadInit?.body as FormData).get("mode")).toBe("asset");
-    expect((uploadInit?.body as FormData).get("purpose")).toBe("brand-logo");
+    const [readBrandUrl, readBrandInit] = fetchMock.mock.calls[3] ?? [];
+    expect(readBrandUrl).toBe("http://api.test/api/brands/sony");
+    expect(readBrandInit?.method).toBeUndefined();
 
-    const [getBrandUrl, getBrandInit] = fetchMock.mock.calls[4] ?? [];
-    expect(getBrandUrl).toBe("http://api.test/api/brands/sony");
-    expect(getBrandInit?.method).toBeUndefined();
+    const [assetUploadUrl, assetUploadInit] = fetchMock.mock.calls[4] ?? [];
+    expect(assetUploadUrl).toBe("http://api.test/api/uploads/assets");
+    expect(assetUploadInit?.method).toBe("POST");
+    expect(assetUploadInit?.body).toBeInstanceOf(FormData);
+    expect((assetUploadInit?.body as FormData).getAll("files")).toHaveLength(2);
 
-    const [appendUrl, appendInit] = fetchMock.mock.calls[5] ?? [];
-    expect(appendUrl).toBe("http://api.test/api/brands/sony");
-    expect(appendInit?.method).toBe("PATCH");
-    expect(JSON.parse(String(appendInit?.body))).toEqual({
+    const [brandPatchUrl, brandPatchInit] = fetchMock.mock.calls[5] ?? [];
+    expect(brandPatchUrl).toBe("http://api.test/api/brands/sony");
+    expect(brandPatchInit?.method).toBe("PATCH");
+    expect(JSON.parse(String(brandPatchInit?.body))).toMatchObject({
       name: "Sony",
       title: "Sony Alpha",
       aliases: ["索尼"],
-      logos: [
-        { url: "/logos/sony-white.svg", alt: "White" },
-        { url: "/logos/sony-black.svg", alt: "Black" },
-        {
-          url: "/uploads/brand-logo.png",
-          fileName: "brand-logo.png",
-          mimeType: "image/png",
-          storage: "local",
-          alt: "brand-logo.png",
-        },
-      ],
       logoUrls: [
         "/logos/sony-white.svg",
-        "/logos/sony-black.svg",
         "/uploads/brand-logo.png",
+        "/uploads/brand-logo-dark.png",
       ],
     });
 

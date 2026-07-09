@@ -28,8 +28,8 @@ export interface WatermarkRenderResult {
 type DrawableImage = HTMLImageElement | ImageBitmap;
 
 type Palette = {
-  overlayTop: string;
-  overlayBottom: string;
+  strip: string;
+  stripFade: string;
   text: string;
   muted: string;
   separator: string;
@@ -47,19 +47,19 @@ const clamp = (value: number, min: number, max: number): number =>
 const paletteForTone = (tone: WatermarkTone): Palette =>
   tone === "black"
     ? {
-        overlayTop: "rgba(9, 9, 11, 0)",
-        overlayBottom: "rgba(9, 9, 11, 0.9)",
+        strip: "rgba(9, 9, 11, 0.9)",
+        stripFade: "rgba(9, 9, 11, 0)",
         text: "#fafafa",
-        muted: "rgba(250, 250, 250, 0.76)",
-        separator: "rgba(250, 250, 250, 0.36)",
+        muted: "rgba(250, 250, 250, 0.78)",
+        separator: "rgba(250, 250, 250, 0.32)",
         logoBackground: "#fafafa",
         logoText: "#09090b",
       }
     : {
-        overlayTop: "rgba(250, 250, 250, 0)",
-        overlayBottom: "rgba(250, 250, 250, 0.92)",
+        strip: "rgba(250, 250, 250, 0.92)",
+        stripFade: "rgba(250, 250, 250, 0)",
         text: "#09090b",
-        muted: "rgba(9, 9, 11, 0.68)",
+        muted: "rgba(9, 9, 11, 0.7)",
         separator: "rgba(9, 9, 11, 0.24)",
         logoBackground: "#09090b",
         logoText: "#fafafa",
@@ -190,26 +190,30 @@ const drawWatermarkComposition = async (
   const stripY = canvasHeight - stripHeight;
   const paddingX = clamp(canvasWidth * 0.036, 36, 96);
   const paddingY = clamp(stripHeight * 0.22, 22, 48);
-  const logoSize = stripHeight - paddingY * 2;
-  const logoX = paddingX;
-  const logoY = stripY + paddingY;
   const hasLogo = Boolean(input.logo);
-  const separatorX = logoX + logoSize + paddingX * 0.45;
-  const textX = hasLogo ? separatorX + paddingX * 0.45 : paddingX;
-  const textWidth = canvasWidth - textX - paddingX;
 
   const overlayGradient = context.createLinearGradient(
     0,
-    stripY,
-    0,
     canvasHeight,
+    0,
+    stripY,
   );
-  overlayGradient.addColorStop(0, palette.overlayTop);
-  overlayGradient.addColorStop(1, palette.overlayBottom);
+  overlayGradient.addColorStop(0, palette.strip);
+  overlayGradient.addColorStop(1, palette.stripFade);
   context.fillStyle = overlayGradient;
   context.fillRect(0, stripY, canvasWidth, stripHeight);
 
-  if (input.logo) {
+  let textX = paddingX;
+  let textWidth = canvasWidth - paddingX * 2;
+
+  if (hasLogo && input.logo) {
+    const logoSize = stripHeight - paddingY * 2;
+    const logoX = paddingX;
+    const logoY = stripY + paddingY;
+    const separatorX = logoX + logoSize + paddingX * 0.45;
+    textX = separatorX + paddingX * 0.45;
+    textWidth = canvasWidth - textX - paddingX;
+
     if (logoImage) {
       context.fillStyle = palette.logoBackground;
       context.fillRect(logoX, logoY, logoSize, logoSize);
@@ -241,13 +245,13 @@ const drawWatermarkComposition = async (
 
   if (meta) {
     context.textAlign = "left";
-    context.textBaseline = "alphabetic";
+    context.textBaseline = "middle";
     context.font = watermarkFont(metaSize, 600);
     context.fillStyle = palette.text;
     context.fillText(
       fitText(context, meta, textWidth),
       textX,
-      canvasHeight - paddingY,
+      stripY + stripHeight * 0.56,
     );
   }
 };
@@ -291,11 +295,11 @@ const renderWatermarkOnMainThread = async (
 const workerSource = String.raw`
 const clamp = (value, min, max) => Math.min(max, Math.max(min, value));
 const paletteForTone = (tone) => tone === "black" ? {
-  overlayTop: "rgba(9, 9, 11, 0)", overlayBottom: "rgba(9, 9, 11, 0.9)", text: "#fafafa", muted: "rgba(250, 250, 250, 0.76)", separator: "rgba(250, 250, 250, 0.36)", logoBackground: "#fafafa", logoText: "#09090b"
+  strip: "rgba(9, 9, 11, 0.9)", stripFade: "rgba(9, 9, 11, 0)", text: "#fafafa", muted: "rgba(250, 250, 250, 0.78)", separator: "rgba(250, 250, 250, 0.32)", logoBackground: "#fafafa", logoText: "#09090b"
 } : {
-  overlayTop: "rgba(250, 250, 250, 0)", overlayBottom: "rgba(250, 250, 250, 0.92)", text: "#09090b", muted: "rgba(9, 9, 11, 0.68)", separator: "rgba(9, 9, 11, 0.24)", logoBackground: "#09090b", logoText: "#fafafa"
+  strip: "rgba(250, 250, 250, 0.92)", stripFade: "rgba(250, 250, 250, 0)", text: "#09090b", muted: "rgba(9, 9, 11, 0.7)", separator: "rgba(9, 9, 11, 0.24)", logoBackground: "#09090b", logoText: "#fafafa"
 };
-const watermarkFont = (size, weight = 600) => Math.round(size) + 'px "Fira Code", "Fira Sans", sans-serif';
+const watermarkFont = (size, weight = 600) => weight + ' ' + Math.round(size) + 'px "Fira Code", "Fira Sans", sans-serif';
 const fitText = (context, value, maxWidth) => {
   const normalized = String(value || "").trim();
   if (!normalized || context.measureText(normalized).width <= maxWidth) return normalized;
@@ -324,7 +328,7 @@ const drawLogoMark = (context, mark, x, y, size, palette) => {
   context.fillStyle = palette.logoText;
   context.textAlign = "center";
   context.textBaseline = "middle";
-  context.font = '700 ' + watermarkFont(size * 0.26);
+  context.font = watermarkFont(size * 0.26, 700);
   context.fillText(fitText(context, mark || "dk+", size * 0.76), x + size / 2, y + size / 2);
 };
 self.onmessage = async (event) => {
@@ -351,19 +355,20 @@ self.onmessage = async (event) => {
     const stripY = height - stripHeight;
     const paddingX = clamp(width * 0.036, 36, 96);
     const paddingY = clamp(stripHeight * 0.22, 22, 48);
-    const logoSize = stripHeight - paddingY * 2;
-    const logoX = paddingX;
-    const logoY = stripY + paddingY;
-    const hasLogo = Boolean(input.logo);
-    const separatorX = logoX + logoSize + paddingX * 0.45;
-    const textX = hasLogo ? separatorX + paddingX * 0.45 : paddingX;
-    const textWidth = width - textX - paddingX;
-    const overlayGradient = context.createLinearGradient(0, stripY, 0, height);
-    overlayGradient.addColorStop(0, palette.overlayTop);
-    overlayGradient.addColorStop(1, palette.overlayBottom);
+    const overlayGradient = context.createLinearGradient(0, height, 0, stripY);
+    overlayGradient.addColorStop(0, palette.strip);
+    overlayGradient.addColorStop(1, palette.stripFade);
     context.fillStyle = overlayGradient;
     context.fillRect(0, stripY, width, stripHeight);
+    let textX = paddingX;
+    let textWidth = width - paddingX * 2;
     if (input.logo) {
+      const logoSize = stripHeight - paddingY * 2;
+      const logoX = paddingX;
+      const logoY = stripY + paddingY;
+      const separatorX = logoX + logoSize + paddingX * 0.45;
+      textX = separatorX + paddingX * 0.45;
+      textWidth = width - textX - paddingX;
       if (logoImage) {
         context.fillStyle = palette.logoBackground;
         context.fillRect(logoX, logoY, logoSize, logoSize);
@@ -378,10 +383,10 @@ self.onmessage = async (event) => {
     const meta = [input.date, input.model, input.exposure].filter(Boolean).join("   ·   ");
     if (meta) {
       context.textAlign = "left";
-      context.textBaseline = "alphabetic";
-      context.font = '600 ' + watermarkFont(metaSize);
+      context.textBaseline = "middle";
+      context.font = watermarkFont(metaSize, 600);
       context.fillStyle = palette.text;
-      context.fillText(fitText(context, meta, textWidth), textX, height - paddingY);
+      context.fillText(fitText(context, meta, textWidth), textX, stripY + stripHeight * 0.56);
     }
     const blob = await canvas.convertToBlob({ type: "image/png" });
     image.close && image.close();
