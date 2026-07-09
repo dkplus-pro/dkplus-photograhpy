@@ -1,5 +1,5 @@
 import type {
-  BrandLogo,
+  BrandLogoRecord,
   BrandPayload,
   BrandRecord,
   PhotoExif,
@@ -44,6 +44,7 @@ export interface ApiClient {
   updateBrand: (id: string, payload: BrandPayload) => Promise<BrandRecord>;
   deleteBrand: (id: string) => Promise<void>;
   uploadBrandLogos: (id: string, files: File[]) => Promise<BrandRecord>;
+  addBrandLogo: (id: string, logo: BrandLogoRecord) => Promise<BrandRecord>;
   createTopic: (payload: TopicPayload) => Promise<TopicRecord>;
   updateTopic: (id: string, payload: TopicPayload) => Promise<TopicRecord>;
   deleteTopic: (id: string) => Promise<void>;
@@ -83,17 +84,12 @@ type ServerPhoto = PhotoRecord & {
 type ServerPhotoEnvelope = ServerPhoto | { photo: ServerPhoto };
 type ServerTopicEnvelope = TopicRecord | { topic: TopicRecord };
 type ServerBrandLogo = BrandLogoRecord | string;
-type ServerBrand = Partial<
-  Omit<BrandRecord, "aliases" | "logos" | "logoUrls">
-> & {
-  aliases?: string[];
+type ServerBrand = Omit<BrandRecord, "logos"> & {
   brand?: string;
   cameraMake?: string;
-  displayName?: string;
   logoUrl?: string;
-  logoUrls?: unknown;
-  logos?: unknown;
-  aliases?: unknown;
+  logos?: ServerBrandLogo[];
+  logoUrls?: string[];
 };
 type ServerBrandEnvelope = ServerBrand | { brand: ServerBrand };
 type ServerExportEnvelope = ExportResult | { export: ExportResult };
@@ -133,14 +129,6 @@ const normalizeTopicIds = (values: Array<string | undefined>): string[] => [
   ),
 ];
 
-const normalizeStringList = (values?: Array<string | undefined>): string[] => [
-  ...new Set(
-    (values ?? [])
-      .map((value) => value?.trim())
-      .filter((value): value is string => Boolean(value)),
-  ),
-];
-
 const topicIdsFromPayload = (payload: PhotoPayload): string[] =>
   normalizeTopicIds([...(payload.topicIds ?? []), payload.topicId]);
 
@@ -170,18 +158,10 @@ const toServerTopicPayload = (payload: TopicPayload) => ({
   description: payload.description?.trim() ?? "",
 });
 
-const normalizeStringList = (values: unknown): string[] => [
-  ...new Set(
-    (Array.isArray(values) ? values : [])
-      .map((value) => (typeof value === "string" ? value.trim() : ""))
-      .filter(Boolean),
-  ),
-];
-
-const cleanBrandLogos = (logos: BrandPayload["logos"] = []): BrandLogo[] =>
+const cleanBrandLogos = (logos: BrandLogoRecord[]): BrandLogoRecord[] =>
   logos
     .map((logo) => {
-      const url = logo.url?.trim() || "";
+      const url = logo.url.trim();
       const alt = (logo.alt ?? logo.label)?.trim() || undefined;
       return {
         url,
@@ -197,20 +177,18 @@ const cleanBrandLogos = (logos: BrandPayload["logos"] = []): BrandLogo[] =>
 
 const toServerBrandPayload = (payload: BrandPayload) => {
   const logos = cleanBrandLogos(payload.logos);
-  const aliases = normalizeStringList(payload.aliases);
-  const logoUrls = [
-    ...new Set([
-      ...normalizeStringList(payload.logoUrls),
-      ...logos.map((logo) => logo.url),
-    ]),
-  ];
   return {
     id: payload.id?.trim() || undefined,
-    name,
-    title: payload.title?.trim() || name,
-    aliases,
+    name: payload.name.trim(),
+    title: payload.title?.trim() || payload.name.trim(),
+    aliases: payload.aliases
+      ?.map((alias) => alias.trim())
+      .filter((alias) => Boolean(alias)),
     logos,
-    logoUrls,
+    logoUrls:
+      payload.logoUrls
+        ?.map((url) => url.trim())
+        .filter((url) => Boolean(url)) ?? logos.map((logo) => logo.url),
   };
 };
 
@@ -307,56 +285,32 @@ const brandIdFromName = (name: string): string => {
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/^-+|-+$/g, "");
-  if (ascii) return ascii;
-  return `brand-${Array.from(name)
-    .map((char) => char.charCodeAt(0).toString(36))
-    .join("-")}`;
+  return ascii || encodeURIComponent(name.trim()).toLowerCase();
 };
 
-const normalizeBrandLogos = (source: unknown): BrandLogo[] => {
+const normalizeBrandLogos = (
+  source?: ServerBrandLogo[] | string,
+): BrandLogoRecord[] => {
   const entries = Array.isArray(source) ? source : source ? [source] : [];
   return entries
-    .map((entry, index): BrandLogo | undefined => {
+    .map((entry, index): BrandLogoRecord | undefined => {
       if (typeof entry === "string") {
         const url = entry.trim();
         return url ? { id: `logo-${index + 1}`, url } : undefined;
       }
-      if (!entry || typeof entry !== "object") return undefined;
-      const logo = entry as Partial<BrandLogo> & {
-        logoUrl?: unknown;
-        src?: unknown;
-        name?: unknown;
-        title?: unknown;
-      };
-      const rawUrl =
-        typeof logo.url === "string"
-          ? logo.url
-          : typeof logo.logoUrl === "string"
-            ? logo.logoUrl
-            : typeof logo.src === "string"
-              ? logo.src
-              : "";
-      const url = rawUrl.trim();
+      const url = entry.url?.trim();
       if (!url) return undefined;
-      const label =
-        typeof logo.label === "string"
-          ? logo.label.trim()
-          : typeof logo.alt === "string"
-            ? logo.alt.trim()
-            : typeof logo.title === "string"
-              ? logo.title.trim()
-              : typeof logo.name === "string"
-                ? logo.name.trim()
-                : undefined;
-      const id = typeof logo.id === "string" ? logo.id.trim() : "";
+      const label = (entry.label ?? entry.alt)?.trim() || undefined;
+      const alt = entry.alt?.trim() || label;
       return {
-        ...logo,
-        id: id || logo.key || `logo-${index + 1}`,
+        ...entry,
+        id: entry.id ?? entry.key ?? `logo-${index + 1}`,
         url,
-        ...(label ? { label, alt: label } : {}),
+        ...(label ? { label } : {}),
+        ...(alt ? { alt } : {}),
       };
     })
-    .filter((logo): logo is BrandLogo => Boolean(logo));
+    .filter((logo): logo is BrandLogoRecord => Boolean(logo));
 };
 
 export const normalizeBrandForAdmin = (
@@ -376,22 +330,25 @@ export const normalizeBrandForAdmin = (
     "未命名品牌"
   ).trim();
   const title = (source.title || source.displayName || name).trim();
-  const sourceLogoUrls = normalizeStringList(source.logoUrls);
+  const sourceLogoUrls = (source.logoUrls ?? [])
+    .map((url) => url.trim())
+    .filter((url) => Boolean(url));
   const logoSource =
     source.logos ??
-    (sourceLogoUrls.length ? sourceLogoUrls : undefined) ??
-    source.logoUrl;
+    (sourceLogoUrls.length ? sourceLogoUrls : source.logoUrl) ??
+    undefined;
   const logos = normalizeBrandLogos(logoSource);
-  const logoUrls = normalizeStringList(source.logoUrls);
+  const logoUrls = source.logoUrls?.map((url) => url.trim()).filter(Boolean);
   return {
     ...source,
     id: (source.id || brandIdFromName(name)).trim(),
     name,
     title,
-    aliases: normalizeStringList(source.aliases),
     logos,
     logoUrls: logoUrls?.length ? logoUrls : logos.map((logo) => logo.url),
-    aliases: normalizeStringList(source.aliases),
+    aliases: (source.aliases ?? [])
+      .map((alias) => alias.trim())
+      .filter((alias) => Boolean(alias)),
   };
 };
 
@@ -596,6 +553,20 @@ export const createApiClient = (
     await requestJson<void>(baseUrl, `/topics/${encodeURIComponent(id)}`, {
       method: "DELETE",
     });
+  },
+  async addBrandLogo(id, logo) {
+    const [cleanLogo] = cleanBrandLogos([logo]);
+    if (!cleanLogo) throw new Error("Logo URL is required");
+    return normalizeBrandForAdmin(
+      await requestJson<ServerBrandEnvelope>(
+        baseUrl,
+        `/brands/${encodeURIComponent(id)}/logos`,
+        {
+          method: "POST",
+          body: JSON.stringify(cleanLogo),
+        },
+      ),
+    );
   },
   async createPhoto(payload) {
     return normalizePhotoForAdmin(

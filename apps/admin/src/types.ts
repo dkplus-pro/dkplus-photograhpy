@@ -50,7 +50,7 @@ export interface PhotoPayload {
   exif?: PhotoExif;
 }
 
-export interface BrandLogo {
+export interface BrandLogoRecord {
   /** Local-only key used by the Admin logo row editor. */
   id?: string;
   url: string;
@@ -59,13 +59,12 @@ export interface BrandLogo {
   mimeType?: string;
   size?: number;
   storage?: "local" | "cos" | "remote";
-  /** Backward-compatible Admin label alias; server contract uses alt. */
   label?: string;
   alt?: string;
   createdAt?: string;
 }
 
-export type BrandLogoRecord = BrandLogo;
+export type BrandLogo = BrandLogoRecord;
 
 export interface BrandRecord {
   id: string;
@@ -73,8 +72,8 @@ export interface BrandRecord {
   title?: string;
   displayName?: string;
   logos: BrandLogoRecord[];
-  logoUrls: string[];
-  aliases: string[];
+  logoUrls?: string[];
+  aliases?: string[];
   photoCount?: number;
   createdAt?: string;
   updatedAt?: string;
@@ -86,7 +85,7 @@ export interface BrandPayload {
   title?: string;
   aliases?: string[];
   logoUrls?: string[];
-  logos: BrandLogo[];
+  logos: BrandLogoRecord[];
 }
 
 export interface TopicRecord {
