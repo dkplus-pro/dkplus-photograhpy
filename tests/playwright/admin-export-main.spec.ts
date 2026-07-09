@@ -1032,9 +1032,10 @@ test("Main top menu opens works and watermark export with a rendered example", a
   await expect(page.getByText("固定白字黑底")).toBeVisible();
   await expect(page.getByLabel("黑字白底")).toHaveCount(0);
   await expect(page.getByLabel("白字黑底")).toHaveCount(0);
-  expect(
-    await page.locator(".watermark-preview").getAttribute("data-tone"),
-  ).toBeNull();
+  await expect(page.locator(".watermark-preview")).toHaveAttribute(
+    "data-tone",
+    "black",
+  );
 
   const logoOptions = await page
     .getByLabel("选择 Logo（可选）")
@@ -1092,6 +1093,9 @@ test("Main top menu opens works and watermark export with a rendered example", a
   await expect(page.getByLabel("水印机型")).toHaveValue("A7R V");
   await expect(page.getByLabel("水印镜头")).toHaveValue("FE 35mm F1.4 GM");
   await expect(page.getByLabel("水印焦段")).toHaveValue("35mm");
+  await expect(page.getByLabel("水印曝光")).toHaveValue(
+    /f\/4\s+1\/250s\s+ISO 100/,
+  );
   await expect(page.getByLabel("选择 Logo（可选）")).toHaveValue("sony");
 });
 
