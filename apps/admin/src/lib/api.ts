@@ -351,20 +351,15 @@ export const normalizeBrandForAdmin = (
     (sourceLogoUrls.length ? sourceLogoUrls : source.logoUrl) ??
     undefined;
   const logos = normalizeBrandLogos(logoSource);
-  const logoUrls = sourceLogoUrls.length
-    ? sourceLogoUrls
-    : logos.map((logo) => logo.url);
+  const logoUrls = source.logoUrls?.map((url) => url.trim()).filter(Boolean);
   return {
     ...source,
     id: (source.id || brandIdFromName(name)).trim(),
     name,
     title,
     logos,
-    logoUrls:
-      source.logoUrls?.map((url) => url.trim()).filter(Boolean) ??
-      logos.map((logo) => logo.url),
+    logoUrls: logoUrls?.length ? logoUrls : logos.map((logo) => logo.url),
     aliases: source.aliases?.filter((alias) => Boolean(alias.trim())),
-    photoCount: source.photoCount,
   };
 };
 
