@@ -82,20 +82,17 @@ type ServerPhoto = PhotoRecord & {
 
 type ServerPhotoEnvelope = ServerPhoto | { photo: ServerPhoto };
 type ServerTopicEnvelope = TopicRecord | { topic: TopicRecord };
-type ServerBrand = Omit<
-  Partial<BrandRecord>,
-  "aliases" | "logos" | "logoUrls"
-> & {
+type ServerBrandLogo = Partial<BrandLogoRecord> | string;
+type ServerBrand = Partial<Omit<BrandRecord, "logos" | "logoUrls">> & {
   id?: string;
   name?: string;
   title?: string;
+  displayName?: string;
   brand?: string;
   cameraMake?: string;
-  displayName?: string;
   logoUrl?: string;
-  logoUrls?: unknown;
-  logos?: unknown;
-  aliases?: unknown;
+  logoUrls?: string[];
+  logos?: ServerBrandLogo[] | ServerBrandLogo;
 };
 type ServerBrandEnvelope = ServerBrand | { brand: ServerBrand };
 type ServerExportEnvelope = ExportResult | { export: ExportResult };
@@ -164,32 +161,94 @@ const toServerTopicPayload = (payload: TopicPayload) => ({
   description: payload.description?.trim() ?? "",
 });
 
-const toServerBrandLogo = (logo: BrandLogoRecord) => {
-  const url = logo.url.trim();
-  if (!url) return undefined;
-  const alt = (logo.alt ?? logo.label)?.trim() || undefined;
-  return {
-    url,
-    key: logo.key?.trim() || undefined,
-    fileName: logo.fileName?.trim() || undefined,
-    mimeType: logo.mimeType?.trim() || undefined,
-    size: logo.size,
-    storage: logo.storage,
-    alt,
-  };
+const brandIdFromName = (name: string): string => {
+  const ascii = name
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+  if (ascii) return ascii;
+  return `brand-${Array.from(name)
+    .map((char) => char.charCodeAt(0).toString(36))
+    .join("-")}`;
 };
 
+const trimmedString = (value: unknown): string | undefined =>
+  typeof value === "string" && value.trim() ? value.trim() : undefined;
+
+const normalizeBrandLogos = (value: unknown): BrandLogoRecord[] => {
+  const entries = Array.isArray(value) ? value : value ? [value] : [];
+  const seen = new Set<string>();
+  return entries
+    .map((entry): BrandLogoRecord | undefined => {
+      if (typeof entry === "string") {
+        const url = entry.trim();
+        return url ? { url } : undefined;
+      }
+      if (!entry || typeof entry !== "object") return undefined;
+      const source = entry as Record<string, unknown>;
+      const url = trimmedString(source.url);
+      if (!url) return undefined;
+      const label = trimmedString(source.label) ?? trimmedString(source.alt);
+      return {
+        id: trimmedString(source.id),
+        url,
+        label,
+        key: trimmedString(source.key),
+        fileName: trimmedString(source.fileName),
+        mimeType: trimmedString(source.mimeType),
+        size: typeof source.size === "number" ? source.size : undefined,
+        storage:
+          source.storage === "local" ||
+          source.storage === "cos" ||
+          source.storage === "remote"
+            ? source.storage
+            : undefined,
+        alt: label,
+        createdAt: trimmedString(source.createdAt),
+      };
+    })
+    .filter((logo): logo is BrandLogoRecord => {
+      if (!logo?.url || seen.has(logo.url)) return false;
+      seen.add(logo.url);
+      return true;
+    });
+};
+
+const cleanBrandLogos = (logos: BrandLogoRecord[] = []): BrandLogoRecord[] =>
+  normalizeBrandLogos(logos);
+
+const toServerBrandLogo = (logo: BrandLogoRecord) => ({
+  url: logo.url,
+  key: logo.key,
+  fileName: logo.fileName,
+  mimeType: logo.mimeType,
+  size: logo.size,
+  storage: logo.storage,
+  alt: logo.label ?? logo.alt,
+  createdAt: logo.createdAt,
+});
+
 const toServerBrandPayload = (payload: BrandPayload) => {
-  const logos = payload.logos
-    .map(toServerBrandLogo)
-    .filter((logo): logo is NonNullable<typeof logo> => Boolean(logo));
+  const logos = cleanBrandLogos(payload.logos);
+  const logoUrls = [
+    ...new Set([
+      ...logos.map((logo) => logo.url),
+      ...(payload.logoUrls ?? [])
+        .map((url) => url.trim())
+        .filter((url) => Boolean(url)),
+    ]),
+  ];
+  const name = payload.name.trim();
   return {
     id: payload.id?.trim() || undefined,
-    name: payload.name.trim(),
-    title: payload.title?.trim() || undefined,
-    aliases: payload.aliases?.map((alias) => alias.trim()).filter(Boolean),
-    logoUrls: payload.logoUrls?.map((url) => url.trim()).filter(Boolean),
-    logos,
+    name,
+    title: payload.title?.trim() || name,
+    aliases: payload.aliases
+      ?.map((alias) => alias.trim())
+      .filter((alias) => Boolean(alias)),
+    logos: logos.map(toServerBrandLogo),
+    logoUrls,
   };
 };
 
@@ -297,22 +356,42 @@ const normalizeBrandLogoForAdmin = (
 export const normalizeBrandForAdmin = (
   input: ServerBrandEnvelope,
 ): BrandRecord => {
-  const source = "brand" in input ? input.brand : input;
-  const sourceLogos = source.logos ?? [];
-  const logoUrls = (source.logoUrls ?? [])
+  const source: ServerBrand =
+    "brand" in input && typeof input.brand === "object" && input.brand
+      ? input.brand
+      : (input as ServerBrand);
+  const name = (
+    source.name ||
+    source.title ||
+    source.displayName ||
+    source.brand ||
+    source.cameraMake ||
+    source.id ||
+    "未命名品牌"
+  ).trim();
+  const title = (source.title || source.displayName || name).trim();
+  const sourceLogoUrls = (source.logoUrls ?? [])
     .map((url) => url.trim())
-    .filter(Boolean);
-  const logos = sourceLogos.length
-    ? sourceLogos.map(normalizeBrandLogoForAdmin)
-    : logoUrls.map((url, index) => ({ id: `logo-${index + 1}`, url }));
+    .filter((url) => Boolean(url));
+  const logoSource =
+    source.logos ??
+    (sourceLogoUrls.length ? sourceLogoUrls : source.logoUrl) ??
+    undefined;
+  const logos = normalizeBrandLogos(logoSource);
+  const logoUrls = sourceLogoUrls.length
+    ? sourceLogoUrls
+    : logos.map((logo) => logo.url);
   return {
     ...source,
-    id: source.id.trim(),
-    name: source.name.trim(),
-    title: source.title?.trim() || source.displayName?.trim() || undefined,
-    aliases: source.aliases ?? [],
-    logos,
-    logoUrls: logoUrls.length ? logoUrls : logos.map((logo) => logo.url),
+    id: (source.id || brandIdFromName(name)).trim(),
+    name,
+    title,
+    aliases: (source.aliases ?? [])
+      .map((alias) => alias.trim())
+      .filter((alias) => Boolean(alias)),
+    logos: logos.length ? logos : normalizeBrandLogos(logoUrls),
+    logoUrls,
+    photoCount: source.photoCount,
   };
 };
 
@@ -449,7 +528,7 @@ export const createApiClient = (
   async listBrands() {
     return unwrapBrands(
       await requestJson<
-        BrandRecord[] | { brands?: BrandRecord[]; data?: BrandRecord[] }
+        ServerBrandEnvelope[] | { brands?: ServerBrandEnvelope[]; data?: ServerBrandEnvelope[] }
       >(baseUrl, "/brands"),
     );
   },
@@ -516,47 +595,6 @@ export const createApiClient = (
     await requestJson<void>(baseUrl, `/topics/${encodeURIComponent(id)}`, {
       method: "DELETE",
     });
-  },
-  async createBrand(payload) {
-    return normalizeBrandForAdmin(
-      await requestJson<ServerBrandEnvelope>(baseUrl, "/brands", {
-        method: "POST",
-        body: JSON.stringify(toServerBrandPayload(payload)),
-      }),
-    );
-  },
-  async updateBrand(id, payload) {
-    return normalizeBrandForAdmin(
-      await requestJson<ServerBrandEnvelope>(
-        baseUrl,
-        `/brands/${encodeURIComponent(id)}`,
-        {
-          method: "PATCH",
-          body: JSON.stringify(toServerBrandPayload(payload)),
-        },
-      ),
-    );
-  },
-  async deleteBrand(id) {
-    await requestJson<void>(baseUrl, `/brands/${encodeURIComponent(id)}`, {
-      method: "DELETE",
-    });
-  },
-  async uploadBrandLogos(id, files) {
-    const body = new FormData();
-    for (const file of files) {
-      body.append("files", file);
-    }
-    return normalizeBrandForAdmin(
-      await requestJson<ServerBrandEnvelope>(
-        baseUrl,
-        `/brands/${encodeURIComponent(id)}/logos`,
-        {
-          method: "POST",
-          body,
-        },
-      ),
-    );
   },
   async createPhoto(payload) {
     return normalizePhotoForAdmin(
