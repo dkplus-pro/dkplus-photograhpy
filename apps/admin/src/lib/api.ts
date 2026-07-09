@@ -221,13 +221,10 @@ const appendBrandLogosViaBrandUpdate = async (
     await requestJson<ServerBrandEnvelope>(baseUrl, path, {
       method: "PATCH",
       body: JSON.stringify(
-        toServerBrandPayload({
-          name: current.name,
-          title: current.title ?? current.name,
-          aliases: current.aliases ?? [],
+        {
           logos: mergedLogos,
           logoUrls: mergedLogos.map((logo) => logo.url),
-        }),
+        },
       ),
     }),
   );

@@ -70,7 +70,6 @@ function isAssetUpload(value: unknown): boolean {
   const intent = field(value.intent)?.toLowerCase();
   return (
     mode === "asset" ||
-    purpose === "asset" ||
     purpose === "brand-logo" ||
     intent === "asset"
   );
