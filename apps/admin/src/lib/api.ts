@@ -1,5 +1,5 @@
 import type {
-  BrandLogo,
+  BrandLogoRecord,
   BrandPayload,
   BrandRecord,
   PhotoExif,
@@ -47,10 +47,6 @@ export interface ApiClient {
   createTopic: (payload: TopicPayload) => Promise<TopicRecord>;
   updateTopic: (id: string, payload: TopicPayload) => Promise<TopicRecord>;
   deleteTopic: (id: string) => Promise<void>;
-  createBrand: (payload: BrandPayload) => Promise<BrandRecord>;
-  updateBrand: (id: string, payload: BrandPayload) => Promise<BrandRecord>;
-  deleteBrand: (id: string) => Promise<void>;
-  uploadBrandLogos: (id: string, files: File[]) => Promise<BrandRecord>;
   createPhoto: (payload: PhotoPayload) => Promise<PhotoRecord>;
   updatePhoto: (id: string, payload: PhotoPayload) => Promise<PhotoRecord>;
   deletePhoto: (id: string) => Promise<void>;
@@ -168,43 +164,31 @@ const toServerTopicPayload = (payload: TopicPayload) => ({
   description: payload.description?.trim() ?? "",
 });
 
-const normalizeStringList = (values: unknown): string[] => [
-  ...new Set(
-    (Array.isArray(values) ? values : [])
-      .map((value) => (typeof value === "string" ? value.trim() : ""))
-      .filter(Boolean),
-  ),
-];
-
-const cleanBrandLogos = (logos: BrandPayload["logos"] = []): BrandLogo[] =>
-  logos
-    .map((logo) => ({
-      id: logo.id?.trim() || undefined,
-      url: logo.url?.trim() || "",
-      key: logo.key?.trim() || undefined,
-      fileName: logo.fileName?.trim() || undefined,
-      mimeType: logo.mimeType?.trim() || undefined,
-      size: logo.size,
-      storage: logo.storage,
-      alt: logo.alt?.trim() || undefined,
-      createdAt: logo.createdAt,
-    }))
-    .filter((logo) => Boolean(logo.url));
+const toServerBrandLogo = (logo: BrandLogoRecord) => {
+  const url = logo.url.trim();
+  if (!url) return undefined;
+  const alt = (logo.alt ?? logo.label)?.trim() || undefined;
+  return {
+    url,
+    key: logo.key?.trim() || undefined,
+    fileName: logo.fileName?.trim() || undefined,
+    mimeType: logo.mimeType?.trim() || undefined,
+    size: logo.size,
+    storage: logo.storage,
+    alt,
+  };
+};
 
 const toServerBrandPayload = (payload: BrandPayload) => {
-  const logos = cleanBrandLogos(payload.logos);
-  const logoUrls = [
-    ...new Set([
-      ...normalizeStringList(payload.logoUrls),
-      ...logos.map((logo) => logo.url),
-    ]),
-  ];
+  const logos = payload.logos
+    .map(toServerBrandLogo)
+    .filter((logo): logo is NonNullable<typeof logo> => Boolean(logo));
   return {
     id: payload.id?.trim() || undefined,
     name: payload.name.trim(),
     title: payload.title?.trim() || undefined,
-    aliases: normalizeStringList(payload.aliases),
-    logoUrls,
+    aliases: payload.aliases?.map((alias) => alias.trim()).filter(Boolean),
+    logoUrls: payload.logoUrls?.map((url) => url.trim()).filter(Boolean),
     logos,
   };
 };
@@ -296,123 +280,39 @@ export const normalizeTopicForAdmin = (
   };
 };
 
-const brandIdFromName = (name: string): string => {
-  const ascii = name
-    .trim()
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-+|-+$/g, "");
-  if (ascii) return ascii;
-  return `brand-${Array.from(name)
-    .map((char) => char.charCodeAt(0).toString(36))
-    .join("-")}`;
-};
-
-const normalizeBrandLogos = (value: unknown): BrandLogo[] => {
-  const entries = Array.isArray(value) ? value : value ? [value] : [];
-  return entries
-    .map((entry, index): BrandLogo | undefined => {
-      if (typeof entry === "string") {
-        const url = entry.trim();
-        return url ? { id: `logo-${index + 1}`, url } : undefined;
-      }
-      if (!entry || typeof entry !== "object") return undefined;
-      const logo = entry as {
-        id?: unknown;
-        url?: unknown;
-        logoUrl?: unknown;
-        src?: unknown;
-        label?: unknown;
-        alt?: unknown;
-        title?: unknown;
-        name?: unknown;
-        key?: unknown;
-        fileName?: unknown;
-        mimeType?: unknown;
-        size?: unknown;
-        storage?: unknown;
-        createdAt?: unknown;
-      };
-      const rawUrl =
-        typeof logo.url === "string"
-          ? logo.url
-          : typeof logo.logoUrl === "string"
-            ? logo.logoUrl
-            : typeof logo.src === "string"
-              ? logo.src
-              : "";
-      const url = rawUrl.trim();
-      if (!url) return undefined;
-      const label =
-        typeof logo.alt === "string"
-          ? logo.alt.trim()
-          : typeof logo.label === "string"
-          ? logo.label.trim()
-          : typeof logo.title === "string"
-            ? logo.title.trim()
-            : typeof logo.name === "string"
-              ? logo.name.trim()
-              : undefined;
-      const id = typeof logo.id === "string" ? logo.id.trim() : "";
-      return {
-        id: id || `logo-${index + 1}`,
-        url,
-        alt: label || undefined,
-        key: typeof logo.key === "string" ? logo.key.trim() : undefined,
-        fileName:
-          typeof logo.fileName === "string" ? logo.fileName.trim() : undefined,
-        mimeType:
-          typeof logo.mimeType === "string" ? logo.mimeType.trim() : undefined,
-        size: typeof logo.size === "number" ? logo.size : undefined,
-        storage:
-          logo.storage === "local" ||
-          logo.storage === "cos" ||
-          logo.storage === "remote"
-            ? logo.storage
-            : undefined,
-        createdAt:
-          typeof logo.createdAt === "string" ? logo.createdAt : undefined,
-      };
-    })
-    .filter((logo): logo is BrandLogo => Boolean(logo));
+const normalizeBrandLogoForAdmin = (
+  logo: BrandLogoRecord,
+  index: number,
+): BrandLogoRecord => {
+  const label = (logo.label ?? logo.alt)?.trim() || undefined;
+  return {
+    ...logo,
+    id: logo.id ?? logo.key ?? `logo-${index + 1}`,
+    url: logo.url.trim(),
+    label,
+    alt: logo.alt?.trim() || label,
+  };
 };
 
 export const normalizeBrandForAdmin = (
   input: ServerBrandEnvelope,
 ): BrandRecord => {
-  const source: ServerBrand =
-    "brand" in input && typeof input.brand === "object" && input.brand
-      ? input.brand
-      : (input as ServerBrand);
-  const name = (
-    source.name ||
-    source.title ||
-    source.displayName ||
-    source.brand ||
-    source.cameraMake ||
-    source.id ||
-    "未命名品牌"
-  ).trim();
-  const title = (source.title || source.displayName || name).trim();
-  const serverLogoUrls = normalizeStringList(source.logoUrls);
-  const logoSource =
-    source.logos ??
-    (serverLogoUrls.length ? serverLogoUrls : undefined) ??
-    source.logoUrl ??
-    undefined;
-  const logos = normalizeBrandLogos(logoSource);
-  const logoUrls = [
-    ...new Set([...serverLogoUrls, ...logos.map((logo) => logo.url)]),
-  ];
+  const source = "brand" in input ? input.brand : input;
+  const sourceLogos = source.logos ?? [];
+  const logoUrls = (source.logoUrls ?? [])
+    .map((url) => url.trim())
+    .filter(Boolean);
+  const logos = sourceLogos.length
+    ? sourceLogos.map(normalizeBrandLogoForAdmin)
+    : logoUrls.map((url, index) => ({ id: `logo-${index + 1}`, url }));
   return {
     ...source,
-    id: (source.id || brandIdFromName(name)).trim(),
-    name,
-    title,
+    id: source.id.trim(),
+    name: source.name.trim(),
+    title: source.title?.trim() || source.displayName?.trim() || undefined,
+    aliases: source.aliases ?? [],
     logos,
-    logoUrls,
-    aliases: normalizeStringList(source.aliases),
-    photoCount: source.photoCount,
+    logoUrls: logoUrls.length ? logoUrls : logos.map((logo) => logo.url),
   };
 };
 

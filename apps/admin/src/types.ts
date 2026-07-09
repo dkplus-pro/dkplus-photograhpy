@@ -50,8 +50,7 @@ export interface PhotoPayload {
   exif?: PhotoExif;
 }
 
-
-export interface BrandLogo {
+export interface BrandLogoRecord {
   id?: string;
   url: string;
   key?: string;
@@ -59,6 +58,7 @@ export interface BrandLogo {
   mimeType?: string;
   size?: number;
   storage?: "local" | "cos" | "remote";
+  label?: string;
   alt?: string;
   createdAt?: string;
 }
@@ -67,9 +67,10 @@ export interface BrandRecord {
   id: string;
   name: string;
   title?: string;
-  aliases: string[];
-  logos: BrandLogo[];
-  logoUrls: string[];
+  displayName?: string;
+  aliases?: string[];
+  logos: BrandLogoRecord[];
+  logoUrls?: string[];
   photoCount?: number;
   createdAt?: string;
   updatedAt?: string;
@@ -79,57 +80,9 @@ export interface BrandPayload {
   id?: string;
   name: string;
   title?: string;
-  logoUrls?: string[];
-  aliases?: string[];
-  logos?: Partial<BrandLogo>[];
-}
-
-export interface TopicRecord {
-  id: string;
-  title: string;
-  description?: string;
-  slug?: string;
-  coverPhotoId?: string;
-  sortOrder?: number;
-  createdAt?: string;
-  updatedAt?: string;
-}
-
-export interface TopicPayload {
-  id?: string;
-  title: string;
-  description?: string;
-}
-
-export interface BrandLogo {
-  url: string;
-  key?: string;
-  fileName?: string;
-  mimeType?: string;
-  size?: number;
-  storage?: "local" | "cos" | "remote";
-  alt?: string;
-  createdAt?: string;
-}
-
-export interface BrandRecord {
-  id: string;
-  name: string;
-  title?: string;
-  aliases: string[];
-  logos: BrandLogo[];
-  logoUrls: string[];
-  createdAt?: string;
-  updatedAt?: string;
-}
-
-export interface BrandPayload {
-  id?: string;
-  name: string;
-  title?: string;
   aliases?: string[];
   logoUrls?: string[];
-  logos?: Partial<BrandLogo>[];
+  logos: BrandLogoRecord[];
 }
 
 export interface UploadPreview {

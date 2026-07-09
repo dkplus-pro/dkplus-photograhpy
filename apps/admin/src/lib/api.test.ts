@@ -584,7 +584,6 @@ describe("admin API client auth headers", () => {
     });
   });
 
-<<<<<<< HEAD
   it("maps brand CRUD requests with editable multiple logos", async () => {
     const fetchMock = vi.fn(async (input: unknown, init?: RequestInit) => {
       const url = String(input);
@@ -743,7 +742,7 @@ describe("admin API client auth headers", () => {
     const [deleteUrl, deleteInit] = fetchMock.mock.calls[3] ?? [];
     expect(deleteUrl).toBe("http://api.test/api/brands/sony");
     expect(deleteInit?.method).toBe("DELETE");
-=======
+
   it("normalizes brand envelopes with logoUrls derived from logos", () => {
     expect(
       normalizeBrandForAdmin({
@@ -762,6 +761,6 @@ describe("admin API client auth headers", () => {
       logos: [{ url: "/logos/sony.svg" }],
       logoUrls: ["/logos/sony.svg"],
     });
->>>>>>> 67a5f24 (omx(team): auto-checkpoint worker-2 [unknown])
+
   });
 });
