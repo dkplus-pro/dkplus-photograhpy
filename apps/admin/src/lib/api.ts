@@ -1,5 +1,4 @@
 import type {
-  BrandLogoRecord,
   BrandPayload,
   BrandRecord,
   PhotoExif,
@@ -40,6 +39,10 @@ export interface ApiClient {
   listPhotos: () => Promise<PhotoRecord[]>;
   listTopics: () => Promise<TopicRecord[]>;
   listBrands: () => Promise<BrandRecord[]>;
+  createBrand: (payload: BrandPayload) => Promise<BrandRecord>;
+  updateBrand: (id: string, payload: BrandPayload) => Promise<BrandRecord>;
+  deleteBrand: (id: string) => Promise<void>;
+  uploadBrandLogos: (id: string, files: File[]) => Promise<BrandRecord>;
   createTopic: (payload: TopicPayload) => Promise<TopicRecord>;
   updateTopic: (id: string, payload: TopicPayload) => Promise<TopicRecord>;
   deleteTopic: (id: string) => Promise<void>;
@@ -81,18 +84,7 @@ type ServerPhoto = PhotoRecord & {
 
 type ServerPhotoEnvelope = ServerPhoto | { photo: ServerPhoto };
 type ServerTopicEnvelope = TopicRecord | { topic: TopicRecord };
-type ServerBrand = Omit<Partial<BrandRecord>, "logos"> & {
-  id?: string;
-  name?: string;
-  title?: string;
-  brand?: string;
-  cameraMake?: string;
-  displayName?: string;
-  logoUrl?: string;
-  logoUrls?: string[];
-  logos?: unknown;
-};
-type ServerBrandEnvelope = ServerBrand | { brand: ServerBrand };
+type ServerBrandEnvelope = BrandRecord | { brand: BrandRecord };
 type ServerExportEnvelope = ExportResult | { export: ExportResult };
 type ServerExif = PhotoExif & {
   cameraBrand?: string;
@@ -159,22 +151,13 @@ const toServerTopicPayload = (payload: TopicPayload) => ({
   description: payload.description?.trim() ?? "",
 });
 
-const cleanBrandLogos = (logos: BrandLogoRecord[]): BrandLogoRecord[] =>
-  logos
-    .map((logo) => ({
-      id: logo.id?.trim() || undefined,
-      url: logo.url.trim(),
-      label: logo.label?.trim() || undefined,
-    }))
-    .filter((logo) => Boolean(logo.url));
-
 const toServerBrandPayload = (payload: BrandPayload) => ({
+  id: payload.id?.trim() || undefined,
   name: payload.name.trim(),
-  title: payload.title?.trim() || payload.name.trim(),
-  aliases: payload.aliases
-    ?.map((alias) => alias.trim())
-    .filter((alias) => Boolean(alias)),
-  logos: cleanBrandLogos(payload.logos),
+  title: payload.title?.trim() || undefined,
+  aliases: payload.aliases?.map((alias) => alias.trim()).filter(Boolean),
+  logoUrls: payload.logoUrls?.map((url) => url.trim()).filter(Boolean),
+  logos: payload.logos,
 });
 
 const toBulkUploadItem = (preview: UploadPreview) => {
@@ -264,84 +247,21 @@ export const normalizeTopicForAdmin = (
   };
 };
 
-const brandIdFromName = (name: string): string => {
-  const ascii = name
-    .trim()
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-+|-+$/g, "");
-  if (ascii) return ascii;
-  return `brand-${Array.from(name)
-    .map((char) => char.charCodeAt(0).toString(36))
-    .join("-")}`;
-};
-
-const normalizeBrandLogos = (value: unknown): BrandLogoRecord[] => {
-  const entries = Array.isArray(value) ? value : value ? [value] : [];
-  return entries
-    .map((entry, index): BrandLogoRecord | undefined => {
-      if (typeof entry === "string") {
-        const url = entry.trim();
-        return url ? { id: `logo-${index + 1}`, url } : undefined;
-      }
-      if (!entry || typeof entry !== "object") return undefined;
-      const logo = entry as {
-        id?: unknown;
-        url?: unknown;
-        logoUrl?: unknown;
-        src?: unknown;
-        label?: unknown;
-        title?: unknown;
-        name?: unknown;
-      };
-      const rawUrl =
-        typeof logo.url === "string"
-          ? logo.url
-          : typeof logo.logoUrl === "string"
-            ? logo.logoUrl
-            : typeof logo.src === "string"
-              ? logo.src
-              : "";
-      const url = rawUrl.trim();
-      if (!url) return undefined;
-      const label =
-        typeof logo.label === "string"
-          ? logo.label.trim()
-          : typeof logo.title === "string"
-            ? logo.title.trim()
-            : typeof logo.name === "string"
-              ? logo.name.trim()
-              : undefined;
-      const id = typeof logo.id === "string" ? logo.id.trim() : "";
-      return { id: id || `logo-${index + 1}`, url, label: label || undefined };
-    })
-    .filter((logo): logo is BrandLogoRecord => Boolean(logo));
-};
-
 export const normalizeBrandForAdmin = (
   input: ServerBrandEnvelope,
 ): BrandRecord => {
   const source = "brand" in input ? input.brand : input;
-  const name = (
-    source.name ||
-    source.title ||
-    source.displayName ||
-    source.brand ||
-    source.cameraMake ||
-    source.id ||
-    "未命名品牌"
-  ).trim();
-  const title = (source.title || source.displayName || name).trim();
-  const logoSource =
-    source.logos ?? source.logoUrls ?? source.logoUrl ?? undefined;
+  const logos = source.logos ?? [];
   return {
     ...source,
-    id: (source.id || brandIdFromName(name)).trim(),
-    name,
-    title,
-    logos: normalizeBrandLogos(logoSource),
-    aliases: source.aliases?.filter((alias) => Boolean(alias.trim())),
-    photoCount: source.photoCount,
+    id: source.id.trim(),
+    name: source.name.trim(),
+    title: source.title?.trim() || undefined,
+    aliases: source.aliases ?? [],
+    logos,
+    logoUrls: source.logoUrls?.length
+      ? source.logoUrls
+      : logos.map((logo) => logo.url),
   };
 };
 
@@ -478,9 +398,47 @@ export const createApiClient = (
   async listBrands() {
     return unwrapBrands(
       await requestJson<
-        | ServerBrandEnvelope[]
-        | { brands?: ServerBrandEnvelope[]; data?: ServerBrandEnvelope[] }
+        BrandRecord[] | { brands?: BrandRecord[]; data?: BrandRecord[] }
       >(baseUrl, "/brands"),
+    );
+  },
+  async createBrand(payload) {
+    return normalizeBrandForAdmin(
+      await requestJson<ServerBrandEnvelope>(baseUrl, "/brands", {
+        method: "POST",
+        body: JSON.stringify(toServerBrandPayload(payload)),
+      }),
+    );
+  },
+  async updateBrand(id, payload) {
+    return normalizeBrandForAdmin(
+      await requestJson<ServerBrandEnvelope>(
+        baseUrl,
+        `/brands/${encodeURIComponent(id)}`,
+        {
+          method: "PATCH",
+          body: JSON.stringify(toServerBrandPayload(payload)),
+        },
+      ),
+    );
+  },
+  async deleteBrand(id) {
+    await requestJson<void>(baseUrl, `/brands/${encodeURIComponent(id)}`, {
+      method: "DELETE",
+    });
+  },
+  async uploadBrandLogos(id, files) {
+    const body = new FormData();
+    for (const file of files) body.append("files", file);
+    return normalizeBrandForAdmin(
+      await requestJson<ServerBrandEnvelope>(
+        baseUrl,
+        `/brands/${encodeURIComponent(id)}/logos`,
+        {
+          method: "POST",
+          body,
+        },
+      ),
     );
   },
   async createTopic(payload) {

@@ -62,6 +62,50 @@ export const photoAssetSchema = {
   },
 } as const satisfies JsonSchemaLike;
 
+export const brandLogoSchema = {
+  type: "object",
+  additionalProperties: false,
+  required: ["url"],
+  properties: {
+    url: stringSchema("Brand logo URL"),
+    key: stringSchema("Storage key"),
+    fileName: stringSchema("Original uploaded file name"),
+    mimeType: stringSchema("Uploaded file MIME type"),
+    size: { type: "integer", description: "File size in bytes", minimum: 0 },
+    storage: stringSchema("Storage provider: local, cos, or remote"),
+    alt: stringSchema("Logo alt text"),
+    createdAt: stringSchema("Logo creation timestamp", "date-time"),
+  },
+} as const satisfies JsonSchemaLike;
+
+export const cameraBrandSchema = {
+  type: "object",
+  additionalProperties: false,
+  required: ["id", "name", "logos", "logoUrls"],
+  properties: {
+    id: stringSchema("Stable camera brand id"),
+    name: stringSchema("Camera brand display name"),
+    title: stringSchema("Optional UI title"),
+    aliases: {
+      type: "array",
+      description: "Alternative EXIF/display names matched to this brand",
+      items: stringSchema("Brand alias"),
+    },
+    logos: {
+      type: "array",
+      description: "Editable brand logo objects",
+      items: brandLogoSchema,
+    },
+    logoUrls: {
+      type: "array",
+      description: "Convenience projection of logos[].url",
+      items: stringSchema("Brand logo URL"),
+    },
+    createdAt: stringSchema("Record creation timestamp", "date-time"),
+    updatedAt: stringSchema("Record update timestamp", "date-time"),
+  },
+} as const satisfies JsonSchemaLike;
+
 export const photoSchema = {
   type: "object",
   additionalProperties: false,

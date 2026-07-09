@@ -92,6 +92,37 @@ export interface TopicPayload {
   description?: string;
 }
 
+export interface BrandLogo {
+  url: string;
+  key?: string;
+  fileName?: string;
+  mimeType?: string;
+  size?: number;
+  storage?: "local" | "cos" | "remote";
+  alt?: string;
+  createdAt?: string;
+}
+
+export interface BrandRecord {
+  id: string;
+  name: string;
+  title?: string;
+  aliases: string[];
+  logos: BrandLogo[];
+  logoUrls: string[];
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export interface BrandPayload {
+  id?: string;
+  name: string;
+  title?: string;
+  aliases?: string[];
+  logoUrls?: string[];
+  logos?: Partial<BrandLogo>[];
+}
+
 export interface UploadPreview {
   id: string;
   file: File;

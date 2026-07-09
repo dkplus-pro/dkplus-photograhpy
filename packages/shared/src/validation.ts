@@ -1,4 +1,7 @@
 import type {
+  BrandId,
+  BrandLogo,
+  CameraBrand,
   ExifData,
   GalleryData,
   ISODateString,
@@ -131,6 +134,31 @@ const optionalInteger = (
       issue(
         `${path}.${key}`,
         "Expected an integer when provided.",
+        "invalid_integer",
+      ),
+    );
+    return undefined;
+  }
+
+  return value;
+};
+
+const optionalNonNegativeInteger = (
+  input: Record<string, unknown>,
+  key: string,
+  path: string,
+  issues: ValidationIssue[],
+): number | undefined => {
+  const value = input[key];
+  if (value === undefined || value === null || value === "") {
+    return undefined;
+  }
+
+  if (typeof value !== "number" || !Number.isInteger(value) || value < 0) {
+    issues.push(
+      issue(
+        `${path}.${key}`,
+        "Expected a non-negative integer when provided.",
         "invalid_integer",
       ),
     );
@@ -303,6 +331,112 @@ export const validatePhotoAsset = (
   return issues.length > 0
     ? { ok: false, issues }
     : { ok: true, data: asset, issues: [] };
+};
+
+export const validateBrandLogo = (
+  input: unknown,
+  path = "$.brands[0].logos[0]",
+): ValidationResult<BrandLogo> => {
+  const issues: ValidationIssue[] = [];
+  if (!isRecord(input)) {
+    return {
+      ok: false,
+      issues: [issue(path, "Expected a brand logo object.", "invalid_object")],
+    };
+  }
+
+  const url = requiredString(input, "url", path, issues);
+  const storage = optionalString(input, "storage", path, issues);
+  if (
+    storage !== undefined &&
+    storage !== "local" &&
+    storage !== "cos" &&
+    storage !== "remote"
+  ) {
+    issues.push(
+      issue(
+        `${path}.storage`,
+        "Expected storage to be local, cos, or remote.",
+        "invalid_storage",
+      ),
+    );
+  }
+
+  const logo: BrandLogo = { url };
+  assign(logo, "key", optionalString(input, "key", path, issues));
+  assign(logo, "fileName", optionalString(input, "fileName", path, issues));
+  assign(logo, "mimeType", optionalString(input, "mimeType", path, issues));
+  assign(
+    logo,
+    "size",
+    optionalNonNegativeInteger(input, "size", path, issues),
+  );
+  assign(logo, "storage", storage as BrandLogo["storage"] | undefined);
+  assign(logo, "alt", optionalString(input, "alt", path, issues));
+  assign(logo, "createdAt", optionalIsoDate(input, "createdAt", path, issues));
+
+  return issues.length > 0
+    ? { ok: false, issues }
+    : { ok: true, data: logo, issues: [] };
+};
+
+export const validateCameraBrand = (
+  input: unknown,
+  path = "$.brands[0]",
+): ValidationResult<CameraBrand> => {
+  const issues: ValidationIssue[] = [];
+  if (!isRecord(input)) {
+    return {
+      ok: false,
+      issues: [issue(path, "Expected a camera brand object.", "invalid_object")],
+    };
+  }
+
+  const id = requiredString(input, "id", path, issues) as BrandId;
+  const name = requiredString(input, "name", path, issues);
+  const brand: CameraBrand = {
+    id,
+    name,
+    logos: [],
+    logoUrls: [],
+  };
+  assign(brand, "title", optionalString(input, "title", path, issues));
+  assign(brand, "aliases", optionalStringArray(input, "aliases", path, issues));
+
+  const rawLogos = input.logos;
+  if (!Array.isArray(rawLogos)) {
+    issues.push(
+      issue(`${path}.logos`, "Expected logos to be present.", "missing_required"),
+    );
+  } else {
+    brand.logos = rawLogos.flatMap((logo, index) => {
+      const result = validateBrandLogo(logo, `${path}.logos[${index}]`);
+      if (!result.ok) {
+        issues.push(...result.issues);
+        return [];
+      }
+      return [result.data];
+    });
+  }
+
+  const logoUrls = optionalStringArray(input, "logoUrls", path, issues);
+  if (!Array.isArray(input.logoUrls)) {
+    issues.push(
+      issue(
+        `${path}.logoUrls`,
+        "Expected logoUrls to be present.",
+        "missing_required",
+      ),
+    );
+  } else {
+    brand.logoUrls = logoUrls ?? [];
+  }
+  assign(brand, "createdAt", optionalIsoDate(input, "createdAt", path, issues));
+  assign(brand, "updatedAt", optionalIsoDate(input, "updatedAt", path, issues));
+
+  return issues.length > 0
+    ? { ok: false, issues }
+    : { ok: true, data: brand, issues: [] };
 };
 
 export const validateTopic = (
