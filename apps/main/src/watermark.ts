@@ -269,7 +269,7 @@ const renderWatermarkOnMainThread = async (
   const context = canvas.getContext("2d");
   if (!context) throw new Error("浏览器不支持 Canvas 2D 渲染");
 
-  const logoImage = await loadOptionalLogo(input.logo.url);
+  const logoImage = await loadOptionalLogo(input.logo?.url);
   await drawWatermarkComposition(
     context,
     outputWidth,

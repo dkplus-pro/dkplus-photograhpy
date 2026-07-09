@@ -400,7 +400,7 @@ test("watermark export renders metadata-only output with optional logo and fade 
 
   const gradientCalls =
     watermarkSource.match(
-      /createLinearGradient\(0, stripY, 0, (?:canvasHeight|height)\)/g,
+      /createLinearGradient\(\s*0,\s*stripY,\s*0,\s*(?:canvasHeight|height),?\s*\)/g,
     ) ?? [];
   assert.equal(gradientCalls.length, 2);
   assert.match(
