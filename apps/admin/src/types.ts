@@ -125,6 +125,7 @@ export interface TopicPayload {
   description?: string;
 }
 
+
 export interface UploadPreview {
   id: string;
   file: File;
