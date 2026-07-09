@@ -360,8 +360,8 @@ test("main top menu exposes works and canvas watermark export contracts", () => 
   assert.match(mainSource, /不使用 Logo/);
   assert.match(mainSource, /Logo（可选）/);
   assert.match(mainSource, /上传自定义 Logo/);
-  assert.match(mainSource, /白字黑底/);
-  assert.match(mainSource, /黑字白底/);
+  assert.match(mainSource, /固定白字黑底/);
+  assert.doesNotMatch(mainSource, /黑字白底|name="watermark-tone"/);
   assert.doesNotMatch(mainSource, /aria-label="水印日期"|显示日期/);
   assert.match(mainSource, /显示设备行/);
   assert.match(mainSource, /显示曝光行/);
@@ -391,7 +391,8 @@ test("main top menu exposes works and canvas watermark export contracts", () => 
     /if \(selectedWatermarkLogo\) input\.logo = selectedWatermarkLogo/,
   );
   assert.match(styles, /\.main-menu__link\.active/);
-  assert.match(styles, /\.watermark-preview\[data-tone="black"\]/);
+  assert.doesNotMatch(styles, /\.watermark-preview\[data-tone=|\.watermark-tone/);
+  assert.match(cssBlock(".watermark-preview"), /#18181b/);
 
   assert.match(watermarkSource, /export const renderWatermarkExport =/);
   assert.match(watermarkSource, /OffscreenCanvas/);
@@ -437,13 +438,15 @@ test("main top menu exposes works and canvas watermark export contracts", () => 
     watermarkSource,
     /const secondRow = \[input\.model, input\.lens\][\s\S]*?\.join\(watermarkSecondarySpacer\)/,
   );
+  assert.match(watermarkSource, /const watermarkPalette: Palette =/);
+  assert.doesNotMatch(watermarkSource, /WatermarkTone|paletteForTone|rgba\(250, 250, 250, 0\.92\)/);
   assert.match(
     watermarkSource,
-    /watermarkFont\(primarySize, 400, watermarkPrimaryFontFamily\)/,
+    /watermarkFont\(metadataSize, 400, watermarkPrimaryFontFamily\)/,
   );
-  assert.match(watermarkSource, /watermarkFont\(secondarySize, 300\)/);
-  assert.match(watermarkSource, /secondRow \? 0\.52 : 0\.56/);
-  assert.match(watermarkSource, /stripHeight \* 0\.64/);
+  assert.match(watermarkSource, /watermarkFont\(metadataSize, 300\)/);
+  assert.match(watermarkSource, /secondRow \? 0\.48 : 0\.56/);
+  assert.match(watermarkSource, /stripHeight \* 0\.68/);
 });
 
 test("watermark export renders metadata-only output with optional logo and fade overlay", () => {
@@ -487,6 +490,26 @@ test("watermark export renders metadata-only output with optional logo and fade 
   assert.match(
     watermarkSource,
     /const secondRow = \[input\.model, input\.lens\][\s\S]*?\.join\(watermarkSecondarySpacer\)/,
+  );
+  assert.equal(
+    (watermarkSource.match(/const metadataSize = clamp\((?:canvasWidth|width) \* 0\.018, 20, 42\)/g) ?? []).length,
+    2,
+  );
+  assert.equal(
+    (watermarkSource.match(/watermarkFont\(metadataSize, 400, watermarkPrimaryFontFamily\)/g) ?? []).length,
+    2,
+  );
+  assert.equal(
+    (watermarkSource.match(/watermarkFont\(metadataSize, 300\)/g) ?? []).length,
+    2,
+  );
+  assert.equal(
+    (watermarkSource.match(/secondRow \? 0\.48 : 0\.56/g) ?? []).length,
+    2,
+  );
+  assert.equal(
+    (watermarkSource.match(/stripHeight \* 0\.68/g) ?? []).length,
+    2,
   );
 
   const gradientCalls =
@@ -607,8 +630,8 @@ test("main top menu exposes Works and watermark-export routes", () => {
 test("watermark export page captures required canvas and metadata controls", () => {
   assert.match(mainSource, /WatermarkExport/);
   assert.match(watermarkSource, /createElement\("canvas"\)|OffscreenCanvas/);
-  assert.match(mainSource, /黑色|black/i);
-  assert.match(mainSource, /白色|white/i);
+  assert.match(mainSource, /固定白字黑底/);
+  assert.doesNotMatch(mainSource, /黑字白底|黑白样式|watermark-tone/);
   assert.doesNotMatch(mainSource, /aria-label="水印日期"|显示日期/);
   assert.match(mainSource, /机型|型号|model/i);
   assert.match(mainSource, /曝光|快门|光圈|exposure/i);
