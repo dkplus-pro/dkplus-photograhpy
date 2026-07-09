@@ -3,19 +3,19 @@ export type WatermarkTone = "black" | "white";
 export interface WatermarkLogoInput {
   name: string;
   mark: string;
-  url?: string;
+  url?: string | undefined;
 }
 
 export interface WatermarkRenderInput {
   imageUrl: string;
-  imageWidth?: number;
-  imageHeight?: number;
+  imageWidth?: number | undefined;
+  imageHeight?: number | undefined;
   title: string;
   tone: WatermarkTone;
   logo: WatermarkLogoInput;
-  date?: string;
-  model?: string;
-  exposure?: string;
+  date?: string | undefined;
+  model?: string | undefined;
+  exposure?: string | undefined;
 }
 
 export interface WatermarkRenderResult {
