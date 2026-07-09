@@ -62,6 +62,7 @@ export interface BrandRecord {
   name: string;
   title?: string;
   logos: BrandLogoRecord[];
+  logoUrls?: string[];
   aliases?: string[];
   photoCount?: number;
   createdAt?: string;
@@ -72,6 +73,7 @@ export interface BrandPayload {
   name: string;
   title?: string;
   logos: BrandLogoRecord[];
+  logoUrls?: string[];
   aliases?: string[];
 }
 

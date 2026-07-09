@@ -48,6 +48,7 @@ export interface ApiClient {
   deleteTopic: (id: string) => Promise<void>;
   createBrand: (payload: BrandPayload) => Promise<BrandRecord>;
   updateBrand: (id: string, payload: BrandPayload) => Promise<BrandRecord>;
+  addBrandLogo: (id: string, logo: BrandLogoRecord) => Promise<BrandRecord>;
   deleteBrand: (id: string) => Promise<void>;
   createPhoto: (payload: PhotoPayload) => Promise<PhotoRecord>;
   updatePhoto: (id: string, payload: PhotoPayload) => Promise<PhotoRecord>;
@@ -151,14 +152,27 @@ const toServerTopicPayload = (payload: TopicPayload) => ({
   description: payload.description?.trim() ?? "",
 });
 
-const toServerBrandPayload = (payload: BrandPayload) => ({
-  id: payload.id?.trim() || undefined,
-  name: payload.name.trim(),
-  title: payload.title?.trim() || undefined,
-  aliases: payload.aliases?.map((alias) => alias.trim()).filter(Boolean),
-  logoUrls: payload.logoUrls?.map((url) => url.trim()).filter(Boolean),
-  logos: payload.logos,
-});
+const cleanBrandLogos = (logos: BrandLogoRecord[]): BrandLogoRecord[] =>
+  logos
+    .map((logo) => ({
+      id: logo.id?.trim() || undefined,
+      url: logo.url.trim(),
+      label: logo.label?.trim() || undefined,
+    }))
+    .filter((logo) => Boolean(logo.url));
+
+const toServerBrandPayload = (payload: BrandPayload) => {
+  const logos = cleanBrandLogos(payload.logos);
+  return {
+    name: payload.name.trim(),
+    title: payload.title?.trim() || payload.name.trim(),
+    aliases: payload.aliases
+      ?.map((alias) => alias.trim())
+      .filter((alias) => Boolean(alias)),
+    logos,
+    logoUrls: logos.map((logo) => logo.url),
+  };
+};
 
 const toBulkUploadItem = (preview: UploadPreview) => {
   const topicIds = topicIdsFromPreview(preview);
@@ -250,18 +264,32 @@ export const normalizeTopicForAdmin = (
 export const normalizeBrandForAdmin = (
   input: ServerBrandEnvelope,
 ): BrandRecord => {
-  const source = "brand" in input ? input.brand : input;
-  const logos = source.logos ?? [];
+  const source: ServerBrand =
+    "brand" in input && typeof input.brand === "object" && input.brand
+      ? input.brand
+      : (input as ServerBrand);
+  const name = (
+    source.name ||
+    source.title ||
+    source.displayName ||
+    source.brand ||
+    source.cameraMake ||
+    source.id ||
+    "未命名品牌"
+  ).trim();
+  const title = (source.title || source.displayName || name).trim();
+  const logoSource =
+    source.logos ?? source.logoUrls ?? source.logoUrl ?? undefined;
+  const logos = normalizeBrandLogos(logoSource);
   return {
     ...source,
-    id: source.id.trim(),
-    name: source.name.trim(),
-    title: source.title?.trim() || undefined,
-    aliases: source.aliases ?? [],
+    id: (source.id || brandIdFromName(name)).trim(),
+    name,
+    title,
     logos,
-    logoUrls: source.logoUrls?.length
-      ? source.logoUrls
-      : logos.map((logo) => logo.url),
+    logoUrls: source.logoUrls ?? logos.map((logo) => logo.url),
+    aliases: source.aliases?.filter((alias) => Boolean(alias.trim())),
+    photoCount: source.photoCount,
   };
 };
 
@@ -482,6 +510,20 @@ export const createApiClient = (
         {
           method: "PATCH",
           body: JSON.stringify(toServerBrandPayload(payload)),
+        },
+      ),
+    );
+  },
+  async addBrandLogo(id, logo) {
+    const [cleanLogo] = cleanBrandLogos([logo]);
+    if (!cleanLogo) throw new Error("Logo URL is required");
+    return normalizeBrandForAdmin(
+      await requestJson<ServerBrandEnvelope>(
+        baseUrl,
+        `/brands/${encodeURIComponent(id)}/logos`,
+        {
+          method: "POST",
+          body: JSON.stringify(cleanLogo),
         },
       ),
     );

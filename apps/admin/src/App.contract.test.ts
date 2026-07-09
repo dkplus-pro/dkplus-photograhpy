@@ -215,6 +215,8 @@ describe("admin gallery list contract", () => {
     expect(appSource).toContain('api.listBrands');
     expect(appSource).toContain('api.createBrand');
     expect(appSource).toContain('api.updateBrand');
+    expect(apiSource).toContain('addBrandLogo');
+    expect(apiSource).toContain('logoUrls');
     expect(appSource).toContain('api.deleteBrand');
     expect(appSource).toContain('deriveBrandsFromPhotos');
     expect(appSource).toContain('刷新并同步照片品牌');
