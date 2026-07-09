@@ -434,8 +434,11 @@ describe("admin API client auth headers", () => {
             name: "Sony",
             title: "Sony Alpha",
             aliases: ["索尼"],
-            logos: [{ url: "/logos/sony-white.svg", alt: "White" }],
-            logoUrls: ["/logos/sony-white.svg"],
+            logos: [
+              { url: "/logos/sony-white.svg", alt: "White" },
+              { url: "/logos/sony-black.svg", alt: "Black" },
+            ],
+            logoUrls: ["/logos/sony-white.svg", "/logos/sony-black.svg"],
           },
         });
       }
@@ -458,11 +461,17 @@ describe("admin API client auth headers", () => {
                   fileName: "brand-logo.png",
                   alt: "brand-logo.png",
                 },
+                {
+                  url: "/uploads/brand-logo-dark.png",
+                  fileName: "brand-logo-dark.png",
+                  alt: "brand-logo-dark.png",
+                },
               ],
               logoUrls: [
                 "/logos/sony-white.svg",
                 "/logos/sony-black.svg",
                 "/uploads/brand-logo.png",
+                "/uploads/brand-logo-dark.png",
               ],
             },
           });
@@ -481,7 +490,7 @@ describe("admin API client auth headers", () => {
           },
         });
       }
-      if (url.endsWith("/uploads") && init?.method === "POST") {
+      if (url.endsWith("/uploads/assets") && init?.method === "POST") {
         return jsonResponse(
           {
             uploads: [
@@ -491,6 +500,13 @@ describe("admin API client auth headers", () => {
                 mimeType: "image/png",
                 storage: "local",
                 alt: "brand-logo.png",
+              },
+              {
+                url: "/uploads/brand-logo-dark.png",
+                fileName: "brand-logo-dark.png",
+                mimeType: "image/png",
+                storage: "local",
+                alt: "brand-logo-dark.png",
               },
             ],
           },
@@ -611,6 +627,7 @@ describe("admin API client auth headers", () => {
         "/logos/sony-white.svg",
         "/logos/sony-black.svg",
         "/uploads/brand-logo.png",
+        "/uploads/brand-logo-dark.png",
       ],
     });
 
