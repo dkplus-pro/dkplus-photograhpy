@@ -47,8 +47,8 @@ type MainPageKey = "works" | "watermark-export";
 type AppRoute = {
   page: MainPageKey;
   tab: TabKey;
-  topicKey?: string;
-  photoId?: string;
+  topicKey?: string | undefined;
+  photoId?: string | undefined;
 };
 
 const mainPageLabels = {
@@ -573,6 +573,7 @@ type RawBrand = {
   title?: string;
   cameraBrand?: string;
   mark?: string;
+  url?: string;
   logoUrl?: string;
   logoUrls?: string[];
   imageUrl?: string;
@@ -588,6 +589,7 @@ const builtInWatermarkLogos: WatermarkLogoOption[] = [
     source: "built-in",
   },
 ];
+const fallbackWatermarkLogo = builtInWatermarkLogos[0]!;
 
 const dateInputValue = (value: string): string => {
   const date = new Date(value);
@@ -608,12 +610,17 @@ const formatExposure = (photo?: ResolvedPhoto): string => {
 
 const formatCameraModel = (photo?: ResolvedPhoto): string => {
   if (!photo) return "";
-  return [photo.exif?.cameraBrand ?? photo.exif?.cameraMake, photo.exif?.cameraModel]
+  return [
+    photo.exif?.cameraBrand ?? photo.exif?.cameraMake,
+    photo.exif?.cameraModel,
+  ]
     .filter(Boolean)
     .join(" ");
 };
 
-const watermarkFieldsFromPhoto = (photo?: ResolvedPhoto): WatermarkFieldState => ({
+const watermarkFieldsFromPhoto = (
+  photo?: ResolvedPhoto,
+): WatermarkFieldState => ({
   title: photo?.title ?? "DKPLUS WATERMARK EXAMPLE",
   date: photo ? dateInputValue(photo.takenAt) : "",
   model: formatCameraModel(photo),
@@ -657,7 +664,10 @@ const normalizeAdminBrandLogos = (payload: unknown): WatermarkLogoOption[] => {
     if (!entry || typeof entry !== "object") return;
     const brand = entry as RawBrand;
     const brandName =
-      brand.name ?? brand.title ?? brand.cameraBrand ?? `品牌 ${brandIndex + 1}`;
+      brand.name ??
+      brand.title ??
+      brand.cameraBrand ??
+      `品牌 ${brandIndex + 1}`;
     const brandId = brand.id ?? `admin-${brandIndex}`;
     if (Array.isArray(brand.logos) && brand.logos.length) {
       brand.logos.forEach((logo, logoIndex) => {
@@ -675,12 +685,10 @@ const normalizeAdminBrandLogos = (payload: unknown): WatermarkLogoOption[] => {
     if (Array.isArray(brand.logoUrls) && brand.logoUrls.length) {
       brand.logoUrls.forEach((url, logoIndex) => {
         options.push(
-          compactLogoOption(
-            `${brandId}:url:${logoIndex}`,
-            brandName,
-            "admin",
-            { ...brand, url },
-          ),
+          compactLogoOption(`${brandId}:url:${logoIndex}`, brandName, "admin", {
+            ...brand,
+            url,
+          }),
         );
       });
       return;
@@ -716,7 +724,9 @@ const useAdminBrandLogos = () => {
   return logos;
 };
 
-const deriveCameraBrandLogos = (photos: ResolvedPhoto[]): WatermarkLogoOption[] => {
+const deriveCameraBrandLogos = (
+  photos: ResolvedPhoto[],
+): WatermarkLogoOption[] => {
   const seen = new Set<string>();
   const options: WatermarkLogoOption[] = [];
   for (const photo of photos) {
@@ -747,7 +757,9 @@ const WatermarkExportPage = ({ photos }: { photos: ResolvedPhoto[] }) => {
     watermarkFieldsFromPhoto(selectedPhoto),
   );
   const [tone, setTone] = useState<WatermarkTone>("black");
-  const [customLogo, setCustomLogo] = useState<WatermarkLogoOption | null>(null);
+  const [customLogo, setCustomLogo] = useState<WatermarkLogoOption | null>(
+    null,
+  );
   const [selectedLogoId, setSelectedLogoId] = useState("dkplus");
   const [rendered, setRendered] = useState<WatermarkRenderResult | null>(null);
   const [renderError, setRenderError] = useState<string | null>(null);
@@ -772,7 +784,7 @@ const WatermarkExportPage = ({ photos }: { photos: ResolvedPhoto[] }) => {
   const selectedLogo =
     logoOptions.find((option) => option.id === selectedLogoId) ??
     logoOptions[0] ??
-    builtInWatermarkLogos[0];
+    fallbackWatermarkLogo;
 
   useEffect(() => {
     if (!selectedPhotoId && photos[0]) {
@@ -821,7 +833,9 @@ const WatermarkExportPage = ({ photos }: { photos: ResolvedPhoto[] }) => {
       })
       .catch((reason: unknown) => {
         if (!active) return;
-        setRenderError(reason instanceof Error ? reason.message : "水印渲染失败");
+        setRenderError(
+          reason instanceof Error ? reason.message : "水印渲染失败",
+        );
       })
       .finally(() => {
         if (active) setIsRendering(false);
@@ -1098,12 +1112,13 @@ const App = () => {
     [data],
   );
   const modalPhotos =
-    data && route.tab === "topics" && selectedTopic
+    data && route.page === "works" && route.tab === "topics" && selectedTopic
       ? topicPhotos
       : (data?.photos ?? []);
-  const activePhoto = route.photoId
-    ? (photoById.get(route.photoId) ?? null)
-    : null;
+  const activePhoto =
+    route.page === "works" && route.photoId
+      ? (photoById.get(route.photoId) ?? null)
+      : null;
 
   useEffect(() => {
     const syncRoute = () => {
@@ -1132,9 +1147,16 @@ const App = () => {
       `${window.location.pathname}${window.location.search}${hash}`,
     );
   };
-  const selectTab = (key: TabKey) => navigateToRoute({ tab: key });
+  const selectMainPage = (page: MainPageKey) =>
+    navigateToRoute({ page, tab: "latest" });
+  const selectTab = (key: TabKey) =>
+    navigateToRoute({ page: "works", tab: key });
   const selectTopic = (topic: Topic) =>
-    navigateToRoute({ tab: "topics", topicKey: topicRouteKey(topic) });
+    navigateToRoute({
+      page: "works",
+      tab: "topics",
+      topicKey: topicRouteKey(topic),
+    });
   const openPhotoRoute = (photo: ResolvedPhoto) =>
     navigateToRoute({ ...galleryRouteWithoutPhoto(route), photoId: photo.id });
   const closePhotoRoute = () =>
@@ -1164,9 +1186,27 @@ const App = () => {
     <>
       <header className="hero">
         <nav className="topbar" aria-label="站点导航">
-          <a href="#/latest" className="brand">
+          <a href="#/works/latest" className="brand">
             dk+ photography
           </a>
+          <div className="main-menu" role="list" aria-label="主菜单">
+            {(Object.keys(mainPageLabels) as MainPageKey[]).map((page) => (
+              <a
+                key={page}
+                className={`main-menu__link ${
+                  route.page === page ? "active" : ""
+                }`}
+                href={routeToHash({ page, tab: "latest" })}
+                aria-current={route.page === page ? "page" : undefined}
+                onClick={(event) => {
+                  event.preventDefault();
+                  selectMainPage(page);
+                }}
+              >
+                {mainPageLabels[page]}
+              </a>
+            ))}
+          </div>
           <div className="topbar__actions">
             <span className="topbar__count">
               {data.photos.length} Photos · {data.topics.length} Topics
@@ -1191,43 +1231,62 @@ const App = () => {
         </nav>
       </header>
 
-      <main id="gallery" className="shell" aria-busy={isRoutePending}>
-        <section className="controls" aria-label="图库筛选">
-          <div className="tabs" role="tablist" aria-label="图库标签">
-            {(Object.keys(tabLabels) as TabKey[]).map((key) => (
-              <button
-                key={key}
-                role="tab"
-                aria-selected={route.tab === key}
-                className={route.tab === key ? "active" : ""}
-                onClick={() => selectTab(key)}
-              >
-                {tabLabels[key]}
-              </button>
-            ))}
-          </div>
-        </section>
+      <main
+        id={deferredRoute.page === "works" ? "gallery" : "watermark-export"}
+        className="shell"
+        aria-busy={isRoutePending}
+      >
+        {deferredRoute.page === "works" ? (
+          <>
+            <section className="controls" aria-label="图库筛选">
+              <div className="tabs" role="tablist" aria-label="图库标签">
+                {(Object.keys(tabLabels) as TabKey[]).map((key) => (
+                  <button
+                    key={key}
+                    role="tab"
+                    aria-selected={route.page === "works" && route.tab === key}
+                    className={
+                      route.page === "works" && route.tab === key
+                        ? "active"
+                        : ""
+                    }
+                    onClick={() => selectTab(key)}
+                  >
+                    {tabLabels[key]}
+                  </button>
+                ))}
+              </div>
+            </section>
 
-        {deferredRoute.tab === "latest" && (
-          <VirtualPhotoGrid
-            photos={data.photos}
-            style="square"
-            onOpen={openPhotoRoute}
-          />
-        )}
-        {deferredRoute.tab === "topics" &&
-          (selectedTopic ? (
-            <TopicDetail
-              topic={selectedTopic}
-              photos={topicPhotos}
-              onBack={() => navigateToRoute({ tab: "topics" })}
-              onOpen={openPhotoRoute}
-            />
-          ) : (
-            <TopicGrid summaries={topicSummaries} onSelectTopic={selectTopic} />
-          ))}
-        {deferredRoute.tab === "timeline" && (
-          <Timeline photos={data.photos} onOpen={openPhotoRoute} />
+            {deferredRoute.tab === "latest" && (
+              <VirtualPhotoGrid
+                photos={data.photos}
+                style="square"
+                onOpen={openPhotoRoute}
+              />
+            )}
+            {deferredRoute.tab === "topics" &&
+              (selectedTopic ? (
+                <TopicDetail
+                  topic={selectedTopic}
+                  photos={topicPhotos}
+                  onBack={() =>
+                    navigateToRoute({ page: "works", tab: "topics" })
+                  }
+                  onOpen={openPhotoRoute}
+                />
+              ) : (
+                <TopicGrid
+                  summaries={topicSummaries}
+                  onSelectTopic={selectTopic}
+                />
+              ))}
+            {deferredRoute.tab === "timeline" && (
+              <Timeline photos={data.photos} onOpen={openPhotoRoute} />
+            )}
+          </>
+        ) : (
+          <WatermarkExportPage photos={data.photos} />
         )}
       </main>
 
