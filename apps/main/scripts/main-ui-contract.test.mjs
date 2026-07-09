@@ -404,7 +404,7 @@ test("watermark export renders metadata-only output with optional logo and fade 
   assert.ok(formatCameraModelBlock, "Expected formatCameraModel helper");
   assert.match(
     formatCameraModelBlock,
-    /return photo\.exif\?\.cameraModel\?\.trim\(\) \?\? "";/,
+    /(?:return\s+|=>\s*)photo\?\.exif\?\.cameraModel\?\.trim\(\) \?\? "";/,
   );
   assert.doesNotMatch(formatCameraModelBlock, /cameraBrand|cameraMake/);
 

@@ -182,10 +182,6 @@ const cleanBrandLogos = (logos: BrandLogoRecord[]): BrandLogoRecord[] =>
     })
     .filter((logo) => Boolean(logo.url));
 
-const uploadedLogosFromResult = (
-  result: Pick<ServerUploadResult, "uploads" | "files">,
-): BrandLogoRecord[] => normalizeBrandLogos(result.uploads ?? result.files);
-
 const toServerBrandPayload = (payload: BrandPayload) => {
   const logos = cleanBrandLogos(payload.logos);
   return {
@@ -201,33 +197,6 @@ const toServerBrandPayload = (payload: BrandPayload) => {
         ?.map((url) => url.trim())
         .filter((url) => Boolean(url)) ?? logos.map((logo) => logo.url),
   };
-};
-
-const appendBrandLogosViaBrandUpdate = async (
-  baseUrl: string,
-  id: string,
-  logos: BrandLogoRecord[],
-): Promise<BrandRecord> => {
-  const newLogos = cleanBrandLogos(logos);
-  if (!newLogos.length) throw new Error("Logo URL is required");
-
-  const path = `/brands/${encodeURIComponent(id)}`;
-  const current = normalizeBrandForAdmin(
-    await requestJson<ServerBrandEnvelope>(baseUrl, path),
-  );
-  const mergedLogos = cleanBrandLogos([...current.logos, ...newLogos]);
-
-  return normalizeBrandForAdmin(
-    await requestJson<ServerBrandEnvelope>(baseUrl, path, {
-      method: "PATCH",
-      body: JSON.stringify(
-        {
-          logos: mergedLogos,
-          logoUrls: mergedLogos.map((logo) => logo.url),
-        },
-      ),
-    }),
-  );
 };
 
 const toBulkUploadItem = (preview: UploadPreview) => {
@@ -596,16 +565,17 @@ export const createApiClient = (
     body.append("mode", "asset");
     body.append("purpose", "brand-logo");
 
-    const result = await requestJson<ServerUploadResult>(baseUrl, "/uploads", {
-      method: "POST",
-      body,
-    });
-    const uploadedLogos = uploadedLogosFromResult(result);
+    const uploadedLogos = unwrapUploadAssets(
+      await requestJson<ServerUploadAssetsResult>(baseUrl, "/uploads/assets", {
+        method: "POST",
+        body,
+      }),
+    );
     if (!uploadedLogos.length) {
       throw new Error("Upload did not return any logo files");
     }
 
-    return appendBrandLogosViaBrandUpdate(baseUrl, id, uploadedLogos);
+    return appendBrandLogosViaPatch(baseUrl, id, uploadedLogos);
   },
   async createTopic(payload) {
     return normalizeTopicForAdmin(
@@ -633,7 +603,7 @@ export const createApiClient = (
     });
   },
   async addBrandLogo(id, logo) {
-    return appendBrandLogosViaBrandUpdate(baseUrl, id, [logo]);
+    return appendBrandLogosViaPatch(baseUrl, id, [logo]);
   },
   async createPhoto(payload) {
     return normalizePhotoForAdmin(
