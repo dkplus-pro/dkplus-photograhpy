@@ -1,4 +1,5 @@
 import type {
+  BrandLogo,
   BrandPayload,
   BrandRecord,
   PhotoExif,
@@ -48,8 +49,8 @@ export interface ApiClient {
   deleteTopic: (id: string) => Promise<void>;
   createBrand: (payload: BrandPayload) => Promise<BrandRecord>;
   updateBrand: (id: string, payload: BrandPayload) => Promise<BrandRecord>;
-  addBrandLogo: (id: string, logo: BrandLogoRecord) => Promise<BrandRecord>;
   deleteBrand: (id: string) => Promise<void>;
+  uploadBrandLogos: (id: string, files: File[]) => Promise<BrandRecord>;
   createPhoto: (payload: PhotoPayload) => Promise<PhotoRecord>;
   updatePhoto: (id: string, payload: PhotoPayload) => Promise<PhotoRecord>;
   deletePhoto: (id: string) => Promise<void>;
@@ -85,7 +86,22 @@ type ServerPhoto = PhotoRecord & {
 
 type ServerPhotoEnvelope = ServerPhoto | { photo: ServerPhoto };
 type ServerTopicEnvelope = TopicRecord | { topic: TopicRecord };
-type ServerBrandEnvelope = BrandRecord | { brand: BrandRecord };
+type ServerBrand = Omit<
+  Partial<BrandRecord>,
+  "aliases" | "logos" | "logoUrls"
+> & {
+  id?: string;
+  name?: string;
+  title?: string;
+  brand?: string;
+  cameraMake?: string;
+  displayName?: string;
+  logoUrl?: string;
+  logoUrls?: unknown;
+  logos?: unknown;
+  aliases?: unknown;
+};
+type ServerBrandEnvelope = ServerBrand | { brand: ServerBrand };
 type ServerExportEnvelope = ExportResult | { export: ExportResult };
 type ServerExif = PhotoExif & {
   cameraBrand?: string;
@@ -152,25 +168,44 @@ const toServerTopicPayload = (payload: TopicPayload) => ({
   description: payload.description?.trim() ?? "",
 });
 
-const cleanBrandLogos = (logos: BrandLogoRecord[]): BrandLogoRecord[] =>
+const normalizeStringList = (values: unknown): string[] => [
+  ...new Set(
+    (Array.isArray(values) ? values : [])
+      .map((value) => (typeof value === "string" ? value.trim() : ""))
+      .filter(Boolean),
+  ),
+];
+
+const cleanBrandLogos = (logos: BrandPayload["logos"] = []): BrandLogo[] =>
   logos
     .map((logo) => ({
       id: logo.id?.trim() || undefined,
-      url: logo.url.trim(),
-      label: logo.label?.trim() || undefined,
+      url: logo.url?.trim() || "",
+      key: logo.key?.trim() || undefined,
+      fileName: logo.fileName?.trim() || undefined,
+      mimeType: logo.mimeType?.trim() || undefined,
+      size: logo.size,
+      storage: logo.storage,
+      alt: logo.alt?.trim() || undefined,
+      createdAt: logo.createdAt,
     }))
     .filter((logo) => Boolean(logo.url));
 
 const toServerBrandPayload = (payload: BrandPayload) => {
   const logos = cleanBrandLogos(payload.logos);
+  const logoUrls = [
+    ...new Set([
+      ...normalizeStringList(payload.logoUrls),
+      ...logos.map((logo) => logo.url),
+    ]),
+  ];
   return {
+    id: payload.id?.trim() || undefined,
     name: payload.name.trim(),
-    title: payload.title?.trim() || payload.name.trim(),
-    aliases: payload.aliases
-      ?.map((alias) => alias.trim())
-      .filter((alias) => Boolean(alias)),
+    title: payload.title?.trim() || undefined,
+    aliases: normalizeStringList(payload.aliases),
+    logoUrls,
     logos,
-    logoUrls: logos.map((logo) => logo.url),
   };
 };
 
@@ -261,6 +296,87 @@ export const normalizeTopicForAdmin = (
   };
 };
 
+const brandIdFromName = (name: string): string => {
+  const ascii = name
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+  if (ascii) return ascii;
+  return `brand-${Array.from(name)
+    .map((char) => char.charCodeAt(0).toString(36))
+    .join("-")}`;
+};
+
+const normalizeBrandLogos = (value: unknown): BrandLogo[] => {
+  const entries = Array.isArray(value) ? value : value ? [value] : [];
+  return entries
+    .map((entry, index): BrandLogo | undefined => {
+      if (typeof entry === "string") {
+        const url = entry.trim();
+        return url ? { id: `logo-${index + 1}`, url } : undefined;
+      }
+      if (!entry || typeof entry !== "object") return undefined;
+      const logo = entry as {
+        id?: unknown;
+        url?: unknown;
+        logoUrl?: unknown;
+        src?: unknown;
+        label?: unknown;
+        alt?: unknown;
+        title?: unknown;
+        name?: unknown;
+        key?: unknown;
+        fileName?: unknown;
+        mimeType?: unknown;
+        size?: unknown;
+        storage?: unknown;
+        createdAt?: unknown;
+      };
+      const rawUrl =
+        typeof logo.url === "string"
+          ? logo.url
+          : typeof logo.logoUrl === "string"
+            ? logo.logoUrl
+            : typeof logo.src === "string"
+              ? logo.src
+              : "";
+      const url = rawUrl.trim();
+      if (!url) return undefined;
+      const label =
+        typeof logo.alt === "string"
+          ? logo.alt.trim()
+          : typeof logo.label === "string"
+          ? logo.label.trim()
+          : typeof logo.title === "string"
+            ? logo.title.trim()
+            : typeof logo.name === "string"
+              ? logo.name.trim()
+              : undefined;
+      const id = typeof logo.id === "string" ? logo.id.trim() : "";
+      return {
+        id: id || `logo-${index + 1}`,
+        url,
+        alt: label || undefined,
+        key: typeof logo.key === "string" ? logo.key.trim() : undefined,
+        fileName:
+          typeof logo.fileName === "string" ? logo.fileName.trim() : undefined,
+        mimeType:
+          typeof logo.mimeType === "string" ? logo.mimeType.trim() : undefined,
+        size: typeof logo.size === "number" ? logo.size : undefined,
+        storage:
+          logo.storage === "local" ||
+          logo.storage === "cos" ||
+          logo.storage === "remote"
+            ? logo.storage
+            : undefined,
+        createdAt:
+          typeof logo.createdAt === "string" ? logo.createdAt : undefined,
+      };
+    })
+    .filter((logo): logo is BrandLogo => Boolean(logo));
+};
+
 export const normalizeBrandForAdmin = (
   input: ServerBrandEnvelope,
 ): BrandRecord => {
@@ -278,17 +394,24 @@ export const normalizeBrandForAdmin = (
     "未命名品牌"
   ).trim();
   const title = (source.title || source.displayName || name).trim();
+  const serverLogoUrls = normalizeStringList(source.logoUrls);
   const logoSource =
-    source.logos ?? source.logoUrls ?? source.logoUrl ?? undefined;
+    source.logos ??
+    (serverLogoUrls.length ? serverLogoUrls : undefined) ??
+    source.logoUrl ??
+    undefined;
   const logos = normalizeBrandLogos(logoSource);
+  const logoUrls = [
+    ...new Set([...serverLogoUrls, ...logos.map((logo) => logo.url)]),
+  ];
   return {
     ...source,
     id: (source.id || brandIdFromName(name)).trim(),
     name,
     title,
     logos,
-    logoUrls: source.logoUrls ?? logos.map((logo) => logo.url),
-    aliases: source.aliases?.filter((alias) => Boolean(alias.trim())),
+    logoUrls,
+    aliases: normalizeStringList(source.aliases),
     photoCount: source.photoCount,
   };
 };
@@ -514,24 +637,26 @@ export const createApiClient = (
       ),
     );
   },
-  async addBrandLogo(id, logo) {
-    const [cleanLogo] = cleanBrandLogos([logo]);
-    if (!cleanLogo) throw new Error("Logo URL is required");
+  async deleteBrand(id) {
+    await requestJson<void>(baseUrl, `/brands/${encodeURIComponent(id)}`, {
+      method: "DELETE",
+    });
+  },
+  async uploadBrandLogos(id, files) {
+    const body = new FormData();
+    for (const file of files) {
+      body.append("files", file);
+    }
     return normalizeBrandForAdmin(
       await requestJson<ServerBrandEnvelope>(
         baseUrl,
         `/brands/${encodeURIComponent(id)}/logos`,
         {
           method: "POST",
-          body: JSON.stringify(cleanLogo),
+          body,
         },
       ),
     );
-  },
-  async deleteBrand(id) {
-    await requestJson<void>(baseUrl, `/brands/${encodeURIComponent(id)}`, {
-      method: "DELETE",
-    });
   },
   async createPhoto(payload) {
     return normalizePhotoForAdmin(

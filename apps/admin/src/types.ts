@@ -51,30 +51,37 @@ export interface PhotoPayload {
 }
 
 
-export interface BrandLogoRecord {
+export interface BrandLogo {
   id?: string;
   url: string;
-  label?: string;
+  key?: string;
+  fileName?: string;
+  mimeType?: string;
+  size?: number;
+  storage?: "local" | "cos" | "remote";
+  alt?: string;
+  createdAt?: string;
 }
 
 export interface BrandRecord {
   id: string;
   name: string;
   title?: string;
-  logos: BrandLogoRecord[];
-  logoUrls?: string[];
-  aliases?: string[];
+  aliases: string[];
+  logos: BrandLogo[];
+  logoUrls: string[];
   photoCount?: number;
   createdAt?: string;
   updatedAt?: string;
 }
 
 export interface BrandPayload {
+  id?: string;
   name: string;
   title?: string;
-  logos: BrandLogoRecord[];
   logoUrls?: string[];
   aliases?: string[];
+  logos?: Partial<BrandLogo>[];
 }
 
 export interface TopicRecord {
