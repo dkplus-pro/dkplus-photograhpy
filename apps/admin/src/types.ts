@@ -72,8 +72,8 @@ export interface BrandRecord {
   title?: string;
   displayName?: string;
   logos: BrandLogoRecord[];
-  logoUrls?: string[];
-  aliases?: string[];
+  logoUrls: string[];
+  aliases: string[];
   photoCount?: number;
   createdAt?: string;
   updatedAt?: string;

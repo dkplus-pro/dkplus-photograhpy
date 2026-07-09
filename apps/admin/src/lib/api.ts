@@ -84,7 +84,10 @@ type ServerPhoto = PhotoRecord & {
 type ServerPhotoEnvelope = ServerPhoto | { photo: ServerPhoto };
 type ServerTopicEnvelope = TopicRecord | { topic: TopicRecord };
 type ServerBrandLogo = BrandLogoRecord | string;
-type ServerBrand = Omit<BrandRecord, "logos"> & {
+type ServerBrand = Partial<
+  Omit<BrandRecord, "aliases" | "logos" | "logoUrls">
+> & {
+  aliases?: string[];
   brand?: string;
   cameraMake?: string;
   logoUrl?: string;
@@ -124,6 +127,14 @@ const resolveDisplayUrl = (value?: string): string | undefined => {
 const normalizeTopicIds = (values: Array<string | undefined>): string[] => [
   ...new Set(
     values
+      .map((value) => value?.trim())
+      .filter((value): value is string => Boolean(value)),
+  ),
+];
+
+const normalizeStringList = (values?: Array<string | undefined>): string[] => [
+  ...new Set(
+    (values ?? [])
       .map((value) => value?.trim())
       .filter((value): value is string => Boolean(value)),
   ),
@@ -177,18 +188,23 @@ const cleanBrandLogos = (logos: BrandLogoRecord[]): BrandLogoRecord[] =>
 
 const toServerBrandPayload = (payload: BrandPayload) => {
   const logos = cleanBrandLogos(payload.logos);
+  const aliases = normalizeStringList(payload.aliases);
+  const logoUrls = [
+    ...new Set([
+      ...logos.map((logo) => logo.url),
+      ...(payload.logoUrls ?? [])
+        .map((url) => url.trim())
+        .filter((url) => Boolean(url)),
+    ]),
+  ];
+  const name = payload.name.trim();
   return {
     id: payload.id?.trim() || undefined,
-    name: payload.name.trim(),
-    title: payload.title?.trim() || payload.name.trim(),
-    aliases: payload.aliases
-      ?.map((alias) => alias.trim())
-      .filter((alias) => Boolean(alias)),
+    name,
+    title: payload.title?.trim() || name,
+    aliases,
     logos,
-    logoUrls:
-      payload.logoUrls
-        ?.map((url) => url.trim())
-        .filter((url) => Boolean(url)) ?? logos.map((logo) => logo.url),
+    logoUrls,
   };
 };
 
@@ -338,7 +354,7 @@ export const normalizeBrandForAdmin = (
     (sourceLogoUrls.length ? sourceLogoUrls : source.logoUrl) ??
     undefined;
   const logos = normalizeBrandLogos(logoSource);
-  const logoUrls = source.logoUrls?.map((url) => url.trim()).filter(Boolean);
+  const logoUrls = normalizeStringList(source.logoUrls);
   return {
     ...source,
     id: (source.id || brandIdFromName(name)).trim(),
@@ -346,9 +362,7 @@ export const normalizeBrandForAdmin = (
     title,
     logos,
     logoUrls: logoUrls?.length ? logoUrls : logos.map((logo) => logo.url),
-    aliases: (source.aliases ?? [])
-      .map((alias) => alias.trim())
-      .filter((alias) => Boolean(alias)),
+    aliases: normalizeStringList(source.aliases),
   };
 };
 
