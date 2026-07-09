@@ -389,7 +389,10 @@ test("main top menu exposes works and canvas watermark export contracts", () => 
   );
   assert.match(watermarkSource, /const hasLogo = Boolean\(input\.logo\)/);
   assert.match(watermarkSource, /if \(hasLogo && input\.logo\)/);
-  assert.match(watermarkSource, /const logoMaxHeight = clamp\(stripHeight \* 0\.38/);
+  assert.match(
+    watermarkSource,
+    /const logoMaxHeight = clamp\(stripHeight \* 0\.38/,
+  );
   assert.match(watermarkSource, /const logoWidth = logoImage/);
   assert.match(
     watermarkSource,

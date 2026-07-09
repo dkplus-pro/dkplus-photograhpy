@@ -68,11 +68,7 @@ function isAssetUpload(value: unknown): boolean {
   const mode = field(value.mode)?.toLowerCase();
   const purpose = field(value.purpose)?.toLowerCase();
   const intent = field(value.intent)?.toLowerCase();
-  return (
-    mode === "asset" ||
-    purpose === "brand-logo" ||
-    intent === "asset"
-  );
+  return mode === "asset" || purpose === "brand-logo" || intent === "asset";
 }
 
 function itemField(value: unknown, path: string): string | undefined {
