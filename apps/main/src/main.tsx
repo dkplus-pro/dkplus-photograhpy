@@ -643,13 +643,16 @@ const compactLogoOption = (
   name: string,
   source: WatermarkLogoOption["source"],
   logo?: RawBrandLogo | RawBrand,
-): WatermarkLogoOption => ({
-  id,
-  name,
-  mark: logo?.mark ?? normalizeLogoMark(name),
-  url: logo?.url ?? logo?.logoUrl ?? logo?.imageUrl ?? logo?.dataUrl,
-  source,
-});
+): WatermarkLogoOption => {
+  const url = logo?.url ?? logo?.logoUrl ?? logo?.imageUrl ?? logo?.dataUrl;
+  return {
+    id,
+    name,
+    mark: logo?.mark ?? normalizeLogoMark(name),
+    ...(url ? { url } : {}),
+    source,
+  };
+};
 
 const normalizeAdminBrandLogos = (payload: unknown): WatermarkLogoOption[] => {
   const rawBrands = Array.isArray(payload)
@@ -801,17 +804,21 @@ const WatermarkExportPage = ({ photos }: { photos: ResolvedPhoto[] }) => {
 
   const renderInput = useMemo<WatermarkRenderInput | null>(() => {
     if (!selectedPhoto) return null;
-    return {
+    const input: WatermarkRenderInput = {
       imageUrl: selectedPhoto.urls.preview,
-      imageWidth: selectedPhoto.asset.width,
-      imageHeight: selectedPhoto.asset.height,
       title: fields.title,
       tone,
       logo: selectedLogo,
-      date: fields.includeDate ? fields.date : undefined,
-      model: fields.includeModel ? fields.model : undefined,
-      exposure: fields.includeExposure ? fields.exposure : undefined,
     };
+    if (selectedPhoto.asset.width) input.imageWidth = selectedPhoto.asset.width;
+    if (selectedPhoto.asset.height)
+      input.imageHeight = selectedPhoto.asset.height;
+    if (fields.includeDate && fields.date) input.date = fields.date;
+    if (fields.includeModel && fields.model) input.model = fields.model;
+    if (fields.includeExposure && fields.exposure) {
+      input.exposure = fields.exposure;
+    }
+    return input;
   }, [fields, selectedLogo, selectedPhoto, tone]);
 
   useEffect(() => {

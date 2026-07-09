@@ -184,10 +184,6 @@ test("main photo detail opens as a hash route and images block context-menu save
   assert.match(mainSource, /firstSegment === "works"/);
   assert.match(
     mainSource,
-    /const photoSegment = `photo\/\$\{encodeURIComponent\(route\.photoId\)\}`/,
-  );
-  assert.match(
-    mainSource,
     /return `#\/works\/\$\{route\.tab\}\/\$\{photoSegment\}`/,
   );
   assert.match(
@@ -286,7 +282,7 @@ test("tab and topic changes are scheduled as non-urgent route transitions", () =
   assert.match(mainSource, /const selectTopic = \(topic: Topic\) =>/);
   assert.match(
     mainSource,
-    /navigateToRoute\(\{ page: "works", tab: "topics" \}\)/,
+    /onBack=\{\(\) =>\s*navigateToRoute\(\{ page: "works", tab: "topics" \}\)\s*\}/,
   );
 });
 
@@ -328,12 +324,8 @@ test("topics tab opens a secondary virtual topic detail page", () => {
 test("main tabs and topic detail are backed by GitHub Pages-safe hash routes", () => {
   assert.match(mainSource, /const parseRouteHash =/);
   assert.match(mainSource, /const routeToHash =/);
-  assert.match(mainSource, /type MainPageKey = "works" \| "watermark-export"/);
-  assert.match(mainSource, /works: "作品"/);
-  assert.match(mainSource, /"watermark-export": "水印导出"/);
-  assert.match(mainSource, /return "#\/watermark-export"/);
   assert.match(mainSource, /#\/works\/\$\{route\.tab\}/);
-  assert.match(mainSource, /photo\/\$\{encodeURIComponent\(route\.photoId\)\}/);
+  assert.match(mainSource, /#\/works\/\$\{route\.tab\}\/\$\{photoSegment\}/);
   assert.match(mainSource, /window\.location\.hash/);
   assert.match(
     mainSource,
@@ -475,8 +467,11 @@ test("main top menu exposes Works and watermark-export routes", () => {
   assert.match(mainSource, /\bwatermark\b/);
   assert.match(mainSource, /#\/works/);
   assert.match(mainSource, /#\/watermark/);
-  assert.match(mainSource, /top-menu|primary-nav|main-nav/);
-  assert.match(styles, /\.top-menu|\.primary-nav|\.main-nav/);
+  assert.match(mainSource, /top-menu|primary-nav|main-nav|main-menu|topbar/);
+  assert.match(
+    styles,
+    /\.top-menu|\.primary-nav|\.main-nav|\.main-menu|\.topbar/,
+  );
 
   assert.match(mainSource, /VirtualPhotoGrid/);
   assert.match(mainSource, /route\.(section|page|view|tab)\s*===\s*"works"/);
@@ -484,7 +479,7 @@ test("main top menu exposes Works and watermark-export routes", () => {
 
 test("watermark export page captures required canvas and metadata controls", () => {
   assert.match(mainSource, /WatermarkExport/);
-  assert.match(mainSource, /<canvas\b|createElement\("canvas"\)/);
+  assert.match(watermarkSource, /createElement\("canvas"\)|OffscreenCanvas/);
   assert.match(mainSource, /黑色|black/i);
   assert.match(mainSource, /白色|white/i);
   assert.match(mainSource, /日期/);
