@@ -2,6 +2,7 @@ import React, {
   useDeferredValue,
   useEffect,
   useMemo,
+  useRef,
   useState,
   useTransition,
 } from "react";
@@ -23,6 +24,13 @@ import type {
   Topic,
 } from "./types";
 import { useVirtualRows } from "./useVirtualRows";
+import {
+  renderWatermarkExport,
+  type WatermarkLogoInput,
+  type WatermarkRenderInput,
+  type WatermarkRenderResult,
+  type WatermarkTone,
+} from "./watermark";
 import "./styles.css";
 
 const staticDataUrl = `${import.meta.env.BASE_URL}data/gallery.json`;
@@ -34,29 +42,99 @@ const galleryDataUrl = import.meta.env.DEV
   ? `${apiBaseUrl}/gallery`
   : staticDataUrl;
 
+type MainPageKey = "works" | "watermark-export";
+
 type AppRoute = {
+  page: MainPageKey;
   tab: TabKey;
   topicKey?: string;
   photoId?: string;
 };
 
+const mainPageLabels = {
+  works: "作品",
+  "watermark-export": "水印导出",
+} as const;
+
 const routeTabs = new Set<TabKey>(["latest", "topics", "timeline"]);
+
+const defaultWorksRoute = (): AppRoute => ({ page: "works", tab: "latest" });
 
 const parseRouteHash = (hash: string): AppRoute => {
   const path = hash.replace(/^#\/?/, "").replace(/^\/+/, "");
-  const [tabSegment, detailSegment] = path.split("/");
+  const [firstSegment, secondSegment, thirdSegment, fourthSegment] =
+    path.split("/");
+  if (
+    firstSegment === "watermark-export" ||
+    firstSegment === "watermark" ||
+    firstSegment === "export"
+  ) {
+    return { page: "watermark-export", tab: "latest" };
+  }
+  if (firstSegment === "works" || firstSegment === "work") {
+    if (!secondSegment) return defaultWorksRoute();
+    if (secondSegment === "photo" && thirdSegment) {
+      return {
+        page: "works",
+        tab: "latest",
+        photoId: safeDecodeRouteSegment(thirdSegment),
+      };
+    }
+    if (secondSegment === "topics") {
+      if (thirdSegment === "photo" && fourthSegment) {
+        return {
+          page: "works",
+          tab: "topics",
+          photoId: safeDecodeRouteSegment(fourthSegment),
+        };
+      }
+      return thirdSegment
+        ? {
+            page: "works",
+            tab: "topics",
+            topicKey: safeDecodeRouteSegment(thirdSegment),
+            photoId:
+              fourthSegment === "photo"
+                ? undefined
+                : fourthSegment
+                  ? safeDecodeRouteSegment(fourthSegment)
+                  : undefined,
+          }
+        : { page: "works", tab: "topics" };
+    }
+    if (routeTabs.has(secondSegment as TabKey)) {
+      return {
+        page: "works",
+        tab: secondSegment as TabKey,
+        photoId:
+          thirdSegment === "photo" && fourthSegment
+            ? safeDecodeRouteSegment(fourthSegment)
+            : undefined,
+      };
+    }
+    return defaultWorksRoute();
+  }
+  const [tabSegment, detailSegment] = [firstSegment, secondSegment];
   if (tabSegment === "photo" && detailSegment) {
-    return { tab: "latest", photoId: safeDecodeRouteSegment(detailSegment) };
+    return {
+      page: "works",
+      tab: "latest",
+      photoId: safeDecodeRouteSegment(detailSegment),
+    };
   }
   if (tabSegment === "topics") {
     return detailSegment
-      ? { tab: "topics", topicKey: safeDecodeRouteSegment(detailSegment) }
-      : { tab: "topics" };
+      ? {
+          page: "works",
+          tab: "topics",
+          topicKey: safeDecodeRouteSegment(detailSegment),
+        }
+      : { page: "works", tab: "topics" };
   }
   if (routeTabs.has(tabSegment as TabKey)) {
-    return { tab: tabSegment as TabKey };
+    return { page: "works", tab: tabSegment as TabKey };
   }
-  return { tab: "latest" };
+  return defaultWorksRoute();
 };
 
 const safeDecodeRouteSegment = (value: string): string => {
@@ -68,10 +146,17 @@ const safeDecodeRouteSegment = (value: string): string => {
 };
 
 const routeToHash = (route: AppRoute): string => {
-  if (route.photoId) {
-    return `#/photo/${encodeURIComponent(route.photoId)}`;
+  if (route.page === "watermark-export") {
+    return "#/watermark-export";
   }
-  return `#/${route.tab}${
+  if (route.photoId) {
+    const photoSegment = `photo/${encodeURIComponent(route.photoId)}`;
+    if (route.tab === "topics" && route.topicKey) {
+      return `#/works/topics/${encodeURIComponent(route.topicKey)}/${photoSegment}`;
+    }
+    return `#/works/${route.tab}/${photoSegment}`;
+  }
+  return `#/works/${route.tab}${
     route.tab === "topics" && route.topicKey
       ? `/${encodeURIComponent(route.topicKey)}`
       : ""
@@ -85,9 +170,9 @@ const preventImageSave = (event: React.MouseEvent<HTMLImageElement>) => {
 };
 
 const galleryRouteWithoutPhoto = (route: AppRoute): AppRoute =>
-  route.tab === "topics" && route.topicKey
-    ? { tab: "topics", topicKey: route.topicKey }
-    : { tab: route.tab };
+  route.page === "works" && route.tab === "topics" && route.topicKey
+    ? { page: "works", tab: "topics", topicKey: route.topicKey }
+    : { page: "works", tab: route.page === "works" ? route.tab : "latest" };
 
 const dataSaverStorageKey = "dkplus:data-saver";
 
