@@ -840,23 +840,66 @@ const deriveCameraBrandLogos = (
   return options;
 };
 
-const WatermarkExportPage = ({ photos }: { photos: ResolvedPhoto[] }) => {
+const findMatchingWatermarkLogoId = (
+  logoOptions: WatermarkLogoOption[],
+  selectedPhoto?: ResolvedPhoto,
+  fields?: WatermarkFieldState,
+): string => {
+  const brandValues = [
+    fields?.brand,
+    formatCameraBrand(selectedPhoto),
+    selectedPhoto?.exif?.cameraMake,
+  ]
+    .map(normalizeLogoMatchValue)
+    .filter(Boolean);
+  if (!brandValues.length) return noLogoWatermarkOption.id;
+
+  const matched = logoOptions.find((option) => {
+    if (option.source === "none" || option.source === "custom") return false;
+    const optionValues = [option.name, option.id]
+      .map(normalizeLogoMatchValue)
+      .filter(Boolean);
+    return optionValues.some((optionValue) =>
+      brandValues.some(
+        (brandValue) =>
+          optionValue === brandValue ||
+          optionValue.includes(brandValue) ||
+          brandValue.includes(optionValue),
+      ),
+    );
+  });
+
+  return matched?.id ?? noLogoWatermarkOption.id;
+};
+
+const WatermarkExportPage = ({
+  photos,
+  route,
+}: {
+  photos: ResolvedPhoto[];
+  route: AppRoute;
+}) => {
   const adminBrandLogos = useAdminBrandLogos();
   const photoById = useMemo(
     () => new Map(photos.map((photo) => [photo.id, photo])),
     [photos],
   );
+  const routePhoto =
+    route.photoId && photoById.has(route.photoId)
+      ? photoById.get(route.photoId)
+      : photos[0];
   const [selectedPhotoId, setSelectedPhotoId] = useState(
-    () => photos[0]?.id ?? "",
+    () => routePhoto?.id ?? "",
   );
-  const selectedPhoto = photoById.get(selectedPhotoId) ?? photos[0];
+  const selectedPhoto = photoById.get(selectedPhotoId) ?? routePhoto;
   const [fields, setFields] = useState(() =>
-    watermarkFieldsFromPhoto(selectedPhoto),
+    watermarkFieldsFromRoute(selectedPhoto, route.watermarkFields),
   );
   const [customLogo, setCustomLogo] = useState<WatermarkLogoOption | null>(
     null,
   );
   const [selectedLogoId, setSelectedLogoId] = useState("none");
+  const [logoSelectionTouched, setLogoSelectionTouched] = useState(false);
   const [rendered, setRendered] = useState<WatermarkRenderResult | null>(null);
   const [renderError, setRenderError] = useState<string | null>(null);
   const [isRendering, setIsRendering] = useState(false);
@@ -883,24 +926,45 @@ const WatermarkExportPage = ({ photos }: { photos: ResolvedPhoto[] }) => {
     noLogoWatermarkOption;
   const selectedWatermarkLogo =
     selectedLogo.source === "none" ? undefined : selectedLogo;
+  const defaultLogoId = useMemo(
+    () => findMatchingWatermarkLogoId(logoOptions, selectedPhoto, fields),
+    [fields, logoOptions, selectedPhoto],
+  );
+
+  useEffect(() => {
+    if (route.page !== "watermark-export") return;
+    const nextPhoto =
+      route.photoId && photoById.has(route.photoId)
+        ? photoById.get(route.photoId)
+        : photos[0];
+    if (!nextPhoto) return;
+    setSelectedPhotoId(nextPhoto.id);
+    setFields(watermarkFieldsFromRoute(nextPhoto, route.watermarkFields));
+    setLogoSelectionTouched(false);
+  }, [photoById, photos, route]);
 
   useEffect(() => {
     if (!selectedPhotoId && photos[0]) {
       setSelectedPhotoId(photos[0].id);
       setFields(watermarkFieldsFromPhoto(photos[0]));
+      setLogoSelectionTouched(false);
     }
   }, [photos, selectedPhotoId]);
 
   useEffect(() => {
-    if (!logoOptions.some((option) => option.id === selectedLogoId)) {
-      setSelectedLogoId(noLogoWatermarkOption.id);
+    const selectedLogoExists = logoOptions.some(
+      (option) => option.id === selectedLogoId,
+    );
+    if (!selectedLogoExists || !logoSelectionTouched) {
+      setSelectedLogoId(defaultLogoId);
     }
-  }, [logoOptions, selectedLogoId]);
+  }, [defaultLogoId, logoOptions, logoSelectionTouched, selectedLogoId]);
 
   const renderInput = useMemo<WatermarkRenderInput | null>(() => {
     if (!selectedPhoto) return null;
     const input: WatermarkRenderInput = {
       imageUrl: selectedPhoto.urls.preview,
+      tone: "black",
     };
     if (selectedWatermarkLogo) input.logo = selectedWatermarkLogo;
     if (selectedPhoto.asset.width) input.imageWidth = selectedPhoto.asset.width;
@@ -970,6 +1034,7 @@ const WatermarkExportPage = ({ photos }: { photos: ResolvedPhoto[] }) => {
     const nextPhoto = photoById.get(event.currentTarget.value);
     setSelectedPhotoId(event.currentTarget.value);
     setFields(watermarkFieldsFromPhoto(nextPhoto));
+    setLogoSelectionTouched(false);
   };
 
   const uploadCustomLogo = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -986,6 +1051,7 @@ const WatermarkExportPage = ({ photos }: { photos: ResolvedPhoto[] }) => {
         source: "custom",
       };
       setCustomLogo(option);
+      setLogoSelectionTouched(true);
       setSelectedLogoId(option.id);
     };
     reader.readAsDataURL(file);
@@ -1015,12 +1081,12 @@ const WatermarkExportPage = ({ photos }: { photos: ResolvedPhoto[] }) => {
         <h1 id="watermark-title">水印导出</h1>
         <p>
           载入一张示例作品，按测试参考图的底部渐变水印输出；固定白字黑底，
-          也可不选择 Logo，仅保留品牌、机型、镜头、焦段与曝光参数。
+          可不选择 Logo，仅保留品牌、机型、镜头、焦段与曝光参数。
         </p>
       </div>
 
       <div className="watermark-workbench">
-        <figure className="watermark-preview">
+        <figure className="watermark-preview" data-tone="black">
           {rendered ? (
             <img src={rendered.url} alt={`${selectedPhoto.title} 水印预览`} />
           ) : (
@@ -1047,13 +1113,15 @@ const WatermarkExportPage = ({ photos }: { photos: ResolvedPhoto[] }) => {
             </select>
           </label>
 
-
           <label>
             <span>Logo（可选）</span>
             <select
               aria-label="选择 Logo（可选）"
               value={selectedLogo.id}
-              onChange={(event) => setSelectedLogoId(event.currentTarget.value)}
+              onChange={(event) => {
+                setLogoSelectionTouched(true);
+                setSelectedLogoId(event.currentTarget.value);
+              }}
             >
               {logoOptions.map((option) => (
                 <option key={option.id} value={option.id}>
@@ -1241,6 +1309,8 @@ const App = () => {
     navigateToRoute({ ...galleryRouteWithoutPhoto(route), photoId: photo.id });
   const closePhotoRoute = () =>
     navigateToRoute(galleryRouteWithoutPhoto(route));
+  const exportWatermarkRoute = (photo: ResolvedPhoto) =>
+    navigateToRoute(watermarkRouteForPhoto(photo));
 
   if (error) {
     return (
@@ -1366,7 +1436,7 @@ const App = () => {
             )}
           </>
         ) : (
-          <WatermarkExportPage photos={data.photos} />
+          <WatermarkExportPage photos={data.photos} route={deferredRoute} />
         )}
       </main>
 
@@ -1375,6 +1445,7 @@ const App = () => {
         active={activePhoto}
         dataSaverEnabled={dataSaverEnabled}
         onClose={closePhotoRoute}
+        onExportWatermark={exportWatermarkRoute}
         onSelect={openPhotoRoute}
       />
     </>
