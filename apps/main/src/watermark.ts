@@ -12,7 +12,10 @@ export interface WatermarkRenderInput {
   imageHeight?: number | undefined;
   tone: WatermarkTone;
   logo?: WatermarkLogoInput | undefined;
+  brand?: string | undefined;
   model?: string | undefined;
+  lens?: string | undefined;
+  focalLength?: string | undefined;
   exposure?: string | undefined;
 }
 
@@ -31,7 +34,6 @@ type Palette = {
   stripFade: string;
   text: string;
   muted: string;
-  separator: string;
   logoBackground: string;
   logoText: string;
 };
@@ -39,7 +41,9 @@ type Palette = {
 const outputMinWidth = 1200;
 const outputMaxWidth = 2400;
 const workerTimeoutMs = 4200;
-const watermarkSignature = "dkplus";
+const watermarkMetadataSpacer = "     ";
+const watermarkFontFamily =
+  '"Fira Code", "Fira Sans", ui-sans-serif, system-ui, sans-serif';
 
 const clamp = (value: number, min: number, max: number): number =>
   Math.min(max, Math.max(min, value));
@@ -51,7 +55,6 @@ const paletteForTone = (tone: WatermarkTone): Palette =>
         stripFade: "rgba(9, 9, 11, 0)",
         text: "#fafafa",
         muted: "rgba(250, 250, 250, 0.78)",
-        separator: "rgba(250, 250, 250, 0.32)",
         logoBackground: "#fafafa",
         logoText: "#09090b",
       }
@@ -60,13 +63,12 @@ const paletteForTone = (tone: WatermarkTone): Palette =>
         stripFade: "rgba(250, 250, 250, 0)",
         text: "#09090b",
         muted: "rgba(9, 9, 11, 0.7)",
-        separator: "rgba(9, 9, 11, 0.24)",
         logoBackground: "#09090b",
         logoText: "#fafafa",
       };
 
 const watermarkFont = (size: number, weight = 600): string =>
-  `${weight} ${Math.round(size)}px "Fira Code", "Fira Sans", sans-serif`;
+  `${weight} ${Math.round(size)}px ${watermarkFontFamily}`;
 
 const fitText = (
   context: CanvasRenderingContext2D | OffscreenCanvasRenderingContext2D,
@@ -185,10 +187,9 @@ const drawWatermarkComposition = async (
   context.drawImage(image, 0, 0, canvasWidth, canvasHeight);
 
   const palette = paletteForTone(input.tone);
-  const stripHeight = clamp(canvasHeight * 0.16, 112, 260);
+  const stripHeight = clamp(canvasHeight * 0.2, 132, 340);
   const stripY = canvasHeight - stripHeight;
   const paddingX = clamp(canvasWidth * 0.036, 36, 96);
-  const paddingY = clamp(stripHeight * 0.22, 22, 48);
   const hasLogo = Boolean(input.logo);
 
   const overlayGradient = context.createLinearGradient(
@@ -206,8 +207,8 @@ const drawWatermarkComposition = async (
   let textWidth = canvasWidth - paddingX * 2;
 
   if (hasLogo && input.logo) {
-    const logoMaxHeight = clamp(stripHeight * 0.38, 36, 92);
-    const logoMaxWidth = clamp(canvasWidth * 0.18, 96, 320);
+    const logoMaxHeight = clamp(stripHeight * 0.45, 48, 132);
+    const logoMaxWidth = clamp(canvasWidth * 0.2, 120, 380);
     const logoX = paddingX;
     const logoCenterY = stripY + stripHeight * 0.56;
     const logoWidth = logoImage
@@ -227,25 +228,18 @@ const drawWatermarkComposition = async (
           logoMaxHeight,
           palette,
         );
-    const separatorX = logoX + logoWidth + paddingX * 0.45;
-    textX = separatorX + paddingX * 0.45;
+    textX = logoX + logoWidth + paddingX * 0.8;
     textWidth = canvasWidth - textX - paddingX;
-
-    context.fillStyle = palette.separator;
-    context.fillRect(
-      separatorX,
-      logoCenterY - logoMaxHeight / 2,
-      Math.max(2, canvasWidth * 0.0012),
-      logoMaxHeight,
-    );
   }
 
-  const primarySize = clamp(canvasWidth * 0.014, 16, 30);
-  const secondarySize = clamp(canvasWidth * 0.0115, 13, 24);
-  const firstRow = [input.model, watermarkSignature]
+  const primarySize = clamp(canvasWidth * 0.018, 20, 42);
+  const secondarySize = clamp(canvasWidth * 0.014, 15, 30);
+  const firstRow = [input.brand, input.model, input.lens]
     .filter(Boolean)
-    .join("   ·   ");
-  const secondRow = input.exposure?.trim() ?? "";
+    .join(watermarkMetadataSpacer);
+  const secondRow = [input.focalLength, input.exposure]
+    .filter(Boolean)
+    .join(watermarkMetadataSpacer);
 
   context.textAlign = "left";
   context.textBaseline = "middle";
@@ -259,7 +253,7 @@ const drawWatermarkComposition = async (
     );
   }
   if (secondRow) {
-    context.font = watermarkFont(secondarySize, 500);
+    context.font = watermarkFont(secondarySize, 300);
     context.fillStyle = palette.muted;
     context.fillText(
       fitText(context, secondRow, textWidth),
@@ -308,12 +302,13 @@ const renderWatermarkOnMainThread = async (
 const workerSource = String.raw`
 const clamp = (value, min, max) => Math.min(max, Math.max(min, value));
 const paletteForTone = (tone) => tone === "black" ? {
-  strip: "rgba(9, 9, 11, 0.9)", stripFade: "rgba(9, 9, 11, 0)", text: "#fafafa", muted: "rgba(250, 250, 250, 0.78)", separator: "rgba(250, 250, 250, 0.32)", logoBackground: "#fafafa", logoText: "#09090b"
+  strip: "rgba(9, 9, 11, 0.9)", stripFade: "rgba(9, 9, 11, 0)", text: "#fafafa", muted: "rgba(250, 250, 250, 0.78)", logoBackground: "#fafafa", logoText: "#09090b"
 } : {
-  strip: "rgba(250, 250, 250, 0.92)", stripFade: "rgba(250, 250, 250, 0)", text: "#09090b", muted: "rgba(9, 9, 11, 0.7)", separator: "rgba(9, 9, 11, 0.24)", logoBackground: "#09090b", logoText: "#fafafa"
+  strip: "rgba(250, 250, 250, 0.92)", stripFade: "rgba(250, 250, 250, 0)", text: "#09090b", muted: "rgba(9, 9, 11, 0.7)", logoBackground: "#09090b", logoText: "#fafafa"
 };
-const watermarkFont = (size, weight = 600) => weight + ' ' + Math.round(size) + 'px "Fira Code", "Fira Sans", sans-serif';
-const watermarkSignature = "dkplus";
+const watermarkMetadataSpacer = "     ";
+const watermarkFontFamily = '"Fira Code", "Fira Sans", ui-sans-serif, system-ui, sans-serif';
+const watermarkFont = (size, weight = 600) => weight + ' ' + Math.round(size) + 'px ' + watermarkFontFamily;
 const fitText = (context, value, maxWidth) => {
   const normalized = String(value || "").trim();
   if (!normalized || context.measureText(normalized).width <= maxWidth) return normalized;
@@ -370,10 +365,9 @@ self.onmessage = async (event) => {
     context.fillRect(0, 0, width, height);
     context.drawImage(image, 0, 0, width, height);
     const palette = paletteForTone(input.tone);
-    const stripHeight = clamp(height * 0.16, 112, 260);
+    const stripHeight = clamp(height * 0.2, 132, 340);
     const stripY = height - stripHeight;
     const paddingX = clamp(width * 0.036, 36, 96);
-    const paddingY = clamp(stripHeight * 0.22, 22, 48);
     const overlayGradient = context.createLinearGradient(0, height, 0, stripY);
     overlayGradient.addColorStop(0, palette.strip);
     overlayGradient.addColorStop(1, palette.stripFade);
@@ -382,23 +376,20 @@ self.onmessage = async (event) => {
     let textX = paddingX;
     let textWidth = width - paddingX * 2;
     if (input.logo) {
-      const logoMaxHeight = clamp(stripHeight * 0.38, 36, 92);
-      const logoMaxWidth = clamp(width * 0.18, 96, 320);
+      const logoMaxHeight = clamp(stripHeight * 0.45, 48, 132);
+      const logoMaxWidth = clamp(width * 0.2, 120, 380);
       const logoX = paddingX;
       const logoCenterY = stripY + stripHeight * 0.56;
       const logoWidth = logoImage
         ? drawAdaptiveLogoImage(context, logoImage, logoX, logoCenterY, logoMaxHeight, logoMaxWidth)
         : drawLogoMark(context, input.logo.mark, logoX, logoCenterY, logoMaxHeight, palette);
-      const separatorX = logoX + logoWidth + paddingX * 0.45;
-      textX = separatorX + paddingX * 0.45;
+      textX = logoX + logoWidth + paddingX * 0.8;
       textWidth = width - textX - paddingX;
-      context.fillStyle = palette.separator;
-      context.fillRect(separatorX, logoCenterY - logoMaxHeight / 2, Math.max(2, width * 0.0012), logoMaxHeight);
     }
-    const primarySize = clamp(width * 0.014, 16, 30);
-    const secondarySize = clamp(width * 0.0115, 13, 24);
-    const firstRow = [input.model, watermarkSignature].filter(Boolean).join("   ·   ");
-    const secondRow = input.exposure && input.exposure.trim ? input.exposure.trim() : "";
+    const primarySize = clamp(width * 0.018, 20, 42);
+    const secondarySize = clamp(width * 0.014, 15, 30);
+    const firstRow = [input.brand, input.model, input.lens].filter(Boolean).join(watermarkMetadataSpacer);
+    const secondRow = [input.focalLength, input.exposure].filter(Boolean).join(watermarkMetadataSpacer);
     context.textAlign = "left";
     context.textBaseline = "middle";
     if (firstRow) {
@@ -407,7 +398,7 @@ self.onmessage = async (event) => {
       context.fillText(fitText(context, firstRow, textWidth), textX, stripY + stripHeight * (secondRow ? 0.48 : 0.56));
     }
     if (secondRow) {
-      context.font = watermarkFont(secondarySize, 500);
+      context.font = watermarkFont(secondarySize, 300);
       context.fillStyle = palette.muted;
       context.fillText(fitText(context, secondRow, textWidth), textX, stripY + stripHeight * 0.68);
     }
