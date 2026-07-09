@@ -1,5 +1,7 @@
 import { AppError } from "../errors.js";
 import type {
+  BrandInput,
+  BrandLogo,
   PhotoAsset,
   PhotoImage,
   PhotoInput,
@@ -52,6 +54,51 @@ function readStringArray(value: unknown, field: string): string[] | undefined {
     );
   }
   return value.map((item) => item.trim()).filter(Boolean);
+}
+
+function readBrandLogos(value: unknown): Partial<BrandLogo>[] | undefined {
+  if (value === undefined || value === null) {
+    return undefined;
+  }
+  if (!Array.isArray(value)) {
+    throw new AppError(400, "VALIDATION_ERROR", "logos must be an array");
+  }
+
+  return value.map((entry, index) => {
+    if (!isRecord(entry)) {
+      throw new AppError(
+        400,
+        "VALIDATION_ERROR",
+        `logos[${index}] must be an object`,
+      );
+    }
+    const url = readString(entry.url, `logos[${index}].url`, true);
+    const storage = readString(entry.storage, `logos[${index}].storage`);
+    if (storage && !["local", "cos", "remote"].includes(storage)) {
+      throw new AppError(
+        400,
+        "VALIDATION_ERROR",
+        `logos[${index}].storage must be local, cos, or remote`,
+      );
+    }
+    const size = entry.size === undefined ? undefined : Number(entry.size);
+    if (size !== undefined && (!Number.isFinite(size) || size < 0)) {
+      throw new AppError(
+        400,
+        "VALIDATION_ERROR",
+        `logos[${index}].size must be a non-negative number`,
+      );
+    }
+    return {
+      url,
+      key: readString(entry.key, `logos[${index}].key`),
+      fileName: readString(entry.fileName, `logos[${index}].fileName`),
+      mimeType: readString(entry.mimeType, `logos[${index}].mimeType`),
+      size,
+      storage: storage as BrandLogo["storage"] | undefined,
+      alt: readString(entry.alt, `logos[${index}].alt`),
+    };
+  });
 }
 
 function readInteger(value: unknown, field: string): number | undefined {
@@ -199,6 +246,40 @@ export function validateTopicInput(
     slug: readString(value.slug, "slug"),
     coverPhotoId: readString(value.coverPhotoId, "coverPhotoId"),
     sortOrder: readInteger(value.sortOrder, "sortOrder"),
+  };
+}
+
+export function validateBrandInput(
+  value: unknown,
+  options: { requireName?: boolean } = {},
+): BrandInput {
+  if (!isRecord(value)) {
+    throw new AppError(
+      400,
+      "VALIDATION_ERROR",
+      "request body must be an object",
+    );
+  }
+
+  const name = readOptionalTrimmedString(value.name, "name");
+  const title = readOptionalTrimmedString(value.title, "title");
+  if (options.requireName && !name && !title) {
+    throw new AppError(400, "VALIDATION_ERROR", "name is required");
+  }
+  if (value.name !== undefined && !name) {
+    throw new AppError(400, "VALIDATION_ERROR", "name is required");
+  }
+  if (value.title !== undefined && !title) {
+    throw new AppError(400, "VALIDATION_ERROR", "title is required");
+  }
+
+  return {
+    id: readString(value.id, "id"),
+    name,
+    title,
+    aliases: readStringArray(value.aliases, "aliases"),
+    logoUrls: readStringArray(value.logoUrls, "logoUrls"),
+    logos: readBrandLogos(value.logos),
   };
 }
 

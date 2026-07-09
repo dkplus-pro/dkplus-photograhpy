@@ -4,6 +4,10 @@ import path from "node:path";
 import Database from "better-sqlite3";
 import { AppError } from "../errors.js";
 import type {
+  BrandInput,
+  BrandLogo,
+  BrandRecord,
+  ExifMetadata,
   GalleryData,
   PhotoAsset,
   PhotoImage,
@@ -25,6 +29,11 @@ type PhotoRow = {
 };
 
 type TopicRow = {
+  id: string;
+  data: string;
+};
+
+type BrandRow = {
   id: string;
   data: string;
 };
@@ -157,7 +166,7 @@ function normalizeTopicRecord(value: unknown): TopicRecord {
   };
 }
 
-function normalizeTopicId(value: string): string {
+function normalizeSlug(value: string): string {
   return value
     .normalize("NFKC")
     .trim()
@@ -166,6 +175,14 @@ function normalizeTopicId(value: string): string {
     .replace(/[^\p{L}\p{N}-]+/gu, "")
     .replace(/-+/g, "-")
     .replace(/^-|-$/g, "");
+}
+
+function normalizeTopicId(value: string): string {
+  return normalizeSlug(value);
+}
+
+function normalizeBrandId(value: string): string {
+  return normalizeSlug(value);
 }
 
 function normalizePhotoRecord(value: unknown): PhotoRecord {
@@ -201,6 +218,119 @@ function normalizePhotoRecord(value: unknown): PhotoRecord {
     asset,
     exif: isRecord(source.exif) ? { ...source.exif } : undefined,
   };
+}
+
+function normalizeLogoStorage(
+  value: unknown,
+): BrandLogo["storage"] | undefined {
+  const storage = readString(value);
+  return storage === "local" || storage === "cos" || storage === "remote"
+    ? storage
+    : undefined;
+}
+
+function normalizeBrandLogo(value: unknown): BrandLogo | undefined {
+  if (!isRecord(value)) return undefined;
+  const url = readString(value.url);
+  if (!url) return undefined;
+  const size =
+    typeof value.size === "number" && Number.isFinite(value.size)
+      ? value.size
+      : undefined;
+  return {
+    url,
+    key: readString(value.key),
+    fileName: readString(value.fileName),
+    mimeType: readString(value.mimeType),
+    size,
+    storage: normalizeLogoStorage(value.storage),
+    alt: readString(value.alt),
+    createdAt: readString(value.createdAt),
+  };
+}
+
+function logoFromUrl(url: string): BrandLogo {
+  return { url, storage: "remote" };
+}
+
+function normalizeBrandLogos(
+  logos: unknown,
+  logoUrls: unknown,
+): BrandLogo[] {
+  const normalized: BrandLogo[] = [];
+  if (Array.isArray(logos)) {
+    for (const logo of logos) {
+      const normalizedLogo = normalizeBrandLogo(logo);
+      if (normalizedLogo) normalized.push(normalizedLogo);
+    }
+  }
+  for (const url of readStringArray(logoUrls) ?? []) {
+    normalized.push(logoFromUrl(url));
+  }
+
+  const seen = new Set<string>();
+  return normalized.filter((logo) => {
+    const key = logo.url.trim();
+    if (!key || seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
+}
+
+function withLogoUrls(brand: Omit<BrandRecord, "logoUrls">): BrandRecord {
+  const logos = normalizeBrandLogos(brand.logos, undefined);
+  return {
+    ...brand,
+    logos,
+    logoUrls: logos.map((logo) => logo.url),
+  };
+}
+
+function normalizeBrandRecord(value: unknown): BrandRecord {
+  const source = isRecord(value) ? value : {};
+  const now = new Date().toISOString();
+  const name =
+    readString(source.name) ?? readString(source.title) ?? readString(source.id);
+  if (!name) {
+    throw new AppError(400, "VALIDATION_ERROR", "brand name is required");
+  }
+  const id = normalizeBrandId(readString(source.id) ?? name) || randomUUID();
+  return withLogoUrls({
+    id,
+    name,
+    title: readString(source.title),
+    aliases: readStringArray(source.aliases) ?? [],
+    logos: normalizeBrandLogos(source.logos, source.logoUrls),
+    createdAt: readString(source.createdAt) ?? now,
+    updatedAt: readString(source.updatedAt) ?? now,
+  });
+}
+
+function mergeBrand(input: BrandInput, existing?: BrandRecord): BrandRecord {
+  const now = new Date().toISOString();
+  const name = input.name ?? input.title ?? existing?.name;
+  if (!name?.trim()) {
+    throw new AppError(400, "VALIDATION_ERROR", "name is required");
+  }
+  const logos =
+    input.logos !== undefined || input.logoUrls !== undefined
+      ? normalizeBrandLogos(input.logos, input.logoUrls)
+      : (existing?.logos ?? []);
+  const id =
+    input.id ??
+    existing?.id ??
+    normalizeBrandId(input.name ?? input.title ?? name) ??
+    randomUUID();
+
+  return withLogoUrls({
+    id,
+    name: name.trim(),
+    title: input.title ?? existing?.title,
+    aliases: input.aliases ?? existing?.aliases ?? [],
+    logos,
+    createdAt: existing?.createdAt ?? now,
+    updatedAt: now,
+  });
 }
 
 function mergeAsset(
@@ -297,6 +427,13 @@ function parseTopicRow(row: TopicRow | undefined, id: string): TopicRecord {
     throw new AppError(404, "TOPIC_NOT_FOUND", `Topic ${id} was not found`);
   }
   return normalizeTopicRecord(JSON.parse(row.data));
+}
+
+function parseBrandRow(row: BrandRow | undefined, id: string): BrandRecord {
+  if (!row) {
+    throw new AppError(404, "BRAND_NOT_FOUND", `Brand ${id} was not found`);
+  }
+  return normalizeBrandRecord(JSON.parse(row.data));
 }
 
 function mergeTopic(input: TopicInput, existing?: TopicRecord): TopicRecord {

@@ -20,6 +20,28 @@ export type PhotoImage = {
   storage?: "local" | "cos" | "remote";
 };
 
+export type BrandLogo = {
+  url: string;
+  key?: string;
+  fileName?: string;
+  mimeType?: string;
+  size?: number;
+  storage?: "local" | "cos" | "remote";
+  alt?: string;
+  createdAt?: string;
+};
+
+export type BrandRecord = {
+  id: string;
+  name: string;
+  title?: string;
+  aliases?: string[];
+  logos: BrandLogo[];
+  logoUrls: string[];
+  createdAt: string;
+  updatedAt: string;
+};
+
 export type PhotoAsset = {
   original: string;
   thumbnail?: string;
@@ -63,6 +85,15 @@ export type TopicInput = {
   slug?: string;
   coverPhotoId?: string;
   sortOrder?: number;
+};
+
+export type BrandInput = {
+  id?: string;
+  name?: string;
+  title?: string;
+  aliases?: string[];
+  logoUrls?: string[];
+  logos?: Partial<BrandLogo>[];
 };
 
 export type GalleryData = {
