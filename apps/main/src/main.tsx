@@ -542,10 +542,8 @@ const PhotoModal = ({
 };
 
 type WatermarkFieldState = {
-  date: string;
   model: string;
   exposure: string;
-  includeDate: boolean;
   includeModel: boolean;
   includeExposure: boolean;
 };
@@ -596,12 +594,6 @@ const builtInWatermarkLogos: WatermarkLogoOption[] = [
   },
 ];
 
-const dateInputValue = (value: string): string => {
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return "";
-  return date.toISOString().slice(0, 10);
-};
-
 const formatExposure = (photo?: ResolvedPhoto): string => {
   if (!photo) return "";
   return [
@@ -619,10 +611,8 @@ const formatCameraModel = (photo?: ResolvedPhoto): string =>
 const watermarkFieldsFromPhoto = (
   photo?: ResolvedPhoto,
 ): WatermarkFieldState => ({
-  date: photo ? dateInputValue(photo.takenAt) : "",
   model: formatCameraModel(photo),
   exposure: formatExposure(photo),
-  includeDate: true,
   includeModel: true,
   includeExposure: true,
 });
@@ -811,7 +801,6 @@ const WatermarkExportPage = ({ photos }: { photos: ResolvedPhoto[] }) => {
     if (selectedPhoto.asset.width) input.imageWidth = selectedPhoto.asset.width;
     if (selectedPhoto.asset.height)
       input.imageHeight = selectedPhoto.asset.height;
-    if (fields.includeDate && fields.date) input.date = fields.date;
     if (fields.includeModel && fields.model) input.model = fields.model;
     if (fields.includeExposure && fields.exposure) {
       input.exposure = fields.exposure;
@@ -916,7 +905,7 @@ const WatermarkExportPage = ({ photos }: { photos: ResolvedPhoto[] }) => {
         <h1 id="watermark-title">水印导出</h1>
         <p>
           载入一张示例作品，按测试参考图的底部渐变水印输出；可切换黑白字色，
-          也可不选择 Logo，仅保留日期、机型和曝光参数。
+          也可不选择 Logo，仅保留机型、固定签名 dkplus 和曝光参数。
         </p>
       </div>
 
@@ -979,7 +968,6 @@ const WatermarkExportPage = ({ photos }: { photos: ResolvedPhoto[] }) => {
               value={selectedLogo.id}
               onChange={(event) => setSelectedLogoId(event.currentTarget.value)}
             >
-              <option value="">不显示 Logo</option>
               {logoOptions.map((option) => (
                 <option key={option.id} value={option.id}>
                   {option.name}
@@ -1003,23 +991,6 @@ const WatermarkExportPage = ({ photos }: { photos: ResolvedPhoto[] }) => {
           </label>
 
           <div className="watermark-field-grid">
-            <label>
-              <span>日期</span>
-              <input
-                aria-label="水印日期"
-                type="date"
-                value={fields.date}
-                onChange={updateField("date")}
-              />
-            </label>
-            <label className="watermark-check">
-              <input
-                type="checkbox"
-                checked={fields.includeDate}
-                onChange={updateField("includeDate")}
-              />
-              显示日期
-            </label>
             <label>
               <span>机型</span>
               <input

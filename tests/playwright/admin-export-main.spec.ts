@@ -961,8 +961,8 @@ test("Main top menu opens works and watermark export with a rendered example", a
   await expect(page.getByLabel("选择示例照片")).toBeVisible();
   await expect(page.getByLabel("选择 Logo（可选）")).toBeVisible();
   await expect(page.getByLabel("水印标题")).toHaveCount(0);
+  await expect(page.getByLabel("水印日期")).toHaveCount(0);
 
-  await page.getByLabel("水印日期").fill("2026-07-09");
   await page.getByLabel("水印机型").fill("A7R V");
   await page.getByLabel("水印曝光").fill("f/4 · 1/250s · ISO 100");
   await page.getByLabel("黑字白底").check();

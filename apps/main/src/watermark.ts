@@ -12,7 +12,6 @@ export interface WatermarkRenderInput {
   imageHeight?: number | undefined;
   tone: WatermarkTone;
   logo?: WatermarkLogoInput | undefined;
-  date?: string | undefined;
   model?: string | undefined;
   exposure?: string | undefined;
 }
@@ -40,6 +39,7 @@ type Palette = {
 const outputMinWidth = 1200;
 const outputMaxWidth = 2400;
 const workerTimeoutMs = 4200;
+const watermarkSignature = "dkplus";
 
 const clamp = (value: number, min: number, max: number): number =>
   Math.min(max, Math.max(min, value));
@@ -97,46 +97,51 @@ const imageNaturalSize = (image: DrawableImage) => {
   return { width: image.width, height: image.height };
 };
 
-const drawContainedImage = (
+const drawAdaptiveLogoImage = (
   context: CanvasRenderingContext2D | OffscreenCanvasRenderingContext2D,
   image: DrawableImage,
   x: number,
-  y: number,
-  width: number,
-  height: number,
-) => {
+  centerY: number,
+  maxHeight: number,
+  maxWidth: number,
+): number => {
   const natural = imageNaturalSize(image);
-  const ratio = Math.min(width / natural.width, height / natural.height);
+  const ratio = Math.min(maxWidth / natural.width, maxHeight / natural.height);
   const drawWidth = natural.width * ratio;
   const drawHeight = natural.height * ratio;
   context.drawImage(
     image,
-    x + (width - drawWidth) / 2,
-    y + (height - drawHeight) / 2,
+    x,
+    centerY - drawHeight / 2,
     drawWidth,
     drawHeight,
   );
+  return drawWidth;
 };
 
 const drawLogoMark = (
   context: CanvasRenderingContext2D | OffscreenCanvasRenderingContext2D,
   mark: string,
   x: number,
-  y: number,
-  size: number,
+  centerY: number,
+  height: number,
   palette: Palette,
-) => {
+) : number => {
+  const horizontalPadding = height * 0.42;
+  context.font = watermarkFont(height * 0.36, 700);
+  const normalizedMark = fitText(context, mark || "dk+", height * 2.4);
+  const markWidth = clamp(
+    context.measureText(normalizedMark).width + horizontalPadding * 2,
+    height * 1.15,
+    height * 3.2,
+  );
   context.fillStyle = palette.logoBackground;
-  context.fillRect(x, y, size, size);
+  context.fillRect(x, centerY - height / 2, markWidth, height);
   context.fillStyle = palette.logoText;
   context.textAlign = "center";
   context.textBaseline = "middle";
-  context.font = watermarkFont(size * 0.26, 700);
-  context.fillText(
-    fitText(context, mark || "dk+", size * 0.76),
-    x + size / 2,
-    y + size / 2,
-  );
+  context.fillText(normalizedMark, x + markWidth / 2, centerY);
+  return markWidth;
 };
 
 const loadImage = (url: string): Promise<HTMLImageElement> =>
@@ -207,51 +212,65 @@ const drawWatermarkComposition = async (
   let textWidth = canvasWidth - paddingX * 2;
 
   if (hasLogo && input.logo) {
-    const logoSize = stripHeight - paddingY * 2;
+    const logoMaxHeight = clamp(stripHeight * 0.38, 36, 92);
+    const logoMaxWidth = clamp(canvasWidth * 0.18, 96, 320);
     const logoX = paddingX;
-    const logoY = stripY + paddingY;
-    const separatorX = logoX + logoSize + paddingX * 0.45;
+    const logoCenterY = stripY + stripHeight * 0.56;
+    const logoWidth = logoImage
+      ? drawAdaptiveLogoImage(
+          context,
+          logoImage,
+          logoX,
+          logoCenterY,
+          logoMaxHeight,
+          logoMaxWidth,
+        )
+      : drawLogoMark(
+          context,
+          input.logo.mark,
+          logoX,
+          logoCenterY,
+          logoMaxHeight,
+          palette,
+        );
+    const separatorX = logoX + logoWidth + paddingX * 0.45;
     textX = separatorX + paddingX * 0.45;
     textWidth = canvasWidth - textX - paddingX;
-
-    if (logoImage) {
-      context.fillStyle = palette.logoBackground;
-      context.fillRect(logoX, logoY, logoSize, logoSize);
-      drawContainedImage(
-        context,
-        logoImage,
-        logoX + logoSize * 0.16,
-        logoY + logoSize * 0.16,
-        logoSize * 0.68,
-        logoSize * 0.68,
-      );
-    } else {
-      drawLogoMark(context, input.logo.mark, logoX, logoY, logoSize, palette);
-    }
 
     context.fillStyle = palette.separator;
     context.fillRect(
       separatorX,
-      logoY,
+      logoCenterY - logoMaxHeight / 2,
       Math.max(2, canvasWidth * 0.0012),
-      logoSize,
+      logoMaxHeight,
     );
   }
 
-  const metaSize = clamp(canvasWidth * 0.014, 16, 30);
-  const meta = [input.date, input.model, input.exposure]
+  const primarySize = clamp(canvasWidth * 0.014, 16, 30);
+  const secondarySize = clamp(canvasWidth * 0.0115, 13, 24);
+  const firstRow = [input.model, watermarkSignature]
     .filter(Boolean)
     .join("   ·   ");
+  const secondRow = input.exposure?.trim() ?? "";
 
-  if (meta) {
-    context.textAlign = "left";
-    context.textBaseline = "middle";
-    context.font = watermarkFont(metaSize, 600);
+  context.textAlign = "left";
+  context.textBaseline = "middle";
+  if (firstRow) {
+    context.font = watermarkFont(primarySize, 700);
     context.fillStyle = palette.text;
     context.fillText(
-      fitText(context, meta, textWidth),
+      fitText(context, firstRow, textWidth),
       textX,
-      stripY + stripHeight * 0.56,
+      stripY + stripHeight * (secondRow ? 0.48 : 0.56),
+    );
+  }
+  if (secondRow) {
+    context.font = watermarkFont(secondarySize, 500);
+    context.fillStyle = palette.muted;
+    context.fillText(
+      fitText(context, secondRow, textWidth),
+      textX,
+      stripY + stripHeight * 0.68,
     );
   }
 };
@@ -300,6 +319,7 @@ const paletteForTone = (tone) => tone === "black" ? {
   strip: "rgba(250, 250, 250, 0.92)", stripFade: "rgba(250, 250, 250, 0)", text: "#09090b", muted: "rgba(9, 9, 11, 0.7)", separator: "rgba(9, 9, 11, 0.24)", logoBackground: "#09090b", logoText: "#fafafa"
 };
 const watermarkFont = (size, weight = 600) => weight + ' ' + Math.round(size) + 'px "Fira Code", "Fira Sans", sans-serif';
+const watermarkSignature = "dkplus";
 const fitText = (context, value, maxWidth) => {
   const normalized = String(value || "").trim();
   if (!normalized || context.measureText(normalized).width <= maxWidth) return normalized;
@@ -316,20 +336,25 @@ const loadBitmap = async (url) => {
   if (!response.ok) throw new Error('图片加载失败：' + response.status);
   return createImageBitmap(await response.blob());
 };
-const drawContainedImage = (context, image, x, y, width, height) => {
-  const ratio = Math.min(width / image.width, height / image.height);
+const drawAdaptiveLogoImage = (context, image, x, centerY, maxHeight, maxWidth) => {
+  const ratio = Math.min(maxWidth / image.width, maxHeight / image.height);
   const drawWidth = image.width * ratio;
   const drawHeight = image.height * ratio;
-  context.drawImage(image, x + (width - drawWidth) / 2, y + (height - drawHeight) / 2, drawWidth, drawHeight);
+  context.drawImage(image, x, centerY - drawHeight / 2, drawWidth, drawHeight);
+  return drawWidth;
 };
-const drawLogoMark = (context, mark, x, y, size, palette) => {
+const drawLogoMark = (context, mark, x, centerY, height, palette) => {
+  const horizontalPadding = height * 0.42;
+  context.font = watermarkFont(height * 0.36, 700);
+  const normalizedMark = fitText(context, mark || "dk+", height * 2.4);
+  const markWidth = clamp(context.measureText(normalizedMark).width + horizontalPadding * 2, height * 1.15, height * 3.2);
   context.fillStyle = palette.logoBackground;
-  context.fillRect(x, y, size, size);
+  context.fillRect(x, centerY - height / 2, markWidth, height);
   context.fillStyle = palette.logoText;
   context.textAlign = "center";
   context.textBaseline = "middle";
-  context.font = watermarkFont(size * 0.26, 700);
-  context.fillText(fitText(context, mark || "dk+", size * 0.76), x + size / 2, y + size / 2);
+  context.fillText(normalizedMark, x + markWidth / 2, centerY);
+  return markWidth;
 };
 self.onmessage = async (event) => {
   const input = event.data;
@@ -363,30 +388,34 @@ self.onmessage = async (event) => {
     let textX = paddingX;
     let textWidth = width - paddingX * 2;
     if (input.logo) {
-      const logoSize = stripHeight - paddingY * 2;
+      const logoMaxHeight = clamp(stripHeight * 0.38, 36, 92);
+      const logoMaxWidth = clamp(width * 0.18, 96, 320);
       const logoX = paddingX;
-      const logoY = stripY + paddingY;
-      const separatorX = logoX + logoSize + paddingX * 0.45;
+      const logoCenterY = stripY + stripHeight * 0.56;
+      const logoWidth = logoImage
+        ? drawAdaptiveLogoImage(context, logoImage, logoX, logoCenterY, logoMaxHeight, logoMaxWidth)
+        : drawLogoMark(context, input.logo.mark, logoX, logoCenterY, logoMaxHeight, palette);
+      const separatorX = logoX + logoWidth + paddingX * 0.45;
       textX = separatorX + paddingX * 0.45;
       textWidth = width - textX - paddingX;
-      if (logoImage) {
-        context.fillStyle = palette.logoBackground;
-        context.fillRect(logoX, logoY, logoSize, logoSize);
-        drawContainedImage(context, logoImage, logoX + logoSize * 0.16, logoY + logoSize * 0.16, logoSize * 0.68, logoSize * 0.68);
-      } else {
-        drawLogoMark(context, input.logo.mark, logoX, logoY, logoSize, palette);
-      }
       context.fillStyle = palette.separator;
-      context.fillRect(separatorX, logoY, Math.max(2, width * 0.0012), logoSize);
+      context.fillRect(separatorX, logoCenterY - logoMaxHeight / 2, Math.max(2, width * 0.0012), logoMaxHeight);
     }
-    const metaSize = clamp(width * 0.014, 16, 30);
-    const meta = [input.date, input.model, input.exposure].filter(Boolean).join("   ·   ");
-    if (meta) {
-      context.textAlign = "left";
-      context.textBaseline = "middle";
-      context.font = watermarkFont(metaSize, 600);
+    const primarySize = clamp(width * 0.014, 16, 30);
+    const secondarySize = clamp(width * 0.0115, 13, 24);
+    const firstRow = [input.model, watermarkSignature].filter(Boolean).join("   ·   ");
+    const secondRow = input.exposure && input.exposure.trim ? input.exposure.trim() : "";
+    context.textAlign = "left";
+    context.textBaseline = "middle";
+    if (firstRow) {
+      context.font = watermarkFont(primarySize, 700);
       context.fillStyle = palette.text;
-      context.fillText(fitText(context, meta, textWidth), textX, stripY + stripHeight * 0.56);
+      context.fillText(fitText(context, firstRow, textWidth), textX, stripY + stripHeight * (secondRow ? 0.48 : 0.56));
+    }
+    if (secondRow) {
+      context.font = watermarkFont(secondarySize, 500);
+      context.fillStyle = palette.muted;
+      context.fillText(fitText(context, secondRow, textWidth), textX, stripY + stripHeight * 0.68);
     }
     const blob = await canvas.convertToBlob({ type: "image/png" });
     image.close && image.close();

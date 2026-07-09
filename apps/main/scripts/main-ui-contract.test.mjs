@@ -362,7 +362,7 @@ test("main top menu exposes works and canvas watermark export contracts", () => 
   assert.match(mainSource, /上传自定义 Logo/);
   assert.match(mainSource, /白字黑底/);
   assert.match(mainSource, /黑字白底/);
-  assert.match(mainSource, /显示日期/);
+  assert.doesNotMatch(mainSource, /aria-label="水印日期"|显示日期/);
   assert.match(mainSource, /显示机型/);
   assert.match(mainSource, /显示曝光/);
   assert.match(
@@ -389,48 +389,54 @@ test("main top menu exposes works and canvas watermark export contracts", () => 
   );
   assert.match(watermarkSource, /const hasLogo = Boolean\(input\.logo\)/);
   assert.match(watermarkSource, /if \(hasLogo && input\.logo\)/);
+  assert.match(watermarkSource, /const logoMaxHeight = clamp\(stripHeight \* 0\.38/);
+  assert.match(watermarkSource, /const logoWidth = logoImage/);
   assert.match(
     watermarkSource,
     /createLinearGradient\(\s*0,\s*canvasHeight,\s*0,\s*stripY,?\s*\)/,
   );
   assert.match(watermarkSource, /createLinearGradient\(0, height, 0, stripY\)/);
-  assert.doesNotMatch(watermarkSource, /input\.title|titleSize|brandLabel/);
-  assert.match(watermarkSource, /const separatorX = logoX \+ logoSize/);
+  assert.doesNotMatch(watermarkSource, /input\.title|input\.date|titleSize|brandLabel|const logoSize/);
+  assert.match(watermarkSource, /const separatorX = logoX \+ logoWidth/);
 });
 
 test("watermark export renders metadata-only output with optional logo and fade overlay", () => {
-  const formatCameraModelBlock =
-    mainSource.match(/const formatCameraModel[\s\S]*?^};/m)?.[0] ?? "";
-  assert.ok(formatCameraModelBlock, "Expected formatCameraModel helper");
-  assert.match(
-    formatCameraModelBlock,
-    /(?:return\s+|=>\s*)photo\?\.exif\?\.cameraModel\?\.trim\(\) \?\? "";/,
-  );
-  assert.doesNotMatch(formatCameraModelBlock, /cameraBrand|cameraMake/);
-
-  assert.doesNotMatch(mainSource, /水印标题|aria-label="水印标题"/);
-  assert.doesNotMatch(watermarkSource, /input\.title|DKPLUS PHOTOGRAPHY/);
   assert.match(
     mainSource,
-    /const \[selectedLogoId, setSelectedLogoId\] = useState\(""\)/,
+    /const formatCameraModel = \(photo\?: ResolvedPhoto\): string =>\s*photo\?\.exif\?\.cameraModel\?\.trim\(\) \?\? "";/,
   );
-  assert.match(mainSource, /<option value="">不显示 Logo<\/option>/);
+
+  assert.doesNotMatch(
+    mainSource,
+    /水印标题|aria-label="水印标题"|aria-label="水印日期"|显示日期/,
+  );
+  assert.doesNotMatch(watermarkSource, /input\.title|input\.date|DKPLUS PHOTOGRAPHY/);
+  assert.match(
+    mainSource,
+    /const \[selectedLogoId, setSelectedLogoId\] = useState\("none"\)/,
+  );
+  assert.match(mainSource, /const noLogoWatermarkOption[\s\S]*?id: "none"/);
   assert.match(watermarkSource, /logo\?: WatermarkLogoInput \| undefined;/);
   assert.match(watermarkSource, /const hasLogo = Boolean\(input\.logo\)/);
-  assert.match(watermarkSource, /if \(input\.logo\) \{[\s\S]*?drawLogoMark/);
+  assert.match(watermarkSource, /if \(hasLogo && input\.logo\) \{[\s\S]*?drawLogoMark/);
+  assert.match(watermarkSource, /const watermarkSignature = "dkplus"/);
+  assert.match(
+    watermarkSource,
+    /const firstRow = \[input\.model, watermarkSignature\][\s\S]*?const secondRow = input\.exposure\?\.trim\(\) \?\? "";/,
+  );
 
   const gradientCalls =
     watermarkSource.match(
-      /createLinearGradient\(\s*0,\s*stripY,\s*0,\s*(?:canvasHeight|height),?\s*\)/g,
+      /createLinearGradient\(\s*0,\s*(?:canvasHeight|height),\s*0,\s*stripY,?\s*\)/g,
     ) ?? [];
   assert.equal(gradientCalls.length, 2);
   assert.match(
     watermarkSource,
-    /overlayGradient\.addColorStop\(0, palette\.overlayTop\)/,
+    /overlayGradient\.addColorStop\(0, palette\.strip\)/,
   );
   assert.match(
     watermarkSource,
-    /overlayGradient\.addColorStop\(1, palette\.overlayBottom\)/,
+    /overlayGradient\.addColorStop\(1, palette\.stripFade\)/,
   );
 });
 
@@ -539,7 +545,7 @@ test("watermark export page captures required canvas and metadata controls", () 
   assert.match(watermarkSource, /createElement\("canvas"\)|OffscreenCanvas/);
   assert.match(mainSource, /黑色|black/i);
   assert.match(mainSource, /白色|white/i);
-  assert.match(mainSource, /日期/);
+  assert.doesNotMatch(mainSource, /aria-label="水印日期"|显示日期/);
   assert.match(mainSource, /机型|型号|model/i);
   assert.match(mainSource, /曝光|快门|光圈|exposure/i);
   assert.match(mainSource, /自定义\s*Logo|custom\s*logo/i);
