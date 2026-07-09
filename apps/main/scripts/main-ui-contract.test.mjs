@@ -350,18 +350,38 @@ test("main top menu exposes works and canvas watermark export contracts", () => 
     mainSource,
     /id=\{deferredRoute\.page === "works" \? "gallery" : "watermark-export"\}/,
   );
-  assert.match(mainSource, /<WatermarkExportPage photos=\{data\.photos\} \/>/);
+  assert.match(
+    mainSource,
+    /<WatermarkExportPage photos=\{data\.photos\} route=\{deferredRoute\} \/>/,
+  );
+  assert.match(mainSource, /type WatermarkRouteFields =/);
+  assert.match(mainSource, /const watermarkRouteFieldKeys = \[/);
+  assert.match(mainSource, /new URLSearchParams\(queryString\)/);
+  assert.match(mainSource, /searchParams\.get\("photo"\)/);
+  assert.match(mainSource, /params\.set\("photo", route\.photoId\)/);
+  assert.match(mainSource, /const watermarkRouteForPhoto = \(photo: ResolvedPhoto\): AppRoute =>/);
+  assert.match(mainSource, /watermarkFields: watermarkRouteFieldsFromPhoto\(photo\)/);
+  assert.match(mainSource, /onExportWatermark=\{exportWatermarkRoute\}/);
+  assert.match(mainSource, />\s*导出水印\s*<\/button>/);
   assert.match(mainSource, /const useAdminBrandLogos = \(\) =>/);
   assert.match(mainSource, /fetch\(`\$\{apiBaseUrl\}\/brands`\)/);
   assert.match(mainSource, /logoUrls/);
   assert.match(mainSource, /deriveCameraBrandLogos/);
+  assert.match(mainSource, /const findMatchingWatermarkLogoId =/);
+  assert.match(mainSource, /setLogoSelectionTouched\(false\)/);
+  assert.match(mainSource, /setSelectedLogoId\(defaultLogoId\)/);
   assert.match(mainSource, /const noLogoWatermarkOption/);
   assert.match(mainSource, /id: "none"/);
   assert.match(mainSource, /不使用 Logo/);
   assert.match(mainSource, /Logo（可选）/);
   assert.match(mainSource, /上传自定义 Logo/);
   assert.match(mainSource, /固定白字黑底/);
-  assert.doesNotMatch(mainSource, /黑字白底|name="watermark-tone"/);
+  assert.match(mainSource, /data-tone="black"/);
+  assert.match(mainSource, /tone: "black"/);
+  assert.doesNotMatch(
+    mainSource,
+    /name="watermark-tone"|className="watermark-tone"|setTone|黑字白底/,
+  );
   assert.doesNotMatch(mainSource, /aria-label="水印日期"|显示日期/);
   assert.match(mainSource, /显示设备行/);
   assert.match(mainSource, /显示曝光行/);
