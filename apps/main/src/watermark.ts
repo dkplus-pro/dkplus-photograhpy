@@ -1,5 +1,3 @@
-export type WatermarkTone = "black" | "white";
-
 export interface WatermarkLogoInput {
   name: string;
   mark: string;
@@ -10,7 +8,6 @@ export interface WatermarkRenderInput {
   imageUrl: string;
   imageWidth?: number | undefined;
   imageHeight?: number | undefined;
-  tone: WatermarkTone;
   logo?: WatermarkLogoInput | undefined;
   brand?: string | undefined;
   model?: string | undefined;
@@ -51,24 +48,14 @@ const watermarkFontFamily =
 const clamp = (value: number, min: number, max: number): number =>
   Math.min(max, Math.max(min, value));
 
-const paletteForTone = (tone: WatermarkTone): Palette =>
-  tone === "black"
-    ? {
-        strip: "rgba(9, 9, 11, 0.9)",
-        stripFade: "rgba(9, 9, 11, 0)",
-        text: "#fafafa",
-        muted: "rgba(250, 250, 250, 0.78)",
-        logoBackground: "#fafafa",
-        logoText: "#09090b",
-      }
-    : {
-        strip: "rgba(250, 250, 250, 0.92)",
-        stripFade: "rgba(250, 250, 250, 0)",
-        text: "#09090b",
-        muted: "rgba(9, 9, 11, 0.7)",
-        logoBackground: "#09090b",
-        logoText: "#fafafa",
-      };
+const watermarkPalette: Palette = {
+  strip: "rgba(9, 9, 11, 0.9)",
+  stripFade: "rgba(9, 9, 11, 0)",
+  text: "#fafafa",
+  muted: "rgba(250, 250, 250, 0.78)",
+  logoBackground: "#fafafa",
+  logoText: "#09090b",
+};
 
 const watermarkFont = (
   size: number,
@@ -192,7 +179,7 @@ const drawWatermarkComposition = async (
   context.fillRect(0, 0, canvasWidth, canvasHeight);
   context.drawImage(image, 0, 0, canvasWidth, canvasHeight);
 
-  const palette = paletteForTone(input.tone);
+  const palette = watermarkPalette;
   const stripHeight = clamp(canvasHeight * 0.2, 132, 340);
   const stripY = canvasHeight - stripHeight;
   const paddingX = clamp(canvasWidth * 0.036, 36, 96);
@@ -318,10 +305,8 @@ const renderWatermarkOnMainThread = async (
 
 const workerSource = String.raw`
 const clamp = (value, min, max) => Math.min(max, Math.max(min, value));
-const paletteForTone = (tone) => tone === "black" ? {
+const watermarkPalette = {
   strip: "rgba(9, 9, 11, 0.9)", stripFade: "rgba(9, 9, 11, 0)", text: "#fafafa", muted: "rgba(250, 250, 250, 0.78)", logoBackground: "#fafafa", logoText: "#09090b"
-} : {
-  strip: "rgba(250, 250, 250, 0.92)", stripFade: "rgba(250, 250, 250, 0)", text: "#09090b", muted: "rgba(9, 9, 11, 0.7)", logoBackground: "#09090b", logoText: "#fafafa"
 };
 const watermarkMetadataSpacer = "  ";
 const watermarkSecondarySpacer = "     ";
@@ -383,7 +368,7 @@ self.onmessage = async (event) => {
     context.fillStyle = "#09090b";
     context.fillRect(0, 0, width, height);
     context.drawImage(image, 0, 0, width, height);
-    const palette = paletteForTone(input.tone);
+    const palette = watermarkPalette;
     const stripHeight = clamp(height * 0.2, 132, 340);
     const stripY = height - stripHeight;
     const paddingX = clamp(width * 0.036, 36, 96);

@@ -29,7 +29,6 @@ import {
   type WatermarkLogoInput,
   type WatermarkRenderInput,
   type WatermarkRenderResult,
-  type WatermarkTone,
 } from "./watermark";
 import "./styles.css";
 
@@ -768,7 +767,6 @@ const WatermarkExportPage = ({ photos }: { photos: ResolvedPhoto[] }) => {
   const [fields, setFields] = useState(() =>
     watermarkFieldsFromPhoto(selectedPhoto),
   );
-  const [tone, setTone] = useState<WatermarkTone>("black");
   const [customLogo, setCustomLogo] = useState<WatermarkLogoOption | null>(
     null,
   );
@@ -817,7 +815,6 @@ const WatermarkExportPage = ({ photos }: { photos: ResolvedPhoto[] }) => {
     if (!selectedPhoto) return null;
     const input: WatermarkRenderInput = {
       imageUrl: selectedPhoto.urls.preview,
-      tone,
     };
     if (selectedWatermarkLogo) input.logo = selectedWatermarkLogo;
     if (selectedPhoto.asset.width) input.imageWidth = selectedPhoto.asset.width;
@@ -833,7 +830,7 @@ const WatermarkExportPage = ({ photos }: { photos: ResolvedPhoto[] }) => {
       if (fields.exposure) input.exposure = fields.exposure;
     }
     return input;
-  }, [fields, selectedPhoto, selectedWatermarkLogo, tone]);
+  }, [fields, selectedPhoto, selectedWatermarkLogo]);
 
   useEffect(() => {
     if (!renderInput) return;
@@ -931,13 +928,13 @@ const WatermarkExportPage = ({ photos }: { photos: ResolvedPhoto[] }) => {
         <p className="eyebrow">Canvas watermark export</p>
         <h1 id="watermark-title">水印导出</h1>
         <p>
-          载入一张示例作品，按测试参考图的底部渐变水印输出；可切换黑白字色，
+          载入一张示例作品，按测试参考图的底部渐变水印输出；固定白字黑底，
           也可不选择 Logo，仅保留品牌、机型、镜头、焦段与曝光参数。
         </p>
       </div>
 
       <div className="watermark-workbench">
-        <figure className="watermark-preview" data-tone={tone}>
+        <figure className="watermark-preview">
           {rendered ? (
             <img src={rendered.url} alt={`${selectedPhoto.title} 水印预览`} />
           ) : (
@@ -964,29 +961,6 @@ const WatermarkExportPage = ({ photos }: { photos: ResolvedPhoto[] }) => {
             </select>
           </label>
 
-          <fieldset className="watermark-tone">
-            <legend>黑白样式</legend>
-            <label>
-              <input
-                type="radio"
-                name="watermark-tone"
-                value="black"
-                checked={tone === "black"}
-                onChange={() => setTone("black")}
-              />
-              白字黑底
-            </label>
-            <label>
-              <input
-                type="radio"
-                name="watermark-tone"
-                value="white"
-                checked={tone === "white"}
-                onChange={() => setTone("white")}
-              />
-              黑字白底
-            </label>
-          </fieldset>
 
           <label>
             <span>Logo（可选）</span>
