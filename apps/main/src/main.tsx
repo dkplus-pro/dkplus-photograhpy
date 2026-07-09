@@ -801,10 +801,19 @@ const normalizeAdminBrandLogos = (payload: unknown): WatermarkLogoOption[] => {
   return options;
 };
 
-const useAdminBrandLogos = () => {
-  const [logos, setLogos] = useState<WatermarkLogoOption[]>([]);
+const useAdminBrandLogos = (staticBrands: GalleryPayload["brands"]) => {
+  const staticLogos = useMemo(
+    () => normalizeAdminBrandLogos({ brands: staticBrands }),
+    [staticBrands],
+  );
+  const [logos, setLogos] = useState<WatermarkLogoOption[]>(staticLogos);
 
   useEffect(() => {
+    setLogos(staticLogos);
+  }, [staticLogos]);
+
+  useEffect(() => {
+    if (!import.meta.env.DEV) return undefined;
     let active = true;
     fetch(`${apiBaseUrl}/brands`)
       .then((response) => (response.ok ? response.json() : null))
@@ -814,13 +823,13 @@ const useAdminBrandLogos = () => {
         }
       })
       .catch(() => {
-        // The admin brand endpoint is supplied by the coordinated brand task.
-        // Main keeps the export page usable with built-in and camera-derived logos.
+        // The static gallery JSON also carries the brand kit for GitHub Pages.
+        // In local dev, the API can refresh it when the admin server is running.
       });
     return () => {
       active = false;
     };
-  }, []);
+  }, [staticLogos]);
 
   return logos;
 };
@@ -878,12 +887,14 @@ const findMatchingWatermarkLogoId = (
 
 const WatermarkExportPage = ({
   photos,
+  brands,
   route,
 }: {
   photos: ResolvedPhoto[];
+  brands: GalleryPayload["brands"];
   route: AppRoute;
 }) => {
-  const adminBrandLogos = useAdminBrandLogos();
+  const adminBrandLogos = useAdminBrandLogos(brands);
   const photoById = useMemo(
     () => new Map(photos.map((photo) => [photo.id, photo])),
     [photos],
@@ -1439,7 +1450,11 @@ const App = () => {
             )}
           </>
         ) : (
-          <WatermarkExportPage photos={data.photos} route={deferredRoute} />
+          <WatermarkExportPage
+            photos={data.photos}
+            brands={data.brands}
+            route={deferredRoute}
+          />
         )}
       </main>
 

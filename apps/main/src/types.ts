@@ -31,6 +31,20 @@ export interface PhotoAsset {
   height?: number;
 }
 
+export interface BrandLogo {
+  url: string;
+  alt?: string;
+}
+
+export interface Brand {
+  id: string;
+  name: string;
+  title?: string;
+  aliases?: string[];
+  logoUrls?: string[];
+  logos?: BrandLogo[];
+}
+
 export interface ResolvedPhoto {
   id: string;
   title: string;
@@ -52,6 +66,7 @@ export interface GalleryPayload {
   generatedAt: string;
   topics: Topic[];
   photos: ResolvedPhoto[];
+  brands: Brand[];
 }
 
 export type TabKey = "latest" | "topics" | "timeline";

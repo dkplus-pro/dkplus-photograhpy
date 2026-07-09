@@ -352,7 +352,7 @@ test("main top menu exposes works and canvas watermark export contracts", () => 
   );
   assert.match(
     mainSource,
-    /<WatermarkExportPage photos=\{data\.photos\} route=\{deferredRoute\} \/>/,
+    /<WatermarkExportPage[\s\S]*?photos=\{data\.photos\}[\s\S]*?brands=\{data\.brands\}[\s\S]*?route=\{deferredRoute\}/,
   );
   assert.match(mainSource, /type WatermarkRouteFields =/);
   assert.match(mainSource, /const watermarkRouteFieldKeys = \[/);
@@ -369,7 +369,15 @@ test("main top menu exposes works and canvas watermark export contracts", () => 
   );
   assert.match(mainSource, /onExportWatermark=\{exportWatermarkRoute\}/);
   assert.match(mainSource, />\s*导出水印\s*<\/button>/);
-  assert.match(mainSource, /const useAdminBrandLogos = \(\) =>/);
+  assert.match(
+    mainSource,
+    /const useAdminBrandLogos = \(staticBrands: GalleryPayload\["brands"\]\) =>/,
+  );
+  assert.match(
+    mainSource,
+    /normalizeAdminBrandLogos\(\{ brands: staticBrands \}\)/,
+  );
+  assert.match(mainSource, /if \(!import\.meta\.env\.DEV\) return undefined/);
   assert.match(mainSource, /fetch\(`\$\{apiBaseUrl\}\/brands`\)/);
   assert.match(mainSource, /logoUrls/);
   assert.match(mainSource, /deriveCameraBrandLogos/);

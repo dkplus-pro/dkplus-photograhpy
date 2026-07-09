@@ -41,6 +41,11 @@ const forbiddenClientKeys = [
   "topicId",
   "topicTitle",
   "tags",
+  "key",
+  "fileName",
+  "mimeType",
+  "size",
+  "storage",
 ];
 
 function assertNoClientInternals(value: unknown, path = "$"): void {
@@ -67,6 +72,7 @@ function assertNoClientInternals(value: unknown, path = "$"): void {
 type ClientExportArtifact = {
   generatedAt: string;
   topics: Array<Record<string, unknown>>;
+  brands: Array<Record<string, unknown>>;
   photos: Array<
     Record<string, unknown> & {
       id: string;
@@ -115,6 +121,7 @@ test("development gallery endpoint is public but production keeps it behind auth
     const app = createApp(config).callback();
     const gallery = await request(app).get("/api/gallery").expect(200);
     assert.deepEqual(Object.keys(gallery.body).sort(), [
+      "brands",
       "generatedAt",
       "photos",
       "topics",
@@ -375,6 +382,29 @@ test("brand CRUD persists multiple logos and uploaded EXIF auto-syncs camera bra
     assert.equal(publicSony.name, "Sony");
     assert.deepEqual(publicSony.logoUrls, []);
 
+    const brandExport = await authed(request(app).post("/api/export/client"))
+      .send({})
+      .expect(200);
+    assert.equal(brandExport.body.export.brandCount, 2);
+    const brandArtifact = await readClientExport(config.exportFile);
+    const exportedCanon = brandArtifact.brands.find(
+      (brand) => brand.id === "canon",
+    );
+    assert.deepEqual(exportedCanon, {
+      id: "canon",
+      name: "Canon",
+      title: "Canon / 佳能",
+      aliases: ["Canon Inc.", "佳能"],
+      logoUrls: savedAfterUpload.body.brand.logoUrls,
+      logos: savedAfterUpload.body.brand.logos.map(
+        (logo: { url: string; alt?: string }) => ({
+          url: logo.url,
+          ...(logo.alt ? { alt: logo.alt } : {}),
+        }),
+      ),
+    });
+    assertNoClientInternals(brandArtifact);
+
     const deleted = await authed(request(app).delete("/api/brands/canon"))
       .send({})
       .expect(200);
@@ -389,6 +419,24 @@ test("existing JSON seeds an empty database and is rewritten only by explicit ex
   const seedJson = `${JSON.stringify(
     {
       generatedAt: "2026-07-01T00:00:00.000Z",
+      brands: [
+        {
+          id: "seed-brand",
+          name: "Seed Brand",
+          title: "种子品牌",
+          aliases: ["Seed"],
+          logos: [
+            {
+              url: "seed-brand.svg",
+              alt: "Seed Brand",
+              key: "secret/key.svg",
+              storage: "local",
+            },
+          ],
+          createdAt: "2026-06-01T00:00:00.000Z",
+          updatedAt: "2026-06-02T00:00:00.000Z",
+        },
+      ],
       topics: [
         {
           id: "seed-topic",
@@ -446,6 +494,7 @@ test("existing JSON seeds an empty database and is rewritten only by explicit ex
 
     const devGallery = await request(app).get("/api/gallery").expect(200);
     assert.deepEqual(Object.keys(devGallery.body).sort(), [
+      "brands",
       "generatedAt",
       "photos",
       "topics",
@@ -462,6 +511,7 @@ test("existing JSON seeds an empty database and is rewritten only by explicit ex
     const artifact = JSON.parse(await readFile(config.exportFile, "utf8")) as {
       generatedAt: string;
       topics: Array<Record<string, unknown>>;
+      brands: Array<Record<string, unknown>>;
       photos: Array<
         Record<string, unknown> & {
           id: string;
@@ -471,12 +521,14 @@ test("existing JSON seeds an empty database and is rewritten only by explicit ex
       >;
     };
     assert.deepEqual(Object.keys(artifact).sort(), [
+      "brands",
       "generatedAt",
       "photos",
       "topics",
     ]);
     assert.ok(artifact.generatedAt);
     assert.deepEqual(Object.keys(artifact).sort(), [
+      "brands",
       "generatedAt",
       "photos",
       "topics",
@@ -484,6 +536,15 @@ test("existing JSON seeds an empty database and is rewritten only by explicit ex
     assert.equal(artifact.topics.length, 1);
     assert.equal("createdAt" in artifact.topics[0], false);
     assert.equal("updatedAt" in artifact.topics[0], false);
+    assert.equal(artifact.brands.length, 1);
+    assert.deepEqual(artifact.brands[0], {
+      id: "seed-brand",
+      name: "Seed Brand",
+      title: "种子品牌",
+      aliases: ["Seed"],
+      logoUrls: ["seed-brand.svg"],
+      logos: [{ url: "seed-brand.svg", alt: "Seed Brand" }],
+    });
     assert.deepEqual(
       artifact.photos.find((photo) => photo.id === "seed-photo")?.topicIds,
       ["seed-topic"],

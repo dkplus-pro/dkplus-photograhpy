@@ -1,5 +1,7 @@
 import type {
   ExifData,
+  Brand,
+  BrandLogo,
   GalleryPayload,
   PhotoAsset,
   ResolvedPhoto,
@@ -185,10 +187,29 @@ type RawPhoto = Partial<Omit<ResolvedPhoto, "asset" | "urls">> & {
 
 type RawTopic = Partial<Topic>;
 
+type RawBrandLogo = Partial<BrandLogo> & {
+  id?: string;
+  label?: string;
+  name?: string;
+  title?: string;
+  logoUrl?: string;
+  imageUrl?: string;
+  dataUrl?: string;
+};
+
+type RawBrand = Partial<Omit<Brand, "logos">> & {
+  cameraBrand?: string;
+  logoUrl?: string;
+  imageUrl?: string;
+  dataUrl?: string;
+  logos?: RawBrandLogo[];
+};
+
 type RawPayload = Partial<Omit<GalleryPayload, "photos" | "topics">> & {
   photos?: RawPhoto[];
   data?: RawPhoto[];
   topics?: RawTopic[];
+  brands?: RawBrand[];
   updatedAt?: string;
 };
 
@@ -220,6 +241,39 @@ const normalizeTopic = (topic: RawTopic): Topic | undefined => {
     coverPhotoId: topic.coverPhotoId,
     sortOrder: topic.sortOrder,
   }) as Topic;
+};
+
+const normalizeBrandLogo = (logo: RawBrandLogo): BrandLogo | undefined => {
+  const url = logo.url ?? logo.logoUrl ?? logo.imageUrl ?? logo.dataUrl;
+  if (!url) return undefined;
+  return compact({
+    url,
+    alt: logo.alt ?? logo.label ?? logo.name ?? logo.title,
+  }) as BrandLogo;
+};
+
+const normalizeBrand = (brand: RawBrand, index: number): Brand | undefined => {
+  const name = brand.name ?? brand.title ?? brand.cameraBrand;
+  if (!name) return undefined;
+  const id = brand.id ?? `brand-${index}`;
+  const logos = Array.isArray(brand.logos)
+    ? brand.logos
+        .map(normalizeBrandLogo)
+        .filter((logo): logo is BrandLogo => Boolean(logo))
+    : [];
+  const logoUrls = Array.isArray(brand.logoUrls)
+    ? brand.logoUrls.filter((url): url is string => typeof url === "string")
+    : [];
+  const directLogo = normalizeBrandLogo(brand);
+  const mergedLogos = directLogo ? [...logos, directLogo] : logos;
+  return compact({
+    id,
+    name,
+    title: brand.title,
+    aliases: brand.aliases,
+    logoUrls,
+    logos: mergedLogos,
+  }) as Brand;
 };
 
 const deriveTopics = (photos: RawPhoto[]): Topic[] => {
@@ -308,9 +362,16 @@ export const normalizePayload = (payload: unknown): GalleryPayload => {
     ? sourceTopics
     : deriveTopics(sourcePhotos);
 
+  const brands = Array.isArray(raw.brands)
+    ? raw.brands
+        .map(normalizeBrand)
+        .filter((brand): brand is Brand => Boolean(brand))
+    : [];
+
   return {
     generatedAt: raw.generatedAt ?? raw.updatedAt ?? new Date().toISOString(),
     topics: topics.sort((a, b) => (a.sortOrder ?? 999) - (b.sortOrder ?? 999)),
     photos: sourcePhotos.map(normalizePhoto).sort(compareNewest),
+    brands,
   };
 };

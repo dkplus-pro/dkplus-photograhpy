@@ -19,6 +19,11 @@ const forbiddenKeys = new Set([
   "tags",
   "cdnBaseUrl",
   "sourceGeneratedAt",
+  "key",
+  "fileName",
+  "mimeType",
+  "size",
+  "storage",
 ]);
 
 const assertNoForbiddenKeys = (value) => {
@@ -46,6 +51,26 @@ const assertDerivedUrlBases = (photo) => {
 
 test("normalizes gallery records and writes resolved CDN urls", () => {
   const gallery = normalizeGalleryData({
+    brands: [
+      {
+        id: "sony",
+        name: "Sony",
+        title: "Sony Alpha",
+        aliases: ["索尼"],
+        logoUrls: ["https://cdn.example/sony.svg"],
+        logos: [
+          {
+            url: "https://cdn.example/sony.svg",
+            alt: "Sony mark",
+            key: "internal/sony.svg",
+            size: 1234,
+            storage: "cos",
+          },
+        ],
+        createdAt: "2026-07-01T00:00:00Z",
+        updatedAt: "2026-07-02T00:00:00Z",
+      },
+    ],
     topics: [
       {
         id: "topic",
@@ -77,6 +102,7 @@ test("normalizes gallery records and writes resolved CDN urls", () => {
   assertDerivedUrlBases(gallery.photos[0]);
   assert.doesNotMatch(JSON.stringify(gallery), /imageMogr2/);
   assert.deepEqual(Object.keys(gallery).sort(), [
+    "brands",
     "generatedAt",
     "photos",
     "topics",
@@ -89,6 +115,26 @@ test("exports only the minimal client gallery JSON contract", () => {
   const gallery = normalizeGalleryData({
     generatedAt: "2026-07-06T00:00:00Z",
     updatedAt: "2026-07-06T01:00:00Z",
+    brands: [
+      {
+        id: "sony",
+        name: "Sony",
+        title: "Sony Alpha",
+        aliases: ["索尼"],
+        logoUrls: ["https://cdn.example/sony.svg"],
+        logos: [
+          {
+            url: "https://cdn.example/sony.svg",
+            alt: "Sony mark",
+            key: "internal/sony.svg",
+            size: 1234,
+            storage: "cos",
+          },
+        ],
+        createdAt: "2026-07-01T00:00:00Z",
+        updatedAt: "2026-07-02T00:00:00Z",
+      },
+    ],
     topics: [
       {
         id: "topic",
@@ -139,6 +185,7 @@ test("exports only the minimal client gallery JSON contract", () => {
   });
 
   assert.deepEqual(Object.keys(gallery).sort(), [
+    "brands",
     "generatedAt",
     "photos",
     "topics",
@@ -167,6 +214,17 @@ test("exports only the minimal client gallery JSON contract", () => {
     "height",
     "original",
     "width",
+  ]);
+  assert.deepEqual(Object.keys(gallery.brands[0]).sort(), [
+    "aliases",
+    "id",
+    "logoUrls",
+    "logos",
+    "name",
+    "title",
+  ]);
+  assert.deepEqual(gallery.brands[0].logos, [
+    { url: "https://cdn.example/sony.svg", alt: "Sony mark" },
   ]);
   assert.equal(gallery.photos[0].asset.original, "client-original.jpg");
   assert.match(

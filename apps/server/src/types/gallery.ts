@@ -99,6 +99,7 @@ export type BrandInput = {
 export type GalleryData = {
   photos: PhotoRecord[];
   topics: TopicRecord[];
+  brands: BrandRecord[];
   updatedAt?: string;
 };
 

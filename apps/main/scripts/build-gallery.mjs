@@ -109,8 +109,58 @@ const normalizeTopic = (topic, index) => {
   });
 };
 
+const normalizeBrandLogo = (logo) => {
+  if (!logo || typeof logo !== "object") return undefined;
+  const url = logo.url ?? logo.logoUrl ?? logo.imageUrl ?? logo.dataUrl;
+  if (!url) return undefined;
+  return compact({
+    url,
+    alt: logo.alt ?? logo.label ?? logo.name ?? logo.title,
+  });
+};
+
+const uniqueStrings = (values) => {
+  const seen = new Set();
+  return values.filter((value) => {
+    if (typeof value !== "string" || !value.trim()) return false;
+    const normalized = value.trim();
+    if (seen.has(normalized)) return false;
+    seen.add(normalized);
+    return true;
+  });
+};
+
+const normalizeBrand = (brand, index) => {
+  if (!brand || typeof brand !== "object") {
+    throw new Error(`brands[${index}] must be an object`);
+  }
+  const name = brand.name ?? brand.title ?? brand.cameraBrand;
+  if (!name) throw new Error(`brands[${index}] requires name`);
+  const directLogo = normalizeBrandLogo(brand);
+  const logos = Array.isArray(brand.logos)
+    ? brand.logos.map(normalizeBrandLogo).filter(Boolean)
+    : [];
+  if (directLogo) logos.push(directLogo);
+  const logoUrls = uniqueStrings([
+    ...(Array.isArray(brand.logoUrls) ? brand.logoUrls : []),
+    ...logos.map((logo) => logo.url),
+  ]);
+  return compact(
+    {
+      id: brand.id ?? `brand-${index}`,
+      name,
+      title: brand.title,
+      aliases: Array.isArray(brand.aliases) ? brand.aliases : undefined,
+      logoUrls,
+      logos,
+    },
+    { keepEmptyArrays: true },
+  );
+};
+
 export function normalizeGalleryData(input) {
   const topics = assertArray(input.topics ?? [], "topics").map(normalizeTopic);
+  const brands = assertArray(input.brands ?? [], "brands").map(normalizeBrand);
   const knownTopicIds = new Set(topics.map((topic) => topic.id));
   const photos = assertArray(input.photos, "photos").map((photo, index) => {
     const asset = normalizeAsset(photo);
@@ -166,6 +216,7 @@ export function normalizeGalleryData(input) {
     photos: photos.sort(
       (a, b) => new Date(b.takenAt).getTime() - new Date(a.takenAt).getTime(),
     ),
+    brands,
   };
 }
 
@@ -174,5 +225,5 @@ const gallery = normalizeGalleryData(raw);
 await mkdir(path.dirname(outputPath), { recursive: true });
 await writeFile(outputPath, `${JSON.stringify(gallery, null, 2)}\n`, "utf8");
 console.log(
-  `Generated ${path.relative(repoRoot, outputPath)} from ${path.relative(repoRoot, sourcePath)} (${gallery.photos.length} photos)`,
+  `Generated ${path.relative(repoRoot, outputPath)} from ${path.relative(repoRoot, sourcePath)} (${gallery.photos.length} photos, ${gallery.brands.length} brands)`,
 );

@@ -43,16 +43,23 @@ export type GalleryExportResult = {
   generatedAt: string;
   photoCount: number;
   topicCount: number;
+  brandCount: number;
 };
 
 type ClientGalleryPayload = {
   generatedAt: string;
   topics: Record<string, unknown>[];
   photos: Record<string, unknown>[];
+  brands: Record<string, unknown>[];
 };
 
 function emptyGallery(): GalleryData {
-  return { photos: [], topics: [], updatedAt: new Date(0).toISOString() };
+  return {
+    photos: [],
+    topics: [],
+    brands: [],
+    updatedAt: new Date(0).toISOString(),
+  };
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -79,6 +86,7 @@ function normalizeGallery(value: unknown): GalleryData {
     return {
       photos: value.map(normalizePhotoRecord),
       topics: [],
+      brands: [],
       updatedAt: new Date().toISOString(),
     };
   }
@@ -91,6 +99,9 @@ function normalizeGallery(value: unknown): GalleryData {
       : [],
     topics: Array.isArray(value.topics)
       ? value.topics.map(normalizeTopicRecord)
+      : [],
+    brands: Array.isArray(value.brands)
+      ? value.brands.map(normalizeBrandRecord)
       : [],
     updatedAt:
       typeof value.updatedAt === "string"
@@ -253,10 +264,7 @@ function logoFromUrl(url: string): BrandLogo {
   return { url, storage: "remote" };
 }
 
-function normalizeBrandLogos(
-  logos: unknown,
-  logoUrls: unknown,
-): BrandLogo[] {
+function normalizeBrandLogos(logos: unknown, logoUrls: unknown): BrandLogo[] {
   const normalized: BrandLogo[] = [];
   if (Array.isArray(logos)) {
     for (const logo of logos) {
@@ -290,7 +298,9 @@ function normalizeBrandRecord(value: unknown): BrandRecord {
   const source = isRecord(value) ? value : {};
   const now = new Date().toISOString();
   const name =
-    readString(source.name) ?? readString(source.title) ?? readString(source.id);
+    readString(source.name) ??
+    readString(source.title) ??
+    readString(source.id);
   if (!name) {
     throw new AppError(400, "VALIDATION_ERROR", "brand name is required");
   }
@@ -516,6 +526,30 @@ function toClientTopic(topic: TopicRecord): Record<string, unknown> {
   ]);
 }
 
+function toClientBrandLogo(logo: BrandLogo): Record<string, unknown> {
+  return compactObject([
+    ["url", logo.url],
+    ["alt", logo.alt],
+  ]);
+}
+
+function toClientBrand(brand: BrandRecord): Record<string, unknown> {
+  const logos = brand.logos
+    .map(toClientBrandLogo)
+    .filter((logo) => Boolean(logo.url));
+  return compactObject(
+    [
+      ["id", brand.id],
+      ["name", brand.name],
+      ["title", brand.title],
+      ["aliases", brand.aliases],
+      ["logoUrls", brand.logoUrls],
+      ["logos", logos],
+    ],
+    { keepEmptyArrays: true },
+  );
+}
+
 function toClientPhoto(photo: PhotoRecord): Record<string, unknown> {
   const topicIds = photo.topicIds?.length
     ? photo.topicIds
@@ -563,6 +597,7 @@ export class PhotoStore {
     return {
       photos: await this.list(),
       topics: this.listTopics(),
+      brands: this.listBrands(),
       updatedAt: this.readMeta("updatedAt"),
     };
   }
@@ -655,10 +690,7 @@ export class PhotoStore {
     return updated;
   }
 
-  async appendBrandLogos(
-    id: string,
-    logos: BrandLogo[],
-  ): Promise<BrandRecord> {
+  async appendBrandLogos(id: string, logos: BrandLogo[]): Promise<BrandRecord> {
     const current = await this.getBrand(id);
     const updated = mergeBrand(
       {
@@ -806,6 +838,7 @@ export class PhotoStore {
       generatedAt,
       topics: this.listTopics().map(toClientTopic),
       photos: (await this.list()).map(toClientPhoto),
+      brands: this.listBrands().map(toClientBrand),
     };
   }
 
@@ -825,6 +858,7 @@ export class PhotoStore {
       generatedAt,
       photoCount: payload.photos.length,
       topicCount: payload.topics.length,
+      brandCount: payload.brands.length,
     };
   }
 
@@ -884,6 +918,7 @@ export class PhotoStore {
 
     const operation = this.db.transaction(() => {
       for (const topic of data.topics) this.insertTopic(topic);
+      for (const brand of data.brands) this.insertBrand(brand);
       for (const photo of data.photos) {
         this.insertPhoto(photo);
         this.syncBrandFromExif(photo.exif);

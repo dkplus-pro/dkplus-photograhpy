@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-07-08T11:58:06.498Z",
+  "generatedAt": "2026-07-09T13:34:30.347Z",
   "topics": [
     {
       "id": "city-night",
@@ -347,7 +347,8 @@
       "id": "43836df5-d8a5-4d86-98e8-cafbe22120bd",
       "title": "P7082984",
       "topicIds": [
-        "新疆2025"
+        "新疆2025",
+        "mountain-light"
       ],
       "takenAt": "2025-07-08T10:15:54.000Z",
       "asset": {
@@ -364,7 +365,9 @@
         "aperture": "f/4",
         "shutterSpeed": "1/1600s",
         "focalLength": "42",
-        "capturedAt": "2025-07-08T10:15:54.000Z"
+        "capturedAt": "2025-07-08T10:15:54.000Z",
+        "cameraMake": "OM Digital Solutions",
+        "shutter": "1/1600s"
       }
     },
     {
@@ -480,6 +483,43 @@
         "focalLength": "25",
         "capturedAt": "2024-01-12T09:35:51.000Z"
       }
+    }
+  ],
+  "brands": [
+    {
+      "id": "olympus-corporation",
+      "name": "OLYMPUS CORPORATION",
+      "title": "OLYMPUS",
+      "aliases": [],
+      "logoUrls": [
+        "https://cdn.ai4love.cn/tmp/2026/07/1783581023417-26584660-f8bc-4c29-b987-9c1c5b72f6d2-black.jpg",
+        "https://cdn.ai4love.cn/tmp/2026/07/1783585687917-58933da4-a617-4a9c-936c-ac4e41edefea-white1.jpg"
+      ],
+      "logos": [
+        {
+          "url": "https://cdn.ai4love.cn/tmp/2026/07/1783581023417-26584660-f8bc-4c29-b987-9c1c5b72f6d2-black.jpg",
+          "alt": "black.jpg"
+        },
+        {
+          "url": "https://cdn.ai4love.cn/tmp/2026/07/1783585687917-58933da4-a617-4a9c-936c-ac4e41edefea-white1.jpg",
+          "alt": "white1.jpg"
+        }
+      ]
+    },
+    {
+      "id": "om-digital-solutions",
+      "name": "OM Digital Solutions",
+      "title": "OM SYSTEM",
+      "aliases": [],
+      "logoUrls": [
+        "https://cdn.ai4love.cn/tmp/2026/07/1783581035576-fb3c9a2c-bbfd-4d5b-b79d-bfe2c577b7f1-black.jpg"
+      ],
+      "logos": [
+        {
+          "url": "https://cdn.ai4love.cn/tmp/2026/07/1783581035576-fb3c9a2c-bbfd-4d5b-b79d-bfe2c577b7f1-black.jpg",
+          "alt": "black.jpg"
+        }
+      ]
     }
   ]
 }
