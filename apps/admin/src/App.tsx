@@ -498,6 +498,39 @@ function App() {
     }
     return usage;
   }, [photos]);
+  const brandUsageByName = useMemo(() => {
+    const usage = new Map<string, number>();
+    for (const photo of photos) {
+      const key = brandKey(photoBrandName(photo));
+      if (key) usage.set(key, (usage.get(key) ?? 0) + 1);
+    }
+    return usage;
+  }, [photos]);
+  const brandPhotoCount = (brand: BrandRecord): number =>
+    brandUsageByName.get(brandKey(brand.name)) ?? brand.photoCount ?? 0;
+  const filteredBrands = useMemo(() => {
+    const keyword = brandSearch.trim().toLowerCase();
+    if (!keyword) return brands;
+    return brands.filter((brand) =>
+      [
+        brand.name,
+        brand.title,
+        ...(brand.aliases ?? []),
+        ...brand.logos.flatMap((logo) => [logo.label, logo.url]),
+      ]
+        .filter(Boolean)
+        .join(" ")
+        .toLowerCase()
+        .includes(keyword),
+    );
+  }, [brandSearch, brands]);
+  const brandLogoCount = brands.reduce(
+    (count, brand) => count + brand.logos.filter((logo) => logo.url).length,
+    0,
+  );
+  const syncedBrandCount = brands.filter(
+    (brand) => brandPhotoCount(brand) > 0,
+  ).length;
   const editingPhoto = useMemo(
     () => photos.find((photo) => photo.id === editingId) ?? null,
     [editingId, photos],
@@ -903,6 +936,128 @@ function App() {
     }
   };
 
+  const emptyBrandLogo = () => ({ id: randomId(), url: "", label: "" });
+
+  const openCreateBrandEditor = () => {
+    setEditingBrandId(null);
+    setBrandPayload({ ...emptyBrandPayload, logos: [emptyBrandLogo()] });
+    setIsBrandEditorOpen(true);
+    setActiveSection("brands");
+  };
+
+  const editBrand = (brand: BrandRecord) => {
+    setEditingBrandId(brand.id);
+    setBrandPayload({
+      name: brand.name,
+      title: brand.title ?? brand.name,
+      aliases: brand.aliases ?? [],
+      logos: brand.logos.length
+        ? brand.logos.map((logo) => ({ ...logo }))
+        : [emptyBrandLogo()],
+    });
+    setIsBrandEditorOpen(true);
+  };
+
+  const resetBrandEditor = () => {
+    setEditingBrandId(null);
+    setBrandPayload(emptyBrandPayload);
+    setIsBrandEditorOpen(false);
+  };
+
+  const updateBrandLogo = (
+    index: number,
+    field: "url" | "label",
+    value: string,
+  ) => {
+    setBrandPayload((current) => ({
+      ...current,
+      logos: current.logos.map((logo, logoIndex) =>
+        logoIndex === index ? { ...logo, [field]: value } : logo,
+      ),
+    }));
+  };
+
+  const removeBrandLogo = (index: number) => {
+    setBrandPayload((current) => ({
+      ...current,
+      logos: current.logos.filter((_logo, logoIndex) => logoIndex !== index),
+    }));
+  };
+
+  const addBrandLogo = () => {
+    setBrandPayload((current) => ({
+      ...current,
+      logos: [...current.logos, emptyBrandLogo()],
+    }));
+  };
+
+  const saveBrand = async () => {
+    const name = brandPayload.name.trim();
+    if (!name) {
+      pushMessage("error", "请填写品牌名称。");
+      return;
+    }
+
+    const cleanPayload: BrandPayload = {
+      ...brandPayload,
+      name,
+      title: brandPayload.title?.trim() || name,
+      logos: brandPayload.logos
+        .map((logo) => ({
+          id: logo.id?.trim() || undefined,
+          url: logo.url.trim(),
+          label: logo.label?.trim() || undefined,
+        }))
+        .filter((logo) => Boolean(logo.url)),
+    };
+
+    setIsSaving(true);
+    try {
+      const saved = editingBrandId
+        ? await api.updateBrand(editingBrandId, cleanPayload)
+        : await api.createBrand(cleanPayload);
+      setBrands((current) => {
+        const withoutCurrent = current.filter(
+          (brand) =>
+            brand.id !== saved.id &&
+            (!editingBrandId || brand.id !== editingBrandId),
+        );
+        return mergeBrandsWithPhotoBrands([...withoutCurrent, saved], photos);
+      });
+      pushMessage(
+        "success",
+        editingBrandId ? "品牌已更新" : `品牌“${saved.title || saved.name}”已创建`,
+      );
+      resetBrandEditor();
+    } catch (error) {
+      pushMessage(
+        "error",
+        error instanceof Error ? error.message : "保存品牌失败",
+      );
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const requestDeleteBrand = (brand: BrandRecord) => {
+    const usageCount = brandPhotoCount(brand);
+    setConfirmAction({
+      title: "删除品牌",
+      body: `确认删除“${brand.title || brand.name}”？${
+        usageCount > 0
+          ? "照片 EXIF 中仍存在该品牌，刷新后会通过自动同步再次出现。"
+          : "此操作会移除品牌与 Logo 配置。"
+      }`,
+      async onConfirm() {
+        await api.deleteBrand(brand.id);
+        setBrands((current) =>
+          current.filter((record) => record.id !== brand.id),
+        );
+        pushMessage("success", "品牌已删除");
+      },
+    });
+  };
+
   const requestDeleteTopic = (topic: TopicRecord) => {
     const usageCount = topicUsageById.get(topic.id) ?? 0;
     if (usageCount > 0) {
@@ -1109,6 +1264,87 @@ function App() {
           </Space>
         );
       },
+    },
+  ];
+
+
+  const brandColumns: TableColumnProps<BrandRecord>[] = [
+    {
+      title: "品牌",
+      dataIndex: "title",
+      width: 220,
+      render: (_value, brand) => (
+        <div className="brand-title-cell">
+          <strong>{brand.title || brand.name}</strong>
+          <Text type="secondary">{brand.name}</Text>
+        </div>
+      ),
+    },
+    {
+      title: "Logo",
+      key: "logos",
+      width: 260,
+      align: "center",
+      render: (_value, brand) => {
+        const logos = brand.logos.filter((logo) => logo.url);
+        return logos.length ? (
+          <div className="brand-logo-strip" aria-label={`${brand.name} Logo`}>
+            {logos.slice(0, 4).map((logo, index) => (
+              <figure key={logo.id || `${logo.url}-${index}`}>
+                <img
+                  src={withAdminThumbnailDisplayUrl(logo.url) || logo.url}
+                  alt={logo.label || `${brand.name} logo ${index + 1}`}
+                  loading="lazy"
+                />
+                <figcaption>{logo.label || `Logo ${index + 1}`}</figcaption>
+              </figure>
+            ))}
+            {logos.length > 4 && <Tag>+{logos.length - 4}</Tag>}
+          </div>
+        ) : (
+          <Text type="secondary">未配置 Logo</Text>
+        );
+      },
+    },
+    {
+      title: "图片数",
+      key: "photoCount",
+      width: 110,
+      align: "center",
+      render: (_value, brand) => brandPhotoCount(brand),
+    },
+    {
+      title: "同步状态",
+      key: "sync",
+      width: 150,
+      align: "center",
+      render: (_value, brand) =>
+        brandPhotoCount(brand) > 0 ? (
+          <Tag color="green">EXIF 自动同步</Tag>
+        ) : (
+          <Tag>手动维护</Tag>
+        ),
+    },
+    {
+      title: "操作",
+      key: "actions",
+      width: 170,
+      align: "center",
+      render: (_value, brand) => (
+        <Space size="mini">
+          <Button size="mini" type="outline" onClick={() => editBrand(brand)}>
+            编辑
+          </Button>
+          <Button
+            size="mini"
+            status="danger"
+            type="outline"
+            onClick={() => requestDeleteBrand(brand)}
+          >
+            删除
+          </Button>
+        </Space>
+      ),
     },
   ];
 
