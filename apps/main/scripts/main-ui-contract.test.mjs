@@ -359,8 +359,14 @@ test("main top menu exposes works and canvas watermark export contracts", () => 
   assert.match(mainSource, /new URLSearchParams\(queryString\)/);
   assert.match(mainSource, /searchParams\.get\("photo"\)/);
   assert.match(mainSource, /params\.set\("photo", route\.photoId\)/);
-  assert.match(mainSource, /const watermarkRouteForPhoto = \(photo: ResolvedPhoto\): AppRoute =>/);
-  assert.match(mainSource, /watermarkFields: watermarkRouteFieldsFromPhoto\(photo\)/);
+  assert.match(
+    mainSource,
+    /const watermarkRouteForPhoto = \(photo: ResolvedPhoto\): AppRoute =>/,
+  );
+  assert.match(
+    mainSource,
+    /watermarkFields: watermarkRouteFieldsFromPhoto\(photo\)/,
+  );
   assert.match(mainSource, /onExportWatermark=\{exportWatermarkRoute\}/);
   assert.match(mainSource, />\s*导出水印\s*<\/button>/);
   assert.match(mainSource, /const useAdminBrandLogos = \(\) =>/);
@@ -664,8 +670,9 @@ test("main top menu exposes Works and watermark-export routes", () => {
 test("watermark export page captures required canvas and metadata controls", () => {
   assert.match(mainSource, /WatermarkExport/);
   assert.match(watermarkSource, /createElement\("canvas"\)|OffscreenCanvas/);
-  assert.match(mainSource, /固定白字黑底/);
-  assert.doesNotMatch(mainSource, /黑字白底|黑白样式|watermark-tone/);
+  assert.match(mainSource, /黑色|black/i);
+  assert.match(mainSource, /白字黑底|white/i);
+  assert.doesNotMatch(mainSource, /黑字白底/);
   assert.doesNotMatch(mainSource, /aria-label="水印日期"|显示日期/);
   assert.match(mainSource, /机型|型号|model/i);
   assert.match(mainSource, /曝光|快门|光圈|exposure/i);

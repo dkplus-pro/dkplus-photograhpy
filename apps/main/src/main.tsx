@@ -90,14 +90,12 @@ const parseRouteHash = (hash: string): AppRoute => {
     const searchParams = new URLSearchParams(queryString);
     const photoId =
       searchParams.get("photo") ?? searchParams.get("photoId") ?? undefined;
-    const watermarkFields = watermarkRouteFieldKeys.reduce<WatermarkRouteFields>(
-      (fields, key) => {
+    const watermarkFields =
+      watermarkRouteFieldKeys.reduce<WatermarkRouteFields>((fields, key) => {
         const value = searchParams.get(key);
         if (value) fields[key] = value;
         return fields;
-      },
-      {},
-    );
+      }, {});
     return {
       page: "watermark-export",
       tab: "latest",
@@ -711,12 +709,18 @@ const watermarkRouteForPhoto = (photo: ResolvedPhoto): AppRoute => ({
 const watermarkFieldsFromRoute = (
   photo?: ResolvedPhoto,
   routeFields?: WatermarkRouteFields,
-): WatermarkFieldState => ({
-  ...watermarkFieldsFromPhoto(photo),
-  ...routeFields,
-  includeModel: true,
-  includeExposure: true,
-});
+): WatermarkFieldState => {
+  const photoFields = watermarkFieldsFromPhoto(photo);
+  return {
+    brand: routeFields?.brand ?? photoFields.brand,
+    model: routeFields?.model ?? photoFields.model,
+    lens: routeFields?.lens ?? photoFields.lens,
+    focalLength: routeFields?.focalLength ?? photoFields.focalLength,
+    exposure: routeFields?.exposure ?? photoFields.exposure,
+    includeModel: true,
+    includeExposure: true,
+  };
+};
 
 const normalizeLogoMark = (value: string): string => {
   const normalized = value.trim();
