@@ -377,6 +377,42 @@ test("main top menu exposes works and canvas watermark export contracts", () => 
   assert.match(watermarkSource, /const separatorX = logoX \+ logoSize/);
 });
 
+test("watermark export renders metadata-only output with optional logo and fade overlay", () => {
+  const formatCameraModelBlock =
+    mainSource.match(/const formatCameraModel[\s\S]*?^};/m)?.[0] ?? "";
+  assert.ok(formatCameraModelBlock, "Expected formatCameraModel helper");
+  assert.match(
+    formatCameraModelBlock,
+    /return photo\.exif\?\.cameraModel\?\.trim\(\) \?\? "";/,
+  );
+  assert.doesNotMatch(formatCameraModelBlock, /cameraBrand|cameraMake/);
+
+  assert.doesNotMatch(mainSource, /水印标题|aria-label="水印标题"/);
+  assert.doesNotMatch(watermarkSource, /input\.title|DKPLUS PHOTOGRAPHY/);
+  assert.match(
+    mainSource,
+    /const \[selectedLogoId, setSelectedLogoId\] = useState\(""\)/,
+  );
+  assert.match(mainSource, /<option value="">不显示 Logo<\/option>/);
+  assert.match(watermarkSource, /logo\?: WatermarkLogoInput \| undefined;/);
+  assert.match(watermarkSource, /const hasLogo = Boolean\(input\.logo\)/);
+  assert.match(watermarkSource, /if \(input\.logo\) \{[\s\S]*?drawLogoMark/);
+
+  const gradientCalls =
+    watermarkSource.match(
+      /createLinearGradient\(0, stripY, 0, (?:canvasHeight|height)\)/g,
+    ) ?? [];
+  assert.equal(gradientCalls.length, 2);
+  assert.match(
+    watermarkSource,
+    /overlayGradient\.addColorStop\(0, palette\.overlayTop\)/,
+  );
+  assert.match(
+    watermarkSource,
+    /overlayGradient\.addColorStop\(1, palette\.overlayBottom\)/,
+  );
+});
+
 test("topic and timeline derived data are precomputed without repeated render scans", () => {
   assert.match(gallerySource, /export const buildTopicSummaries =/);
   assert.match(gallerySource, /summary\.photos\.push\(photo\)/);

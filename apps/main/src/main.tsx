@@ -542,7 +542,6 @@ const PhotoModal = ({
 };
 
 type WatermarkFieldState = {
-  title: string;
   date: string;
   model: string;
   exposure: string;
@@ -589,8 +588,6 @@ const builtInWatermarkLogos: WatermarkLogoOption[] = [
     source: "built-in",
   },
 ];
-const fallbackWatermarkLogo = builtInWatermarkLogos[0]!;
-
 const dateInputValue = (value: string): string => {
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return "";
@@ -610,18 +607,12 @@ const formatExposure = (photo?: ResolvedPhoto): string => {
 
 const formatCameraModel = (photo?: ResolvedPhoto): string => {
   if (!photo) return "";
-  return [
-    photo.exif?.cameraBrand ?? photo.exif?.cameraMake,
-    photo.exif?.cameraModel,
-  ]
-    .filter(Boolean)
-    .join(" ");
+  return photo.exif?.cameraModel?.trim() ?? "";
 };
 
 const watermarkFieldsFromPhoto = (
   photo?: ResolvedPhoto,
 ): WatermarkFieldState => ({
-  title: photo?.title ?? "DKPLUS WATERMARK EXAMPLE",
   date: photo ? dateInputValue(photo.takenAt) : "",
   model: formatCameraModel(photo),
   exposure: formatExposure(photo),
@@ -763,7 +754,7 @@ const WatermarkExportPage = ({ photos }: { photos: ResolvedPhoto[] }) => {
   const [customLogo, setCustomLogo] = useState<WatermarkLogoOption | null>(
     null,
   );
-  const [selectedLogoId, setSelectedLogoId] = useState("dkplus");
+  const [selectedLogoId, setSelectedLogoId] = useState("");
   const [rendered, setRendered] = useState<WatermarkRenderResult | null>(null);
   const [renderError, setRenderError] = useState<string | null>(null);
   const [isRendering, setIsRendering] = useState(false);
@@ -784,10 +775,9 @@ const WatermarkExportPage = ({ photos }: { photos: ResolvedPhoto[] }) => {
     });
   }, [adminBrandLogos, customLogo, photos]);
 
-  const selectedLogo =
-    logoOptions.find((option) => option.id === selectedLogoId) ??
-    logoOptions[0] ??
-    fallbackWatermarkLogo;
+  const selectedLogo = selectedLogoId
+    ? logoOptions.find((option) => option.id === selectedLogoId)
+    : undefined;
 
   useEffect(() => {
     if (!selectedPhotoId && photos[0]) {
@@ -797,8 +787,11 @@ const WatermarkExportPage = ({ photos }: { photos: ResolvedPhoto[] }) => {
   }, [photos, selectedPhotoId]);
 
   useEffect(() => {
-    if (!logoOptions.some((option) => option.id === selectedLogoId)) {
-      setSelectedLogoId(logoOptions[0]?.id ?? "dkplus");
+    if (
+      selectedLogoId &&
+      !logoOptions.some((option) => option.id === selectedLogoId)
+    ) {
+      setSelectedLogoId("");
     }
   }, [logoOptions, selectedLogoId]);
 
@@ -806,10 +799,9 @@ const WatermarkExportPage = ({ photos }: { photos: ResolvedPhoto[] }) => {
     if (!selectedPhoto) return null;
     const input: WatermarkRenderInput = {
       imageUrl: selectedPhoto.urls.preview,
-      title: fields.title,
       tone,
-      logo: selectedLogo,
     };
+    if (selectedLogo) input.logo = selectedLogo;
     if (selectedPhoto.asset.width) input.imageWidth = selectedPhoto.asset.width;
     if (selectedPhoto.asset.height)
       input.imageHeight = selectedPhoto.asset.height;
@@ -918,7 +910,7 @@ const WatermarkExportPage = ({ photos }: { photos: ResolvedPhoto[] }) => {
         <h1 id="watermark-title">水印导出</h1>
         <p>
           载入一张示例作品，按测试参考图的底部条形水印输出；可切换黑白字色、品牌
-          Logo、日期、机型和曝光参数。
+          Logo、日期、机型和曝光参数；不选择 Logo 时画面只保留底部渐隐信息层。
         </p>
       </div>
 
@@ -950,15 +942,6 @@ const WatermarkExportPage = ({ photos }: { photos: ResolvedPhoto[] }) => {
             </select>
           </label>
 
-          <label>
-            <span>水印标题</span>
-            <input
-              aria-label="水印标题"
-              value={fields.title}
-              onChange={updateField("title")}
-            />
-          </label>
-
           <fieldset className="watermark-tone">
             <legend>黑白样式</legend>
             <label>
@@ -987,9 +970,10 @@ const WatermarkExportPage = ({ photos }: { photos: ResolvedPhoto[] }) => {
             <span>品牌 Logo</span>
             <select
               aria-label="选择品牌 Logo"
-              value={selectedLogo.id}
+              value={selectedLogo?.id ?? ""}
               onChange={(event) => setSelectedLogoId(event.currentTarget.value)}
             >
+              <option value="">不显示 Logo</option>
               {logoOptions.map((option) => (
                 <option key={option.id} value={option.id}>
                   {option.name}

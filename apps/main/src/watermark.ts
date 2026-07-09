@@ -198,7 +198,12 @@ const drawWatermarkComposition = async (
   const textX = hasLogo ? separatorX + paddingX * 0.45 : paddingX;
   const textWidth = canvasWidth - textX - paddingX;
 
-  const overlayGradient = context.createLinearGradient(0, stripY, 0, canvasHeight);
+  const overlayGradient = context.createLinearGradient(
+    0,
+    stripY,
+    0,
+    canvasHeight,
+  );
   overlayGradient.addColorStop(0, palette.overlayTop);
   overlayGradient.addColorStop(1, palette.overlayBottom);
   context.fillStyle = overlayGradient;
