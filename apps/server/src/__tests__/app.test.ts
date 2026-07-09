@@ -283,17 +283,41 @@ test("brand CRUD persists multiple logos and uploaded EXIF auto-syncs camera bra
     ]);
 
     const uploadedLogo = await request(app)
-      .post("/api/brands/canon/logos")
+      .post("/api/uploads")
       .set("Authorization", "Bearer test-token")
+      .field("mode", "asset")
+      .field("purpose", "brand-logo")
       .attach("files", Buffer.from([0xff, 0xd8, 0xff, 0xd9]), {
         filename: "canon-logo.jpg",
         contentType: "image/jpeg",
       })
       .expect(201);
-    assert.equal(uploadedLogo.body.brand.logoUrls.length, 2);
+    assert.equal(uploadedLogo.body.uploads.length, 1);
     assert.match(
-      uploadedLogo.body.logos[0].url,
+      uploadedLogo.body.uploads[0].url,
       /^http:\/\/cdn\.test\/uploads\//,
+    );
+    const listedBeforeLogoPatch = await authed(request(app).get("/api/photos"))
+      .send({})
+      .expect(200);
+    assert.equal(
+      listedBeforeLogoPatch.body.photos.length,
+      0,
+      "asset-only uploads must not create photo records",
+    );
+
+    const logoPatched = await authed(request(app).patch("/api/brands/canon"))
+      .send({
+        name: "Canon",
+        title: updated.body.brand.title,
+        aliases: updated.body.brand.aliases,
+        logos: [...updated.body.brand.logos, uploadedLogo.body.uploads[0]],
+      })
+      .expect(200);
+    assert.equal(logoPatched.body.brand.logoUrls.length, 2);
+    assert.equal(
+      logoPatched.body.brand.logoUrls[1],
+      uploadedLogo.body.uploads[0].url,
     );
 
     const sonyUpload = await request(app)

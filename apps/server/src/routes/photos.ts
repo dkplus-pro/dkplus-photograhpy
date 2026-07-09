@@ -63,6 +63,19 @@ function field(value: unknown): string | undefined {
   return undefined;
 }
 
+function isAssetUpload(value: unknown): boolean {
+  if (!isRecord(value)) return false;
+  const mode = field(value.mode)?.toLowerCase();
+  const purpose = field(value.purpose)?.toLowerCase();
+  const intent = field(value.intent)?.toLowerCase();
+  return (
+    mode === "asset" ||
+    purpose === "asset" ||
+    purpose === "brand-logo" ||
+    intent === "asset"
+  );
+}
+
 function itemField(value: unknown, path: string): string | undefined {
   if (value === undefined || value === null || value === "") {
     return undefined;
@@ -609,6 +622,17 @@ export function createPhotosRouter(
     }
 
     const form = body(ctx) as Record<string, unknown>;
+    if (isAssetUpload(form)) {
+      const uploadedAssets = [];
+      for (const file of incoming) {
+        const stored = await uploads.store(file);
+        uploadedAssets.push(logoFromStoredFile(file, stored.image));
+      }
+      ctx.status = 201;
+      ctx.body = { uploads: uploadedAssets };
+      return;
+    }
+
     const photoId = field(form.photoId);
     const clientExif = parseClientExif(form.exif);
     const parsedTopicId = field(form.topicId);

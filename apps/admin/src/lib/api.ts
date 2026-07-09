@@ -104,6 +104,8 @@ type ServerUploadResult = Omit<UploadResult, "exif" | "photo"> & {
   exif?: ServerExif;
   photo?: ServerPhoto;
   photos?: ServerPhoto[];
+  uploads?: ServerBrandLogo[];
+  files?: ServerBrandLogo[];
 };
 type ServerUploadBulkResult = {
   photos?: ServerPhoto[];
@@ -175,6 +177,10 @@ const cleanBrandLogos = (logos: BrandLogoRecord[]): BrandLogoRecord[] =>
     })
     .filter((logo) => Boolean(logo.url));
 
+const uploadedLogosFromResult = (
+  result: Pick<ServerUploadResult, "uploads" | "files">,
+): BrandLogoRecord[] => normalizeBrandLogos(result.uploads ?? result.files);
+
 const toServerBrandPayload = (payload: BrandPayload) => {
   const logos = cleanBrandLogos(payload.logos);
   return {
@@ -190,6 +196,36 @@ const toServerBrandPayload = (payload: BrandPayload) => {
         ?.map((url) => url.trim())
         .filter((url) => Boolean(url)) ?? logos.map((logo) => logo.url),
   };
+};
+
+const appendBrandLogosViaBrandUpdate = async (
+  baseUrl: string,
+  id: string,
+  logos: BrandLogoRecord[],
+): Promise<BrandRecord> => {
+  const newLogos = cleanBrandLogos(logos);
+  if (!newLogos.length) throw new Error("Logo URL is required");
+
+  const path = `/brands/${encodeURIComponent(id)}`;
+  const current = normalizeBrandForAdmin(
+    await requestJson<ServerBrandEnvelope>(baseUrl, path),
+  );
+  const mergedLogos = cleanBrandLogos([...current.logos, ...newLogos]);
+
+  return normalizeBrandForAdmin(
+    await requestJson<ServerBrandEnvelope>(baseUrl, path, {
+      method: "PATCH",
+      body: JSON.stringify(
+        toServerBrandPayload({
+          name: current.name,
+          title: current.title ?? current.name,
+          aliases: current.aliases ?? [],
+          logos: mergedLogos,
+          logoUrls: mergedLogos.map((logo) => logo.url),
+        }),
+      ),
+    }),
+  );
 };
 
 const toBulkUploadItem = (preview: UploadPreview) => {
@@ -518,16 +554,19 @@ export const createApiClient = (
   async uploadBrandLogos(id, files) {
     const body = new FormData();
     for (const file of files) body.append("files", file);
-    return normalizeBrandForAdmin(
-      await requestJson<ServerBrandEnvelope>(
-        baseUrl,
-        `/brands/${encodeURIComponent(id)}/logos`,
-        {
-          method: "POST",
-          body,
-        },
-      ),
-    );
+    body.append("mode", "asset");
+    body.append("purpose", "brand-logo");
+
+    const result = await requestJson<ServerUploadResult>(baseUrl, "/uploads", {
+      method: "POST",
+      body,
+    });
+    const uploadedLogos = uploadedLogosFromResult(result);
+    if (!uploadedLogos.length) {
+      throw new Error("Upload did not return any logo files");
+    }
+
+    return appendBrandLogosViaBrandUpdate(baseUrl, id, uploadedLogos);
   },
   async createTopic(payload) {
     return normalizeTopicForAdmin(
@@ -555,18 +594,7 @@ export const createApiClient = (
     });
   },
   async addBrandLogo(id, logo) {
-    const [cleanLogo] = cleanBrandLogos([logo]);
-    if (!cleanLogo) throw new Error("Logo URL is required");
-    return normalizeBrandForAdmin(
-      await requestJson<ServerBrandEnvelope>(
-        baseUrl,
-        `/brands/${encodeURIComponent(id)}/logos`,
-        {
-          method: "POST",
-          body: JSON.stringify(cleanLogo),
-        },
-      ),
-    );
+    return appendBrandLogosViaBrandUpdate(baseUrl, id, [logo]);
   },
   async createPhoto(payload) {
     return normalizePhotoForAdmin(
