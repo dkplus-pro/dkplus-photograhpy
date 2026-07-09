@@ -10,9 +10,8 @@ export interface WatermarkRenderInput {
   imageUrl: string;
   imageWidth?: number | undefined;
   imageHeight?: number | undefined;
-  title: string;
   tone: WatermarkTone;
-  logo: WatermarkLogoInput;
+  logo?: WatermarkLogoInput | undefined;
   date?: string | undefined;
   model?: string | undefined;
   exposure?: string | undefined;
@@ -29,7 +28,8 @@ export interface WatermarkRenderResult {
 type DrawableImage = HTMLImageElement | ImageBitmap;
 
 type Palette = {
-  strip: string;
+  overlayTop: string;
+  overlayBottom: string;
   text: string;
   muted: string;
   separator: string;
@@ -47,7 +47,8 @@ const clamp = (value: number, min: number, max: number): number =>
 const paletteForTone = (tone: WatermarkTone): Palette =>
   tone === "black"
     ? {
-        strip: "rgba(9, 9, 11, 0.9)",
+        overlayTop: "rgba(9, 9, 11, 0)",
+        overlayBottom: "rgba(9, 9, 11, 0.9)",
         text: "#fafafa",
         muted: "rgba(250, 250, 250, 0.76)",
         separator: "rgba(250, 250, 250, 0.36)",
@@ -55,7 +56,8 @@ const paletteForTone = (tone: WatermarkTone): Palette =>
         logoText: "#09090b",
       }
     : {
-        strip: "rgba(250, 250, 250, 0.92)",
+        overlayTop: "rgba(250, 250, 250, 0)",
+        overlayBottom: "rgba(250, 250, 250, 0.92)",
         text: "#09090b",
         muted: "rgba(9, 9, 11, 0.68)",
         separator: "rgba(9, 9, 11, 0.24)",
@@ -191,69 +193,56 @@ const drawWatermarkComposition = async (
   const logoSize = stripHeight - paddingY * 2;
   const logoX = paddingX;
   const logoY = stripY + paddingY;
+  const hasLogo = Boolean(input.logo);
   const separatorX = logoX + logoSize + paddingX * 0.45;
-  const textX = separatorX + paddingX * 0.45;
+  const textX = hasLogo ? separatorX + paddingX * 0.45 : paddingX;
   const textWidth = canvasWidth - textX - paddingX;
 
-  context.fillStyle = palette.strip;
+  const overlayGradient = context.createLinearGradient(0, stripY, 0, canvasHeight);
+  overlayGradient.addColorStop(0, palette.overlayTop);
+  overlayGradient.addColorStop(1, palette.overlayBottom);
+  context.fillStyle = overlayGradient;
   context.fillRect(0, stripY, canvasWidth, stripHeight);
 
-  if (logoImage) {
-    context.fillStyle = palette.logoBackground;
-    context.fillRect(logoX, logoY, logoSize, logoSize);
-    drawContainedImage(
-      context,
-      logoImage,
-      logoX + logoSize * 0.16,
-      logoY + logoSize * 0.16,
-      logoSize * 0.68,
-      logoSize * 0.68,
+  if (input.logo) {
+    if (logoImage) {
+      context.fillStyle = palette.logoBackground;
+      context.fillRect(logoX, logoY, logoSize, logoSize);
+      drawContainedImage(
+        context,
+        logoImage,
+        logoX + logoSize * 0.16,
+        logoY + logoSize * 0.16,
+        logoSize * 0.68,
+        logoSize * 0.68,
+      );
+    } else {
+      drawLogoMark(context, input.logo.mark, logoX, logoY, logoSize, palette);
+    }
+
+    context.fillStyle = palette.separator;
+    context.fillRect(
+      separatorX,
+      logoY,
+      Math.max(2, canvasWidth * 0.0012),
+      logoSize,
     );
-  } else {
-    drawLogoMark(context, input.logo.mark, logoX, logoY, logoSize, palette);
   }
 
-  context.fillStyle = palette.separator;
-  context.fillRect(
-    separatorX,
-    logoY,
-    Math.max(2, canvasWidth * 0.0012),
-    logoSize,
-  );
-
-  const titleSize = clamp(canvasWidth * 0.024, 24, 50);
-  const metaSize = clamp(canvasWidth * 0.0125, 14, 26);
-  const eyebrowSize = clamp(canvasWidth * 0.0095, 11, 18);
-  const brandLabel = input.logo.name || "DKPLUS";
+  const metaSize = clamp(canvasWidth * 0.014, 16, 30);
   const meta = [input.date, input.model, input.exposure]
     .filter(Boolean)
     .join("   ·   ");
 
-  context.textAlign = "left";
-  context.textBaseline = "alphabetic";
-  context.font = watermarkFont(eyebrowSize, 700);
-  context.fillStyle = palette.muted;
-  context.fillText(
-    fitText(context, brandLabel.toUpperCase(), textWidth),
-    textX,
-    stripY + paddingY + eyebrowSize,
-  );
-
-  context.font = watermarkFont(titleSize, 700);
-  context.fillStyle = palette.text;
-  context.fillText(
-    fitText(context, input.title || "DKPLUS PHOTOGRAPHY", textWidth),
-    textX,
-    stripY + stripHeight * 0.55,
-  );
-
   if (meta) {
-    context.font = watermarkFont(metaSize, 500);
-    context.fillStyle = palette.muted;
+    context.textAlign = "left";
+    context.textBaseline = "alphabetic";
+    context.font = watermarkFont(metaSize, 600);
+    context.fillStyle = palette.text;
     context.fillText(
       fitText(context, meta, textWidth),
       textX,
-      stripY + stripHeight - paddingY,
+      canvasHeight - paddingY,
     );
   }
 };
@@ -297,9 +286,9 @@ const renderWatermarkOnMainThread = async (
 const workerSource = String.raw`
 const clamp = (value, min, max) => Math.min(max, Math.max(min, value));
 const paletteForTone = (tone) => tone === "black" ? {
-  strip: "rgba(9, 9, 11, 0.9)", text: "#fafafa", muted: "rgba(250, 250, 250, 0.76)", separator: "rgba(250, 250, 250, 0.36)", logoBackground: "#fafafa", logoText: "#09090b"
+  overlayTop: "rgba(9, 9, 11, 0)", overlayBottom: "rgba(9, 9, 11, 0.9)", text: "#fafafa", muted: "rgba(250, 250, 250, 0.76)", separator: "rgba(250, 250, 250, 0.36)", logoBackground: "#fafafa", logoText: "#09090b"
 } : {
-  strip: "rgba(250, 250, 250, 0.92)", text: "#09090b", muted: "rgba(9, 9, 11, 0.68)", separator: "rgba(9, 9, 11, 0.24)", logoBackground: "#09090b", logoText: "#fafafa"
+  overlayTop: "rgba(250, 250, 250, 0)", overlayBottom: "rgba(250, 250, 250, 0.92)", text: "#09090b", muted: "rgba(9, 9, 11, 0.68)", separator: "rgba(9, 9, 11, 0.24)", logoBackground: "#09090b", logoText: "#fafafa"
 };
 const watermarkFont = (size, weight = 600) => Math.round(size) + 'px "Fira Code", "Fira Sans", sans-serif';
 const fitText = (context, value, maxWidth) => {
@@ -360,37 +349,34 @@ self.onmessage = async (event) => {
     const logoSize = stripHeight - paddingY * 2;
     const logoX = paddingX;
     const logoY = stripY + paddingY;
+    const hasLogo = Boolean(input.logo);
     const separatorX = logoX + logoSize + paddingX * 0.45;
-    const textX = separatorX + paddingX * 0.45;
+    const textX = hasLogo ? separatorX + paddingX * 0.45 : paddingX;
     const textWidth = width - textX - paddingX;
-    context.fillStyle = palette.strip;
+    const overlayGradient = context.createLinearGradient(0, stripY, 0, height);
+    overlayGradient.addColorStop(0, palette.overlayTop);
+    overlayGradient.addColorStop(1, palette.overlayBottom);
+    context.fillStyle = overlayGradient;
     context.fillRect(0, stripY, width, stripHeight);
-    if (logoImage) {
-      context.fillStyle = palette.logoBackground;
-      context.fillRect(logoX, logoY, logoSize, logoSize);
-      drawContainedImage(context, logoImage, logoX + logoSize * 0.16, logoY + logoSize * 0.16, logoSize * 0.68, logoSize * 0.68);
-    } else {
-      drawLogoMark(context, input.logo && input.logo.mark, logoX, logoY, logoSize, palette);
+    if (input.logo) {
+      if (logoImage) {
+        context.fillStyle = palette.logoBackground;
+        context.fillRect(logoX, logoY, logoSize, logoSize);
+        drawContainedImage(context, logoImage, logoX + logoSize * 0.16, logoY + logoSize * 0.16, logoSize * 0.68, logoSize * 0.68);
+      } else {
+        drawLogoMark(context, input.logo.mark, logoX, logoY, logoSize, palette);
+      }
+      context.fillStyle = palette.separator;
+      context.fillRect(separatorX, logoY, Math.max(2, width * 0.0012), logoSize);
     }
-    context.fillStyle = palette.separator;
-    context.fillRect(separatorX, logoY, Math.max(2, width * 0.0012), logoSize);
-    const titleSize = clamp(width * 0.024, 24, 50);
-    const metaSize = clamp(width * 0.0125, 14, 26);
-    const eyebrowSize = clamp(width * 0.0095, 11, 18);
-    const brandLabel = (input.logo && input.logo.name) || "DKPLUS";
+    const metaSize = clamp(width * 0.014, 16, 30);
     const meta = [input.date, input.model, input.exposure].filter(Boolean).join("   ·   ");
-    context.textAlign = "left";
-    context.textBaseline = "alphabetic";
-    context.font = '700 ' + watermarkFont(eyebrowSize);
-    context.fillStyle = palette.muted;
-    context.fillText(fitText(context, brandLabel.toUpperCase(), textWidth), textX, stripY + paddingY + eyebrowSize);
-    context.font = '700 ' + watermarkFont(titleSize);
-    context.fillStyle = palette.text;
-    context.fillText(fitText(context, input.title || "DKPLUS PHOTOGRAPHY", textWidth), textX, stripY + stripHeight * 0.55);
     if (meta) {
-      context.font = '500 ' + watermarkFont(metaSize);
-      context.fillStyle = palette.muted;
-      context.fillText(fitText(context, meta, textWidth), textX, stripY + stripHeight - paddingY);
+      context.textAlign = "left";
+      context.textBaseline = "alphabetic";
+      context.font = '600 ' + watermarkFont(metaSize);
+      context.fillStyle = palette.text;
+      context.fillText(fitText(context, meta, textWidth), textX, height - paddingY);
     }
     const blob = await canvas.convertToBlob({ type: "image/png" });
     image.close && image.close();
