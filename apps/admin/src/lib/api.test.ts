@@ -514,21 +514,19 @@ describe("admin API client auth headers", () => {
         );
       }
       if (url.endsWith("/brands/sony") && !init?.method) {
-        return jsonResponse(
-          {
-            brand: {
-              id: "sony",
-              name: "Sony",
-              title: "Sony Alpha",
-              aliases: ["索尼"],
-              logos: [
-                { url: "/logos/sony-white.svg", alt: "White" },
-                { url: "/logos/sony-black.svg", alt: "Black" },
-              ],
-              logoUrls: ["/logos/sony-white.svg", "/logos/sony-black.svg"],
-            },
+        return jsonResponse({
+          brand: {
+            id: "sony",
+            name: "Sony",
+            title: "Sony Alpha",
+            aliases: ["索尼"],
+            logos: [
+              { url: "/logos/sony-white.svg", alt: "White" },
+              { url: "/logos/sony-black.svg", alt: "Black" },
+            ],
+            logoUrls: ["/logos/sony-white.svg", "/logos/sony-black.svg"],
           },
-        );
+        });
       }
       return jsonResponse(undefined, 204);
     });
@@ -658,8 +656,9 @@ describe("admin API client auth headers", () => {
     const [deleteUrl, deleteInit] = fetchMock.mock.calls[7] ?? [];
     expect(deleteUrl).toBe("http://api.test/api/brands/old%20brand");
     expect(deleteInit?.method).toBe("DELETE");
-    expect(fetchMock.mock.calls.some(([url]) => String(url).includes("/logos")))
-      .toBe(false);
+    expect(
+      fetchMock.mock.calls.some(([url]) => String(url).includes("/logos")),
+    ).toBe(false);
   });
 
   it("normalizes server photo assets and EXIF aliases for admin filters", () => {
