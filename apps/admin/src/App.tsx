@@ -36,6 +36,7 @@ import {
   summarizeUpload,
 } from "./lib/format";
 import type {
+  BrandLogo,
   BrandPayload,
   BrandRecord,
   PhotoPayload,
@@ -130,11 +131,13 @@ const demoBrands: BrandRecord[] = [
     id: "sony",
     name: "Sony",
     title: "Sony / 索尼",
+    aliases: ["索尼"],
+    logoUrls: [],
     photoCount: 1,
     logos: [
       {
         id: "sony-wordmark",
-        label: "黑底字标",
+        alt: "黑底字标",
         url: "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 240 80'%3E%3Crect width='240' height='80' fill='%23141414'/%3E%3Ctext x='120' y='51' font-size='34' fill='%23fffdf8' text-anchor='middle' font-family='Georgia,serif'%3ESONY%3C/text%3E%3C/svg%3E",
       },
     ],
@@ -143,11 +146,13 @@ const demoBrands: BrandRecord[] = [
     id: "fujifilm",
     name: "Fujifilm",
     title: "Fujifilm / 富士",
+    aliases: ["富士"],
+    logoUrls: [],
     photoCount: 1,
     logos: [
       {
         id: "fujifilm-wordmark",
-        label: "白底字标",
+        alt: "白底字标",
         url: "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 260 80'%3E%3Crect width='260' height='80' fill='%23fffdf8'/%3E%3Ctext x='130' y='51' font-size='31' fill='%23141414' text-anchor='middle' font-family='Georgia,serif'%3EFUJIFILM%3C/text%3E%3C/svg%3E",
       },
     ],
@@ -163,7 +168,13 @@ const emptyPayload: PhotoPayload = {
 };
 
 const emptyTopicPayload: TopicPayload = { title: "", description: "" };
-const emptyBrandPayload: BrandPayload = { name: "", title: "", logos: [] };
+const emptyBrandPayload: BrandPayload = {
+  name: "",
+  title: "",
+  aliases: [],
+  logoUrls: [],
+  logos: [],
+};
 type AdminSection = "photos" | "topics" | "brands";
 
 const sectionRoutes: Record<AdminSection, string> = {
@@ -249,7 +260,9 @@ const deriveBrandsFromPhotos = (records: PhotoRecord[]): BrandRecord[] => {
     id: `auto-${brandIdForName(metric.name)}`,
     name: metric.name,
     title: metric.name,
+    aliases: [],
     logos: [],
+    logoUrls: [],
     photoCount: metric.count,
   }));
 };
@@ -272,7 +285,9 @@ const mergeBrandsWithPhotoBrands = (
       ...brand,
       name,
       title: brand.title || name,
+      aliases: brand.aliases ?? [],
       logos: brand.logos ?? [],
+      logoUrls: brand.logoUrls ?? brand.logos?.map((logo) => logo.url) ?? [],
       photoCount: photoCountByKey.get(key) ?? brand.photoCount ?? 0,
     });
   }
@@ -313,6 +328,7 @@ function App() {
   const editorFileInputRef = useRef<HTMLInputElement>(null);
   const quickFileInputRef = useRef<HTMLInputElement>(null);
   const topicFileInputRef = useRef<HTMLInputElement>(null);
+  const brandLogoFileInputRef = useRef<HTMLInputElement>(null);
   const [titleFilter, setTitleFilter] = useState("");
   const [topicFilter, setTopicFilter] = useState("all");
   const [brandFilter, setBrandFilter] = useState("all");
@@ -320,6 +336,7 @@ function App() {
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
+  const [isBrandLogoUploading, setIsBrandLogoUploading] = useState(false);
   const [isEditorOpen, setIsEditorOpen] = useState(false);
   const [isUploadOpen, setIsUploadOpen] = useState(false);
   const [isTopicEditorOpen, setIsTopicEditorOpen] = useState(false);
@@ -516,7 +533,7 @@ function App() {
         brand.name,
         brand.title,
         ...(brand.aliases ?? []),
-        ...brand.logos.flatMap((logo) => [logo.label, logo.url]),
+        ...brand.logos.flatMap((logo) => [logo.alt, logo.url]),
       ]
         .filter(Boolean)
         .join(" ")
@@ -936,7 +953,7 @@ function App() {
     }
   };
 
-  const emptyBrandLogo = () => ({ id: randomId(), url: "", label: "" });
+  const emptyBrandLogo = (): BrandLogo => ({ id: randomId(), url: "", alt: "" });
 
   const openCreateBrandEditor = () => {
     setEditingBrandId(null);
@@ -951,6 +968,7 @@ function App() {
       name: brand.name,
       title: brand.title ?? brand.name,
       aliases: brand.aliases ?? [],
+      logoUrls: brand.logoUrls ?? [],
       logos: brand.logos.length
         ? brand.logos.map((logo) => ({ ...logo }))
         : [emptyBrandLogo()],
@@ -966,12 +984,12 @@ function App() {
 
   const updateBrandLogo = (
     index: number,
-    field: "url" | "label",
+    field: "url" | "alt",
     value: string,
   ) => {
     setBrandPayload((current) => ({
       ...current,
-      logos: current.logos.map((logo, logoIndex) =>
+      logos: (current.logos ?? []).map((logo, logoIndex) =>
         logoIndex === index ? { ...logo, [field]: value } : logo,
       ),
     }));
@@ -980,14 +998,16 @@ function App() {
   const removeBrandLogo = (index: number) => {
     setBrandPayload((current) => ({
       ...current,
-      logos: current.logos.filter((_logo, logoIndex) => logoIndex !== index),
+      logos: (current.logos ?? []).filter(
+        (_logo, logoIndex) => logoIndex !== index,
+      ),
     }));
   };
 
   const addBrandLogo = () => {
     setBrandPayload((current) => ({
       ...current,
-      logos: [...current.logos, emptyBrandLogo()],
+      logos: [...(current.logos ?? []), emptyBrandLogo()],
     }));
   };
 
@@ -998,17 +1018,27 @@ function App() {
       return;
     }
 
+    const cleanLogos = (brandPayload.logos ?? [])
+      .map((logo) => ({
+        id: logo.id?.trim() || undefined,
+        url: logo.url?.trim() || "",
+        alt: logo.alt?.trim() || undefined,
+        key: logo.key?.trim() || undefined,
+        fileName: logo.fileName?.trim() || undefined,
+        mimeType: logo.mimeType?.trim() || undefined,
+        size: logo.size,
+        storage: logo.storage,
+        createdAt: logo.createdAt,
+      }))
+      .filter((logo) => Boolean(logo.url));
+
     const cleanPayload: BrandPayload = {
       ...brandPayload,
       name,
       title: brandPayload.title?.trim() || name,
-      logos: brandPayload.logos
-        .map((logo) => ({
-          id: logo.id?.trim() || undefined,
-          url: logo.url.trim(),
-          label: logo.label?.trim() || undefined,
-        }))
-        .filter((logo) => Boolean(logo.url)),
+      aliases: brandPayload.aliases?.map((alias) => alias.trim()).filter(Boolean),
+      logos: cleanLogos,
+      logoUrls: cleanLogos.map((logo) => logo.url),
     };
 
     setIsSaving(true);
@@ -1036,6 +1066,50 @@ function App() {
       );
     } finally {
       setIsSaving(false);
+    }
+  };
+
+  const uploadBrandLogoFiles = async (files: FileList | null) => {
+    const selectedFiles = Array.from(files ?? []);
+    if (!selectedFiles.length) return;
+    if (!editingBrandId) {
+      pushMessage("error", "请先保存品牌，再上传 Logo 文件。");
+      return;
+    }
+
+    setIsBrandLogoUploading(true);
+    try {
+      const saved = await api.uploadBrandLogos(editingBrandId, selectedFiles);
+      setBrandPayload((current) => ({
+        ...current,
+        name: saved.name,
+        title: saved.title ?? saved.name,
+        aliases: saved.aliases ?? [],
+        logoUrls: saved.logoUrls ?? [],
+        logos: saved.logos.length ? saved.logos : (current.logos ?? []),
+      }));
+      setBrands((current) =>
+        mergeBrandsWithPhotoBrands(
+          [
+            ...current.filter(
+              (brand) => brand.id !== saved.id && brand.id !== editingBrandId,
+            ),
+            saved,
+          ],
+          photos,
+        ),
+      );
+      pushMessage("success", `已上传 ${selectedFiles.length} 个 Logo 文件`);
+    } catch (error) {
+      pushMessage(
+        "error",
+        error instanceof Error ? error.message : "上传品牌 Logo 失败",
+      );
+    } finally {
+      setIsBrandLogoUploading(false);
+      if (brandLogoFileInputRef.current) {
+        brandLogoFileInputRef.current.value = "";
+      }
     }
   };
 
@@ -1293,10 +1367,10 @@ function App() {
               <figure key={logo.id || `${logo.url}-${index}`}>
                 <img
                   src={withAdminThumbnailDisplayUrl(logo.url) || logo.url}
-                  alt={logo.label || `${brand.name} logo ${index + 1}`}
+                  alt={logo.alt || `${brand.name} logo ${index + 1}`}
                   loading="lazy"
                 />
-                <figcaption>{logo.label || `Logo ${index + 1}`}</figcaption>
+                <figcaption>{logo.alt || `Logo ${index + 1}`}</figcaption>
               </figure>
             ))}
             {logos.length > 4 && <Tag>+{logos.length - 4}</Tag>}
