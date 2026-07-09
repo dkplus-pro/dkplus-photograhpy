@@ -266,7 +266,7 @@ const drawWatermarkComposition = async (
     context.fillText(
       fitText(context, firstRow, textWidth),
       textX,
-      stripY + stripHeight * (secondRow ? 0.48 : 0.56),
+      stripY + stripHeight * (secondRow ? 0.52 : 0.56),
     );
   }
   if (secondRow) {
@@ -275,7 +275,7 @@ const drawWatermarkComposition = async (
     context.fillText(
       fitText(context, secondRow, textWidth),
       textX,
-      stripY + stripHeight * 0.68,
+      stripY + stripHeight * 0.64,
     );
   }
 };
@@ -425,12 +425,12 @@ self.onmessage = async (event) => {
     if (firstRow) {
       context.font = watermarkFont(primarySize, 400, watermarkPrimaryFontFamily);
       context.fillStyle = palette.text;
-      context.fillText(fitText(context, firstRow, textWidth), textX, stripY + stripHeight * (secondRow ? 0.48 : 0.56));
+      context.fillText(fitText(context, firstRow, textWidth), textX, stripY + stripHeight * (secondRow ? 0.52 : 0.56));
     }
     if (secondRow) {
       context.font = watermarkFont(secondarySize, 300);
       context.fillStyle = palette.muted;
-      context.fillText(fitText(context, secondRow, textWidth), textX, stripY + stripHeight * 0.68);
+      context.fillText(fitText(context, secondRow, textWidth), textX, stripY + stripHeight * 0.64);
     }
     const blob = await canvas.convertToBlob({ type: "image/png" });
     image.close && image.close();

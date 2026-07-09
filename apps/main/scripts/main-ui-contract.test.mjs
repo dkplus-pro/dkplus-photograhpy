@@ -442,6 +442,8 @@ test("main top menu exposes works and canvas watermark export contracts", () => 
     /watermarkFont\(primarySize, 400, watermarkPrimaryFontFamily\)/,
   );
   assert.match(watermarkSource, /watermarkFont\(secondarySize, 300\)/);
+  assert.match(watermarkSource, /secondRow \? 0\.52 : 0\.56/);
+  assert.match(watermarkSource, /stripHeight \* 0\.64/);
 });
 
 test("watermark export renders metadata-only output with optional logo and fade overlay", () => {
