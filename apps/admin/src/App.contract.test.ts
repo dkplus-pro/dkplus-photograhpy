@@ -199,4 +199,31 @@ describe("admin gallery list contract", () => {
     expect(styles).toContain("min-height: 44px;");
     expect(styles).toContain(".topic-form");
   });
+
+  it("adds brand management navigation and editable multiple logos", () => {
+    expect(appSource).toContain('<MenuItem key="brands">品牌管理</MenuItem>');
+    expect(appSource).toContain('brands: "#/brands"');
+    expect(appSource).toContain('title="品牌列表"');
+    expect(appSource).toContain('className="brand-toolbar"');
+    expect(appSource).toContain('className="brand-logo-strip"');
+    expect(appSource).toContain('className="brand-editor-modal"');
+    expect(appSource).toContain('aria-label="品牌资料表单"');
+    expect(appSource).toContain('品牌与 Logo 配置');
+    expect(appSource).toContain('多个 Logo');
+    expect(appSource).toContain('添加 Logo');
+    expect(appSource).toContain('removeBrandLogo');
+    expect(appSource).toContain('api.listBrands');
+    expect(appSource).toContain('api.createBrand');
+    expect(appSource).toContain('api.updateBrand');
+    expect(appSource).toContain('api.deleteBrand');
+    expect(appSource).toContain('deriveBrandsFromPhotos');
+    expect(appSource).toContain('刷新并同步照片品牌');
+    expect(appSource).toContain('EXIF 自动同步');
+    expect(apiSource).toContain('baseUrl, "/brands"');
+    expect(styles).toContain('.brand-toolbar');
+    expect(styles).toContain('.brand-logo-row');
+    expect(styles).toContain('.brand-form__hero');
+    expect(styles).toContain('.brand-editor-modal .arco-modal');
+  });
+
 });
