@@ -236,8 +236,7 @@ const drawWatermarkComposition = async (
     textWidth = canvasWidth - textX - paddingX;
   }
 
-  const primarySize = clamp(canvasWidth * 0.018, 20, 42);
-  const secondarySize = clamp(canvasWidth * 0.014, 15, 30);
+  const metadataSize = clamp(canvasWidth * 0.018, 20, 42);
   const firstRow = [input.focalLength, input.exposure]
     .filter(Boolean)
     .join(watermarkMetadataSpacer);
@@ -248,21 +247,21 @@ const drawWatermarkComposition = async (
   context.textAlign = "left";
   context.textBaseline = "middle";
   if (firstRow) {
-    context.font = watermarkFont(primarySize, 400, watermarkPrimaryFontFamily);
+    context.font = watermarkFont(metadataSize, 400, watermarkPrimaryFontFamily);
     context.fillStyle = palette.text;
     context.fillText(
       fitText(context, firstRow, textWidth),
       textX,
-      stripY + stripHeight * (secondRow ? 0.52 : 0.56),
+      stripY + stripHeight * (secondRow ? 0.48 : 0.56),
     );
   }
   if (secondRow) {
-    context.font = watermarkFont(secondarySize, 300);
+    context.font = watermarkFont(metadataSize, 300);
     context.fillStyle = palette.muted;
     context.fillText(
       fitText(context, secondRow, textWidth),
       textX,
-      stripY + stripHeight * 0.64,
+      stripY + stripHeight * 0.68,
     );
   }
 };
@@ -401,21 +400,20 @@ self.onmessage = async (event) => {
       textX = dividerX + dividerGap;
       textWidth = width - textX - paddingX;
     }
-    const primarySize = clamp(width * 0.018, 20, 42);
-    const secondarySize = clamp(width * 0.014, 15, 30);
+    const metadataSize = clamp(width * 0.018, 20, 42);
     const firstRow = [input.focalLength, input.exposure].filter(Boolean).join(watermarkMetadataSpacer);
     const secondRow = [input.model, input.lens].filter(Boolean).join(watermarkSecondarySpacer);
     context.textAlign = "left";
     context.textBaseline = "middle";
     if (firstRow) {
-      context.font = watermarkFont(primarySize, 400, watermarkPrimaryFontFamily);
+      context.font = watermarkFont(metadataSize, 400, watermarkPrimaryFontFamily);
       context.fillStyle = palette.text;
-      context.fillText(fitText(context, firstRow, textWidth), textX, stripY + stripHeight * (secondRow ? 0.52 : 0.56));
+      context.fillText(fitText(context, firstRow, textWidth), textX, stripY + stripHeight * (secondRow ? 0.48 : 0.56));
     }
     if (secondRow) {
-      context.font = watermarkFont(secondarySize, 300);
+      context.font = watermarkFont(metadataSize, 300);
       context.fillStyle = palette.muted;
-      context.fillText(fitText(context, secondRow, textWidth), textX, stripY + stripHeight * 0.64);
+      context.fillText(fitText(context, secondRow, textWidth), textX, stripY + stripHeight * 0.68);
     }
     const blob = await canvas.convertToBlob({ type: "image/png" });
     image.close && image.close();
