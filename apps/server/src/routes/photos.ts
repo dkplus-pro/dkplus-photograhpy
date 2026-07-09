@@ -462,7 +462,7 @@ export function createPhotosRouter(
     ctx.body = { deleted };
   });
 
-  router.post("/brands/:id/logos", upload.any(), async (ctx) => {
+  router.post("/uploads/assets", upload.any(), async (ctx) => {
     const incoming = files(ctx);
     if (incoming.length === 0) {
       throw new AppError(
@@ -474,14 +474,14 @@ export function createPhotosRouter(
 
     const form = body(ctx) as Record<string, unknown>;
     const alt = field(form.alt);
-    const logos: BrandLogo[] = [];
+    const uploadedAssets: BrandLogo[] = [];
     for (const file of incoming) {
       const stored = await uploads.store(file);
-      logos.push(logoFromStoredFile(file, stored.image, alt));
+      uploadedAssets.push(logoFromStoredFile(file, stored.image, alt));
     }
-    const brand = await store.appendBrandLogos(ctx.params.id, logos);
+
     ctx.status = 201;
-    ctx.body = { brand, logos };
+    ctx.body = { uploads: uploadedAssets };
   });
 
   router.post("/topics", async (ctx) => {
