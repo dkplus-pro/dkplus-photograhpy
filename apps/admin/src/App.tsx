@@ -1041,19 +1041,23 @@ function App() {
   };
 
   const uploadBrandLogoFiles = async (files: FileList | null) => {
-    if (!files?.length) return;
+    const selectedFiles = Array.from(files ?? []);
+    if (!selectedFiles.length) return;
     if (!editingBrandId) {
-      pushMessage("info", "请先保存品牌，再上传 Logo 图片文件。");
+      pushMessage("error", "请先保存品牌，再上传 Logo 文件。");
       return;
     }
 
-    setIsSaving(true);
+    setIsBrandLogoUploading(true);
     try {
-      const saved = await api.uploadBrandLogos(editingBrandId, Array.from(files));
+      const saved = await api.uploadBrandLogos(editingBrandId, selectedFiles);
       applySavedBrand(saved);
       setBrandPayload((current) => ({
         ...current,
-        logoUrls: saved.logoUrls,
+        name: saved.name,
+        title: saved.title ?? saved.name,
+        aliases: saved.aliases ?? [],
+        logoUrls: saved.logoUrls ?? [],
         logos: saved.logos.length
           ? saved.logos.map((logo) => ({
               ...logo,
@@ -1062,14 +1066,14 @@ function App() {
             }))
           : current.logos,
       }));
-      pushMessage("success", `已上传 ${files.length} 个品牌 Logo`);
+      pushMessage("success", `已上传 ${selectedFiles.length} 个 Logo 文件`);
     } catch (error) {
       pushMessage(
         "error",
         error instanceof Error ? error.message : "上传品牌 Logo 失败",
       );
     } finally {
-      setIsSaving(false);
+      setIsBrandLogoUploading(false);
       if (brandLogoFileInputRef.current) {
         brandLogoFileInputRef.current.value = "";
       }
@@ -1118,50 +1122,6 @@ function App() {
       );
     } finally {
       setIsSaving(false);
-    }
-  };
-
-  const uploadBrandLogoFiles = async (files: FileList | null) => {
-    const selectedFiles = Array.from(files ?? []);
-    if (!selectedFiles.length) return;
-    if (!editingBrandId) {
-      pushMessage("error", "请先保存品牌，再上传 Logo 文件。");
-      return;
-    }
-
-    setIsBrandLogoUploading(true);
-    try {
-      const saved = await api.uploadBrandLogos(editingBrandId, selectedFiles);
-      setBrandPayload((current) => ({
-        ...current,
-        name: saved.name,
-        title: saved.title ?? saved.name,
-        aliases: saved.aliases ?? [],
-        logoUrls: saved.logoUrls ?? [],
-        logos: saved.logos.length ? saved.logos : (current.logos ?? []),
-      }));
-      setBrands((current) =>
-        mergeBrandsWithPhotoBrands(
-          [
-            ...current.filter(
-              (brand) => brand.id !== saved.id && brand.id !== editingBrandId,
-            ),
-            saved,
-          ],
-          photos,
-        ),
-      );
-      pushMessage("success", `已上传 ${selectedFiles.length} 个 Logo 文件`);
-    } catch (error) {
-      pushMessage(
-        "error",
-        error instanceof Error ? error.message : "上传品牌 Logo 失败",
-      );
-    } finally {
-      setIsBrandLogoUploading(false);
-      if (brandLogoFileInputRef.current) {
-        brandLogoFileInputRef.current.value = "";
-      }
     }
   };
 
@@ -2246,7 +2206,7 @@ function App() {
                       <Button
                         type="secondary"
                         disabled={!editingBrandId}
-                        loading={isSaving && Boolean(editingBrandId)}
+                        loading={isBrandLogoUploading}
                         onClick={() => brandLogoFileInputRef.current?.click()}
                       >
                         上传 Logo 图片
