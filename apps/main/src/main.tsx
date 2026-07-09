@@ -597,7 +597,7 @@ const builtInWatermarkLogos: WatermarkLogoOption[] = [
   },
 ];
 
-const watermarkFieldSpacer = "     ";
+const watermarkFieldSpacer = "  ";
 
 const formatExposure = (photo?: ResolvedPhoto): string => {
   if (!photo) return "";

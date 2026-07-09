@@ -368,7 +368,7 @@ test("main top menu exposes works and canvas watermark export contracts", () => 
   assert.match(mainSource, /水印相机品牌/);
   assert.match(mainSource, /水印镜头/);
   assert.match(mainSource, /水印焦段/);
-  assert.match(mainSource, /const watermarkFieldSpacer = "     "/);
+  assert.match(mainSource, /const watermarkFieldSpacer = "  "/);
   assert.match(
     mainSource,
     /const formatCameraBrand = \(photo\?: ResolvedPhoto\): string =>/,
