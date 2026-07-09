@@ -11,6 +11,10 @@ const gallerySource = readFileSync(
   "utf8",
 );
 const mainSource = readFileSync(path.join(dirname, "../src/main.tsx"), "utf8");
+const watermarkSource = readFileSync(
+  path.join(dirname, "../src/watermark.ts"),
+  "utf8",
+);
 const virtualRows = readFileSync(
   path.join(dirname, "../src/useVirtualRows.ts"),
   "utf8",
@@ -177,9 +181,14 @@ test("main list thumbnails use display-only Tencent thumbnail query", () => {
 test("main photo detail opens as a hash route and images block context-menu saves", () => {
   assert.match(mainSource, /photoId\?: string/);
   assert.match(mainSource, /tabSegment === "photo" && detailSegment/);
+  assert.match(mainSource, /firstSegment === "works"/);
   assert.match(
     mainSource,
-    /return `#\/photo\/\$\{encodeURIComponent\(route\.photoId\)\}`/,
+    /const photoSegment = `photo\/\$\{encodeURIComponent\(route\.photoId\)\}`/,
+  );
+  assert.match(
+    mainSource,
+    /return `#\/works\/\$\{route\.tab\}\/\$\{photoSegment\}`/,
   );
   assert.match(
     mainSource,
@@ -198,7 +207,10 @@ test("main photo detail opens as a hash route and images block context-menu save
     mainSource,
     /const closePhotoRoute = \(\) =>\s*navigateToRoute\(galleryRouteWithoutPhoto\(route\)\)/,
   );
-  assert.match(mainSource, /activePhoto = route\.photoId/);
+  assert.match(
+    mainSource,
+    /activePhoto = route\.page === "works" && route\.photoId/,
+  );
   assert.match(mainSource, /onClose=\{closePhotoRoute\}/);
   assert.match(mainSource, /onSelect=\{openPhotoRoute\}/);
   assert.equal(mainSource.match(/draggable=\{false\}/g)?.length, 3);
@@ -269,12 +281,12 @@ test("tab and topic changes are scheduled as non-urgent route transitions", () =
   );
   assert.match(
     mainSource,
-    /const selectTab = \(key: TabKey\) => navigateToRoute\(\{ tab: key \}\)/,
+    /const selectTab = \(key: TabKey\) =>\s*navigateToRoute\(\{ page: "works", tab: key \}\)/,
   );
   assert.match(mainSource, /const selectTopic = \(topic: Topic\) =>/);
   assert.match(
     mainSource,
-    /onBack=\{\(\) => navigateToRoute\(\{ tab: "topics" \}\)\}/,
+    /navigateToRoute\(\{ page: "works", tab: "topics" \}\)/,
   );
 });
 
@@ -297,7 +309,7 @@ test("topics tab opens a secondary virtual topic detail page", () => {
   assert.match(mainSource, /<TopicDetail[\s\S]*?photos=\{topicPhotos\}/);
   assert.match(
     mainSource,
-    /data && route\.tab === "topics" && selectedTopic[\s\S]*?\? topicPhotos[\s\S]*?: \(data\?\.photos \?\? \[\]\)/,
+    /data && route\.page === "works" && route\.tab === "topics" && selectedTopic[\s\S]*?\? topicPhotos[\s\S]*?: \(data\?\.photos \?\? \[\]\)/,
   );
   assert.match(
     cssBlock(".topic-detail__header"),
@@ -316,11 +328,12 @@ test("topics tab opens a secondary virtual topic detail page", () => {
 test("main tabs and topic detail are backed by GitHub Pages-safe hash routes", () => {
   assert.match(mainSource, /const parseRouteHash =/);
   assert.match(mainSource, /const routeToHash =/);
-  assert.match(mainSource, /#\/\$\{route\.tab\}/);
-  assert.match(
-    mainSource,
-    /#\/photo\/\$\{encodeURIComponent\(route\.photoId\)\}/,
-  );
+  assert.match(mainSource, /type MainPageKey = "works" \| "watermark-export"/);
+  assert.match(mainSource, /works: "作品"/);
+  assert.match(mainSource, /"watermark-export": "水印导出"/);
+  assert.match(mainSource, /return "#\/watermark-export"/);
+  assert.match(mainSource, /#\/works\/\$\{route\.tab\}/);
+  assert.match(mainSource, /photo\/\$\{encodeURIComponent\(route\.photoId\)\}/);
   assert.match(mainSource, /window\.location\.hash/);
   assert.match(
     mainSource,
@@ -334,6 +347,42 @@ test("main tabs and topic detail are backed by GitHub Pages-safe hash routes", (
   assert.match(mainSource, /topicSummaryById\.get\(deferredRoute\.topicKey\)/);
   assert.match(mainSource, /useTransition/);
   assert.match(mainSource, /useDeferredValue/);
+});
+
+test("main top menu exposes works and canvas watermark export contracts", () => {
+  assert.match(mainSource, /className="main-menu"/);
+  assert.match(mainSource, /aria-label="主菜单"/);
+  assert.match(mainSource, /href=\{routeToHash\(\{ page, tab: "latest" \}\)\}/);
+  assert.match(mainSource, /selectMainPage\(page\)/);
+  assert.match(
+    mainSource,
+    /id=\{deferredRoute\.page === "works" \? "gallery" : "watermark-export"\}/,
+  );
+  assert.match(mainSource, /<WatermarkExportPage photos=\{data\.photos\} \/>/);
+  assert.match(mainSource, /const useAdminBrandLogos = \(\) =>/);
+  assert.match(mainSource, /fetch\(`\$\{apiBaseUrl\}\/brands`\)/);
+  assert.match(mainSource, /logoUrls/);
+  assert.match(mainSource, /deriveCameraBrandLogos/);
+  assert.match(mainSource, /上传自定义 Logo/);
+  assert.match(mainSource, /白字黑底/);
+  assert.match(mainSource, /黑字白底/);
+  assert.match(mainSource, /显示日期/);
+  assert.match(mainSource, /显示机型/);
+  assert.match(mainSource, /显示曝光/);
+  assert.match(styles, /\.main-menu__link\.active/);
+  assert.match(styles, /\.watermark-preview\[data-tone="black"\]/);
+
+  assert.match(watermarkSource, /export const renderWatermarkExport =/);
+  assert.match(watermarkSource, /OffscreenCanvas/);
+  assert.match(watermarkSource, /workerTimeoutMs/);
+  assert.match(watermarkSource, /renderWatermarkOnMainThread/);
+  assert.match(watermarkSource, /renderer: "worker"/);
+  assert.match(watermarkSource, /renderer: "main-thread"/);
+  assert.match(
+    watermarkSource,
+    /const stripHeight = clamp\(canvasHeight \* 0\.16/,
+  );
+  assert.match(watermarkSource, /const separatorX = logoX \+ logoSize/);
 });
 
 test("topic and timeline derived data are precomputed without repeated render scans", () => {

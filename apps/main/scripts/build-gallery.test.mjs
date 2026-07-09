@@ -190,7 +190,7 @@ test("source gallery preserves b176cc1 Xinjiang records with a single asset url"
   const xinjiangPhotos = sourceGallery.photos.filter((photo) =>
     photo.topicIds?.includes("新疆2025"),
   );
-  assert.equal(xinjiangPhotos.length, 7);
+  assert.equal(xinjiangPhotos.length, 15);
   assert.deepEqual(
     xinjiangPhotos.map((photo) => photo.id),
     [
@@ -201,6 +201,14 @@ test("source gallery preserves b176cc1 Xinjiang records with a single asset url"
       "d9bb85d4-10ae-40ab-a7c7-9070bdef3dd4",
       "73fb9fd9-6ce9-489d-a89c-bd34601653f7",
       "0fefdbdb-24e0-4106-8724-5f415435e0d9",
+      "ecf5149c-b920-4888-a30e-8885313dfbd0",
+      "9db66670-acf5-44ce-ba9a-d71f61650618",
+      "9dddf02f-a000-47bc-87fa-f779e83ed51a",
+      "e71ae0f8-ed99-4b72-9220-a1df1ede7fd5",
+      "7897d5e7-15a3-4dc3-b9c5-0e515a4afa11",
+      "43836df5-d8a5-4d86-98e8-cafbe22120bd",
+      "5f33cc0a-e834-4fc5-91c2-9771ffdda30b",
+      "9146a7e4-2f4a-4572-bd98-38ac765815c7",
     ],
   );
 
