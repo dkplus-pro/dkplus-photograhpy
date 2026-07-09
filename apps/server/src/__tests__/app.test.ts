@@ -761,8 +761,7 @@ test("brand CRUD stores multiple logos and photo camera brands auto-sync", async
         logos: [
           {
             url: "/uploads/brands/sony-white.svg",
-            label: "White logo",
-            tone: "white",
+            alt: "White logo",
           },
         ],
       })
@@ -770,6 +769,7 @@ test("brand CRUD stores multiple logos and photo camera brands auto-sync", async
     assert.equal(created.body.brand.id, "sony");
     assert.equal(created.body.brand.name, "Sony");
     assert.equal(created.body.brand.logos.length, 1);
+    assert.equal(created.body.brand.logos[0].alt, "White logo");
 
     const updated = await authed(request(app).patch("/api/brands/sony"))
       .send({
@@ -778,19 +778,18 @@ test("brand CRUD stores multiple logos and photo camera brands auto-sync", async
           {
             id: created.body.brand.logos[0].id,
             url: "/uploads/brands/sony-white.svg",
-            label: "White logo",
-            tone: "white",
+            alt: "White logo",
           },
           {
             url: "/uploads/brands/sony-black.svg",
-            label: "Black logo",
-            tone: "black",
+            alt: "Black logo",
           },
         ],
       })
       .expect(200);
     assert.equal(updated.body.brand.title, "Sony Alpha edited");
     assert.equal(updated.body.brand.logos.length, 2);
+    assert.equal(updated.body.brand.logos[1].alt, "Black logo");
 
     await authed(request(app).post("/api/photos"))
       .send({

@@ -451,8 +451,7 @@ describe("admin API client auth headers", () => {
                 {
                   id: "sony-white",
                   url: "/uploads/brands/sony-white.svg",
-                  label: "White logo",
-                  tone: "white",
+                  alt: "White logo",
                 },
               ],
             },
@@ -470,14 +469,12 @@ describe("admin API client auth headers", () => {
               {
                 id: "sony-white",
                 url: "/uploads/brands/sony-white.svg",
-                label: "White logo",
-                tone: "white",
+                alt: "White logo",
               },
               {
                 id: "sony-black",
                 url: "/uploads/brands/sony-black.svg",
-                label: "Black logo",
-                tone: "black",
+                alt: "Black logo",
               },
             ],
           },
@@ -496,8 +493,7 @@ describe("admin API client auth headers", () => {
               {
                 id: "sony-white",
                 url: "/uploads/brands/sony-white.svg",
-                label: "White logo",
-                tone: "white",
+                alt: "White logo",
               },
             ],
           },
@@ -510,7 +506,6 @@ describe("admin API client auth headers", () => {
       id?: string;
       url: string;
       label?: string;
-      tone?: "black" | "white";
     };
     type BrandPayload = {
       name: string;
@@ -537,7 +532,6 @@ describe("admin API client auth headers", () => {
         {
           url: "/uploads/brands/sony-white.svg",
           label: "White logo",
-          tone: "white",
         },
       ],
     });
@@ -549,20 +543,21 @@ describe("admin API client auth headers", () => {
           id: "sony-white",
           url: "/uploads/brands/sony-white.svg",
           label: "White logo",
-          tone: "white",
         },
         {
           url: "/uploads/brands/sony-black.svg",
           label: "Black logo",
-          tone: "black",
         },
       ],
     });
     await client.deleteBrand("sony");
 
     expect(listed[0]?.logos).toHaveLength(1);
+    expect(listed[0]?.logos[0]?.label).toBe("White logo");
     expect(created.name).toBe("Sony");
+    expect(created.logos[0]?.label).toBe("White logo");
     expect(updated.logos).toHaveLength(2);
+    expect(updated.logos[1]?.label).toBe("Black logo");
     expect(fetchMock).toHaveBeenCalledTimes(4);
 
     const [listUrl] = fetchMock.mock.calls[0] ?? [];
@@ -577,8 +572,7 @@ describe("admin API client auth headers", () => {
       logos: [
         {
           url: "/uploads/brands/sony-white.svg",
-          label: "White logo",
-          tone: "white",
+          alt: "White logo",
         },
       ],
     });
@@ -593,13 +587,11 @@ describe("admin API client auth headers", () => {
         {
           id: "sony-white",
           url: "/uploads/brands/sony-white.svg",
-          label: "White logo",
-          tone: "white",
+          alt: "White logo",
         },
         {
           url: "/uploads/brands/sony-black.svg",
-          label: "Black logo",
-          tone: "black",
+          alt: "Black logo",
         },
       ],
     });
