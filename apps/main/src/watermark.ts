@@ -245,10 +245,10 @@ const drawWatermarkComposition = async (
 
   const primarySize = clamp(canvasWidth * 0.018, 20, 42);
   const secondarySize = clamp(canvasWidth * 0.014, 15, 30);
-  const firstRow = [input.model, input.lens, input.exposure]
+  const firstRow = [input.focalLength, input.exposure]
     .filter(Boolean)
     .join(watermarkMetadataSpacer);
-  const secondRow = [input.focalLength]
+  const secondRow = [input.model, input.lens]
     .filter(Boolean)
     .join(watermarkMetadataSpacer);
 
@@ -410,8 +410,8 @@ self.onmessage = async (event) => {
     }
     const primarySize = clamp(width * 0.018, 20, 42);
     const secondarySize = clamp(width * 0.014, 15, 30);
-    const firstRow = [input.model, input.lens, input.exposure].filter(Boolean).join(watermarkMetadataSpacer);
-    const secondRow = [input.focalLength].filter(Boolean).join(watermarkMetadataSpacer);
+    const firstRow = [input.focalLength, input.exposure].filter(Boolean).join(watermarkMetadataSpacer);
+    const secondRow = [input.model, input.lens].filter(Boolean).join(watermarkMetadataSpacer);
     context.textAlign = "left";
     context.textBaseline = "middle";
     if (firstRow) {
