@@ -419,7 +419,7 @@ test("main top menu exposes works and canvas watermark export contracts", () => 
     watermarkSource,
     /input\.title|input\.date|titleSize|brandLabel|const logoSize|separatorX|palette\.separator|watermarkSignature/,
   );
-  assert.match(watermarkSource, /const watermarkMetadataSpacer = "   "/);
+  assert.match(watermarkSource, /const watermarkMetadataSpacer = "  "/);
   assert.match(
     watermarkSource,
     /const watermarkPrimaryFontFamily =[\s\S]*?Futura,[\s\S]*?"Futura PT"/,
@@ -476,7 +476,7 @@ test("watermark export renders metadata-only output with optional logo and fade 
     watermarkSource,
     /context\.moveTo\(dividerX, stripY \+ stripHeight \* 0\.33\)/,
   );
-  assert.match(watermarkSource, /const watermarkMetadataSpacer = "   "/);
+  assert.match(watermarkSource, /const watermarkMetadataSpacer = "  "/);
   assert.match(
     watermarkSource,
     /const firstRow = \[input\.focalLength, input\.exposure\][\s\S]*?\.join\(watermarkMetadataSpacer\)/,
