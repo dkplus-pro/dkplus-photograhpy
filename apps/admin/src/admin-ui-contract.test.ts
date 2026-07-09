@@ -200,4 +200,21 @@ describe("admin list UI contract", () => {
     expect(styles).toContain("min-height: 44px;");
     expect(styles).toContain(".topic-form");
   });
+
+  it("adds brand management navigation, CRUD UI, and multiple-logo editing", () => {
+    expect(appSource).toContain('<MenuItem key="brands">品牌管理</MenuItem>');
+    expect(appSource).toContain('brands: "#/brands"');
+    expect(appSource).toContain('title="品牌列表"');
+    expect(appSource).toContain("isBrandEditorOpen");
+    expect(appSource).toContain("api.listBrands");
+    expect(appSource).toContain("api.createBrand");
+    expect(appSource).toContain("api.updateBrand");
+    expect(appSource).toContain("api.deleteBrand");
+    expect(appSource).toMatch(/brandLogos|logos|logoDrafts/);
+    expect(appSource).toMatch(/添加.*Logo|新增.*Logo|addBrandLogo/i);
+    expect(appSource).toMatch(/移除.*Logo|删除.*Logo|removeBrandLogo/i);
+    expect(appSource).toMatch(/上传图片.*品牌|cameraBrand|auto-sync/i);
+    expect(styles).toContain(".brand-form");
+    expect(styles).toMatch(/\.brand-logo|\.brand-card|\.brand-list/);
+  });
 });

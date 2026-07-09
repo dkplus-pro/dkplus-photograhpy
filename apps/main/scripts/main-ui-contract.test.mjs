@@ -421,3 +421,37 @@ test("modal image uses max-bounded containment for all aspect ratios", () => {
   assert.doesNotMatch(imageBlock, /^\s*height:\s*100%;/m);
   assert.doesNotMatch(imageBlock, /object-fit:\s*cover;/);
 });
+
+test("main top menu exposes Works and watermark-export routes", () => {
+  assert.match(mainSource, /作品/);
+  assert.match(mainSource, /水印导出/);
+  assert.match(mainSource, /\bworks\b/);
+  assert.match(mainSource, /\bwatermark\b/);
+  assert.match(mainSource, /#\/works/);
+  assert.match(mainSource, /#\/watermark/);
+  assert.match(mainSource, /top-menu|primary-nav|main-nav/);
+  assert.match(styles, /\.top-menu|\.primary-nav|\.main-nav/);
+
+  assert.match(mainSource, /VirtualPhotoGrid/);
+  assert.match(mainSource, /route\.(section|page|view|tab)\s*===\s*"works"/);
+});
+
+test("watermark export page captures required canvas and metadata controls", () => {
+  assert.match(mainSource, /WatermarkExport/);
+  assert.match(mainSource, /<canvas\b|createElement\("canvas"\)/);
+  assert.match(mainSource, /黑色|black/i);
+  assert.match(mainSource, /白色|white/i);
+  assert.match(mainSource, /日期/);
+  assert.match(mainSource, /机型|型号|model/i);
+  assert.match(mainSource, /曝光|快门|光圈|exposure/i);
+  assert.match(mainSource, /自定义\s*Logo|custom\s*logo/i);
+  assert.match(mainSource, /品牌\s*Logo|brand\s*logo/i);
+  assert.match(mainSource, /示例|example/i);
+  assert.match(mainSource, /download|toBlob|toDataURL|导出/i);
+
+  const watermarkStyles = styles.match(
+    /\.(watermark-export|watermark-page|watermark-canvas)[\s\S]*/i,
+  )?.[0];
+  assert.ok(watermarkStyles, "Expected watermark export CSS selectors");
+  assert.match(watermarkStyles, /bottom|flex-end|end/i);
+});

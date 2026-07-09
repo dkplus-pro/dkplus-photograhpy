@@ -745,3 +745,81 @@ test("local upload files are served from /uploads without admin auth", async () 
     await rm(root, { recursive: true, force: true });
   }
 });
+
+test("brand CRUD stores multiple logos and photo camera brands auto-sync", async () => {
+  const { config, root } = await makeConfig();
+  try {
+    const app = createApp(config).callback();
+
+    const initial = await authed(request(app).get("/api/brands")).expect(200);
+    assert.deepEqual(initial.body.brands, []);
+
+    const created = await authed(request(app).post("/api/brands"))
+      .send({
+        name: "Sony",
+        title: "Sony Alpha",
+        logos: [
+          {
+            url: "/uploads/brands/sony-white.svg",
+            label: "White logo",
+            tone: "white",
+          },
+        ],
+      })
+      .expect(201);
+    assert.equal(created.body.brand.id, "sony");
+    assert.equal(created.body.brand.name, "Sony");
+    assert.equal(created.body.brand.logos.length, 1);
+
+    const updated = await authed(request(app).patch("/api/brands/sony"))
+      .send({
+        title: "Sony Alpha edited",
+        logos: [
+          {
+            id: created.body.brand.logos[0].id,
+            url: "/uploads/brands/sony-white.svg",
+            label: "White logo",
+            tone: "white",
+          },
+          {
+            url: "/uploads/brands/sony-black.svg",
+            label: "Black logo",
+            tone: "black",
+          },
+        ],
+      })
+      .expect(200);
+    assert.equal(updated.body.brand.title, "Sony Alpha edited");
+    assert.equal(updated.body.brand.logos.length, 2);
+
+    await authed(request(app).post("/api/photos"))
+      .send({
+        title: "Auto sync frame",
+        image: { url: "https://cdn.example/fuji.jpg", storage: "remote" },
+        exif: { cameraBrand: "Fujifilm", cameraModel: "X-H2" },
+      })
+      .expect(201);
+
+    const listed = await authed(request(app).get("/api/brands")).expect(200);
+    const sony = listed.body.brands.find(
+      (brand: { id: string }) => brand.id === "sony",
+    );
+    const fuji = listed.body.brands.find(
+      (brand: { name: string }) => brand.name === "Fujifilm",
+    );
+    assert.equal(sony.logos.length, 2);
+    assert.ok(fuji, "cameraBrand from photo EXIF should create a brand record");
+    assert.deepEqual(fuji.logos, []);
+
+    await authed(request(app).delete("/api/brands/sony")).expect(200);
+    const afterDelete = await authed(request(app).get("/api/brands")).expect(
+      200,
+    );
+    assert.equal(
+      afterDelete.body.brands.some((brand: { id: string }) => brand.id === "sony"),
+      false,
+    );
+  } finally {
+    await rm(root, { recursive: true, force: true });
+  }
+});
