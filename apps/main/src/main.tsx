@@ -43,11 +43,20 @@ const galleryDataUrl = import.meta.env.DEV
 
 type MainPageKey = "works" | "watermark-export";
 
+type WatermarkRouteFields = {
+  brand?: string | undefined;
+  model?: string | undefined;
+  lens?: string | undefined;
+  focalLength?: string | undefined;
+  exposure?: string | undefined;
+};
+
 type AppRoute = {
   page: MainPageKey;
   tab: TabKey;
   topicKey?: string | undefined;
   photoId?: string | undefined;
+  watermarkFields?: WatermarkRouteFields | undefined;
 };
 
 const mainPageLabels = {
@@ -56,11 +65,21 @@ const mainPageLabels = {
 } as const;
 
 const routeTabs = new Set<TabKey>(["latest", "topics", "timeline"]);
+const watermarkRouteFieldKeys = [
+  "brand",
+  "model",
+  "lens",
+  "focalLength",
+  "exposure",
+] as const;
 
 const defaultWorksRoute = (): AppRoute => ({ page: "works", tab: "latest" });
 
 const parseRouteHash = (hash: string): AppRoute => {
-  const path = hash.replace(/^#\/?/, "").replace(/^\/+/, "");
+  const rawPath = hash.replace(/^#\/?/, "").replace(/^\/+/, "");
+  const queryStart = rawPath.indexOf("?");
+  const path = queryStart >= 0 ? rawPath.slice(0, queryStart) : rawPath;
+  const queryString = queryStart >= 0 ? rawPath.slice(queryStart + 1) : "";
   const [firstSegment, secondSegment, thirdSegment, fourthSegment] =
     path.split("/");
   if (
@@ -68,7 +87,25 @@ const parseRouteHash = (hash: string): AppRoute => {
     firstSegment === "watermark" ||
     firstSegment === "export"
   ) {
-    return { page: "watermark-export", tab: "latest" };
+    const searchParams = new URLSearchParams(queryString);
+    const photoId =
+      searchParams.get("photo") ?? searchParams.get("photoId") ?? undefined;
+    const watermarkFields = watermarkRouteFieldKeys.reduce<WatermarkRouteFields>(
+      (fields, key) => {
+        const value = searchParams.get(key);
+        if (value) fields[key] = value;
+        return fields;
+      },
+      {},
+    );
+    return {
+      page: "watermark-export",
+      tab: "latest",
+      photoId: photoId || undefined,
+      watermarkFields: Object.keys(watermarkFields).length
+        ? watermarkFields
+        : undefined,
+    };
   }
   if (firstSegment === "works" || firstSegment === "work") {
     if (!secondSegment) return defaultWorksRoute();
@@ -146,7 +183,14 @@ const safeDecodeRouteSegment = (value: string): string => {
 
 const routeToHash = (route: AppRoute): string => {
   if (route.page === "watermark-export") {
-    return "#/watermark-export";
+    const params = new URLSearchParams();
+    if (route.photoId) params.set("photo", route.photoId);
+    for (const key of watermarkRouteFieldKeys) {
+      const value = route.watermarkFields?.[key];
+      if (value) params.set(key, value);
+    }
+    const query = params.toString();
+    return `#/watermark-export${query ? `?${query}` : ""}`;
   }
   if (route.photoId) {
     const photoSegment = `photo/${encodeURIComponent(route.photoId)}`;
@@ -398,12 +442,14 @@ const PhotoModal = ({
   active,
   dataSaverEnabled,
   onClose,
+  onExportWatermark,
   onSelect,
 }: {
   photos: ResolvedPhoto[];
   active: ResolvedPhoto | null;
   dataSaverEnabled: boolean;
   onClose: () => void;
+  onExportWatermark: (photo: ResolvedPhoto) => void;
   onSelect: (photo: ResolvedPhoto) => void;
 }) => {
   const [loadedPreview, setLoadedPreview] = useState<{
@@ -534,6 +580,13 @@ const PhotoModal = ({
               </div>
             ))}
           </dl>
+          <button
+            type="button"
+            className="watermark-download"
+            onClick={() => onExportWatermark(active)}
+          >
+            导出水印
+          </button>
         </aside>
       </article>
     </div>
@@ -638,6 +691,33 @@ const watermarkFieldsFromPhoto = (
   includeExposure: true,
 });
 
+const watermarkRouteFieldsFromPhoto = (
+  photo: ResolvedPhoto,
+): WatermarkRouteFields => ({
+  brand: formatCameraBrand(photo),
+  model: formatCameraModel(photo),
+  lens: formatLensModel(photo),
+  focalLength: formatFocalLength(photo),
+  exposure: formatExposure(photo),
+});
+
+const watermarkRouteForPhoto = (photo: ResolvedPhoto): AppRoute => ({
+  page: "watermark-export",
+  tab: "latest",
+  photoId: photo.id,
+  watermarkFields: watermarkRouteFieldsFromPhoto(photo),
+});
+
+const watermarkFieldsFromRoute = (
+  photo?: ResolvedPhoto,
+  routeFields?: WatermarkRouteFields,
+): WatermarkFieldState => ({
+  ...watermarkFieldsFromPhoto(photo),
+  ...routeFields,
+  includeModel: true,
+  includeExposure: true,
+});
+
 const normalizeLogoMark = (value: string): string => {
   const normalized = value.trim();
   if (!normalized) return "dk+";
@@ -645,6 +725,12 @@ const normalizeLogoMark = (value: string): string => {
   if (ascii) return ascii.slice(0, 4);
   return normalized.slice(0, 2);
 };
+
+const normalizeLogoMatchValue = (value?: string): string =>
+  (value ?? "")
+    .trim()
+    .toLocaleLowerCase()
+    .replace(/[^a-z0-9\u4e00-\u9fff]+/gu, "");
 
 const compactLogoOption = (
   id: string,
