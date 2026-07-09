@@ -310,10 +310,7 @@ test("topics tab opens a secondary virtual topic detail page", () => {
   const topicDescriptionStyles = cssBlocks(".topic-card__copy em").join("\n");
   assert.match(topicDescriptionStyles, /display:\s*-webkit-box;/);
   assert.match(topicDescriptionStyles, /overflow:\s*hidden;/);
-  assert.match(
-    topicDescriptionStyles,
-    /-webkit-line-clamp:\s*2;/,
-  );
+  assert.match(topicDescriptionStyles, /-webkit-line-clamp:\s*2;/);
 });
 
 test("main tabs and topic detail are backed by GitHub Pages-safe hash routes", () => {

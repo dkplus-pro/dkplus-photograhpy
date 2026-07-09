@@ -816,7 +816,9 @@ test("brand CRUD stores multiple logos and photo camera brands auto-sync", async
       200,
     );
     assert.equal(
-      afterDelete.body.brands.some((brand: { id: string }) => brand.id === "sony"),
+      afterDelete.body.brands.some(
+        (brand: { id: string }) => brand.id === "sony",
+      ),
       false,
     );
   } finally {
