@@ -319,8 +319,7 @@ function mergeBrand(input: BrandInput, existing?: BrandRecord): BrandRecord {
   const id =
     input.id ??
     existing?.id ??
-    normalizeBrandId(input.name ?? input.title ?? name) ??
-    randomUUID();
+    (normalizeBrandId(input.name ?? input.title ?? name) || randomUUID());
 
   return withLogoUrls({
     id,
@@ -608,6 +607,87 @@ export class PhotoStore {
     );
   }
 
+  listBrands(): BrandRecord[] {
+    return this.db
+      .prepare<[], BrandRow>(
+        `SELECT id, data
+         FROM brands
+         ORDER BY sort_name ASC, id ASC`,
+      )
+      .all()
+      .map((row) => normalizeBrandRecord(JSON.parse(row.data)));
+  }
+
+  async getBrand(id: string): Promise<BrandRecord> {
+    return parseBrandRow(
+      this.db
+        .prepare<[string], BrandRow>("SELECT id, data FROM brands WHERE id = ?")
+        .get(id),
+      id,
+    );
+  }
+
+  async createBrand(input: BrandInput): Promise<BrandRecord> {
+    const next = mergeBrand(input);
+    const operation = this.db.transaction(() => {
+      if (this.brandExists(next.id)) {
+        throw new AppError(
+          409,
+          "BRAND_ID_CONFLICT",
+          `Brand ${next.id} already exists`,
+        );
+      }
+      this.insertBrand(next);
+      this.touch();
+    });
+    operation();
+    return next;
+  }
+
+  async updateBrand(id: string, input: BrandInput): Promise<BrandRecord> {
+    const current = await this.getBrand(id);
+    const updated = mergeBrand({ ...input, id }, current);
+    const operation = this.db.transaction(() => {
+      this.insertBrand(updated);
+      this.touch();
+    });
+    operation();
+    return updated;
+  }
+
+  async appendBrandLogos(
+    id: string,
+    logos: BrandLogo[],
+  ): Promise<BrandRecord> {
+    const current = await this.getBrand(id);
+    const updated = mergeBrand(
+      {
+        id,
+        name: current.name,
+        title: current.title,
+        aliases: current.aliases,
+        logos: [...current.logos, ...logos],
+      },
+      current,
+    );
+    const operation = this.db.transaction(() => {
+      this.insertBrand(updated);
+      this.touch();
+    });
+    operation();
+    return updated;
+  }
+
+  async deleteBrand(id: string): Promise<BrandRecord> {
+    const deleted = await this.getBrand(id);
+    const operation = this.db.transaction(() => {
+      this.db.prepare("DELETE FROM brands WHERE id = ?").run(id);
+      this.touch();
+    });
+    operation();
+    return deleted;
+  }
+
   async createTopic(input: TopicInput): Promise<TopicRecord> {
     const next = mergeTopic(input);
     const operation = this.db.transaction(() => {
@@ -665,6 +745,7 @@ export class PhotoStore {
         );
       }
       this.insertPhoto(next);
+      this.syncBrandFromExif(next.exif);
       this.touch();
     });
     operation();
@@ -676,6 +757,7 @@ export class PhotoStore {
     const updated = mergePhoto({ ...input, id }, current);
     const operation = this.db.transaction(() => {
       this.insertPhoto(updated);
+      this.syncBrandFromExif(updated.exif);
       this.touch();
     });
     operation();
@@ -764,6 +846,13 @@ export class PhotoStore {
         data TEXT NOT NULL,
         sort_order INTEGER
       );
+      CREATE TABLE IF NOT EXISTS brands (
+        id TEXT PRIMARY KEY,
+        data TEXT NOT NULL,
+        sort_name TEXT NOT NULL,
+        created_at TEXT NOT NULL,
+        updated_at TEXT NOT NULL
+      );
       CREATE TABLE IF NOT EXISTS gallery_meta (
         key TEXT PRIMARY KEY,
         value TEXT NOT NULL
@@ -795,7 +884,10 @@ export class PhotoStore {
 
     const operation = this.db.transaction(() => {
       for (const topic of data.topics) this.insertTopic(topic);
-      for (const photo of data.photos) this.insertPhoto(photo);
+      for (const photo of data.photos) {
+        this.insertPhoto(photo);
+        this.syncBrandFromExif(photo.exif);
+      }
       this.setMeta("updatedAt", data.updatedAt ?? new Date().toISOString());
     });
     operation();
@@ -843,6 +935,33 @@ export class PhotoStore {
       });
   }
 
+  private insertBrand(brand: BrandRecord): void {
+    const normalized = withLogoUrls(brand);
+    this.db
+      .prepare<{
+        id: string;
+        data: string;
+        sortName: string;
+        createdAt: string;
+        updatedAt: string;
+      }>(
+        `INSERT INTO brands (id, data, sort_name, created_at, updated_at)
+         VALUES (@id, @data, @sortName, @createdAt, @updatedAt)
+         ON CONFLICT(id) DO UPDATE SET
+           data = excluded.data,
+           sort_name = excluded.sort_name,
+           created_at = excluded.created_at,
+           updated_at = excluded.updated_at`,
+      )
+      .run({
+        id: normalized.id,
+        data: JSON.stringify(normalized),
+        sortName: normalized.name.toLocaleLowerCase(),
+        createdAt: normalized.createdAt,
+        updatedAt: normalized.updatedAt,
+      });
+  }
+
   private photoExists(id: string): boolean {
     return Boolean(
       this.db.prepare<[string]>("SELECT 1 FROM photos WHERE id = ?").get(id),
@@ -852,6 +971,41 @@ export class PhotoStore {
   private topicExists(id: string): boolean {
     return Boolean(
       this.db.prepare<[string]>("SELECT 1 FROM topics WHERE id = ?").get(id),
+    );
+  }
+
+  private brandExists(id: string): boolean {
+    return Boolean(
+      this.db.prepare<[string]>("SELECT 1 FROM brands WHERE id = ?").get(id),
+    );
+  }
+
+  private findBrandByName(name: string): BrandRecord | undefined {
+    const normalizedName = name.trim().toLocaleLowerCase();
+    if (!normalizedName) return undefined;
+    return this.listBrands().find(
+      (brand) =>
+        brand.name.toLocaleLowerCase() === normalizedName ||
+        brand.aliases?.some(
+          (alias) => alias.toLocaleLowerCase() === normalizedName,
+        ),
+    );
+  }
+
+  private syncBrandFromExif(exif: ExifMetadata | undefined): void {
+    const name = readString(exif?.cameraBrand);
+    if (!name || this.findBrandByName(name)) {
+      return;
+    }
+    const id = normalizeBrandId(name) || randomUUID();
+    if (this.brandExists(id)) {
+      return;
+    }
+    this.insertBrand(
+      mergeBrand({
+        id,
+        name,
+      }),
     );
   }
 
