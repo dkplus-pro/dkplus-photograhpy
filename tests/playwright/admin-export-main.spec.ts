@@ -940,6 +940,54 @@ test("Main topics tab opens a virtual detail page with scoped modal navigation",
 test("Main top menu opens works and watermark export with a rendered example", async ({
   page,
 }) => {
+  const svg =
+    "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='800' height='800'%3E%3Crect width='800' height='800' fill='%23222222'/%3E%3C/svg%3E";
+  await page.route("**/api/gallery", async (route) => {
+    await route.fulfill({
+      contentType: "application/json",
+      body: JSON.stringify({
+        generatedAt: "2026-07-07T00:00:00.000Z",
+        topics: [],
+        photos: [
+          {
+            id: "watermark-route-photo",
+            title: "水印路由样片",
+            description: "Fixture for modal-to-watermark handoff",
+            topicIds: [],
+            takenAt: "2026-07-07T08:00:00.000Z",
+            asset: {
+              original: svg,
+              thumbnail: svg,
+              preview: svg,
+              alt: "水印路由样片",
+              width: 800,
+              height: 800,
+            },
+            exif: {
+              cameraBrand: "Sony",
+              cameraMake: "Sony",
+              cameraModel: "A7R V",
+              lens: "FE 35mm F1.4 GM",
+              aperture: "f/4",
+              shutter: "1/250s",
+              shutterSpeed: "1/250s",
+              iso: 100,
+              focalLengthMm: 35,
+            },
+          },
+        ],
+      }),
+    });
+  });
+  await page.route("**/api/brands", async (route) => {
+    await route.fulfill({
+      contentType: "application/json",
+      body: JSON.stringify({
+        brands: [{ id: "sony", name: "Sony", mark: "SONY" }],
+      }),
+    });
+  });
+
   await page.setViewportSize({ width: 1280, height: 820 });
   await page.goto(`${mainBaseUrl}#/works/latest`);
   await expect(page.getByRole("link", { name: "作品" })).toHaveAttribute(
@@ -962,13 +1010,25 @@ test("Main top menu opens works and watermark export with a rendered example", a
   await expect(page.getByLabel("选择 Logo（可选）")).toBeVisible();
   await expect(page.getByLabel("水印标题")).toHaveCount(0);
   await expect(page.getByLabel("水印日期")).toHaveCount(0);
+  await expect(page.getByLabel("黑字白底")).toHaveCount(0);
+  await expect(page.getByText("黑白样式")).toHaveCount(0);
+  await expect(page.locator(".watermark-preview")).toHaveAttribute(
+    "data-tone",
+    "black",
+  );
+  await expect(page.getByLabel("选择示例照片")).toHaveValue(
+    "watermark-route-photo",
+  );
+  await expect(page.getByLabel("水印相机品牌")).toHaveValue("Sony");
+  await expect(page.getByLabel("水印机型")).toHaveValue("A7R V");
+  await expect(page.getByLabel("水印镜头")).toHaveValue("FE 35mm F1.4 GM");
+  await expect(page.getByLabel("水印焦段")).toHaveValue("35mm");
+  await expect(page.getByLabel("水印曝光")).toHaveValue(
+    /f\/4\s+1\/250s\s+ISO 100/,
+  );
 
   await page.getByLabel("水印机型").fill("A7R V");
   await page.getByLabel("水印曝光").fill("f/4     1/250s     ISO 100");
-  await expect(page.getByText("固定白字黑底")).toBeVisible();
-  await expect(page.getByLabel("黑字白底")).toHaveCount(0);
-  await expect(page.getByLabel("白字黑底")).toHaveCount(0);
-  expect(await page.locator(".watermark-preview").getAttribute("data-tone")).toBeNull();
 
   const logoOptions = await page
     .getByLabel("选择 Logo（可选）")
@@ -976,8 +1036,8 @@ test("Main top menu opens works and watermark export with a rendered example", a
     .allTextContents();
   expect(logoOptions.join(" ")).toContain("不使用 Logo");
   expect(logoOptions.join(" ")).toContain("dk+ photography");
-  expect(logoOptions.join(" ")).toMatch(/Sony|Fujifilm/);
-  await expect(page.getByLabel("选择 Logo（可选）")).toHaveValue("none");
+  expect(logoOptions.join(" ")).toContain("Sony · 品牌管理");
+  await expect(page.getByLabel("选择 Logo（可选）")).toHaveValue("sony");
 
   await expect(page.locator(".watermark-preview img")).toBeVisible({
     timeout: 10_000,
@@ -1000,6 +1060,33 @@ test("Main top menu opens works and watermark export with a rendered example", a
     "aria-selected",
     "true",
   );
+
+  await page
+    .getByRole("button", { name: "查看图片：水印路由样片", exact: true })
+    .click();
+  await expect(
+    page.getByRole("dialog", { name: "水印路由样片" }),
+  ).toBeVisible();
+  await page.getByRole("button", { name: "导出水印" }).click();
+  await expect(page).toHaveURL(/#\/watermark-export\?/);
+
+  const hash = new URL(page.url()).hash;
+  const routeParams = new URLSearchParams(hash.slice(hash.indexOf("?") + 1));
+  expect(routeParams.get("photo")).toBe("watermark-route-photo");
+  expect(routeParams.get("brand")).toBe("Sony");
+  expect(routeParams.get("model")).toBe("A7R V");
+  expect(routeParams.get("lens")).toBe("FE 35mm F1.4 GM");
+  expect(routeParams.get("focalLength")).toBe("35mm");
+  expect(routeParams.get("exposure")).toMatch(/f\/4\s+1\/250s\s+ISO 100/);
+
+  await expect(page.getByLabel("选择示例照片")).toHaveValue(
+    "watermark-route-photo",
+  );
+  await expect(page.getByLabel("水印相机品牌")).toHaveValue("Sony");
+  await expect(page.getByLabel("水印机型")).toHaveValue("A7R V");
+  await expect(page.getByLabel("水印镜头")).toHaveValue("FE 35mm F1.4 GM");
+  await expect(page.getByLabel("水印焦段")).toHaveValue("35mm");
+  await expect(page.getByLabel("选择 Logo（可选）")).toHaveValue("sony");
 });
 
 test("Main hash routes restore tabs/topic detail and thumbnails stay display-only", async ({
