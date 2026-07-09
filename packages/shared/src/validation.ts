@@ -366,7 +366,11 @@ export const validateBrandLogo = (
   assign(logo, "key", optionalString(input, "key", path, issues));
   assign(logo, "fileName", optionalString(input, "fileName", path, issues));
   assign(logo, "mimeType", optionalString(input, "mimeType", path, issues));
-  assign(logo, "size", optionalNonNegativeInteger(input, "size", path, issues));
+  assign(
+    logo,
+    "size",
+    optionalNonNegativeInteger(input, "size", path, issues),
+  );
   assign(logo, "storage", storage as BrandLogo["storage"] | undefined);
   assign(logo, "alt", optionalString(input, "alt", path, issues));
   assign(logo, "createdAt", optionalIsoDate(input, "createdAt", path, issues));
@@ -384,9 +388,7 @@ export const validateCameraBrand = (
   if (!isRecord(input)) {
     return {
       ok: false,
-      issues: [
-        issue(path, "Expected a camera brand object.", "invalid_object"),
-      ],
+      issues: [issue(path, "Expected a camera brand object.", "invalid_object")],
     };
   }
 
@@ -404,11 +406,7 @@ export const validateCameraBrand = (
   const rawLogos = input.logos;
   if (!Array.isArray(rawLogos)) {
     issues.push(
-      issue(
-        `${path}.logos`,
-        "Expected logos to be present.",
-        "missing_required",
-      ),
+      issue(`${path}.logos`, "Expected logos to be present.", "missing_required"),
     );
   } else {
     brand.logos = rawLogos.flatMap((logo, index) => {

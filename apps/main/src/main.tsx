@@ -62,13 +62,8 @@ const defaultWorksRoute = (): AppRoute => ({ page: "works", tab: "latest" });
 
 const parseRouteHash = (hash: string): AppRoute => {
   const path = hash.replace(/^#\/?/, "").replace(/^\/+/, "");
-  const [
-    firstSegment,
-    secondSegment,
-    thirdSegment,
-    fourthSegment,
-    fifthSegment,
-  ] = path.split("/");
+  const [firstSegment, secondSegment, thirdSegment, fourthSegment] =
+    path.split("/");
   if (
     firstSegment === "watermark-export" ||
     firstSegment === "watermark" ||
@@ -99,9 +94,9 @@ const parseRouteHash = (hash: string): AppRoute => {
             tab: "topics",
             topicKey: safeDecodeRouteSegment(thirdSegment),
             photoId:
-              fourthSegment === "photo" && fifthSegment
-                ? safeDecodeRouteSegment(fifthSegment)
-                : fourthSegment && fourthSegment !== "photo"
+              fourthSegment === "photo"
+                ? undefined
+                : fourthSegment
                   ? safeDecodeRouteSegment(fourthSegment)
                   : undefined,
           }

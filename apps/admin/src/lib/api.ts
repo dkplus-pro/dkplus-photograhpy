@@ -250,22 +250,8 @@ export const normalizeTopicForAdmin = (
 export const normalizeBrandForAdmin = (
   input: ServerBrandEnvelope,
 ): BrandRecord => {
-  const source: ServerBrand =
-    "brand" in input && typeof input.brand === "object" && input.brand
-      ? input.brand
-      : (input as ServerBrand);
-  const name = (
-    source.name ||
-    source.title ||
-    source.displayName ||
-    source.brand ||
-    source.cameraMake ||
-    source.id ||
-    "未命名品牌"
-  ).trim();
-  const title = (source.title || source.displayName || name).trim();
-  const logoSource =
-    source.logos ?? source.logoUrls ?? source.logoUrl ?? undefined;
+  const source = "brand" in input ? input.brand : input;
+  const logos = source.logos ?? [];
   return {
     ...source,
     id: source.id.trim(),
