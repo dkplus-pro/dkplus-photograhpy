@@ -282,8 +282,8 @@ test("brand CRUD persists multiple logos and uploaded EXIF auto-syncs camera bra
       "https://cdn.example/canon-red.svg",
     ]);
 
-    const uploadedLogo = await request(app)
-      .post("/api/uploads")
+    const uploadedLogoAssets = await request(app)
+      .post("/api/uploads/assets")
       .set("Authorization", "Bearer test-token")
       .field("mode", "asset")
       .field("purpose", "brand-logo")
@@ -292,9 +292,9 @@ test("brand CRUD persists multiple logos and uploaded EXIF auto-syncs camera bra
         contentType: "image/jpeg",
       })
       .expect(201);
-    assert.equal(uploadedLogo.body.uploads.length, 1);
+    assert.equal(uploadedLogoAssets.body.uploads.length, 1);
     assert.match(
-      uploadedLogo.body.uploads[0].url,
+      uploadedLogoAssets.body.uploads[0].url,
       /^http:\/\/cdn\.test\/uploads\//,
     );
     const listedBeforeLogoPatch = await authed(request(app).get("/api/photos"))
@@ -319,6 +319,22 @@ test("brand CRUD persists multiple logos and uploaded EXIF auto-syncs camera bra
       logoPatched.body.brand.logoUrls[1],
       uploadedLogo.body.uploads[0].url,
     );
+
+    const photosAfterLogoUpload = await authed(
+      request(app).get("/api/photos"),
+    ).expect(200);
+    assert.equal(
+      photosAfterLogoUpload.body.photos.length,
+      0,
+      "generic asset upload must not create gallery photos",
+    );
+
+    const logoPatched = await authed(request(app).patch("/api/brands/canon"))
+      .send({
+        logos: [...updated.body.brand.logos, ...uploadedLogoAssets.body.uploads],
+      })
+      .expect(200);
+    assert.equal(logoPatched.body.brand.logoUrls.length, 2);
 
     const sonyUpload = await request(app)
       .post("/api/uploads")

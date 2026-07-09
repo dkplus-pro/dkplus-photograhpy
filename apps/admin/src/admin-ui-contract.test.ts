@@ -217,7 +217,11 @@ describe("admin list UI contract", () => {
     expect(appSource).toMatch(/brandLogos|logos|logoDrafts/);
     expect(appSource).toMatch(/添加.*Logo|新增.*Logo|addBrandLogo/i);
     expect(appSource).toMatch(/移除.*Logo|删除.*Logo|removeBrandLogo/i);
+    expect(appSource).toContain("上传 Logo 文件");
     expect(appSource).toMatch(/上传图片.*品牌|cameraBrand|auto-sync/i);
+    expect(apiSource).toContain('baseUrl, "/uploads/assets"');
+    expect(apiSource).toContain("appendBrandLogosViaPatch");
+    expect(apiSource).not.toContain("/brands/${encodeURIComponent(id)}/logos");
     expect(styles).toContain(".brand-form");
     expect(styles).toMatch(/\.brand-logo|\.brand-card|\.brand-list/);
   });

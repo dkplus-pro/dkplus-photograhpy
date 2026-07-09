@@ -973,10 +973,10 @@ const WatermarkExportPage = ({ photos }: { photos: ResolvedPhoto[] }) => {
           </fieldset>
 
           <label>
-            <span>品牌 Logo</span>
+            <span>Logo（可选）</span>
             <select
-              aria-label="选择品牌 Logo"
-              value={selectedLogo?.id ?? ""}
+              aria-label="选择 Logo（可选）"
+              value={selectedLogo.id}
               onChange={(event) => setSelectedLogoId(event.currentTarget.value)}
             >
               <option value="">不显示 Logo</option>

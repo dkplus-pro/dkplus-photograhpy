@@ -217,9 +217,9 @@ describe("admin gallery list contract", () => {
     expect(appSource).toContain('api.createBrand');
     expect(appSource).toContain('api.updateBrand');
     expect(apiSource).toContain('uploadBrandLogos');
-    expect(apiSource).toContain('baseUrl, "/uploads"');
-    expect(apiSource).toContain('body.append("mode", "asset")');
-    expect(apiSource).not.toMatch(/brands\/\$\{encodeURIComponent\(id\)\}\/logos/);
+    expect(apiSource).toContain('baseUrl, "/uploads/assets"');
+    expect(apiSource).toContain('appendBrandLogosViaPatch');
+    expect(apiSource).not.toContain('/brands/${encodeURIComponent(id)}/logos');
     expect(apiSource).toContain('logoUrls');
     expect(appSource).toContain('api.deleteBrand');
     expect(appSource).toContain('deriveBrandsFromPhotos');
