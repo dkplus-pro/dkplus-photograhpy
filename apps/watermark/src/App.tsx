@@ -195,7 +195,9 @@ export default function App() {
       const uniqueImported = withUniqueLogoIds(brandLogos, imported);
       setBrandLogos((current) => [...current, ...uniqueImported]);
       setSelectedLogo(uniqueImported[0]?.id || "none");
-      setNotice(`已从 ${file.name} 导入 ${imported.length} 个品牌标志。`);
+      setNotice(
+        `已从 ${file.name} 导入 ${imported.length} 个品牌标志。`,
+      );
     } catch (error) {
       setNotice(
         error instanceof Error
@@ -218,7 +220,9 @@ export default function App() {
       setNotice(`已将 ${file.name} 用作自定义标志。`);
     } catch (error) {
       setNotice(
-        error instanceof Error ? error.message : "无法读取自定义标志。",
+        error instanceof Error
+          ? error.message
+          : "无法读取自定义标志。",
       );
     }
   };
@@ -278,7 +282,8 @@ export default function App() {
         <p className="eyebrow">dk+ photography / 本地导出工具</p>
         <h1>无需上传，即可为整组照片添加水印。</h1>
         <p className="lede">
-          添加照片，保留或编辑相机信息，然后下载一个包含水印照片的 ZIP 压缩包。
+          添加照片，保留或编辑相机信息，然后下载一个包含水印照片的 ZIP
+          压缩包。
         </p>
       </header>
 
@@ -365,7 +370,9 @@ export default function App() {
         {photos.length === 0 ? (
           <div className="empty-state">
             <strong>尚未选择照片。</strong>
-            <span>文件只会在本地处理，照片不会上传到服务器。</span>
+            <span>
+              文件只会在本地处理，照片不会上传到服务器。
+            </span>
           </div>
         ) : (
           <ul className="photo-list" aria-label="已选择的源照片">
@@ -394,7 +401,12 @@ export default function App() {
                   <div className="metadata-grid">
                     {exifField(photo, "相机型号", "model", updateExif)}
                     {exifField(photo, "镜头", "lens", updateExif)}
-                    {exifField(photo, "焦距", "focalLength", updateExif)}
+                    {exifField(
+                      photo,
+                      "焦距",
+                      "focalLength",
+                      updateExif,
+                    )}
                     {exifField(photo, "曝光参数", "exposure", updateExif)}
                   </div>
                 </div>
