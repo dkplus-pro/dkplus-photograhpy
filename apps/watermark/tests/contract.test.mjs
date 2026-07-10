@@ -33,18 +33,28 @@ test("watermark UI keeps batch, EXIF, logo, and ZIP controls accessible in Chine
   ]) {
     assert.match(app, new RegExp(message));
   }
-  assert.doesNotMatch(app, /Export watermarked ZIP|Camera model|Upload custom logo/);
+  assert.doesNotMatch(
+    app,
+    /Export watermarked ZIP|Camera model|Upload custom logo/,
+  );
   assert.match(app, /aria-live="polite"/);
 });
 
 test("live preview renders the selected photo with the export watermark treatment", async () => {
+  const app = await appFile("src/App.tsx");
   const preview = await appFile("src/live-watermark-preview.tsx");
+  const styles = await appFile("src/styles.css");
 
+  assert.match(app, /import \{ LiveWatermarkPreview \}/);
+  assert.match(app, /photo=\{photos\[0\] \?\? null\}/);
+  assert.match(app, /logoSource=\{logoSource\}/);
   assert.match(preview, /drawWatermark/);
   assert.match(preview, /maximumPreviewDimension = 1600/);
   assert.match(preview, /photo: PhotoEntry \| null/);
   assert.match(preview, /尚未选择预览照片/);
   assert.match(preview, /实时水印预览/);
+  assert.match(styles, /\.preview-canvas/);
+  assert.match(styles, /@media \(max-width: 640px\)/);
 });
 
 test("brand-kit imports assign unique logo IDs before rendering options", async () => {
