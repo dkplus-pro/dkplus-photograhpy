@@ -129,7 +129,7 @@ export function drawWatermark(
   const stripHeight = clamp(height * 0.2, 132, 340);
   const stripY = height - stripHeight;
   const paddingX = clamp(width * 0.036, 36, 96);
-  const hasLogo = Boolean(options.logoSource);
+  const hasLogo = Boolean(options.logoMark);
   const overlayGradient = context.createLinearGradient(0, height, 0, stripY);
   overlayGradient.addColorStop(0, watermarkPalette.strip);
   overlayGradient.addColorStop(1, watermarkPalette.stripFade);
@@ -155,7 +155,13 @@ export function drawWatermark(
           logoMaxHeight,
           logoMaxWidth,
         )
-      : drawLogoMark(context, options.text, logoX, logoCenterY, logoMaxHeight);
+      : drawLogoMark(
+          context,
+          options.logoMark || "dk+",
+          logoX,
+          logoCenterY,
+          logoMaxHeight,
+        );
     const dividerGap = clamp(paddingX * 0.54, 28, 56);
     const dividerX = logoX + logoWidth + dividerGap;
     context.save();

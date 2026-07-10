@@ -229,6 +229,17 @@ export default function App() {
       return;
     }
 
+    const selectedBrandLogo = brandLogos.find(
+      (logo) => logo.id === selectedLogo,
+    );
+    const logoSource =
+      selectedLogo === "custom"
+        ? customLogo
+        : selectedBrandLogo?.source || null;
+    const logoMark =
+      selectedLogo === "custom"
+        ? watermarkText.trim() || "dk+ photography"
+        : selectedBrandLogo?.name || null;
     setIsExporting(true);
     setNotice(`正在渲染：0 / ${photos.length} 张照片…`);
 
@@ -239,6 +250,7 @@ export default function App() {
           text: watermarkText.trim() || "dk+ photography",
           opacity,
           logoSource,
+          logoMark,
         },
         (completed, total) =>
           setNotice(`正在渲染：${completed} / ${total} 张照片…`),
