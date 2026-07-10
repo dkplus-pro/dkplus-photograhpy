@@ -55,6 +55,25 @@ function validLogos(value: unknown): BrandLogo[] {
   });
 }
 
+function withUniqueLogoIds(
+  existing: BrandLogo[],
+  imported: BrandLogo[],
+): BrandLogo[] {
+  const usedIds = new Set(existing.map((logo) => logo.id));
+
+  return imported.map((logo) => {
+    const baseId = logo.id || "imported-logo";
+    let id = baseId;
+    let suffix = 2;
+    while (usedIds.has(id)) {
+      id = `${baseId}-${suffix}`;
+      suffix += 1;
+    }
+    usedIds.add(id);
+    return { ...logo, id };
+  });
+}
+
 function readAsDataUrl(file: File) {
   return new Promise<string>((resolve, reject) => {
     const reader = new FileReader();
@@ -173,8 +192,9 @@ export default function App() {
       if (imported.length === 0) {
         throw new Error("No usable logos were found.");
       }
-      setBrandLogos((current) => [...current, ...imported]);
-      setSelectedLogo(imported[0]?.id || "none");
+      const uniqueImported = withUniqueLogoIds(brandLogos, imported);
+      setBrandLogos((current) => [...current, ...uniqueImported]);
+      setSelectedLogo(uniqueImported[0]?.id || "none");
       setNotice(
         `${imported.length} logo${imported.length === 1 ? "" : "s"} imported from ${file.name}.`,
       );
