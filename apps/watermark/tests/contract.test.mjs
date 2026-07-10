@@ -33,7 +33,10 @@ test("watermark UI keeps batch, EXIF, logo, and ZIP controls accessible in Chine
   ]) {
     assert.match(app, new RegExp(message));
   }
-  assert.doesNotMatch(app, /Export watermarked ZIP|Camera model|Upload custom logo/);
+  assert.doesNotMatch(
+    app,
+    /Export watermarked ZIP|Camera model|Upload custom logo/,
+  );
   assert.match(app, /aria-live="polite"/);
 });
 
