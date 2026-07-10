@@ -143,6 +143,8 @@ async function mainThreadRender(entry: PhotoEntry, options: WatermarkOptions) {
 
   let logo: CanvasImageSource | undefined;
   try {
+    context.fillStyle = "#09090b";
+    context.fillRect(0, 0, width, height);
     context.drawImage(source, 0, 0, width, height);
     if (options.logoSource) {
       try {

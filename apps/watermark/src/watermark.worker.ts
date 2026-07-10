@@ -29,6 +29,8 @@ async function render(request: RenderRequest) {
 
   let logo: ImageBitmap | undefined;
   try {
+    context.fillStyle = "#09090b";
+    context.fillRect(0, 0, canvas.width, canvas.height);
     context.drawImage(bitmap, 0, 0);
     if (options.logoSource) {
       try {

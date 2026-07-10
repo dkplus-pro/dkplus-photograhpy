@@ -83,6 +83,9 @@ test("watermark canvas uses the canonical footer composition in both render path
   assert.match(canvas, /\[options\.exif\.model, options\.exif\.lens\]/);
   assert.match(canvas, /drawAdaptiveLogoImage/);
   assert.match(canvas, /drawLogoMark/);
+  assert.match(canvas, /const hasLogo = Boolean\(options\.logoMark\)/);
+  assert.match(canvas, /options\.logoMark \|\| "dk\+"/);
+  assert.doesNotMatch(canvas, /drawLogoMark\([\s\S]*options\.text/);
   assert.match(canvas, /fitText\(context, firstRow, textWidth\)/);
   assert.match(canvas, /fitText\(context, secondRow, textWidth\)/);
   assert.doesNotMatch(canvas, /footerTop|exifLines\(options\.exif\)/);
@@ -90,10 +93,22 @@ test("watermark canvas uses the canonical footer composition in both render path
     renderer,
     /drawWatermark\(context, width, height, options, logo\)/,
   );
+  assert.match(renderer, /context\.fillStyle = "#09090b"/);
   assert.match(
     worker,
     /drawWatermark\(context, canvas\.width, canvas\.height, options, logo\)/,
   );
+  assert.match(worker, /context\.fillStyle = "#09090b"/);
+});
+
+test("selected logo marks are passed to batch rendering independently of watermark text", async () => {
+  const app = await appFile("src/App.tsx");
+  const types = await appFile("src/types.ts");
+
+  assert.match(app, /const logoMark =/);
+  assert.match(app, /selectedBrandLogo\?\.name \|\| null/);
+  assert.match(app, /logoMark,/);
+  assert.match(types, /logoMark\?: string \| null/);
 });
 
 test("Pages build includes watermark under the gallery's combined artifact", async () => {

@@ -22,6 +22,7 @@ export interface WatermarkOptions {
   text: string;
   opacity: number;
   logoSource: string | null;
+  logoMark?: string | null;
   exif: PhotoExif;
 }
 
