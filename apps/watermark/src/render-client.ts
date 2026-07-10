@@ -53,12 +53,7 @@ function workerRender(entry: PhotoEntry, options: WatermarkOptions) {
       if (event.data.type === "result" && event.data.blob) {
         resolve(event.data.blob);
       } else {
-        reject(
-          new Error(
-            event.data.message ||
-              "渲染 Worker 无法生成图像。",
-          ),
-        );
+        reject(new Error(event.data.message || "渲染 Worker 无法生成图像。"));
       }
     });
     worker.addEventListener("error", () => {
