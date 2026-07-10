@@ -28,6 +28,21 @@ test("watermark UI keeps batch, EXIF, logo, and ZIP controls accessible", async 
   assert.match(app, /aria-live="polite"/);
 });
 
+test("brand-kit imports assign unique logo IDs before rendering options", async () => {
+  const app = await appFile("src/App.tsx");
+
+  assert.match(app, /function withUniqueLogoIds/);
+  assert.match(
+    app,
+    /const usedIds = new Set\(existing\.map\(\(logo\) => logo\.id\)\)/,
+  );
+  assert.match(app, /while \(usedIds\.has\(id\)\)/);
+  assert.match(
+    app,
+    /const uniqueImported = withUniqueLogoIds\(brandLogos, imported\)/,
+  );
+});
+
 test("worker rendering is bounded and falls back to the main thread", async () => {
   const renderer = await appFile("src/render-client.ts");
 
