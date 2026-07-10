@@ -39,7 +39,10 @@ test("worker rendering is bounded and falls back to the main thread", async () =
 
 test("Pages build uses a separate watermark directory", async () => {
   const config = await appFile("vite.config.ts");
-  const workflow = await readFile(new URL("../../../.github/workflows/watermark-pages.yml", import.meta.url), "utf8");
+  const workflow = await readFile(
+    new URL("../../../.github/workflows/watermark-pages.yml", import.meta.url),
+    "utf8",
+  );
 
   assert.match(config, /watermark/);
   assert.match(workflow, /destination_dir: watermark/);

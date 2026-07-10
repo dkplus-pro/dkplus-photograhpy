@@ -28,15 +28,19 @@ function supportsWorkerRendering() {
 }
 
 export function renderConcurrency(jobCount: number) {
-  const hardware = typeof navigator === "undefined" ? 2 : navigator.hardwareConcurrency || 2;
+  const hardware =
+    typeof navigator === "undefined" ? 2 : navigator.hardwareConcurrency || 2;
   return Math.max(1, Math.min(jobCount, hardware, 4));
 }
 
 function workerRender(entry: PhotoEntry, options: WatermarkOptions) {
   return new Promise<Blob>(async (resolve, reject) => {
-    const worker = new Worker(new URL("./watermark.worker.ts", import.meta.url), {
-      type: "module",
-    });
+    const worker = new Worker(
+      new URL("./watermark.worker.ts", import.meta.url),
+      {
+        type: "module",
+      },
+    );
     const id = entry.id;
     const cleanUp = () => worker.terminate();
 
@@ -49,7 +53,12 @@ function workerRender(entry: PhotoEntry, options: WatermarkOptions) {
       if (event.data.type === "result" && event.data.blob) {
         resolve(event.data.blob);
       } else {
-        reject(new Error(event.data.message || "The render worker could not create an image."));
+        reject(
+          new Error(
+            event.data.message ||
+              "The render worker could not create an image.",
+          ),
+        );
       }
     });
     worker.addEventListener("error", () => {
@@ -145,7 +154,10 @@ async function mainThreadRender(entry: PhotoEntry, options: WatermarkOptions) {
     drawWatermark(context, width, height, options, logo);
     const blob = await new Promise<Blob>((resolve, reject) => {
       canvas.toBlob(
-        (result) => (result ? resolve(result) : reject(new Error("Could not encode the watermarked image."))),
+        (result) =>
+          result
+            ? resolve(result)
+            : reject(new Error("Could not encode the watermarked image.")),
         "image/jpeg",
         0.92,
       );
@@ -157,7 +169,11 @@ async function mainThreadRender(entry: PhotoEntry, options: WatermarkOptions) {
   }
 }
 
-async function renderOne(entry: PhotoEntry, index: number, options: WatermarkOptions) {
+async function renderOne(
+  entry: PhotoEntry,
+  index: number,
+  options: WatermarkOptions,
+) {
   if (supportsWorkerRendering()) {
     try {
       return {
@@ -197,14 +213,19 @@ export async function renderBatch(
       if (!entry) {
         continue;
       }
-      results[index] = await renderOne(entry, index, { ...baseOptions, exif: entry.exif });
+      results[index] = await renderOne(entry, index, {
+        ...baseOptions,
+        exif: entry.exif,
+      });
       completed += 1;
       onProgress(completed, entries.length);
     }
   }
 
   await Promise.all(Array.from({ length: concurrency }, () => run()));
-  const photos = results.filter((result): result is RenderedPhoto => Boolean(result));
+  const photos = results.filter((result): result is RenderedPhoto =>
+    Boolean(result),
+  );
 
   return {
     photos,

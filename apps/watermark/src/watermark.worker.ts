@@ -51,9 +51,12 @@ self.addEventListener("message", (event: MessageEvent<RenderRequest>) => {
   }
 
   void render(event.data)
-    .then((blob) => self.postMessage({ type: "result", id: event.data.id, blob }))
+    .then((blob) =>
+      self.postMessage({ type: "result", id: event.data.id, blob }),
+    )
     .catch((error: unknown) => {
-      const message = error instanceof Error ? error.message : "The render worker failed.";
+      const message =
+        error instanceof Error ? error.message : "The render worker failed.";
       self.postMessage({ type: "error", id: event.data.id, message });
     });
 });

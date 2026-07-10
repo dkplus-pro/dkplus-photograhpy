@@ -24,7 +24,9 @@ function asNumber(value: unknown) {
 }
 
 function compactNumber(value: number) {
-  return Number.isInteger(value) ? String(value) : value.toFixed(1).replace(/\.0$/, "");
+  return Number.isInteger(value)
+    ? String(value)
+    : value.toFixed(1).replace(/\.0$/, "");
 }
 
 function valueText(value: unknown) {
@@ -41,10 +43,16 @@ function valueText(value: unknown) {
 
 function formatFocalLength(value: unknown) {
   const focalLength = asNumber(value);
-  return focalLength === null ? valueText(value) : `${compactNumber(focalLength)} mm`;
+  return focalLength === null
+    ? valueText(value)
+    : `${compactNumber(focalLength)} mm`;
 }
 
-function formatExposure(exposureTime: unknown, aperture: unknown, iso: unknown) {
+function formatExposure(
+  exposureTime: unknown,
+  aperture: unknown,
+  iso: unknown,
+) {
   const time = asNumber(exposureTime);
   const fNumber = asNumber(aperture);
   const sensitivity = asNumber(iso);
@@ -95,5 +103,7 @@ export async function readExif(file: File) {
 }
 
 export function exifLines(exif: PhotoExif) {
-  return [exif.model, exif.lens, exif.focalLength, exif.exposure].filter(Boolean);
+  return [exif.model, exif.lens, exif.focalLength, exif.exposure].filter(
+    Boolean,
+  );
 }

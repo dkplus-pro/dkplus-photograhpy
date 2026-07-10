@@ -1,7 +1,8 @@
 import { exifLines } from "./metadata";
 import type { WatermarkOptions } from "./types";
 
-type RenderingContext = CanvasRenderingContext2D | OffscreenCanvasRenderingContext2D;
+type RenderingContext =
+  CanvasRenderingContext2D | OffscreenCanvasRenderingContext2D;
 
 function sourceSize(source: CanvasImageSource) {
   if ("naturalWidth" in source && "naturalHeight" in source) {
@@ -61,9 +62,14 @@ export function drawWatermark(
 
   const lines = exifLines(options.exif);
   context.font = `400 ${metadataSize}px ui-sans-serif, system-ui, sans-serif`;
-  const metadataBottom = height - padding - titleSize - Math.max(9, Math.round(titleSize * 0.35));
+  const metadataBottom =
+    height - padding - titleSize - Math.max(9, Math.round(titleSize * 0.35));
   lines.slice(0, 2).forEach((line, index) => {
-    context.fillText(line, padding, metadataBottom - index * (metadataSize + 5));
+    context.fillText(
+      line,
+      padding,
+      metadataBottom - index * (metadataSize + 5),
+    );
   });
 
   if (logo) {

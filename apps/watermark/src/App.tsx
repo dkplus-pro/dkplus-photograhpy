@@ -22,7 +22,10 @@ const starterLogos: BrandLogo[] = [
 function validLogos(value: unknown): BrandLogo[] {
   const source = Array.isArray(value)
     ? value
-    : value && typeof value === "object" && "logos" in value && Array.isArray(value.logos)
+    : value &&
+        typeof value === "object" &&
+        "logos" in value &&
+        Array.isArray(value.logos)
       ? value.logos
       : [];
 
@@ -32,7 +35,8 @@ function validLogos(value: unknown): BrandLogo[] {
     }
 
     const record = candidate as Record<string, unknown>;
-    const name = typeof record.name === "string" ? record.name : "Imported brand logo";
+    const name =
+      typeof record.name === "string" ? record.name : "Imported brand logo";
     const imageSource = [record.source, record.url, record.dataUri].find(
       (item): item is string => typeof item === "string" && item.length > 0,
     );
@@ -40,7 +44,13 @@ function validLogos(value: unknown): BrandLogo[] {
       return [];
     }
 
-    return [{ id: typeof record.id === "string" ? record.id : `imported-${index}`, name, source: imageSource }];
+    return [
+      {
+        id: typeof record.id === "string" ? record.id : `imported-${index}`,
+        name,
+        source: imageSource,
+      },
+    ];
   });
 }
 
@@ -90,7 +100,9 @@ export default function App() {
   const [customLogo, setCustomLogo] = useState<string | null>(null);
   const [watermarkText, setWatermarkText] = useState("dk+ photography");
   const [opacity, setOpacity] = useState(0.9);
-  const [notice, setNotice] = useState("Your photos stay in this browser until you download the ZIP.");
+  const [notice, setNotice] = useState(
+    "Your photos stay in this browser until you download the ZIP.",
+  );
   const [isExporting, setIsExporting] = useState(false);
 
   useEffect(() => {
@@ -103,7 +115,9 @@ export default function App() {
   const updateExif = (id: string, field: keyof PhotoExif, value: string) => {
     setPhotos((current) =>
       current.map((photo) =>
-        photo.id === id ? { ...photo, exif: { ...photo.exif, [field]: value } } : photo,
+        photo.id === id
+          ? { ...photo, exif: { ...photo.exif, [field]: value } }
+          : photo,
       ),
     );
   };
@@ -130,7 +144,9 @@ export default function App() {
       }),
     );
     setPhotos((current) => [...current, ...entries]);
-    setNotice(`${entries.length} photo${entries.length === 1 ? "" : "s"} added. Review any missing EXIF below.`);
+    setNotice(
+      `${entries.length} photo${entries.length === 1 ? "" : "s"} added. Review any missing EXIF below.`,
+    );
   };
 
   const removePhoto = (id: string) => {
@@ -158,9 +174,15 @@ export default function App() {
       }
       setBrandLogos((current) => [...current, ...imported]);
       setSelectedLogo(imported[0]?.id || "none");
-      setNotice(`${imported.length} logo${imported.length === 1 ? "" : "s"} imported from ${file.name}.`);
+      setNotice(
+        `${imported.length} logo${imported.length === 1 ? "" : "s"} imported from ${file.name}.`,
+      );
     } catch (error) {
-      setNotice(error instanceof Error ? `Brand kit import failed: ${error.message}` : "Brand kit import failed.");
+      setNotice(
+        error instanceof Error
+          ? `Brand kit import failed: ${error.message}`
+          : "Brand kit import failed.",
+      );
     }
   };
 
@@ -176,7 +198,11 @@ export default function App() {
       setSelectedLogo("custom");
       setNotice(`Using ${file.name} as the custom logo.`);
     } catch (error) {
-      setNotice(error instanceof Error ? error.message : "The custom logo could not be read.");
+      setNotice(
+        error instanceof Error
+          ? error.message
+          : "The custom logo could not be read.",
+      );
     }
   };
 
@@ -195,19 +221,33 @@ export default function App() {
     try {
       const batch = await renderBatch(
         photos,
-        { text: watermarkText.trim() || "dk+ photography", opacity, logoSource },
-        (completed, total) => setNotice(`Rendering ${completed} of ${total} photos…`),
+        {
+          text: watermarkText.trim() || "dk+ photography",
+          opacity,
+          logoSource,
+        },
+        (completed, total) =>
+          setNotice(`Rendering ${completed} of ${total} photos…`),
       );
       const zip = new JSZip();
       batch.photos.forEach((photo) => zip.file(photo.fileName, photo.blob));
-      const archive = await zip.generateAsync({ type: "blob", compression: "DEFLATE" });
+      const archive = await zip.generateAsync({
+        type: "blob",
+        compression: "DEFLATE",
+      });
       triggerDownload(archive, "watermarked-photos.zip");
       const fallback = batch.fallbackCount
         ? ` ${batch.fallbackCount} photo${batch.fallbackCount === 1 ? " used" : "s used"} the safe main-thread fallback.`
         : "";
-      setNotice(`ZIP downloaded: ${batch.photos.length} photos rendered with ${batch.concurrency} concurrent worker slots.${fallback}`);
+      setNotice(
+        `ZIP downloaded: ${batch.photos.length} photos rendered with ${batch.concurrency} concurrent worker slots.${fallback}`,
+      );
     } catch (error) {
-      setNotice(error instanceof Error ? `Export failed: ${error.message}` : "Export failed. Please try again.");
+      setNotice(
+        error instanceof Error
+          ? `Export failed: ${error.message}`
+          : "Export failed. Please try again.",
+      );
     } finally {
       setIsExporting(false);
     }
@@ -221,7 +261,8 @@ export default function App() {
         <p className="eyebrow">dk+ photography / local export utility</p>
         <h1>Watermark an entire shoot without uploading it.</h1>
         <p className="lede">
-          Add your photographs, preserve or edit the camera details, then download a single watermarked ZIP.
+          Add your photographs, preserve or edit the camera details, then
+          download a single watermarked ZIP.
         </p>
       </header>
 
@@ -233,18 +274,26 @@ export default function App() {
         <div className="control-grid">
           <label>
             <span>Watermark text</span>
-            <input onChange={(event) => setWatermarkText(event.target.value)} value={watermarkText} />
+            <input
+              onChange={(event) => setWatermarkText(event.target.value)}
+              value={watermarkText}
+            />
           </label>
           <label>
             <span>Brand logo</span>
-            <select onChange={(event) => setSelectedLogo(event.target.value)} value={selectedLogo}>
+            <select
+              onChange={(event) => setSelectedLogo(event.target.value)}
+              value={selectedLogo}
+            >
               <option value="none">Text only</option>
               {brandLogos.map((logo) => (
                 <option key={logo.id} value={logo.id}>
                   {logo.name}
                 </option>
               ))}
-              {customLogo ? <option value="custom">Custom uploaded logo</option> : null}
+              {customLogo ? (
+                <option value="custom">Custom uploaded logo</option>
+              ) : null}
             </select>
           </label>
           <label>
@@ -260,11 +309,21 @@ export default function App() {
           </label>
           <label>
             <span>Custom logo</span>
-            <input accept="image/*" aria-label="Upload custom logo" onChange={chooseCustomLogo} type="file" />
+            <input
+              accept="image/*"
+              aria-label="Upload custom logo"
+              onChange={chooseCustomLogo}
+              type="file"
+            />
           </label>
           <label>
             <span>Brand kit JSON</span>
-            <input accept="application/json,.json" aria-label="Import brand kit JSON" onChange={importBrandKit} type="file" />
+            <input
+              accept="application/json,.json"
+              aria-label="Import brand kit JSON"
+              onChange={importBrandKit}
+              type="file"
+            />
           </label>
         </div>
       </section>
@@ -277,34 +336,56 @@ export default function App() {
           </div>
           <label className="upload-button">
             <span>Add photos</span>
-            <input accept="image/*" aria-label="Add source photos" multiple onChange={addPhotos} type="file" />
+            <input
+              accept="image/*"
+              aria-label="Add source photos"
+              multiple
+              onChange={addPhotos}
+              type="file"
+            />
           </label>
         </div>
 
         {photos.length === 0 ? (
           <div className="empty-state">
             <strong>Nothing selected yet.</strong>
-            <span>Files are processed locally; no photo is sent to a server.</span>
+            <span>
+              Files are processed locally; no photo is sent to a server.
+            </span>
           </div>
         ) : (
           <ul className="photo-list" aria-label="Selected source photos">
             {photos.map((photo) => (
               <li className="photo-card" key={photo.id}>
-                <img alt={`Preview of ${photo.file.name}`} height="112" src={photo.previewUrl} width="112" />
+                <img
+                  alt={`Preview of ${photo.file.name}`}
+                  height="112"
+                  src={photo.previewUrl}
+                  width="112"
+                />
                 <div className="photo-details">
                   <div className="photo-title-row">
                     <div>
                       <strong>{photo.file.name}</strong>
                       <span>{Math.round(photo.file.size / 1024)} KB</span>
                     </div>
-                    <button aria-label={`Remove ${photo.file.name}`} onClick={() => removePhoto(photo.id)} type="button">
+                    <button
+                      aria-label={`Remove ${photo.file.name}`}
+                      onClick={() => removePhoto(photo.id)}
+                      type="button"
+                    >
                       Remove
                     </button>
                   </div>
                   <div className="metadata-grid">
                     {exifField(photo, "Camera model", "model", updateExif)}
                     {exifField(photo, "Lens", "lens", updateExif)}
-                    {exifField(photo, "Focal length", "focalLength", updateExif)}
+                    {exifField(
+                      photo,
+                      "Focal length",
+                      "focalLength",
+                      updateExif,
+                    )}
                     {exifField(photo, "Exposure", "exposure", updateExif)}
                   </div>
                 </div>
@@ -317,7 +398,11 @@ export default function App() {
           <p aria-live="polite" role="status">
             {notice}
           </p>
-          <button disabled={photos.length === 0 || isExporting} onClick={exportZip} type="button">
+          <button
+            disabled={photos.length === 0 || isExporting}
+            onClick={exportZip}
+            type="button"
+          >
             {isExporting ? "Rendering ZIP…" : "Export watermarked ZIP"}
           </button>
         </div>
