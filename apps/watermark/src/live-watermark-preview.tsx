@@ -111,7 +111,9 @@ export function LiveWatermarkPreview({
           <p className="step">03 / 实时预览</p>
           <h2 id="preview-heading">水印效果</h2>
         </div>
-        {photo ? <span className="preview-file-name">{photo.file.name}</span> : null}
+        {photo ? (
+          <span className="preview-file-name">{photo.file.name}</span>
+        ) : null}
       </div>
 
       {photo ? (

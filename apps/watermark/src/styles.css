@@ -314,8 +314,7 @@ input[type="file"] {
   border: 1px solid rgba(255, 255, 255, 0.16);
   border-radius: 16px;
   background:
-    linear-gradient(135deg, rgba(244, 185, 66, 0.1), transparent 35%),
-    #111627;
+    linear-gradient(135deg, rgba(244, 185, 66, 0.1), transparent 35%), #111627;
 }
 
 .preview-stage {
