@@ -103,7 +103,10 @@ test("watermark canvas uses the canonical footer composition in both render path
   assert.match(canvas, /fitText\(context, firstRow, textWidth\)/);
   assert.match(canvas, /fitText\(context, secondRow, textWidth\)/);
   assert.doesNotMatch(canvas, /footerTop|exifLines\(options\.exif\)/);
-  assert.match(renderer, /drawWatermark\(context, width, height, options, logo\)/);
+  assert.match(
+    renderer,
+    /drawWatermark\(context, width, height, options, logo\)/,
+  );
   assert.match(
     worker,
     /drawWatermark\(context, canvas\.width, canvas\.height, options, logo\)/,
