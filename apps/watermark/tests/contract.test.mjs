@@ -37,14 +37,15 @@ test("worker rendering is bounded and falls back to the main thread", async () =
   assert.match(renderer, /URL\.revokeObjectURL/);
 });
 
-test("Pages build uses a separate watermark directory", async () => {
+test("Pages build includes watermark under the gallery's combined artifact", async () => {
   const config = await appFile("vite.config.ts");
   const workflow = await readFile(
-    new URL("../../../.github/workflows/watermark-pages.yml", import.meta.url),
+    new URL("../../../.github/workflows/pages.yml", import.meta.url),
     "utf8",
   );
 
   assert.match(config, /watermark/);
-  assert.match(workflow, /destination_dir: watermark/);
-  assert.match(workflow, /keep_files: true/);
+  assert.match(workflow, /pnpm --filter @dkplus\/watermark build/);
+  assert.match(workflow, /apps\/main\/dist\/watermark/);
+  assert.match(workflow, /actions\/upload-pages-artifact/);
 });
