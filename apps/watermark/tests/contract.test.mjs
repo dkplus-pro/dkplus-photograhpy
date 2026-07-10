@@ -21,11 +21,18 @@ test("watermark UI keeps batch, EXIF, logo, and ZIP controls accessible in Chine
   const app = await appFile("src/App.tsx");
 
   assert.match(app, /multiple[\s\S]*onChange={addPhotos}/);
-  assert.match(app, /品牌素材包 JSON/);
-  assert.match(app, /上传自定义标志/);
-  assert.match(app, /相机型号/);
-  assert.match(app, /导出已加水印的 ZIP/);
-  assert.match(app, /照片会始终保留在当前浏览器中/);
+  for (const message of [
+    "品牌素材包 JSON",
+    "上传自定义标志",
+    "相机型号",
+    "导出已加水印的 ZIP",
+    "照片会始终保留在当前浏览器中",
+    "无需上传，即可为整组照片添加水印。",
+    "尚未选择照片。",
+    "文件只会在本地处理，照片不会上传到服务器。",
+  ]) {
+    assert.match(app, new RegExp(message));
+  }
   assert.doesNotMatch(app, /Export watermarked ZIP|Camera model|Upload custom logo/);
   assert.match(app, /aria-live="polite"/);
 });
