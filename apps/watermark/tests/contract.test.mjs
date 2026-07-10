@@ -64,6 +64,35 @@ test("worker rendering is bounded and falls back to the main thread", async () =
   assert.match(renderer, /URL\.revokeObjectURL/);
 });
 
+test("watermark canvas uses the canonical footer composition in both render paths", async () => {
+  const canvas = await appFile("src/canvas.ts");
+  const renderer = await appFile("src/render-client.ts");
+  const worker = await appFile("src/watermark.worker.ts");
+
+  assert.match(canvas, /clamp\(height \* 0\.2, 132, 340\)/);
+  assert.match(canvas, /rgba\(9, 9, 11, 0\.9\)/);
+  assert.match(canvas, /#fafafa/);
+  assert.match(canvas, /Futura, "Futura PT", "Avenir Next"/);
+  assert.match(canvas, /"Fira Code", "Fira Sans"/);
+  assert.match(canvas, /watermarkMetadataSpacer = "  "/);
+  assert.match(canvas, /watermarkSecondarySpacer = "     "/);
+  assert.match(
+    canvas,
+    /\[options\.exif\.focalLength, options\.exif\.exposure\]/,
+  );
+  assert.match(canvas, /\[options\.exif\.model, options\.exif\.lens\]/);
+  assert.match(canvas, /drawAdaptiveLogoImage/);
+  assert.match(canvas, /drawLogoMark/);
+  assert.match(canvas, /fitText\(context, firstRow, textWidth\)/);
+  assert.match(canvas, /fitText\(context, secondRow, textWidth\)/);
+  assert.doesNotMatch(canvas, /footerTop|exifLines\(options\.exif\)/);
+  assert.match(renderer, /drawWatermark\(context, width, height, options, logo\)/);
+  assert.match(
+    worker,
+    /drawWatermark\(context, canvas\.width, canvas\.height, options, logo\)/,
+  );
+});
+
 test("Pages build includes watermark under the gallery's combined artifact", async () => {
   const config = await appFile("vite.config.ts");
   const workflow = await readFile(
