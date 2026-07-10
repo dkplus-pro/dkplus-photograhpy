@@ -13,7 +13,7 @@ interface RenderRequest {
 async function loadLogo(source: string) {
   const response = await fetch(source);
   if (!response.ok) {
-    throw new Error("Logo response was not successful.");
+    throw new Error("无法获取品牌标志资源。");
   }
 
   return createImageBitmap(await response.blob());
@@ -24,7 +24,7 @@ async function render(request: RenderRequest) {
   const canvas = new OffscreenCanvas(bitmap.width, bitmap.height);
   const context = canvas.getContext("2d");
   if (!context) {
-    throw new Error("Worker canvas is unavailable.");
+    throw new Error("Worker 画布不可用。");
   }
 
   let logo: ImageBitmap | undefined;
@@ -56,7 +56,7 @@ self.addEventListener("message", (event: MessageEvent<RenderRequest>) => {
     )
     .catch((error: unknown) => {
       const message =
-        error instanceof Error ? error.message : "The render worker failed.";
+        error instanceof Error ? error.message : "渲染 Worker 失败。";
       self.postMessage({ type: "error", id: event.data.id, message });
     });
 });

@@ -8,13 +8,13 @@ import type { BrandLogo, PhotoEntry, PhotoExif } from "./types";
 const starterLogos: BrandLogo[] = [
   {
     id: "dkplus-wordmark",
-    name: "dk+ photography wordmark",
+    name: "dk+ photography 文字标志",
     source:
       "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='640' height='180' viewBox='0 0 640 180'%3E%3Crect width='640' height='180' rx='20' fill='%23111627'/%3E%3Ctext x='48' y='112' fill='white' font-family='Arial,sans-serif' font-size='76' font-weight='700'%3Edk%2B photography%3C/text%3E%3C/svg%3E",
   },
   {
     id: "dkplus-monogram",
-    name: "dk+ monogram",
+    name: "dk+ 字母组合标志",
     source:
       "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='240' height='180' viewBox='0 0 240 180'%3E%3Crect width='240' height='180' rx='28' fill='%23f4b942'/%3E%3Ctext x='42' y='120' fill='%23111627' font-family='Arial,sans-serif' font-size='88' font-weight='700'%3Edk%2B%3C/text%3E%3C/svg%3E",
   },
@@ -37,7 +37,7 @@ function validLogos(value: unknown): BrandLogo[] {
 
     const record = candidate as Record<string, unknown>;
     const name =
-      typeof record.name === "string" ? record.name : "Imported brand logo";
+      typeof record.name === "string" ? record.name : "导入的品牌标志";
     const imageSource = [record.source, record.url, record.dataUri].find(
       (item): item is string => typeof item === "string" && item.length > 0,
     );
@@ -78,7 +78,7 @@ function readAsDataUrl(file: File) {
   return new Promise<string>((resolve, reject) => {
     const reader = new FileReader();
     reader.onload = () => resolve(String(reader.result));
-    reader.onerror = () => reject(new Error(`Could not read ${file.name}.`));
+    reader.onerror = () => reject(new Error(`无法读取 ${file.name}。`));
     reader.readAsDataURL(file);
   });
 }
@@ -121,7 +121,7 @@ export default function App() {
   const [watermarkText, setWatermarkText] = useState("dk+ photography");
   const [opacity, setOpacity] = useState(0.9);
   const [notice, setNotice] = useState(
-    "Your photos stay in this browser until you download the ZIP.",
+    "照片会始终保留在当前浏览器中，直到您下载 ZIP 文件。",
   );
   const [isExporting, setIsExporting] = useState(false);
 
@@ -147,7 +147,7 @@ export default function App() {
     event.target.value = "";
     const images = selected.filter((file) => file.type.startsWith("image/"));
     if (images.length === 0) {
-      setNotice("Choose one or more image files to start a batch.");
+      setNotice("请选择一个或多个图像文件以开始批量处理。");
       return;
     }
 
@@ -165,7 +165,7 @@ export default function App() {
     );
     setPhotos((current) => [...current, ...entries]);
     setNotice(
-      `${entries.length} photo${entries.length === 1 ? "" : "s"} added. Review any missing EXIF below.`,
+      `已添加 ${entries.length} 张照片。请在下方检查并补全缺失的 EXIF 信息。`,
     );
   };
 
@@ -190,19 +190,19 @@ export default function App() {
     try {
       const imported = validLogos(JSON.parse(await file.text()) as unknown);
       if (imported.length === 0) {
-        throw new Error("No usable logos were found.");
+        throw new Error("未找到可用的品牌标志。");
       }
       const uniqueImported = withUniqueLogoIds(brandLogos, imported);
       setBrandLogos((current) => [...current, ...uniqueImported]);
       setSelectedLogo(uniqueImported[0]?.id || "none");
       setNotice(
-        `${imported.length} logo${imported.length === 1 ? "" : "s"} imported from ${file.name}.`,
+        `已从 ${file.name} 导入 ${imported.length} 个品牌标志。`,
       );
     } catch (error) {
       setNotice(
         error instanceof Error
-          ? `Brand kit import failed: ${error.message}`
-          : "Brand kit import failed.",
+          ? `品牌素材包导入失败：${error.message}`
+          : "品牌素材包导入失败。",
       );
     }
   };
@@ -217,12 +217,12 @@ export default function App() {
     try {
       setCustomLogo(await readAsDataUrl(file));
       setSelectedLogo("custom");
-      setNotice(`Using ${file.name} as the custom logo.`);
+      setNotice(`已将 ${file.name} 用作自定义标志。`);
     } catch (error) {
       setNotice(
         error instanceof Error
           ? error.message
-          : "The custom logo could not be read.",
+          : "无法读取自定义标志。",
       );
     }
   };
@@ -237,7 +237,7 @@ export default function App() {
         ? customLogo
         : brandLogos.find((logo) => logo.id === selectedLogo)?.source || null;
     setIsExporting(true);
-    setNotice(`Rendering 0 of ${photos.length} photos…`);
+    setNotice(`正在渲染：0 / ${photos.length} 张照片…`);
 
     try {
       const batch = await renderBatch(
@@ -248,7 +248,7 @@ export default function App() {
           logoSource,
         },
         (completed, total) =>
-          setNotice(`Rendering ${completed} of ${total} photos…`),
+          setNotice(`正在渲染：${completed} / ${total} 张照片…`),
       );
       const zip = new JSZip();
       batch.photos.forEach((photo) => zip.file(photo.fileName, photo.blob));
@@ -258,16 +258,16 @@ export default function App() {
       });
       triggerDownload(archive, "watermarked-photos.zip");
       const fallback = batch.fallbackCount
-        ? ` ${batch.fallbackCount} photo${batch.fallbackCount === 1 ? " used" : "s used"} the safe main-thread fallback.`
+        ? `其中 ${batch.fallbackCount} 张照片使用了安全的主线程回退方案。`
         : "";
       setNotice(
-        `ZIP downloaded: ${batch.photos.length} photos rendered with ${batch.concurrency} concurrent worker slots.${fallback}`,
+        `ZIP 已下载：已渲染 ${batch.photos.length} 张照片，使用 ${batch.concurrency} 个并发工作槽位。${fallback}`,
       );
     } catch (error) {
       setNotice(
         error instanceof Error
-          ? `Export failed: ${error.message}`
-          : "Export failed. Please try again.",
+          ? `导出失败：${error.message}`
+          : "导出失败，请重试。",
       );
     } finally {
       setIsExporting(false);
@@ -279,46 +279,46 @@ export default function App() {
   return (
     <main className="app-shell">
       <header className="hero">
-        <p className="eyebrow">dk+ photography / local export utility</p>
-        <h1>Watermark an entire shoot without uploading it.</h1>
+        <p className="eyebrow">dk+ photography / 本地导出工具</p>
+        <h1>无需上传，即可为整组照片添加水印。</h1>
         <p className="lede">
-          Add your photographs, preserve or edit the camera details, then
-          download a single watermarked ZIP.
+          添加照片，保留或编辑相机信息，然后下载一个包含水印照片的 ZIP
+          压缩包。
         </p>
       </header>
 
       <section aria-labelledby="settings-heading" className="panel controls">
         <div className="section-heading">
-          <p className="step">01 / Configure</p>
-          <h2 id="settings-heading">Watermark details</h2>
+          <p className="step">01 / 设置</p>
+          <h2 id="settings-heading">水印设置</h2>
         </div>
         <div className="control-grid">
           <label>
-            <span>Watermark text</span>
+            <span>水印文字</span>
             <input
               onChange={(event) => setWatermarkText(event.target.value)}
               value={watermarkText}
             />
           </label>
           <label>
-            <span>Brand logo</span>
+            <span>品牌标志</span>
             <select
               onChange={(event) => setSelectedLogo(event.target.value)}
               value={selectedLogo}
             >
-              <option value="none">Text only</option>
+              <option value="none">仅文字</option>
               {brandLogos.map((logo) => (
                 <option key={logo.id} value={logo.id}>
                   {logo.name}
                 </option>
               ))}
               {customLogo ? (
-                <option value="custom">Custom uploaded logo</option>
+                <option value="custom">已上传的自定义标志</option>
               ) : null}
             </select>
           </label>
           <label>
-            <span>Watermark opacity: {Math.round(opacity * 100)}%</span>
+            <span>水印透明度：{Math.round(opacity * 100)}%</span>
             <input
               max="1"
               min="0.15"
@@ -329,19 +329,19 @@ export default function App() {
             />
           </label>
           <label>
-            <span>Custom logo</span>
+            <span>自定义标志</span>
             <input
               accept="image/*"
-              aria-label="Upload custom logo"
+              aria-label="上传自定义标志"
               onChange={chooseCustomLogo}
               type="file"
             />
           </label>
           <label>
-            <span>Brand kit JSON</span>
+            <span>品牌素材包 JSON</span>
             <input
               accept="application/json,.json"
-              aria-label="Import brand kit JSON"
+              aria-label="导入品牌素材包 JSON"
               onChange={importBrandKit}
               type="file"
             />
@@ -352,14 +352,14 @@ export default function App() {
       <section aria-labelledby="photos-heading" className="panel photos-panel">
         <div className="section-heading actions-heading">
           <div>
-            <p className="step">02 / Upload and export</p>
-            <h2 id="photos-heading">Source photos</h2>
+            <p className="step">02 / 上传与导出</p>
+            <h2 id="photos-heading">源照片</h2>
           </div>
           <label className="upload-button">
-            <span>Add photos</span>
+            <span>添加照片</span>
             <input
               accept="image/*"
-              aria-label="Add source photos"
+              aria-label="添加源照片"
               multiple
               onChange={addPhotos}
               type="file"
@@ -369,17 +369,17 @@ export default function App() {
 
         {photos.length === 0 ? (
           <div className="empty-state">
-            <strong>Nothing selected yet.</strong>
+            <strong>尚未选择照片。</strong>
             <span>
-              Files are processed locally; no photo is sent to a server.
+              文件只会在本地处理，照片不会上传到服务器。
             </span>
           </div>
         ) : (
-          <ul className="photo-list" aria-label="Selected source photos">
+          <ul className="photo-list" aria-label="已选择的源照片">
             {photos.map((photo) => (
               <li className="photo-card" key={photo.id}>
                 <img
-                  alt={`Preview of ${photo.file.name}`}
+                  alt={`${photo.file.name} 的预览`}
                   height="112"
                   src={photo.previewUrl}
                   width="112"
@@ -391,23 +391,23 @@ export default function App() {
                       <span>{Math.round(photo.file.size / 1024)} KB</span>
                     </div>
                     <button
-                      aria-label={`Remove ${photo.file.name}`}
+                      aria-label={`移除 ${photo.file.name}`}
                       onClick={() => removePhoto(photo.id)}
                       type="button"
                     >
-                      Remove
+                      移除
                     </button>
                   </div>
                   <div className="metadata-grid">
-                    {exifField(photo, "Camera model", "model", updateExif)}
-                    {exifField(photo, "Lens", "lens", updateExif)}
+                    {exifField(photo, "相机型号", "model", updateExif)}
+                    {exifField(photo, "镜头", "lens", updateExif)}
                     {exifField(
                       photo,
-                      "Focal length",
+                      "焦距",
                       "focalLength",
                       updateExif,
                     )}
-                    {exifField(photo, "Exposure", "exposure", updateExif)}
+                    {exifField(photo, "曝光参数", "exposure", updateExif)}
                   </div>
                 </div>
               </li>
@@ -424,7 +424,7 @@ export default function App() {
             onClick={exportZip}
             type="button"
           >
-            {isExporting ? "Rendering ZIP…" : "Export watermarked ZIP"}
+            {isExporting ? "正在生成 ZIP…" : "导出已加水印的 ZIP"}
           </button>
         </div>
       </section>
