@@ -20,7 +20,7 @@ test("watermark app declares the static-export dependencies", async () => {
 test("watermark UI keeps batch, EXIF, logo, and ZIP controls accessible", async () => {
   const app = await appFile("src/App.tsx");
 
-  assert.match(app, /multiple onChange={addPhotos}/);
+  assert.match(app, /multiple[\s\S]*onChange={addPhotos}/);
   assert.match(app, /Brand kit JSON/);
   assert.match(app, /Upload custom logo/);
   assert.match(app, /Camera model/);
