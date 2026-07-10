@@ -28,10 +28,7 @@ function drawLogo(
 ) {
   const source = sourceSize(logo);
   const logoHeight = Math.max(28, Math.min(width * 0.075, 80));
-  const logoWidth = Math.min(
-    width * 0.24,
-    (Number(source.width) / Math.max(Number(source.height), 1)) * logoHeight,
-  );
+  const logoWidth = Math.min(width * 0.24, (source.width / source.height) * logoHeight);
   const y = baseline - logoHeight;
 
   context.drawImage(logo, width - gap - logoWidth, y, logoWidth, logoHeight);

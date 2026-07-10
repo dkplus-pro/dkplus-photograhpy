@@ -121,8 +121,8 @@ async function mainThreadRender(entry: PhotoEntry, options: WatermarkOptions) {
     typeof createImageBitmap !== "undefined"
       ? await createImageBitmap(entry.file)
       : await loadHtmlImage(entry.file);
-  const width = source.width;
-  const height = source.height;
+  const width = "width" in source ? source.width : source.naturalWidth;
+  const height = "height" in source ? source.height : source.naturalHeight;
   const canvas = document.createElement("canvas");
   canvas.width = width;
   canvas.height = height;

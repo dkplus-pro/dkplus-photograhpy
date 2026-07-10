@@ -1,6 +1,5 @@
 import JSZip from "jszip";
-import { useEffect, useRef, useState } from "react";
-import type { ChangeEvent } from "react";
+import { ChangeEvent, useEffect, useRef, useState } from "react";
 import { emptyExif, readExif } from "./metadata";
 import { renderBatch, renderConcurrency } from "./render-client";
 import type { BrandLogo, PhotoEntry, PhotoExif } from "./types";
