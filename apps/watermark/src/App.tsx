@@ -127,6 +127,50 @@ export default function App() {
   const [isExporting, setIsExporting] = useState(false);
 
   useEffect(() => {
+    const loadManagedBrandLogos = async () => {
+      try {
+        const response = await fetch(
+          `${(import.meta.env.VITE_API_BASE_URL ?? "/api").replace(/\/$/, "")}/brands`,
+        );
+        if (!response.ok) return;
+        const payload = (await response.json()) as { brands?: unknown };
+        const brands = Array.isArray(payload.brands) ? payload.brands : [];
+        const imported = brands.flatMap((brand, brandIndex) => {
+          if (!brand || typeof brand !== "object") return [];
+          const record = brand as Record<string, unknown>;
+          const brandName =
+            typeof record.name === "string"
+              ? record.name
+              : typeof record.brand === "string"
+                ? record.brand
+                : `品牌 ${brandIndex + 1}`;
+          const logos = [
+            ...(Array.isArray(record.logos) ? record.logos : []),
+            ...(Array.isArray(record.logoUrls) ? record.logoUrls : []),
+            ...(typeof record.logoUrl === "string" ? [record.logoUrl] : []),
+          ];
+          return validLogos(
+            logos.map((logo, logoIndex) =>
+              typeof logo === "string"
+                ? {
+                    id: `${String(record.id ?? brandIndex)}-${logoIndex}`,
+                    name: `${brandName}标志 ${logoIndex + 1}`,
+                    source: logo,
+                  }
+                : logo,
+            ),
+          );
+        });
+        if (imported.length === 0) return;
+        setBrandLogos((current) => [
+          ...current,
+          ...withUniqueLogoIds(current, imported),
+        ]);
+      } catch {
+        // Static GitHub Pages deployments do not have the optional API.
+      }
+    };
+    void loadManagedBrandLogos();
     return () => {
       previewUrls.current.forEach((url) => URL.revokeObjectURL(url));
       previewUrls.current.clear();
