@@ -1,0 +1,27 @@
+{
+  "name": "@dkplus/watermark",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc --noEmit && vite build",
+    "preview": "vite preview",
+    "typecheck": "tsc --noEmit",
+    "lint": "prettier --check \"src/**/*.{ts,tsx,css}\" \"tests/**/*.mjs\" \"*.{ts,json,html}\"",
+    "test": "node --test tests/*.test.mjs"
+  },
+  "dependencies": {
+    "exifr": "^7.1.3",
+    "jszip": "^3.10.1",
+    "react": "^19.2.4",
+    "react-dom": "^19.2.4"
+  },
+  "devDependencies": {
+    "@types/node": "^24.0.0",
+    "@types/react": "^19.2.0",
+    "@types/react-dom": "^19.2.0",
+    "@vitejs/plugin-react": "^5.1.1",
+    "vite": "^7.1.0"
+  }
+}

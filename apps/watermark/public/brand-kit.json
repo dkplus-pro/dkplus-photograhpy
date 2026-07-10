@@ -1,0 +1,14 @@
+{
+  "logos": [
+    {
+      "id": "dkplus-wordmark",
+      "name": "dk+ photography wordmark",
+      "source": "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='640' height='180' viewBox='0 0 640 180'%3E%3Crect width='640' height='180' rx='20' fill='%23111627'/%3E%3Ctext x='48' y='112' fill='white' font-family='Arial,sans-serif' font-size='76' font-weight='700'%3Edk%2B photography%3C/text%3E%3C/svg%3E"
+    },
+    {
+      "id": "dkplus-monogram",
+      "name": "dk+ monogram",
+      "source": "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='240' height='180' viewBox='0 0 240 180'%3E%3Crect width='240' height='180' rx='28' fill='%23f4b942'/%3E%3Ctext x='42' y='120' fill='%23111627' font-family='Arial,sans-serif' font-size='88' font-weight='700'%3Edk%2B%3C/text%3E%3C/svg%3E"
+    }
+  ]
+}

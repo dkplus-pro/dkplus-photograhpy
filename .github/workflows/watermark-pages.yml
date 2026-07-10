@@ -1,0 +1,42 @@
+name: Deploy watermark utility to GitHub Pages
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - apps/watermark/**
+      - .github/workflows/watermark-pages.yml
+      - pnpm-lock.yaml
+      - pnpm-workspace.yaml
+  workflow_dispatch:
+
+concurrency:
+  group: watermark-pages
+  cancel-in-progress: true
+
+permissions:
+  contents: write
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm --filter @dkplus/watermark build
+        env:
+          GITHUB_ACTIONS: "true"
+      - name: Publish the tool below /watermark without removing the gallery
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: apps/watermark/dist
+          destination_dir: watermark
+          keep_files: true
