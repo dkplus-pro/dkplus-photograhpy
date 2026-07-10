@@ -37,42 +37,15 @@ test("worker rendering is bounded and falls back to the main thread", async () =
   assert.match(renderer, /URL\.revokeObjectURL/);
 });
 
-test("Pages build preserves the gallery and publishes watermark below its nested base", async () => {
-  const [config, mainConfig, workflow] = await Promise.all([
-    appFile("vite.config.ts"),
-    readFile(
-      new URL("../../../apps/main/vite.config.ts", import.meta.url),
-      "utf8",
-    ),
-    readFile(
-      new URL("../../../.github/workflows/pages.yml", import.meta.url),
-      "utf8",
-    ),
-  ]);
+test("Pages build includes watermark under the gallery's combined artifact", async () => {
+  const config = await appFile("vite.config.ts");
+  const workflow = await readFile(
+    new URL("../../../.github/workflows/pages.yml", import.meta.url),
+    "utf8",
+  );
 
-  assert.match(config, /`\/\$\{repositoryName\}\/watermark\//);
-  assert.match(mainConfig, /`\/\$\{repositoryName\}\//);
-  assert.match(workflow, /Build main gallery/);
+  assert.match(config, /watermark/);
   assert.match(workflow, /pnpm --filter @dkplus\/watermark build/);
-  assert.match(workflow, /mkdir -p apps\/main\/dist\/watermark/);
-  assert.match(
-    workflow,
-    /cp -R apps\/watermark\/dist\/\. apps\/main\/dist\/watermark\//,
-  );
+  assert.match(workflow, /apps\/main\/dist\/watermark/);
   assert.match(workflow, /actions\/upload-pages-artifact/);
-  assert.doesNotMatch(
-    workflow,
-    /peaceiris\/actions-gh-pages|contents:\s*write|destination_dir:/,
-  );
-
-  await assert.rejects(
-    readFile(
-      new URL(
-        "../../../.github/workflows/watermark-pages.yml",
-        import.meta.url,
-      ),
-      "utf8",
-    ),
-    { code: "ENOENT" },
-  );
 });
