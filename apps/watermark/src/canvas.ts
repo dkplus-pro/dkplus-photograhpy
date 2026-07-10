@@ -1,8 +1,7 @@
 import type { WatermarkOptions } from "./types";
 
 type RenderingContext =
-  | CanvasRenderingContext2D
-  | OffscreenCanvasRenderingContext2D;
+  CanvasRenderingContext2D | OffscreenCanvasRenderingContext2D;
 
 type Palette = {
   strip: string;
@@ -40,15 +39,21 @@ const watermarkFont = (
 
 function sourceSize(source: CanvasImageSource) {
   if ("naturalWidth" in source && "naturalHeight" in source) {
-    return { width: source.naturalWidth, height: source.naturalHeight };
+    return {
+      width: Number(source.naturalWidth),
+      height: Number(source.naturalHeight),
+    };
   }
 
   if ("videoWidth" in source && "videoHeight" in source) {
-    return { width: source.videoWidth, height: source.videoHeight };
+    return {
+      width: Number(source.videoWidth),
+      height: Number(source.videoHeight),
+    };
   }
 
   if ("width" in source && "height" in source) {
-    return { width: source.width, height: source.height };
+    return { width: Number(source.width), height: Number(source.height) };
   }
 
   return { width: 1, height: 1 };
@@ -150,13 +155,7 @@ export function drawWatermark(
           logoMaxHeight,
           logoMaxWidth,
         )
-      : drawLogoMark(
-          context,
-          options.text,
-          logoX,
-          logoCenterY,
-          logoMaxHeight,
-        );
+      : drawLogoMark(context, options.text, logoX, logoCenterY, logoMaxHeight);
     const dividerGap = clamp(paddingX * 0.54, 28, 56);
     const dividerX = logoX + logoWidth + dividerGap;
     context.save();
