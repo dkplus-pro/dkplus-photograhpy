@@ -12,4 +12,7 @@ function githubPagesBase() {
 export default defineConfig({
   base: githubPagesBase(),
   plugins: [react()],
+  server: {
+    port: 5175,
+  },
 });
