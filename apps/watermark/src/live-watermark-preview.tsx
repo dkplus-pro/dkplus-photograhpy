@@ -72,7 +72,7 @@ export function LiveWatermarkPreview({
         const { width, height } = previewDimensions(image);
         const context = canvasRef.current.getContext("2d");
         if (!context) {
-          throw new Error("当前浏览器无法创建预览画布。 ");
+          throw new Error("当前浏览器无法创建预览画布。");
         }
 
         canvasRef.current.width = width;

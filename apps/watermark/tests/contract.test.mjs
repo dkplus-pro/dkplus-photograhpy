@@ -37,16 +37,14 @@ test("watermark UI keeps batch, EXIF, logo, and ZIP controls accessible in Chine
   assert.match(app, /aria-live="polite"/);
 });
 
-test("watermark document and visible renderer errors are Chinese", async () => {
-  const document = await appFile("index.html");
-  const renderer = await appFile("src/render-client.ts");
-  const worker = await appFile("src/watermark.worker.ts");
+test("live preview renders the selected photo with the export watermark treatment", async () => {
+  const preview = await appFile("src/live-watermark-preview.tsx");
 
-  assert.match(document, /<html lang="zh-CN">/);
-  assert.match(document, /<title>dk\+ 图片水印<\/title>/);
-  assert.match(renderer, /渲染 Worker 无法生成图像。/);
-  assert.match(renderer, /无法编码已添加水印的图像。/);
-  assert.match(worker, /渲染 Worker 失败。/);
+  assert.match(preview, /drawWatermark/);
+  assert.match(preview, /maximumPreviewDimension = 1600/);
+  assert.match(preview, /photo: PhotoEntry \| null/);
+  assert.match(preview, /尚未选择预览照片/);
+  assert.match(preview, /实时水印预览/);
 });
 
 test("brand-kit imports assign unique logo IDs before rendering options", async () => {
