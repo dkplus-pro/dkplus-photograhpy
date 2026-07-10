@@ -17,15 +17,29 @@ test("watermark app declares the static-export dependencies", async () => {
   assert.match(manifest.scripts.build, /vite build/);
 });
 
-test("watermark UI keeps batch, EXIF, logo, and ZIP controls accessible", async () => {
+test("watermark UI keeps batch, EXIF, logo, and ZIP controls accessible in Chinese", async () => {
   const app = await appFile("src/App.tsx");
 
   assert.match(app, /multiple[\s\S]*onChange={addPhotos}/);
-  assert.match(app, /Brand kit JSON/);
-  assert.match(app, /Upload custom logo/);
-  assert.match(app, /Camera model/);
-  assert.match(app, /Export watermarked ZIP/);
+  assert.match(app, /品牌素材包 JSON/);
+  assert.match(app, /上传自定义标志/);
+  assert.match(app, /相机型号/);
+  assert.match(app, /导出已加水印的 ZIP/);
+  assert.match(app, /照片会始终保留在当前浏览器中/);
+  assert.doesNotMatch(app, /Export watermarked ZIP|Camera model|Upload custom logo/);
   assert.match(app, /aria-live="polite"/);
+});
+
+test("watermark document and visible renderer errors are Chinese", async () => {
+  const document = await appFile("index.html");
+  const renderer = await appFile("src/render-client.ts");
+  const worker = await appFile("src/watermark.worker.ts");
+
+  assert.match(document, /<html lang="zh-CN">/);
+  assert.match(document, /<title>dk\+ 图片水印<\/title>/);
+  assert.match(renderer, /渲染 Worker 无法生成图像。/);
+  assert.match(renderer, /无法编码已添加水印的图像。/);
+  assert.match(worker, /渲染 Worker 失败。/);
 });
 
 test("brand-kit imports assign unique logo IDs before rendering options", async () => {

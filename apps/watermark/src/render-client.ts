@@ -56,14 +56,14 @@ function workerRender(entry: PhotoEntry, options: WatermarkOptions) {
         reject(
           new Error(
             event.data.message ||
-              "The render worker could not create an image.",
+              "渲染 Worker 无法生成图像。",
           ),
         );
       }
     });
     worker.addEventListener("error", () => {
       cleanUp();
-      reject(new Error("The render worker stopped unexpectedly."));
+      reject(new Error("渲染 Worker 意外停止。"));
     });
 
     try {
@@ -87,7 +87,7 @@ function loadHtmlImage(file: File) {
     };
     image.onerror = () => {
       URL.revokeObjectURL(source);
-      reject(new Error(`Could not decode ${file.name}.`));
+      reject(new Error(`无法解码 ${file.name}。`));
     };
     image.src = source;
   });
@@ -96,7 +96,7 @@ function loadHtmlImage(file: File) {
 async function loadLogo(source: string) {
   const response = await fetch(source);
   if (!response.ok) {
-    throw new Error("The selected logo could not be loaded.");
+    throw new Error("无法加载所选品牌标志。");
   }
 
   const blob = await response.blob();
@@ -113,7 +113,7 @@ async function loadLogo(source: string) {
     };
     image.onerror = () => {
       URL.revokeObjectURL(url);
-      reject(new Error("The selected logo could not be decoded."));
+      reject(new Error("无法解码所选品牌标志。"));
     };
     image.src = url;
   });
@@ -138,7 +138,7 @@ async function mainThreadRender(entry: PhotoEntry, options: WatermarkOptions) {
   const context = canvas.getContext("2d");
   if (!context) {
     closeBitmap(source);
-    throw new Error("Your browser cannot create a canvas for this image.");
+    throw new Error("您的浏览器无法为此图像创建画布。");
   }
 
   let logo: CanvasImageSource | undefined;
@@ -157,7 +157,7 @@ async function mainThreadRender(entry: PhotoEntry, options: WatermarkOptions) {
         (result) =>
           result
             ? resolve(result)
-            : reject(new Error("Could not encode the watermarked image.")),
+            : reject(new Error("无法编码已添加水印的图像。")),
         "image/jpeg",
         0.92,
       );
