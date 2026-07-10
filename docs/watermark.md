@@ -45,7 +45,33 @@ Use Node.js 20.19+ and pnpm 10+ (via Corepack), consistent with the workspace ro
 
 ## Deployment
 
-The watermark tool deploys through its own GitHub Pages workflow and artifact. It must not replace the existing gallery deployment. The Vite base path is derived from `GITHUB_REPOSITORY`, allowing the static bundle to load correctly from a project Pages URL.
+GitHub Pages permits one Pages site per repository. A second workflow that calls
+`deploy-pages` would therefore replace the gallery's current Pages deployment;
+it is not an isolation boundary. The safe repository-level deployment design is
+one workflow and one assembled Pages artifact:
+
+1. Keep `.github/workflows/pages.yml` as the sole workflow that uploads and
+   deploys the `github-pages` artifact.
+2. Build the gallery at its existing project Pages base,
+   `/${repositoryName}/`.
+3. Build the watermark app with
+   `VITE_BASE_PATH=/${repositoryName}/watermark/`.
+4. Stage `apps/main/dist` at the artifact root and copy
+   `apps/watermark/dist` into `watermark/` below that root before
+   `upload-pages-artifact` runs.
+
+This retains the gallery at `https://<owner>.github.io/<repository>/` and
+publishes the watermark app at
+`https://<owner>.github.io/<repository>/watermark/` in the same atomic
+deployment. The Pages workflow must continue to use the existing
+`github-pages` concurrency group, permissions, build-to-deploy dependency, and
+deployment environment. Do not add an independent `deploy-pages` workflow for
+the watermark app.
+
+The required workflow contract test should build both apps, inspect the staged
+artifact for `index.html` and `watermark/index.html`, and assert the watermark
+HTML references assets below the `/watermark/` project Pages base. This catches
+an accidental artifact replacement or incorrect asset base before deployment.
 
 ## Verification checklist
 
