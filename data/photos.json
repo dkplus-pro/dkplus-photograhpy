@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-07-09T13:34:30.347Z",
+  "generatedAt": "2026-08-24T18:22:08.339Z",
   "topics": [
     {
       "id": "city-night",
@@ -34,6 +34,12 @@
       "sortOrder": 4
     },
     {
+      "id": "2026新疆",
+      "title": "2026新疆",
+      "description": "2026重新出发到新疆，用松下G9M2拍摄",
+      "slug": "2026新疆"
+    },
+    {
       "id": "新疆2025",
       "title": "新疆2025",
       "description": "2025年7月，我第一次来到新疆，我和小伙伴环伊犁玩了一圈，途径独山子、独库公路、安集海大峡谷、赛里木湖，这里是国内风景的天花板，随手一拍就是大片",
@@ -41,6 +47,807 @@
     }
   ],
   "photos": [
+    {
+      "id": "b038a773-b228-4e21-b18b-d486b03e3e6c",
+      "title": "P1075979",
+      "topicIds": [
+        "2026新疆"
+      ],
+      "takenAt": "2026-08-01T09:54:46.000Z",
+      "asset": {
+        "original": "https://cdn.ai4love.cn/tmp/2026/08/1787595548659-c89eb002-f6d2-4186-a913-8cf03085d54c-p1075979.jpg",
+        "thumbnail": "https://cdn.ai4love.cn/tmp/2026/08/1787595548659-c89eb002-f6d2-4186-a913-8cf03085d54c-p1075979.jpg",
+        "preview": "https://cdn.ai4love.cn/tmp/2026/08/1787595548659-c89eb002-f6d2-4186-a913-8cf03085d54c-p1075979.jpg",
+        "alt": "P1075979"
+      },
+      "exif": {
+        "cameraBrand": "Panasonic",
+        "cameraModel": "DC-G9M2",
+        "lens": "OM 12-45mm F4.0",
+        "iso": 100,
+        "aperture": "f/5.6",
+        "shutterSpeed": "1/1250s",
+        "focalLength": "12",
+        "capturedAt": "2026-08-01T09:54:46.000Z"
+      }
+    },
+    {
+      "id": "44b5784f-27d0-4025-8a5a-aea5f4f74095",
+      "title": "P1075953",
+      "topicIds": [
+        "2026新疆"
+      ],
+      "takenAt": "2026-07-31T13:29:57.000Z",
+      "asset": {
+        "original": "https://cdn.ai4love.cn/tmp/2026/08/1787595421929-ba8e0426-e5d1-4c78-b52b-d57c10ab0d60-p1075953.jpg",
+        "thumbnail": "https://cdn.ai4love.cn/tmp/2026/08/1787595421929-ba8e0426-e5d1-4c78-b52b-d57c10ab0d60-p1075953.jpg",
+        "preview": "https://cdn.ai4love.cn/tmp/2026/08/1787595421929-ba8e0426-e5d1-4c78-b52b-d57c10ab0d60-p1075953.jpg",
+        "alt": "P1075953"
+      },
+      "exif": {
+        "cameraBrand": "Panasonic",
+        "cameraModel": "DC-G9M2",
+        "lens": "OM 12-45mm F4.0",
+        "iso": 100,
+        "aperture": "f/4",
+        "shutterSpeed": "1/100s",
+        "focalLength": "45",
+        "capturedAt": "2026-07-31T13:29:57.000Z"
+      }
+    },
+    {
+      "id": "2e167b8d-4645-46ef-ab76-81e9babee7d8",
+      "title": "P1075942",
+      "topicIds": [
+        "2026新疆"
+      ],
+      "takenAt": "2026-07-31T13:14:21.000Z",
+      "asset": {
+        "original": "https://cdn.ai4love.cn/tmp/2026/08/1787595577143-050c6087-e934-47b2-99a3-7fad96618c9b-p1075942.jpg",
+        "thumbnail": "https://cdn.ai4love.cn/tmp/2026/08/1787595577143-050c6087-e934-47b2-99a3-7fad96618c9b-p1075942.jpg",
+        "preview": "https://cdn.ai4love.cn/tmp/2026/08/1787595577143-050c6087-e934-47b2-99a3-7fad96618c9b-p1075942.jpg",
+        "alt": "P1075942"
+      },
+      "exif": {
+        "cameraBrand": "Panasonic",
+        "cameraModel": "DC-G9M2",
+        "iso": 100,
+        "aperture": "f/4",
+        "shutterSpeed": "1/320s",
+        "focalLength": "45",
+        "capturedAt": "2026-07-31T13:14:21.000Z"
+      }
+    },
+    {
+      "id": "a1f0953c-7c84-4d31-8701-0528fb4b1da4",
+      "title": "P1075934",
+      "topicIds": [
+        "2026新疆"
+      ],
+      "takenAt": "2026-07-31T13:08:13.000Z",
+      "asset": {
+        "original": "https://cdn.ai4love.cn/tmp/2026/08/1787595553063-4f8037ff-50f2-4a33-8b13-5097a699694f-p1075934.jpg",
+        "thumbnail": "https://cdn.ai4love.cn/tmp/2026/08/1787595553063-4f8037ff-50f2-4a33-8b13-5097a699694f-p1075934.jpg",
+        "preview": "https://cdn.ai4love.cn/tmp/2026/08/1787595553063-4f8037ff-50f2-4a33-8b13-5097a699694f-p1075934.jpg",
+        "alt": "P1075934"
+      },
+      "exif": {
+        "cameraBrand": "Panasonic",
+        "cameraModel": "DC-G9M2",
+        "lens": "OM 12-45mm F4.0",
+        "iso": 100,
+        "aperture": "f/4",
+        "shutterSpeed": "1/100s",
+        "focalLength": "12",
+        "capturedAt": "2026-07-31T13:08:13.000Z"
+      }
+    },
+    {
+      "id": "00e10d3d-f01c-4665-9370-ab4a3087e831",
+      "title": "P1075805",
+      "topicIds": [
+        "2026新疆"
+      ],
+      "takenAt": "2026-07-31T12:02:25.000Z",
+      "asset": {
+        "original": "https://cdn.ai4love.cn/tmp/2026/08/1787595543600-4e59c01d-5b99-4398-8a28-e648112b99d2-p1075805.jpg",
+        "thumbnail": "https://cdn.ai4love.cn/tmp/2026/08/1787595543600-4e59c01d-5b99-4398-8a28-e648112b99d2-p1075805.jpg",
+        "preview": "https://cdn.ai4love.cn/tmp/2026/08/1787595543600-4e59c01d-5b99-4398-8a28-e648112b99d2-p1075805.jpg",
+        "alt": "P1075805"
+      },
+      "exif": {
+        "cameraBrand": "Panasonic",
+        "cameraModel": "DC-G9M2",
+        "lens": "OM 12-45mm F4.0",
+        "iso": 100,
+        "aperture": "f/4",
+        "shutterSpeed": "1/640s",
+        "focalLength": "45",
+        "capturedAt": "2026-07-31T12:02:25.000Z"
+      }
+    },
+    {
+      "id": "2897a183-1eee-4699-b119-da12b5790676",
+      "title": "P1075752",
+      "topicIds": [
+        "2026新疆"
+      ],
+      "takenAt": "2026-07-31T11:41:28.000Z",
+      "asset": {
+        "original": "https://cdn.ai4love.cn/tmp/2026/08/1787595531698-3ed868b9-065f-416c-bc69-7f8ad3e6af9d-p1075752.jpg",
+        "thumbnail": "https://cdn.ai4love.cn/tmp/2026/08/1787595531698-3ed868b9-065f-416c-bc69-7f8ad3e6af9d-p1075752.jpg",
+        "preview": "https://cdn.ai4love.cn/tmp/2026/08/1787595531698-3ed868b9-065f-416c-bc69-7f8ad3e6af9d-p1075752.jpg",
+        "alt": "P1075752"
+      },
+      "exif": {
+        "cameraBrand": "Panasonic",
+        "cameraModel": "DC-G9M2",
+        "iso": 100,
+        "aperture": "f/4",
+        "shutterSpeed": "1/1250s",
+        "focalLength": "21",
+        "capturedAt": "2026-07-31T11:41:28.000Z"
+      }
+    },
+    {
+      "id": "e1e77ef0-b689-47a6-b6b5-b0354ea1d80c",
+      "title": "P1075749",
+      "topicIds": [
+        "2026新疆"
+      ],
+      "takenAt": "2026-07-31T11:37:56.000Z",
+      "asset": {
+        "original": "https://cdn.ai4love.cn/tmp/2026/08/1787595537415-273fdb16-b23d-4728-a7a6-0b40df67cb44-p1075749.jpg",
+        "thumbnail": "https://cdn.ai4love.cn/tmp/2026/08/1787595537415-273fdb16-b23d-4728-a7a6-0b40df67cb44-p1075749.jpg",
+        "preview": "https://cdn.ai4love.cn/tmp/2026/08/1787595537415-273fdb16-b23d-4728-a7a6-0b40df67cb44-p1075749.jpg",
+        "alt": "P1075749"
+      },
+      "exif": {
+        "cameraBrand": "Panasonic",
+        "cameraModel": "DC-G9M2",
+        "iso": 100,
+        "aperture": "f/4",
+        "shutterSpeed": "1/100s",
+        "focalLength": "16",
+        "capturedAt": "2026-07-31T11:37:56.000Z"
+      }
+    },
+    {
+      "id": "99487beb-dad8-41bb-8d54-0cf2540280e8",
+      "title": "P1075741",
+      "topicIds": [
+        "2026新疆"
+      ],
+      "takenAt": "2026-07-31T11:22:44.000Z",
+      "asset": {
+        "original": "https://cdn.ai4love.cn/tmp/2026/08/1787595517162-2e5c99c0-1283-4b94-84bd-78b9dc966500-p1075741.jpg",
+        "thumbnail": "https://cdn.ai4love.cn/tmp/2026/08/1787595517162-2e5c99c0-1283-4b94-84bd-78b9dc966500-p1075741.jpg",
+        "preview": "https://cdn.ai4love.cn/tmp/2026/08/1787595517162-2e5c99c0-1283-4b94-84bd-78b9dc966500-p1075741.jpg",
+        "alt": "P1075741"
+      },
+      "exif": {
+        "cameraBrand": "Panasonic",
+        "cameraModel": "DC-G9M2",
+        "lens": "OM 12-45mm F4.0",
+        "iso": 100,
+        "aperture": "f/4",
+        "shutterSpeed": "1/160s",
+        "focalLength": "26",
+        "capturedAt": "2026-07-31T11:22:44.000Z"
+      }
+    },
+    {
+      "id": "47aded61-e01c-41ee-b67d-1345972acc3e",
+      "title": "P1075736",
+      "topicIds": [
+        "2026新疆"
+      ],
+      "takenAt": "2026-07-31T11:20:56.000Z",
+      "asset": {
+        "original": "https://cdn.ai4love.cn/tmp/2026/08/1787595569678-02ad3bb0-6ab5-4c73-8059-ab2d2ffb85cc-p1075736.jpg",
+        "thumbnail": "https://cdn.ai4love.cn/tmp/2026/08/1787595569678-02ad3bb0-6ab5-4c73-8059-ab2d2ffb85cc-p1075736.jpg",
+        "preview": "https://cdn.ai4love.cn/tmp/2026/08/1787595569678-02ad3bb0-6ab5-4c73-8059-ab2d2ffb85cc-p1075736.jpg",
+        "alt": "P1075736"
+      },
+      "exif": {
+        "cameraBrand": "Panasonic",
+        "cameraModel": "DC-G9M2",
+        "lens": "OM 12-45mm F4.0",
+        "iso": 100,
+        "aperture": "f/4",
+        "shutterSpeed": "1/250s",
+        "focalLength": "28",
+        "capturedAt": "2026-07-31T11:20:56.000Z"
+      }
+    },
+    {
+      "id": "07b542e8-3744-437b-9016-4da91c5ce935",
+      "title": "P1075723",
+      "topicIds": [
+        "2026新疆"
+      ],
+      "takenAt": "2026-07-31T11:17:07.000Z",
+      "asset": {
+        "original": "https://cdn.ai4love.cn/tmp/2026/08/1787595523808-0d5c64e7-7b0d-4df3-ac92-0f93311256a4-p1075723.jpg",
+        "thumbnail": "https://cdn.ai4love.cn/tmp/2026/08/1787595523808-0d5c64e7-7b0d-4df3-ac92-0f93311256a4-p1075723.jpg",
+        "preview": "https://cdn.ai4love.cn/tmp/2026/08/1787595523808-0d5c64e7-7b0d-4df3-ac92-0f93311256a4-p1075723.jpg",
+        "alt": "P1075723"
+      },
+      "exif": {
+        "cameraBrand": "Panasonic",
+        "cameraModel": "DC-G9M2",
+        "iso": 100,
+        "aperture": "f/4",
+        "shutterSpeed": "1/80s",
+        "focalLength": "27",
+        "capturedAt": "2026-07-31T11:17:07.000Z"
+      }
+    },
+    {
+      "id": "f559b72b-9927-4763-97be-8f864d145217",
+      "title": "P1075722",
+      "topicIds": [
+        "2026新疆"
+      ],
+      "takenAt": "2026-07-31T11:12:35.000Z",
+      "asset": {
+        "original": "https://cdn.ai4love.cn/tmp/2026/08/1787595509694-a8750a83-e3e4-4c10-95e6-527cb34fcc21-p1075722.jpg",
+        "thumbnail": "https://cdn.ai4love.cn/tmp/2026/08/1787595509694-a8750a83-e3e4-4c10-95e6-527cb34fcc21-p1075722.jpg",
+        "preview": "https://cdn.ai4love.cn/tmp/2026/08/1787595509694-a8750a83-e3e4-4c10-95e6-527cb34fcc21-p1075722.jpg",
+        "alt": "P1075722"
+      },
+      "exif": {
+        "cameraBrand": "Panasonic",
+        "cameraModel": "DC-G9M2",
+        "lens": "OM 12-45mm F4.0",
+        "iso": 100,
+        "aperture": "f/4",
+        "shutterSpeed": "1/250s",
+        "focalLength": "12",
+        "capturedAt": "2026-07-31T11:12:35.000Z"
+      }
+    },
+    {
+      "id": "2d700cf3-10d8-40e0-b992-01f5854045f2",
+      "title": "P1075575",
+      "topicIds": [
+        "2026新疆"
+      ],
+      "takenAt": "2026-07-31T09:55:43.000Z",
+      "asset": {
+        "original": "https://cdn.ai4love.cn/tmp/2026/08/1787595557761-6ebbde8b-1604-4590-88b7-179410cd0895-p1075575.jpg",
+        "thumbnail": "https://cdn.ai4love.cn/tmp/2026/08/1787595557761-6ebbde8b-1604-4590-88b7-179410cd0895-p1075575.jpg",
+        "preview": "https://cdn.ai4love.cn/tmp/2026/08/1787595557761-6ebbde8b-1604-4590-88b7-179410cd0895-p1075575.jpg",
+        "alt": "P1075575"
+      },
+      "exif": {
+        "cameraBrand": "Panasonic",
+        "cameraModel": "DC-G9M2",
+        "lens": "OM 12-45mm F4.0",
+        "iso": 3200,
+        "aperture": "f/4",
+        "shutterSpeed": "1/800s",
+        "focalLength": "45",
+        "capturedAt": "2026-07-31T09:55:43.000Z"
+      }
+    },
+    {
+      "id": "b065caac-0aa9-4645-bce8-c75221abdef8",
+      "title": "P1075554",
+      "topicIds": [
+        "2026新疆"
+      ],
+      "takenAt": "2026-07-31T09:55:00.000Z",
+      "asset": {
+        "original": "https://cdn.ai4love.cn/tmp/2026/08/1787595563569-e4768cd1-576e-4f49-a77d-41ff877931e6-p1075554.jpg",
+        "thumbnail": "https://cdn.ai4love.cn/tmp/2026/08/1787595563569-e4768cd1-576e-4f49-a77d-41ff877931e6-p1075554.jpg",
+        "preview": "https://cdn.ai4love.cn/tmp/2026/08/1787595563569-e4768cd1-576e-4f49-a77d-41ff877931e6-p1075554.jpg",
+        "alt": "P1075554"
+      },
+      "exif": {
+        "cameraBrand": "Panasonic",
+        "cameraModel": "DC-G9M2",
+        "lens": "OM 12-45mm F4.0",
+        "iso": 3200,
+        "aperture": "f/4",
+        "shutterSpeed": "1/800s",
+        "focalLength": "45",
+        "capturedAt": "2026-07-31T09:55:00.000Z"
+      }
+    },
+    {
+      "id": "3ec3e4ba-409c-4960-bc37-8b1d3a48e1aa",
+      "title": "P1075465",
+      "topicIds": [
+        "2026新疆"
+      ],
+      "takenAt": "2026-07-31T08:33:14.000Z",
+      "asset": {
+        "original": "https://cdn.ai4love.cn/tmp/2026/08/1787595497970-5797880e-93df-4ea6-b0d8-634a1b6e614a-p1075465.jpg",
+        "thumbnail": "https://cdn.ai4love.cn/tmp/2026/08/1787595497970-5797880e-93df-4ea6-b0d8-634a1b6e614a-p1075465.jpg",
+        "preview": "https://cdn.ai4love.cn/tmp/2026/08/1787595497970-5797880e-93df-4ea6-b0d8-634a1b6e614a-p1075465.jpg",
+        "alt": "P1075465"
+      },
+      "exif": {
+        "cameraBrand": "Panasonic",
+        "cameraModel": "DC-G9M2",
+        "lens": "OM 12-45mm F4.0",
+        "iso": 100,
+        "aperture": "f/4",
+        "shutterSpeed": "1/2000s",
+        "focalLength": "45",
+        "capturedAt": "2026-07-31T08:33:14.000Z"
+      }
+    },
+    {
+      "id": "5c1f5576-b5af-425c-96fd-f7036051a718",
+      "title": "P1075378",
+      "topicIds": [
+        "2026新疆"
+      ],
+      "takenAt": "2026-07-29T06:48:30.000Z",
+      "asset": {
+        "original": "https://cdn.ai4love.cn/tmp/2026/08/1787595584235-0b38d7c5-d905-4581-b2a1-b9929ea0b8f7-p1075378.jpg",
+        "thumbnail": "https://cdn.ai4love.cn/tmp/2026/08/1787595584235-0b38d7c5-d905-4581-b2a1-b9929ea0b8f7-p1075378.jpg",
+        "preview": "https://cdn.ai4love.cn/tmp/2026/08/1787595584235-0b38d7c5-d905-4581-b2a1-b9929ea0b8f7-p1075378.jpg",
+        "alt": "P1075378"
+      },
+      "exif": {
+        "cameraBrand": "Panasonic",
+        "cameraModel": "DC-G9M2",
+        "lens": "OM 12-45mm F4.0",
+        "iso": 100,
+        "aperture": "f/4",
+        "shutterSpeed": "1/125s",
+        "focalLength": "35",
+        "capturedAt": "2026-07-29T06:48:30.000Z"
+      }
+    },
+    {
+      "id": "abd63d8e-7d0f-4d9f-830b-d7e28ad309fc",
+      "title": "P1075349",
+      "topicIds": [
+        "2026新疆"
+      ],
+      "takenAt": "2026-07-27T07:54:26.000Z",
+      "asset": {
+        "original": "https://cdn.ai4love.cn/tmp/2026/08/1787595585807-33867fdd-3a4f-43e4-9856-05ea30d8de15-p1075349.jpg",
+        "thumbnail": "https://cdn.ai4love.cn/tmp/2026/08/1787595585807-33867fdd-3a4f-43e4-9856-05ea30d8de15-p1075349.jpg",
+        "preview": "https://cdn.ai4love.cn/tmp/2026/08/1787595585807-33867fdd-3a4f-43e4-9856-05ea30d8de15-p1075349.jpg",
+        "alt": "P1075349"
+      },
+      "exif": {
+        "cameraBrand": "Panasonic",
+        "cameraModel": "DC-G9M2",
+        "iso": 100,
+        "aperture": "f/4",
+        "shutterSpeed": "1/1600s",
+        "focalLength": "37",
+        "capturedAt": "2026-07-27T07:54:26.000Z"
+      }
+    },
+    {
+      "id": "64c2bda1-436f-480c-a0d3-ec83520f7766",
+      "title": "P1065179",
+      "topicIds": [
+        "2026新疆"
+      ],
+      "takenAt": "2026-07-27T02:36:46.000Z",
+      "asset": {
+        "original": "https://cdn.ai4love.cn/tmp/2026/08/1787595492954-6c29c9f2-be34-4564-b4f5-772508db5e68-p1065179.jpg",
+        "thumbnail": "https://cdn.ai4love.cn/tmp/2026/08/1787595492954-6c29c9f2-be34-4564-b4f5-772508db5e68-p1065179.jpg",
+        "preview": "https://cdn.ai4love.cn/tmp/2026/08/1787595492954-6c29c9f2-be34-4564-b4f5-772508db5e68-p1065179.jpg",
+        "alt": "P1065179"
+      },
+      "exif": {
+        "cameraBrand": "Panasonic",
+        "cameraModel": "DC-G9M2",
+        "lens": "OM 12-45mm F4.0",
+        "iso": 100,
+        "aperture": "f/4",
+        "shutterSpeed": "1/1600s",
+        "focalLength": "45",
+        "capturedAt": "2026-07-27T02:36:46.000Z"
+      }
+    },
+    {
+      "id": "dfddf7d7-edd9-4957-89b7-cb1454d517f4",
+      "title": "P1065161 HDR",
+      "topicIds": [
+        "2026新疆"
+      ],
+      "takenAt": "2026-07-27T00:02:15.000Z",
+      "asset": {
+        "original": "https://cdn.ai4love.cn/tmp/2026/08/1787595486879-a0ecde56-8505-4ee7-a7b8-5b806a333c2e-p1065161-hdr.jpg",
+        "thumbnail": "https://cdn.ai4love.cn/tmp/2026/08/1787595486879-a0ecde56-8505-4ee7-a7b8-5b806a333c2e-p1065161-hdr.jpg",
+        "preview": "https://cdn.ai4love.cn/tmp/2026/08/1787595486879-a0ecde56-8505-4ee7-a7b8-5b806a333c2e-p1065161-hdr.jpg",
+        "alt": "P1065161 HDR"
+      },
+      "exif": {
+        "cameraBrand": "Panasonic",
+        "cameraModel": "DC-G9M2",
+        "iso": 100,
+        "shutterSpeed": "1/800s",
+        "focalLength": "10",
+        "capturedAt": "2026-07-27T00:02:15.000Z"
+      }
+    },
+    {
+      "id": "84e711c2-3777-45a1-b56c-1a6344d36cbb",
+      "title": "P1065134 HDR",
+      "topicIds": [
+        "2026新疆"
+      ],
+      "takenAt": "2026-07-26T23:56:00.000Z",
+      "asset": {
+        "original": "https://cdn.ai4love.cn/tmp/2026/08/1787595480478-0907a722-bf02-476f-a6af-325aa053153e-p1065134-hdr.jpg",
+        "thumbnail": "https://cdn.ai4love.cn/tmp/2026/08/1787595480478-0907a722-bf02-476f-a6af-325aa053153e-p1065134-hdr.jpg",
+        "preview": "https://cdn.ai4love.cn/tmp/2026/08/1787595480478-0907a722-bf02-476f-a6af-325aa053153e-p1065134-hdr.jpg",
+        "alt": "P1065134 HDR"
+      },
+      "exif": {
+        "cameraBrand": "Panasonic",
+        "cameraModel": "DC-G9M2",
+        "iso": 100,
+        "shutterSpeed": "1/640s",
+        "focalLength": "10",
+        "capturedAt": "2026-07-26T23:56:00.000Z"
+      }
+    },
+    {
+      "id": "56d1cc1b-de6c-459e-b0b8-620c9db6cb1e",
+      "title": "P1065127 HDR",
+      "topicIds": [
+        "2026新疆"
+      ],
+      "takenAt": "2026-07-26T23:53:15.000Z",
+      "asset": {
+        "original": "https://cdn.ai4love.cn/tmp/2026/08/1787595598508-cb183591-c4fc-4b85-8ace-dd70b881055b-p1065127-hdr.jpg",
+        "thumbnail": "https://cdn.ai4love.cn/tmp/2026/08/1787595598508-cb183591-c4fc-4b85-8ace-dd70b881055b-p1065127-hdr.jpg",
+        "preview": "https://cdn.ai4love.cn/tmp/2026/08/1787595598508-cb183591-c4fc-4b85-8ace-dd70b881055b-p1065127-hdr.jpg",
+        "alt": "P1065127 HDR"
+      },
+      "exif": {
+        "cameraBrand": "Panasonic",
+        "cameraModel": "DC-G9M2",
+        "iso": 100,
+        "shutterSpeed": "1/500s",
+        "focalLength": "10",
+        "capturedAt": "2026-07-26T23:53:15.000Z"
+      }
+    },
+    {
+      "id": "9616f909-467e-4cc2-bc27-963008a27faa",
+      "title": "P1065110 HDR",
+      "topicIds": [
+        "2026新疆"
+      ],
+      "takenAt": "2026-07-26T23:52:00.000Z",
+      "asset": {
+        "original": "https://cdn.ai4love.cn/tmp/2026/08/1787595604700-71b62c2e-8039-4013-a50c-fe0ed798148f-p1065110-hdr.jpg",
+        "thumbnail": "https://cdn.ai4love.cn/tmp/2026/08/1787595604700-71b62c2e-8039-4013-a50c-fe0ed798148f-p1065110-hdr.jpg",
+        "preview": "https://cdn.ai4love.cn/tmp/2026/08/1787595604700-71b62c2e-8039-4013-a50c-fe0ed798148f-p1065110-hdr.jpg",
+        "alt": "P1065110 HDR"
+      },
+      "exif": {
+        "cameraBrand": "Panasonic",
+        "cameraModel": "DC-G9M2",
+        "iso": 100,
+        "shutterSpeed": "1/640s",
+        "focalLength": "10",
+        "capturedAt": "2026-07-26T23:52:00.000Z"
+      }
+    },
+    {
+      "id": "cd898028-d6dd-4a30-8640-87e2e2149e4f",
+      "title": "P1065052",
+      "topicIds": [
+        "2026新疆"
+      ],
+      "takenAt": "2026-07-26T23:40:20.000Z",
+      "asset": {
+        "original": "https://cdn.ai4love.cn/tmp/2026/08/1787595593015-4ae04a39-19cf-4244-98b2-91d2c0744f95-p1065052.jpg",
+        "thumbnail": "https://cdn.ai4love.cn/tmp/2026/08/1787595593015-4ae04a39-19cf-4244-98b2-91d2c0744f95-p1065052.jpg",
+        "preview": "https://cdn.ai4love.cn/tmp/2026/08/1787595593015-4ae04a39-19cf-4244-98b2-91d2c0744f95-p1065052.jpg",
+        "alt": "P1065052"
+      },
+      "exif": {
+        "cameraBrand": "Panasonic",
+        "cameraModel": "DC-G9M2",
+        "iso": 100,
+        "aperture": "f/4",
+        "shutterSpeed": "1/80s",
+        "focalLength": "40",
+        "capturedAt": "2026-07-26T23:40:20.000Z"
+      }
+    },
+    {
+      "id": "383dbe6e-1cfd-45e8-9e9f-6694060bdfa3",
+      "title": "P1065031",
+      "topicIds": [
+        "2026新疆"
+      ],
+      "takenAt": "2026-07-26T23:32:18.000Z",
+      "asset": {
+        "original": "https://cdn.ai4love.cn/tmp/2026/08/1787595427144-4ce4e006-2fb2-4c71-99e2-ee2fd21cd83d-p1065031.jpg",
+        "thumbnail": "https://cdn.ai4love.cn/tmp/2026/08/1787595427144-4ce4e006-2fb2-4c71-99e2-ee2fd21cd83d-p1065031.jpg",
+        "preview": "https://cdn.ai4love.cn/tmp/2026/08/1787595427144-4ce4e006-2fb2-4c71-99e2-ee2fd21cd83d-p1065031.jpg",
+        "alt": "P1065031"
+      },
+      "exif": {
+        "cameraBrand": "Panasonic",
+        "cameraModel": "DC-G9M2",
+        "lens": "OM 12-45mm F4.0",
+        "iso": 100,
+        "aperture": "f/4",
+        "shutterSpeed": "1/125s",
+        "focalLength": "45",
+        "capturedAt": "2026-07-26T23:32:18.000Z"
+      }
+    },
+    {
+      "id": "2df43348-9fd3-45a8-8053-caaadae5399d",
+      "title": "P1065012",
+      "topicIds": [
+        "2026新疆"
+      ],
+      "takenAt": "2026-07-26T23:28:44.000Z",
+      "asset": {
+        "original": "https://cdn.ai4love.cn/tmp/2026/08/1787595476000-05a0120c-dffa-48d3-994d-0fa60b3be287-p1065012.jpg",
+        "thumbnail": "https://cdn.ai4love.cn/tmp/2026/08/1787595476000-05a0120c-dffa-48d3-994d-0fa60b3be287-p1065012.jpg",
+        "preview": "https://cdn.ai4love.cn/tmp/2026/08/1787595476000-05a0120c-dffa-48d3-994d-0fa60b3be287-p1065012.jpg",
+        "alt": "P1065012"
+      },
+      "exif": {
+        "cameraBrand": "Panasonic",
+        "cameraModel": "DC-G9M2",
+        "lens": "OM 12-45mm F4.0",
+        "iso": 100,
+        "aperture": "f/4",
+        "shutterSpeed": "1/80s",
+        "focalLength": "45",
+        "capturedAt": "2026-07-26T23:28:44.000Z"
+      }
+    },
+    {
+      "id": "e4d0b62c-cf33-4ac3-acd8-f5769b5d84be",
+      "title": "P1064913 1",
+      "topicIds": [
+        "2026新疆"
+      ],
+      "takenAt": "2026-07-26T14:11:20.000Z",
+      "asset": {
+        "original": "https://cdn.ai4love.cn/tmp/2026/08/1787595611336-f1011a30-25ef-44b1-a5d2-a90d246954c1-p1064913_1.jpg",
+        "thumbnail": "https://cdn.ai4love.cn/tmp/2026/08/1787595611336-f1011a30-25ef-44b1-a5d2-a90d246954c1-p1064913_1.jpg",
+        "preview": "https://cdn.ai4love.cn/tmp/2026/08/1787595611336-f1011a30-25ef-44b1-a5d2-a90d246954c1-p1064913_1.jpg",
+        "alt": "P1064913 1"
+      },
+      "exif": {
+        "cameraBrand": "Panasonic",
+        "cameraModel": "DC-G9M2",
+        "iso": 640,
+        "aperture": "f/4",
+        "shutterSpeed": "1/100s",
+        "focalLength": "40",
+        "capturedAt": "2026-07-26T14:11:20.000Z"
+      }
+    },
+    {
+      "id": "706e5de7-c24e-48f7-8fec-0e8d7e60796c",
+      "title": "P1064842",
+      "topicIds": [
+        "2026新疆"
+      ],
+      "takenAt": "2026-07-25T10:01:07.000Z",
+      "asset": {
+        "original": "https://cdn.ai4love.cn/tmp/2026/08/1787595470678-e6b8d158-714a-401f-a697-32bc1000b895-p1064842.jpg",
+        "thumbnail": "https://cdn.ai4love.cn/tmp/2026/08/1787595470678-e6b8d158-714a-401f-a697-32bc1000b895-p1064842.jpg",
+        "preview": "https://cdn.ai4love.cn/tmp/2026/08/1787595470678-e6b8d158-714a-401f-a697-32bc1000b895-p1064842.jpg",
+        "alt": "P1064842"
+      },
+      "exif": {
+        "cameraBrand": "Panasonic",
+        "cameraModel": "DC-G9M2",
+        "lens": "OM 12-45mm F4.0",
+        "iso": 100,
+        "aperture": "f/4",
+        "shutterSpeed": "1/800s",
+        "focalLength": "17",
+        "capturedAt": "2026-07-25T10:01:07.000Z"
+      }
+    },
+    {
+      "id": "ee9c42c7-3798-40a4-9891-501d328d26d4",
+      "title": "P1064825",
+      "topicIds": [
+        "2026新疆"
+      ],
+      "takenAt": "2026-07-25T09:48:45.000Z",
+      "asset": {
+        "original": "https://cdn.ai4love.cn/tmp/2026/08/1787595463998-6f6ad8de-7c55-4e6b-b9b6-9172b03a472a-p1064825.jpg",
+        "thumbnail": "https://cdn.ai4love.cn/tmp/2026/08/1787595463998-6f6ad8de-7c55-4e6b-b9b6-9172b03a472a-p1064825.jpg",
+        "preview": "https://cdn.ai4love.cn/tmp/2026/08/1787595463998-6f6ad8de-7c55-4e6b-b9b6-9172b03a472a-p1064825.jpg",
+        "alt": "P1064825"
+      },
+      "exif": {
+        "cameraBrand": "Panasonic",
+        "cameraModel": "DC-G9M2",
+        "lens": "OM 12-45mm F4.0",
+        "iso": 100,
+        "aperture": "f/4",
+        "shutterSpeed": "1/1000s",
+        "focalLength": "45",
+        "capturedAt": "2026-07-25T09:48:45.000Z"
+      }
+    },
+    {
+      "id": "7dd75c20-65ce-421d-9712-00d352ba5904",
+      "title": "P1064820",
+      "topicIds": [
+        "2026新疆"
+      ],
+      "takenAt": "2026-07-25T09:48:07.000Z",
+      "asset": {
+        "original": "https://cdn.ai4love.cn/tmp/2026/08/1787595458484-748fce1f-0a8e-4813-bad9-5503b3bb1ed8-p1064820.jpg",
+        "thumbnail": "https://cdn.ai4love.cn/tmp/2026/08/1787595458484-748fce1f-0a8e-4813-bad9-5503b3bb1ed8-p1064820.jpg",
+        "preview": "https://cdn.ai4love.cn/tmp/2026/08/1787595458484-748fce1f-0a8e-4813-bad9-5503b3bb1ed8-p1064820.jpg",
+        "alt": "P1064820"
+      },
+      "exif": {
+        "cameraBrand": "Panasonic",
+        "cameraModel": "DC-G9M2",
+        "lens": "OM 12-45mm F4.0",
+        "iso": 100,
+        "aperture": "f/4",
+        "shutterSpeed": "1/1000s",
+        "focalLength": "33",
+        "capturedAt": "2026-07-25T09:48:07.000Z"
+      }
+    },
+    {
+      "id": "9baf6004-92b5-46e2-a15b-fa27d3fc0ab9",
+      "title": "P1064814",
+      "topicIds": [
+        "2026新疆"
+      ],
+      "takenAt": "2026-07-25T09:47:22.000Z",
+      "asset": {
+        "original": "https://cdn.ai4love.cn/tmp/2026/08/1787595451759-8728e2bc-cfc6-431d-8a11-3dc164026454-p1064814.jpg",
+        "thumbnail": "https://cdn.ai4love.cn/tmp/2026/08/1787595451759-8728e2bc-cfc6-431d-8a11-3dc164026454-p1064814.jpg",
+        "preview": "https://cdn.ai4love.cn/tmp/2026/08/1787595451759-8728e2bc-cfc6-431d-8a11-3dc164026454-p1064814.jpg",
+        "alt": "P1064814"
+      },
+      "exif": {
+        "cameraBrand": "Panasonic",
+        "cameraModel": "DC-G9M2",
+        "lens": "OM 12-45mm F4.0",
+        "iso": 100,
+        "aperture": "f/4",
+        "shutterSpeed": "1/1000s",
+        "focalLength": "20",
+        "capturedAt": "2026-07-25T09:47:22.000Z"
+      }
+    },
+    {
+      "id": "689ec515-542c-474d-a93f-86eab888b781",
+      "title": "P1064809",
+      "topicIds": [
+        "2026新疆"
+      ],
+      "takenAt": "2026-07-25T09:46:53.000Z",
+      "asset": {
+        "original": "https://cdn.ai4love.cn/tmp/2026/08/1787595617840-6de36884-5655-4d62-818c-f9c00145a920-p1064809.jpg",
+        "thumbnail": "https://cdn.ai4love.cn/tmp/2026/08/1787595617840-6de36884-5655-4d62-818c-f9c00145a920-p1064809.jpg",
+        "preview": "https://cdn.ai4love.cn/tmp/2026/08/1787595617840-6de36884-5655-4d62-818c-f9c00145a920-p1064809.jpg",
+        "alt": "P1064809"
+      },
+      "exif": {
+        "cameraBrand": "Panasonic",
+        "cameraModel": "DC-G9M2",
+        "lens": "OM 12-45mm F4.0",
+        "iso": 100,
+        "aperture": "f/4",
+        "shutterSpeed": "1/1000s",
+        "focalLength": "23",
+        "capturedAt": "2026-07-25T09:46:53.000Z"
+      }
+    },
+    {
+      "id": "863563e7-59a0-4dae-8e0c-5667869026f9",
+      "title": "P1064769",
+      "topicIds": [
+        "2026新疆"
+      ],
+      "takenAt": "2026-07-25T06:44:05.000Z",
+      "asset": {
+        "original": "https://cdn.ai4love.cn/tmp/2026/08/1787595437020-4d5a1042-039b-4022-9ec9-a9beb0822138-p1064769.jpg",
+        "thumbnail": "https://cdn.ai4love.cn/tmp/2026/08/1787595437020-4d5a1042-039b-4022-9ec9-a9beb0822138-p1064769.jpg",
+        "preview": "https://cdn.ai4love.cn/tmp/2026/08/1787595437020-4d5a1042-039b-4022-9ec9-a9beb0822138-p1064769.jpg",
+        "alt": "P1064769"
+      },
+      "exif": {
+        "cameraBrand": "Panasonic",
+        "cameraModel": "DC-G9M2",
+        "lens": "OM 12-45mm F4.0",
+        "iso": 100,
+        "aperture": "f/4",
+        "shutterSpeed": "1/1600s",
+        "focalLength": "39",
+        "capturedAt": "2026-07-25T06:44:05.000Z"
+      }
+    },
+    {
+      "id": "2e7c1c15-c309-4fb7-b1ba-5c5bf55b7f56",
+      "title": "P1064766",
+      "topicIds": [
+        "2026新疆"
+      ],
+      "takenAt": "2026-07-25T06:43:57.000Z",
+      "asset": {
+        "original": "https://cdn.ai4love.cn/tmp/2026/08/1787595431729-841c620a-e989-471c-9bf6-a87ea071dbe5-p1064766.jpg",
+        "thumbnail": "https://cdn.ai4love.cn/tmp/2026/08/1787595431729-841c620a-e989-471c-9bf6-a87ea071dbe5-p1064766.jpg",
+        "preview": "https://cdn.ai4love.cn/tmp/2026/08/1787595431729-841c620a-e989-471c-9bf6-a87ea071dbe5-p1064766.jpg",
+        "alt": "P1064766"
+      },
+      "exif": {
+        "cameraBrand": "Panasonic",
+        "cameraModel": "DC-G9M2",
+        "lens": "OM 12-45mm F4.0",
+        "iso": 100,
+        "aperture": "f/4",
+        "shutterSpeed": "1/1600s",
+        "focalLength": "45",
+        "capturedAt": "2026-07-25T06:43:57.000Z"
+      }
+    },
+    {
+      "id": "76d454ff-26eb-4c5c-8c8b-7ab712db49cc",
+      "title": "P1064754",
+      "topicIds": [
+        "2026新疆"
+      ],
+      "takenAt": "2026-07-25T06:39:21.000Z",
+      "asset": {
+        "original": "https://cdn.ai4love.cn/tmp/2026/08/1787595442282-0e958ace-7341-44cf-90cb-dd6955f6be41-p1064754.jpg",
+        "thumbnail": "https://cdn.ai4love.cn/tmp/2026/08/1787595442282-0e958ace-7341-44cf-90cb-dd6955f6be41-p1064754.jpg",
+        "preview": "https://cdn.ai4love.cn/tmp/2026/08/1787595442282-0e958ace-7341-44cf-90cb-dd6955f6be41-p1064754.jpg",
+        "alt": "P1064754"
+      },
+      "exif": {
+        "cameraBrand": "Panasonic",
+        "cameraModel": "DC-G9M2",
+        "lens": "OM 12-45mm F4.0",
+        "iso": 100,
+        "aperture": "f/4",
+        "shutterSpeed": "1/200s",
+        "focalLength": "32",
+        "capturedAt": "2026-07-25T06:39:21.000Z"
+      }
+    },
+    {
+      "id": "cb89df54-5597-48b0-95c6-109ca30edae8",
+      "title": "P1064724",
+      "topicIds": [
+        "2026新疆"
+      ],
+      "takenAt": "2026-07-25T06:14:54.000Z",
+      "asset": {
+        "original": "https://cdn.ai4love.cn/tmp/2026/08/1787595447221-1530be23-33cd-416c-b557-b38d661a5ce3-p1064724.jpg",
+        "thumbnail": "https://cdn.ai4love.cn/tmp/2026/08/1787595447221-1530be23-33cd-416c-b557-b38d661a5ce3-p1064724.jpg",
+        "preview": "https://cdn.ai4love.cn/tmp/2026/08/1787595447221-1530be23-33cd-416c-b557-b38d661a5ce3-p1064724.jpg",
+        "alt": "P1064724"
+      },
+      "exif": {
+        "cameraBrand": "Panasonic",
+        "cameraModel": "DC-G9M2",
+        "lens": "OM 12-45mm F4.0",
+        "iso": 100,
+        "aperture": "f/4",
+        "shutterSpeed": "1/500s",
+        "focalLength": "45",
+        "capturedAt": "2026-07-25T06:14:54.000Z"
+      }
+    },
     {
       "id": "bd623c99-8f07-4abf-9bb4-58adb316a5cd",
       "title": "高山植物",
@@ -54,30 +861,6 @@
         "thumbnail": "https://cdn.ai4love.cn/tmp/2026/07/1783504645766-597ada82-9fba-4153-9f80-693674f26f31-p7125052_2_focusstacking.jpg",
         "preview": "https://cdn.ai4love.cn/tmp/2026/07/1783504645766-597ada82-9fba-4153-9f80-693674f26f31-p7125052_2_focusstacking.jpg",
         "alt": "P7125052 2 focusstacking"
-      }
-    },
-    {
-      "id": "240142dd-a9b3-468b-af05-155409e85811",
-      "title": "PA280840",
-      "topicIds": [],
-      "takenAt": "2026-07-07T08:18:14.741Z",
-      "asset": {
-        "original": "https://devcdn.ai4love.cn/tmp/2026/07/1783412289556-4c961f97-1104-474e-be13-cac144325b98-pa280840.jpg",
-        "thumbnail": "https://devcdn.ai4love.cn/tmp/2026/07/1783412289556-4c961f97-1104-474e-be13-cac144325b98-pa280840.jpg",
-        "preview": "https://devcdn.ai4love.cn/tmp/2026/07/1783412289556-4c961f97-1104-474e-be13-cac144325b98-pa280840.jpg",
-        "alt": "PA280840"
-      }
-    },
-    {
-      "id": "80f94580-b46d-400a-9fb5-30cdec68b9e9",
-      "title": "PA210107",
-      "topicIds": [],
-      "takenAt": "2026-07-07T08:13:09.623Z",
-      "asset": {
-        "original": "https://devcdn.ai4love.cn/tmp/2026/07/1783411988275-3566da5c-0685-4ca2-b36b-39003b0b5730-pa210107.jpg",
-        "thumbnail": "https://devcdn.ai4love.cn/tmp/2026/07/1783411988275-3566da5c-0685-4ca2-b36b-39003b0b5730-pa210107.jpg",
-        "preview": "https://devcdn.ai4love.cn/tmp/2026/07/1783411988275-3566da5c-0685-4ca2-b36b-39003b0b5730-pa210107.jpg",
-        "alt": "PA210107"
       }
     },
     {
@@ -483,6 +1266,32 @@
         "focalLength": "25",
         "capturedAt": "2024-01-12T09:35:51.000Z"
       }
+    },
+    {
+      "id": "e6790dae-8e8a-402c-8bea-5daca8879e88",
+      "title": "P1120379 HDR 1",
+      "topicIds": [
+        "mountain-light"
+      ],
+      "takenAt": "2024-01-12T08:59:44.000Z",
+      "asset": {
+        "original": "https://cdn.ai4love.cn/tmp/2026/07/1783756053433-9c82d56a-f41b-48f8-8e2a-4d4696d45200-p1120379-hdr_1.jpg",
+        "thumbnail": "https://cdn.ai4love.cn/tmp/2026/07/1783756053433-9c82d56a-f41b-48f8-8e2a-4d4696d45200-p1120379-hdr_1.jpg",
+        "preview": "https://cdn.ai4love.cn/tmp/2026/07/1783756053433-9c82d56a-f41b-48f8-8e2a-4d4696d45200-p1120379-hdr_1.jpg",
+        "alt": "P1120379 HDR 1"
+      },
+      "exif": {
+        "cameraBrand": "OLYMPUS CORPORATION",
+        "cameraModel": "E-M1MarkIII",
+        "lens": "OLYMPUS M.8-25mm F4.0",
+        "iso": 200,
+        "aperture": "f/4",
+        "shutterSpeed": "1/4000s",
+        "focalLength": "8",
+        "capturedAt": "2024-01-12T08:59:44.000Z",
+        "cameraMake": "OLYMPUS CORPORATION",
+        "shutter": "1/4000s"
+      }
     }
   ],
   "brands": [
@@ -520,6 +1329,13 @@
           "alt": "black.jpg"
         }
       ]
+    },
+    {
+      "id": "panasonic",
+      "name": "Panasonic",
+      "aliases": [],
+      "logoUrls": [],
+      "logos": []
     }
   ]
 }
