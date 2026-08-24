@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-08-24T18:22:08.339Z",
+  "generatedAt": "2026-08-24T18:27:40.664Z",
   "topics": [
     {
       "id": "city-night",
@@ -1333,9 +1333,17 @@
     {
       "id": "panasonic",
       "name": "Panasonic",
+      "title": "Panasonic",
       "aliases": [],
-      "logoUrls": [],
-      "logos": []
+      "logoUrls": [
+        "https://cdn.ai4love.cn/tmp/2026/08/1787596048639-a31512ce-6232-4e61-8698-1c45d5d77a31-lumix.jpg"
+      ],
+      "logos": [
+        {
+          "url": "https://cdn.ai4love.cn/tmp/2026/08/1787596048639-a31512ce-6232-4e61-8698-1c45d5d77a31-lumix.jpg",
+          "alt": "lumix.jpg"
+        }
+      ]
     }
   ]
 }
