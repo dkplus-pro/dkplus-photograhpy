@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-08-24T18:27:40.664Z",
+  "generatedAt": "2026-08-26T18:08:38.300Z",
   "topics": [
     {
       "id": "city-night",
@@ -40,6 +40,12 @@
       "slug": "2026新疆"
     },
     {
+      "id": "内蒙古2024",
+      "title": "内蒙古2024",
+      "description": "记录内蒙古的旅行",
+      "slug": "内蒙古2024"
+    },
+    {
       "id": "新疆2025",
       "title": "新疆2025",
       "description": "2025年7月，我第一次来到新疆，我和小伙伴环伊犁玩了一圈，途径独山子、独库公路、安集海大峡谷、赛里木湖，这里是国内风景的天花板，随手一拍就是大片",
@@ -47,6 +53,20 @@
     }
   ],
   "photos": [
+    {
+      "id": "ba90d39b-b39d-4fb9-bdae-1e4b83cf5e26",
+      "title": "P9183194",
+      "topicIds": [
+        "内蒙古2024"
+      ],
+      "takenAt": "2026-08-26T17:55:17.251Z",
+      "asset": {
+        "original": "https://cdn.ai4love.cn/tmp/2026/08/1787766913419-8523a132-3306-4eec-bd8e-2fda3eed96c7-p9183194.png",
+        "thumbnail": "https://cdn.ai4love.cn/tmp/2026/08/1787766913419-8523a132-3306-4eec-bd8e-2fda3eed96c7-p9183194.png",
+        "preview": "https://cdn.ai4love.cn/tmp/2026/08/1787766913419-8523a132-3306-4eec-bd8e-2fda3eed96c7-p9183194.png",
+        "alt": "P9183194"
+      }
+    },
     {
       "id": "b038a773-b228-4e21-b18b-d486b03e3e6c",
       "title": "P1075979",
@@ -1224,6 +1244,718 @@
       }
     },
     {
+      "id": "a8de4bf9-1e74-418c-be1f-386fc0a15767",
+      "title": "P9225393",
+      "topicIds": [
+        "内蒙古2024"
+      ],
+      "takenAt": "2024-09-21T22:11:02.000Z",
+      "asset": {
+        "original": "https://cdn.ai4love.cn/tmp/2026/08/1787678331721-748665f9-7f54-4f06-a363-920ddf461396-p9225393.jpg",
+        "thumbnail": "https://cdn.ai4love.cn/tmp/2026/08/1787678331721-748665f9-7f54-4f06-a363-920ddf461396-p9225393.jpg",
+        "preview": "https://cdn.ai4love.cn/tmp/2026/08/1787678331721-748665f9-7f54-4f06-a363-920ddf461396-p9225393.jpg",
+        "alt": "P9225393"
+      },
+      "exif": {
+        "cameraBrand": "OM Digital Solutions",
+        "cameraModel": "OM-1MarkII",
+        "lens": "OLYMPUS M.8-25mm F4.0",
+        "iso": 250,
+        "aperture": "f/5.6",
+        "shutterSpeed": "1/25s",
+        "focalLength": "25",
+        "capturedAt": "2024-09-21T22:11:02.000Z"
+      }
+    },
+    {
+      "id": "649fd791-a1ad-40d1-a00b-c98e0ef40ba9",
+      "title": "P9215293 HDR",
+      "topicIds": [
+        "内蒙古2024"
+      ],
+      "takenAt": "2024-09-21T09:56:45.000Z",
+      "asset": {
+        "original": "https://cdn.ai4love.cn/tmp/2026/08/1787678336513-46d1c0b4-62fe-4c81-b803-3bb739fc584d-p9215293-hdr.jpg",
+        "thumbnail": "https://cdn.ai4love.cn/tmp/2026/08/1787678336513-46d1c0b4-62fe-4c81-b803-3bb739fc584d-p9215293-hdr.jpg",
+        "preview": "https://cdn.ai4love.cn/tmp/2026/08/1787678336513-46d1c0b4-62fe-4c81-b803-3bb739fc584d-p9215293-hdr.jpg",
+        "alt": "P9215293 HDR"
+      },
+      "exif": {
+        "cameraBrand": "OM Digital Solutions",
+        "cameraModel": "OM-1MarkII",
+        "lens": "OM 40-150mm F4.0",
+        "iso": 200,
+        "aperture": "f/4",
+        "shutterSpeed": "1/4000s",
+        "focalLength": "72",
+        "capturedAt": "2024-09-21T09:56:45.000Z"
+      }
+    },
+    {
+      "id": "9f8f3417-fedf-43e1-a789-e3d6abbafb7e",
+      "title": "P9215165",
+      "topicIds": [
+        "内蒙古2024"
+      ],
+      "takenAt": "2024-09-21T08:15:09.000Z",
+      "asset": {
+        "original": "https://cdn.ai4love.cn/tmp/2026/08/1787678340021-96a589f3-44a7-4cef-b792-47da2c2ad3e4-p9215165.jpg",
+        "thumbnail": "https://cdn.ai4love.cn/tmp/2026/08/1787678340021-96a589f3-44a7-4cef-b792-47da2c2ad3e4-p9215165.jpg",
+        "preview": "https://cdn.ai4love.cn/tmp/2026/08/1787678340021-96a589f3-44a7-4cef-b792-47da2c2ad3e4-p9215165.jpg",
+        "alt": "P9215165"
+      },
+      "exif": {
+        "cameraBrand": "OM Digital Solutions",
+        "cameraModel": "OM-1MarkII",
+        "lens": "OM 40-150mm F4.0",
+        "iso": 200,
+        "aperture": "f/4",
+        "shutterSpeed": "1/400s",
+        "focalLength": "49",
+        "capturedAt": "2024-09-21T08:15:09.000Z"
+      }
+    },
+    {
+      "id": "97633353-1ca2-48d1-ae4f-02398d098076",
+      "title": "P9215017",
+      "topicIds": [
+        "内蒙古2024"
+      ],
+      "takenAt": "2024-09-21T04:10:10.000Z",
+      "asset": {
+        "original": "https://cdn.ai4love.cn/tmp/2026/08/1787678343785-6d96243c-ccfb-4f5d-80ef-f70e6d8cd9fc-p9215017.jpg",
+        "thumbnail": "https://cdn.ai4love.cn/tmp/2026/08/1787678343785-6d96243c-ccfb-4f5d-80ef-f70e6d8cd9fc-p9215017.jpg",
+        "preview": "https://cdn.ai4love.cn/tmp/2026/08/1787678343785-6d96243c-ccfb-4f5d-80ef-f70e6d8cd9fc-p9215017.jpg",
+        "alt": "P9215017"
+      },
+      "exif": {
+        "cameraBrand": "OM Digital Solutions",
+        "cameraModel": "OM-1MarkII",
+        "lens": "OM 40-150mm F4.0",
+        "iso": 200,
+        "aperture": "f/4",
+        "shutterSpeed": "1/1250s",
+        "focalLength": "150",
+        "capturedAt": "2024-09-21T04:10:10.000Z"
+      }
+    },
+    {
+      "id": "1308856f-962f-48ae-88a8-c3cbf3d7030c",
+      "title": "P9215010",
+      "topicIds": [
+        "内蒙古2024"
+      ],
+      "takenAt": "2024-09-21T04:09:49.000Z",
+      "asset": {
+        "original": "https://cdn.ai4love.cn/tmp/2026/08/1787678348005-b9f4e7ed-be58-4b3c-b77a-5af126be5d45-p9215010.jpg",
+        "thumbnail": "https://cdn.ai4love.cn/tmp/2026/08/1787678348005-b9f4e7ed-be58-4b3c-b77a-5af126be5d45-p9215010.jpg",
+        "preview": "https://cdn.ai4love.cn/tmp/2026/08/1787678348005-b9f4e7ed-be58-4b3c-b77a-5af126be5d45-p9215010.jpg",
+        "alt": "P9215010"
+      },
+      "exif": {
+        "cameraBrand": "OM Digital Solutions",
+        "cameraModel": "OM-1MarkII",
+        "lens": "OM 40-150mm F4.0",
+        "iso": 200,
+        "aperture": "f/4",
+        "shutterSpeed": "1/1600s",
+        "focalLength": "40",
+        "capturedAt": "2024-09-21T04:09:49.000Z"
+      }
+    },
+    {
+      "id": "110d2a64-b5ca-4871-808d-34b07cfd96f6",
+      "title": "P9194257",
+      "topicIds": [
+        "内蒙古2024"
+      ],
+      "takenAt": "2024-09-19T09:45:19.000Z",
+      "asset": {
+        "original": "https://cdn.ai4love.cn/tmp/2026/08/1787678352010-27573470-a879-4774-ac3a-39b7d84b9e8d-p9194257.jpg",
+        "thumbnail": "https://cdn.ai4love.cn/tmp/2026/08/1787678352010-27573470-a879-4774-ac3a-39b7d84b9e8d-p9194257.jpg",
+        "preview": "https://cdn.ai4love.cn/tmp/2026/08/1787678352010-27573470-a879-4774-ac3a-39b7d84b9e8d-p9194257.jpg",
+        "alt": "P9194257"
+      },
+      "exif": {
+        "cameraBrand": "OM Digital Solutions",
+        "cameraModel": "OM-1MarkII",
+        "lens": "OLYMPUS M.8mm F1.8",
+        "iso": 200,
+        "aperture": "f/8",
+        "shutterSpeed": "1/160s",
+        "focalLength": "8",
+        "capturedAt": "2024-09-19T09:45:19.000Z"
+      }
+    },
+    {
+      "id": "fb564d0d-615f-4441-af26-cf3c9d68e03b",
+      "title": "P9194217",
+      "topicIds": [
+        "内蒙古2024"
+      ],
+      "takenAt": "2024-09-19T09:21:44.000Z",
+      "asset": {
+        "original": "https://cdn.ai4love.cn/tmp/2026/08/1787766947850-ac4de87b-5bc0-415b-8cfe-6a3d7da2af74-p9194217.jpg",
+        "thumbnail": "https://cdn.ai4love.cn/tmp/2026/08/1787766947850-ac4de87b-5bc0-415b-8cfe-6a3d7da2af74-p9194217.jpg",
+        "preview": "https://cdn.ai4love.cn/tmp/2026/08/1787766947850-ac4de87b-5bc0-415b-8cfe-6a3d7da2af74-p9194217.jpg",
+        "alt": "P9194217"
+      },
+      "exif": {
+        "cameraBrand": "OM Digital Solutions",
+        "cameraModel": "OM-1MarkII",
+        "iso": 320,
+        "aperture": "f/4",
+        "shutterSpeed": "1/1000s",
+        "focalLength": "106",
+        "capturedAt": "2024-09-19T09:21:44.000Z"
+      }
+    },
+    {
+      "id": "7847b6ac-7d28-4a49-9b73-4e03a9021124",
+      "title": "P9194202",
+      "topicIds": [
+        "内蒙古2024"
+      ],
+      "takenAt": "2024-09-19T09:12:06.000Z",
+      "asset": {
+        "original": "https://cdn.ai4love.cn/tmp/2026/08/1787766953660-aadc3131-78c4-46f0-80e0-05f7a58560b0-p9194202.jpg",
+        "thumbnail": "https://cdn.ai4love.cn/tmp/2026/08/1787766953660-aadc3131-78c4-46f0-80e0-05f7a58560b0-p9194202.jpg",
+        "preview": "https://cdn.ai4love.cn/tmp/2026/08/1787766953660-aadc3131-78c4-46f0-80e0-05f7a58560b0-p9194202.jpg",
+        "alt": "P9194202"
+      },
+      "exif": {
+        "cameraBrand": "OM Digital Solutions",
+        "cameraModel": "OM-1MarkII",
+        "iso": 320,
+        "aperture": "f/4",
+        "shutterSpeed": "1/1000s",
+        "focalLength": "78",
+        "capturedAt": "2024-09-19T09:12:06.000Z"
+      }
+    },
+    {
+      "id": "b0c98379-7843-48da-883b-59b46a9a5aed",
+      "title": "P9194193",
+      "topicIds": [
+        "内蒙古2024"
+      ],
+      "takenAt": "2024-09-19T09:07:37.000Z",
+      "asset": {
+        "original": "https://cdn.ai4love.cn/tmp/2026/08/1787678356004-d8f24a53-34d8-4019-8bc6-74171970aeae-p9194193.jpg",
+        "thumbnail": "https://cdn.ai4love.cn/tmp/2026/08/1787678356004-d8f24a53-34d8-4019-8bc6-74171970aeae-p9194193.jpg",
+        "preview": "https://cdn.ai4love.cn/tmp/2026/08/1787678356004-d8f24a53-34d8-4019-8bc6-74171970aeae-p9194193.jpg",
+        "alt": "P9194193"
+      },
+      "exif": {
+        "cameraBrand": "OM Digital Solutions",
+        "cameraModel": "OM-1MarkII",
+        "lens": "OM 40-150mm F4.0",
+        "iso": 500,
+        "aperture": "f/4",
+        "shutterSpeed": "1/1000s",
+        "focalLength": "42",
+        "capturedAt": "2024-09-19T09:07:37.000Z"
+      }
+    },
+    {
+      "id": "7d956d34-af1c-4307-b5dc-730f9944e8ca",
+      "title": "P9194185",
+      "topicIds": [
+        "内蒙古2024"
+      ],
+      "takenAt": "2024-09-19T09:05:10.000Z",
+      "asset": {
+        "original": "https://cdn.ai4love.cn/tmp/2026/08/1787766958692-056c6201-e71b-4106-a8cc-4a62f3aab682-p9194185.jpg",
+        "thumbnail": "https://cdn.ai4love.cn/tmp/2026/08/1787766958692-056c6201-e71b-4106-a8cc-4a62f3aab682-p9194185.jpg",
+        "preview": "https://cdn.ai4love.cn/tmp/2026/08/1787766958692-056c6201-e71b-4106-a8cc-4a62f3aab682-p9194185.jpg",
+        "alt": "P9194185"
+      },
+      "exif": {
+        "cameraBrand": "OM Digital Solutions",
+        "cameraModel": "OM-1MarkII",
+        "iso": 400,
+        "aperture": "f/4",
+        "shutterSpeed": "1/1000s",
+        "focalLength": "78",
+        "capturedAt": "2024-09-19T09:05:10.000Z"
+      }
+    },
+    {
+      "id": "6dec8ca6-ec9f-482d-b938-00473df45a78",
+      "title": "P9194169",
+      "topicIds": [
+        "内蒙古2024"
+      ],
+      "takenAt": "2024-09-19T09:03:20.000Z",
+      "asset": {
+        "original": "https://cdn.ai4love.cn/tmp/2026/08/1787766965912-ebc9fc23-1f5e-424c-8d4b-88653d69dfc9-p9194169.jpg",
+        "thumbnail": "https://cdn.ai4love.cn/tmp/2026/08/1787766965912-ebc9fc23-1f5e-424c-8d4b-88653d69dfc9-p9194169.jpg",
+        "preview": "https://cdn.ai4love.cn/tmp/2026/08/1787766965912-ebc9fc23-1f5e-424c-8d4b-88653d69dfc9-p9194169.jpg",
+        "alt": "P9194169"
+      },
+      "exif": {
+        "cameraBrand": "OM Digital Solutions",
+        "cameraModel": "OM-1MarkII",
+        "iso": 500,
+        "aperture": "f/4",
+        "shutterSpeed": "1/1000s",
+        "focalLength": "47",
+        "capturedAt": "2024-09-19T09:03:20.000Z"
+      }
+    },
+    {
+      "id": "b545b6db-f395-4ba0-8747-299e7ada6b37",
+      "title": "P9194142",
+      "topicIds": [
+        "内蒙古2024"
+      ],
+      "takenAt": "2024-09-19T08:41:51.000Z",
+      "asset": {
+        "original": "https://cdn.ai4love.cn/tmp/2026/08/1787766908741-d67ed0e3-a2ea-4c96-8b77-b851dd649a50-p9194142.jpg",
+        "thumbnail": "https://cdn.ai4love.cn/tmp/2026/08/1787766908741-d67ed0e3-a2ea-4c96-8b77-b851dd649a50-p9194142.jpg",
+        "preview": "https://cdn.ai4love.cn/tmp/2026/08/1787766908741-d67ed0e3-a2ea-4c96-8b77-b851dd649a50-p9194142.jpg",
+        "alt": "P9194142"
+      },
+      "exif": {
+        "cameraBrand": "OM Digital Solutions",
+        "cameraModel": "OM-1MarkII",
+        "lens": "OM 40-150mm F4.0",
+        "iso": 200,
+        "aperture": "f/4",
+        "shutterSpeed": "1/1600s",
+        "focalLength": "56",
+        "capturedAt": "2024-09-19T08:41:51.000Z"
+      }
+    },
+    {
+      "id": "6f919e4f-31f1-431a-8a02-04152e19a781",
+      "title": "P9194135",
+      "topicIds": [
+        "内蒙古2024"
+      ],
+      "takenAt": "2024-09-19T08:27:06.000Z",
+      "asset": {
+        "original": "https://cdn.ai4love.cn/tmp/2026/08/1787681020745-b0bb04c9-31b2-4c73-a031-07eb81816bd3-p9194135.jpg",
+        "thumbnail": "https://cdn.ai4love.cn/tmp/2026/08/1787681020745-b0bb04c9-31b2-4c73-a031-07eb81816bd3-p9194135.jpg",
+        "preview": "https://cdn.ai4love.cn/tmp/2026/08/1787681020745-b0bb04c9-31b2-4c73-a031-07eb81816bd3-p9194135.jpg",
+        "alt": "P9194135"
+      },
+      "exif": {
+        "cameraBrand": "OM Digital Solutions",
+        "cameraModel": "OM-1MarkII",
+        "iso": 200,
+        "aperture": "f/4",
+        "shutterSpeed": "1/800s",
+        "focalLength": "85",
+        "capturedAt": "2024-09-19T08:27:06.000Z"
+      }
+    },
+    {
+      "id": "bfb26201-d5fd-45ff-8af3-4f52823fa237",
+      "title": "P9194117",
+      "topicIds": [
+        "内蒙古2024"
+      ],
+      "takenAt": "2024-09-19T08:00:01.000Z",
+      "asset": {
+        "original": "https://cdn.ai4love.cn/tmp/2026/08/1787681024577-8949bd0b-c48e-4165-85e0-722d4a8cc8a7-p9194117.jpg",
+        "thumbnail": "https://cdn.ai4love.cn/tmp/2026/08/1787681024577-8949bd0b-c48e-4165-85e0-722d4a8cc8a7-p9194117.jpg",
+        "preview": "https://cdn.ai4love.cn/tmp/2026/08/1787681024577-8949bd0b-c48e-4165-85e0-722d4a8cc8a7-p9194117.jpg",
+        "alt": "P9194117"
+      },
+      "exif": {
+        "cameraBrand": "OM Digital Solutions",
+        "cameraModel": "OM-1MarkII",
+        "iso": 200,
+        "aperture": "f/4",
+        "shutterSpeed": "1/400s",
+        "focalLength": "59",
+        "capturedAt": "2024-09-19T08:00:01.000Z"
+      }
+    },
+    {
+      "id": "b0f86f2a-655a-44f1-8819-e81a0f0e9938",
+      "title": "P9194103",
+      "topicIds": [
+        "内蒙古2024"
+      ],
+      "takenAt": "2024-09-19T07:42:03.000Z",
+      "asset": {
+        "original": "https://cdn.ai4love.cn/tmp/2026/08/1787681028781-01125446-86c0-41ab-b7cb-456912fd5b39-p9194103.jpg",
+        "thumbnail": "https://cdn.ai4love.cn/tmp/2026/08/1787681028781-01125446-86c0-41ab-b7cb-456912fd5b39-p9194103.jpg",
+        "preview": "https://cdn.ai4love.cn/tmp/2026/08/1787681028781-01125446-86c0-41ab-b7cb-456912fd5b39-p9194103.jpg",
+        "alt": "P9194103"
+      },
+      "exif": {
+        "cameraBrand": "OM Digital Solutions",
+        "cameraModel": "OM-1MarkII",
+        "iso": 200,
+        "aperture": "f/4",
+        "shutterSpeed": "1/800s",
+        "focalLength": "81",
+        "capturedAt": "2024-09-19T07:42:03.000Z"
+      }
+    },
+    {
+      "id": "c0544277-97ca-40ab-b67c-3511d5894fcd",
+      "title": "P9194091",
+      "topicIds": [
+        "内蒙古2024"
+      ],
+      "takenAt": "2024-09-19T07:08:14.000Z",
+      "asset": {
+        "original": "https://cdn.ai4love.cn/tmp/2026/08/1787678275868-af56535d-34ae-40da-a178-752c1890052f-p9194091.jpg",
+        "thumbnail": "https://cdn.ai4love.cn/tmp/2026/08/1787678275868-af56535d-34ae-40da-a178-752c1890052f-p9194091.jpg",
+        "preview": "https://cdn.ai4love.cn/tmp/2026/08/1787678275868-af56535d-34ae-40da-a178-752c1890052f-p9194091.jpg",
+        "alt": "P9194091"
+      },
+      "exif": {
+        "cameraBrand": "OM Digital Solutions",
+        "cameraModel": "OM-1MarkII",
+        "lens": "OM 40-150mm F4.0",
+        "iso": 200,
+        "aperture": "f/4",
+        "shutterSpeed": "1/1000s",
+        "focalLength": "93",
+        "capturedAt": "2024-09-19T07:08:14.000Z"
+      }
+    },
+    {
+      "id": "902e4888-8674-4638-9051-323721d1314f",
+      "title": "P9194050",
+      "topicIds": [
+        "内蒙古2024"
+      ],
+      "takenAt": "2024-09-19T06:54:15.000Z",
+      "asset": {
+        "original": "https://cdn.ai4love.cn/tmp/2026/08/1787681009217-1235aecb-f6a5-47a5-8780-6eb573867dc2-p9194050.jpg",
+        "thumbnail": "https://cdn.ai4love.cn/tmp/2026/08/1787681009217-1235aecb-f6a5-47a5-8780-6eb573867dc2-p9194050.jpg",
+        "preview": "https://cdn.ai4love.cn/tmp/2026/08/1787681009217-1235aecb-f6a5-47a5-8780-6eb573867dc2-p9194050.jpg",
+        "alt": "P9194050"
+      },
+      "exif": {
+        "cameraBrand": "OM Digital Solutions",
+        "cameraModel": "OM-1MarkII",
+        "iso": 200,
+        "aperture": "f/4",
+        "shutterSpeed": "1/1250s",
+        "focalLength": "40",
+        "capturedAt": "2024-09-19T06:54:15.000Z"
+      }
+    },
+    {
+      "id": "d7ced50b-9ca4-4454-b232-0df65d77d09c",
+      "title": "P9194025",
+      "topicIds": [
+        "内蒙古2024"
+      ],
+      "takenAt": "2024-09-19T06:25:11.000Z",
+      "asset": {
+        "original": "https://cdn.ai4love.cn/tmp/2026/08/1787678292860-dbda5650-70c9-4d56-a98b-a147d17475a5-p9194025.jpg",
+        "thumbnail": "https://cdn.ai4love.cn/tmp/2026/08/1787678292860-dbda5650-70c9-4d56-a98b-a147d17475a5-p9194025.jpg",
+        "preview": "https://cdn.ai4love.cn/tmp/2026/08/1787678292860-dbda5650-70c9-4d56-a98b-a147d17475a5-p9194025.jpg",
+        "alt": "P9194025"
+      },
+      "exif": {
+        "cameraBrand": "OM Digital Solutions",
+        "cameraModel": "OM-1MarkII",
+        "lens": "OM 40-150mm F4.0",
+        "iso": 200,
+        "aperture": "f/4",
+        "shutterSpeed": "1/1000s",
+        "focalLength": "63",
+        "capturedAt": "2024-09-19T06:25:11.000Z"
+      }
+    },
+    {
+      "id": "ff998383-ed0b-4ca9-acdb-2dab99a086b2",
+      "title": "P9193938",
+      "topicIds": [
+        "内蒙古2024"
+      ],
+      "takenAt": "2024-09-19T04:53:13.000Z",
+      "asset": {
+        "original": "https://cdn.ai4love.cn/tmp/2026/08/1787678299962-f54c10f2-209d-4fe7-8c6d-f98495a132fd-p9193938.jpg",
+        "thumbnail": "https://cdn.ai4love.cn/tmp/2026/08/1787678299962-f54c10f2-209d-4fe7-8c6d-f98495a132fd-p9193938.jpg",
+        "preview": "https://cdn.ai4love.cn/tmp/2026/08/1787678299962-f54c10f2-209d-4fe7-8c6d-f98495a132fd-p9193938.jpg",
+        "alt": "P9193938"
+      },
+      "exif": {
+        "cameraBrand": "OM Digital Solutions",
+        "cameraModel": "OM-1MarkII",
+        "lens": "OM 40-150mm F4.0",
+        "iso": 200,
+        "aperture": "f/4",
+        "shutterSpeed": "1/1000s",
+        "focalLength": "100",
+        "capturedAt": "2024-09-19T04:53:13.000Z"
+      }
+    },
+    {
+      "id": "986320d1-9d30-4daa-9620-d6e298c17e27",
+      "title": "DJI 20240919110915 0043 D",
+      "topicIds": [
+        "内蒙古2024"
+      ],
+      "takenAt": "2024-09-19T03:09:15.000Z",
+      "asset": {
+        "original": "https://cdn.ai4love.cn/tmp/2026/08/1787678304273-8d360157-9df3-4e68-9cb2-f9a47d30f47b-dji_20240919110915_0043_d.jpg",
+        "thumbnail": "https://cdn.ai4love.cn/tmp/2026/08/1787678304273-8d360157-9df3-4e68-9cb2-f9a47d30f47b-dji_20240919110915_0043_d.jpg",
+        "preview": "https://cdn.ai4love.cn/tmp/2026/08/1787678304273-8d360157-9df3-4e68-9cb2-f9a47d30f47b-dji_20240919110915_0043_d.jpg",
+        "alt": "DJI 20240919110915 0043 D"
+      },
+      "exif": {
+        "cameraBrand": "DJI",
+        "cameraModel": "FC8482",
+        "lens": "24.0 mm f/1.7",
+        "iso": 100,
+        "aperture": "f/1.7",
+        "shutterSpeed": "1/1500s",
+        "focalLength": "6.72",
+        "capturedAt": "2024-09-19T03:09:15.000Z"
+      }
+    },
+    {
+      "id": "cbbdcc45-dafc-429e-8feb-01fb11f3415f",
+      "title": "P9183745",
+      "topicIds": [
+        "内蒙古2024"
+      ],
+      "takenAt": "2024-09-18T10:26:11.000Z",
+      "asset": {
+        "original": "https://cdn.ai4love.cn/tmp/2026/08/1787766931955-8b1935f8-b393-4388-a029-c82299f6e1a2-p9183745.jpg",
+        "thumbnail": "https://cdn.ai4love.cn/tmp/2026/08/1787766931955-8b1935f8-b393-4388-a029-c82299f6e1a2-p9183745.jpg",
+        "preview": "https://cdn.ai4love.cn/tmp/2026/08/1787766931955-8b1935f8-b393-4388-a029-c82299f6e1a2-p9183745.jpg",
+        "alt": "P9183745"
+      },
+      "exif": {
+        "cameraBrand": "OM Digital Solutions",
+        "cameraModel": "OM-1MarkII",
+        "lens": "OLYMPUS M.8-25mm F4.0",
+        "iso": 200,
+        "aperture": "f/5.6",
+        "shutterSpeed": "1/60s",
+        "focalLength": "25",
+        "capturedAt": "2024-09-18T10:26:11.000Z"
+      }
+    },
+    {
+      "id": "f8605e5d-fd39-4a91-9c94-b683cf23cc3f",
+      "title": "P9183742",
+      "topicIds": [
+        "内蒙古2024"
+      ],
+      "takenAt": "2024-09-18T10:25:25.000Z",
+      "asset": {
+        "original": "https://cdn.ai4love.cn/tmp/2026/08/1787766926068-19e5ce6b-7796-4036-9c4a-6fbb870e73c6-p9183742.jpg",
+        "thumbnail": "https://cdn.ai4love.cn/tmp/2026/08/1787766926068-19e5ce6b-7796-4036-9c4a-6fbb870e73c6-p9183742.jpg",
+        "preview": "https://cdn.ai4love.cn/tmp/2026/08/1787766926068-19e5ce6b-7796-4036-9c4a-6fbb870e73c6-p9183742.jpg",
+        "alt": "P9183742"
+      },
+      "exif": {
+        "cameraBrand": "OM Digital Solutions",
+        "cameraModel": "OM-1MarkII",
+        "lens": "OLYMPUS M.8-25mm F4.0",
+        "iso": 200,
+        "aperture": "f/5.6",
+        "shutterSpeed": "1/40s",
+        "focalLength": "25",
+        "capturedAt": "2024-09-18T10:25:25.000Z"
+      }
+    },
+    {
+      "id": "4911a2c2-814b-4aa9-8fae-55ae66c1c741",
+      "title": "P9183732",
+      "topicIds": [
+        "内蒙古2024"
+      ],
+      "takenAt": "2024-09-18T10:19:38.000Z",
+      "asset": {
+        "original": "https://cdn.ai4love.cn/tmp/2026/08/1787766936992-d1e88d56-1837-4ed2-bde7-ba897146e679-p9183732.jpg",
+        "thumbnail": "https://cdn.ai4love.cn/tmp/2026/08/1787766936992-d1e88d56-1837-4ed2-bde7-ba897146e679-p9183732.jpg",
+        "preview": "https://cdn.ai4love.cn/tmp/2026/08/1787766936992-d1e88d56-1837-4ed2-bde7-ba897146e679-p9183732.jpg",
+        "alt": "P9183732"
+      },
+      "exif": {
+        "cameraBrand": "OM Digital Solutions",
+        "cameraModel": "OM-1MarkII",
+        "lens": "OLYMPUS M.8-25mm F4.0",
+        "iso": 200,
+        "aperture": "f/5.6",
+        "shutterSpeed": "1/60s",
+        "focalLength": "22",
+        "capturedAt": "2024-09-18T10:19:38.000Z"
+      }
+    },
+    {
+      "id": "a3471242-af41-4b80-8c06-f9eeb4059aac",
+      "title": "P9183727",
+      "topicIds": [
+        "内蒙古2024"
+      ],
+      "takenAt": "2024-09-18T10:18:53.000Z",
+      "asset": {
+        "original": "https://cdn.ai4love.cn/tmp/2026/08/1787766941851-69d1f49b-3e6b-4355-8542-defbb611176f-p9183727.jpg",
+        "thumbnail": "https://cdn.ai4love.cn/tmp/2026/08/1787766941851-69d1f49b-3e6b-4355-8542-defbb611176f-p9183727.jpg",
+        "preview": "https://cdn.ai4love.cn/tmp/2026/08/1787766941851-69d1f49b-3e6b-4355-8542-defbb611176f-p9183727.jpg",
+        "alt": "P9183727"
+      },
+      "exif": {
+        "cameraBrand": "OM Digital Solutions",
+        "cameraModel": "OM-1MarkII",
+        "lens": "OLYMPUS M.8-25mm F4.0",
+        "iso": 200,
+        "aperture": "f/5.6",
+        "shutterSpeed": "1/25s",
+        "focalLength": "23",
+        "capturedAt": "2024-09-18T10:18:53.000Z"
+      }
+    },
+    {
+      "id": "38df2cb1-7fcd-46b3-86bf-a1f454e252ba",
+      "title": "P9183369",
+      "topicIds": [
+        "内蒙古2024"
+      ],
+      "takenAt": "2024-09-18T07:49:17.000Z",
+      "asset": {
+        "original": "https://cdn.ai4love.cn/tmp/2026/08/1787678307126-c654d723-02af-4aba-ae00-1eee3de92f3a-p9183369.jpg",
+        "thumbnail": "https://cdn.ai4love.cn/tmp/2026/08/1787678307126-c654d723-02af-4aba-ae00-1eee3de92f3a-p9183369.jpg",
+        "preview": "https://cdn.ai4love.cn/tmp/2026/08/1787678307126-c654d723-02af-4aba-ae00-1eee3de92f3a-p9183369.jpg",
+        "alt": "P9183369"
+      },
+      "exif": {
+        "cameraBrand": "OM Digital Solutions",
+        "cameraModel": "OM-1MarkII",
+        "lens": "OM 40-150mm F4.0",
+        "iso": 800,
+        "aperture": "f/4",
+        "shutterSpeed": "1/640s",
+        "focalLength": "49",
+        "capturedAt": "2024-09-18T07:49:17.000Z"
+      }
+    },
+    {
+      "id": "56038d63-1717-4c6c-9d5b-54202533aaef",
+      "title": "P9183165",
+      "topicIds": [
+        "内蒙古2024"
+      ],
+      "takenAt": "2024-09-18T07:05:02.000Z",
+      "asset": {
+        "original": "https://cdn.ai4love.cn/tmp/2026/08/1787766917252-ff2dcae6-c058-4848-b33e-5f795f745618-p9183165.jpg",
+        "thumbnail": "https://cdn.ai4love.cn/tmp/2026/08/1787766917252-ff2dcae6-c058-4848-b33e-5f795f745618-p9183165.jpg",
+        "preview": "https://cdn.ai4love.cn/tmp/2026/08/1787766917252-ff2dcae6-c058-4848-b33e-5f795f745618-p9183165.jpg",
+        "alt": "P9183165"
+      },
+      "exif": {
+        "cameraBrand": "OM Digital Solutions",
+        "cameraModel": "OM-1MarkII",
+        "lens": "OLYMPUS M.8-25mm F4.0",
+        "iso": 200,
+        "aperture": "f/4",
+        "shutterSpeed": "1/160s",
+        "focalLength": "25",
+        "capturedAt": "2024-09-18T07:05:02.000Z"
+      }
+    },
+    {
+      "id": "d5b45cef-45aa-4db8-a190-0747fa341ff4",
+      "title": "P9182923",
+      "topicIds": [
+        "内蒙古2024"
+      ],
+      "takenAt": "2024-09-18T05:45:37.000Z",
+      "asset": {
+        "original": "https://cdn.ai4love.cn/tmp/2026/08/1787678311575-dc4ed427-c860-4ecf-b61e-ce8beb998da3-p9182923.jpg",
+        "thumbnail": "https://cdn.ai4love.cn/tmp/2026/08/1787678311575-dc4ed427-c860-4ecf-b61e-ce8beb998da3-p9182923.jpg",
+        "preview": "https://cdn.ai4love.cn/tmp/2026/08/1787678311575-dc4ed427-c860-4ecf-b61e-ce8beb998da3-p9182923.jpg",
+        "alt": "P9182923"
+      },
+      "exif": {
+        "cameraBrand": "OM Digital Solutions",
+        "cameraModel": "OM-1MarkII",
+        "lens": "OM 40-150mm F4.0",
+        "iso": 200,
+        "aperture": "f/4",
+        "shutterSpeed": "1/2000s",
+        "focalLength": "40",
+        "capturedAt": "2024-09-18T05:45:37.000Z"
+      }
+    },
+    {
+      "id": "b7f81a70-6c08-4d9f-88d5-f2e688e9309b",
+      "title": "P9182663",
+      "topicIds": [
+        "内蒙古2024"
+      ],
+      "takenAt": "2024-09-18T03:12:18.000Z",
+      "asset": {
+        "original": "https://cdn.ai4love.cn/tmp/2026/08/1787678316220-46ce88f0-be69-4d6f-ab71-b9e752515888-p9182663.jpg",
+        "thumbnail": "https://cdn.ai4love.cn/tmp/2026/08/1787678316220-46ce88f0-be69-4d6f-ab71-b9e752515888-p9182663.jpg",
+        "preview": "https://cdn.ai4love.cn/tmp/2026/08/1787678316220-46ce88f0-be69-4d6f-ab71-b9e752515888-p9182663.jpg",
+        "alt": "P9182663"
+      },
+      "exif": {
+        "cameraBrand": "OM Digital Solutions",
+        "cameraModel": "OM-1MarkII",
+        "lens": "OM 40-150mm F4.0",
+        "iso": 200,
+        "aperture": "f/4",
+        "shutterSpeed": "1/1250s",
+        "focalLength": "150",
+        "capturedAt": "2024-09-18T03:12:18.000Z"
+      }
+    },
+    {
+      "id": "f5878b0b-0d6b-4794-9e71-1a462592c74e",
+      "title": "P9172598 HDR",
+      "topicIds": [
+        "内蒙古2024"
+      ],
+      "takenAt": "2024-09-17T10:14:16.000Z",
+      "asset": {
+        "original": "https://cdn.ai4love.cn/tmp/2026/08/1787766923268-fe08734a-bcba-488f-bc79-45270c901199-p9172598-hdr.jpg",
+        "thumbnail": "https://cdn.ai4love.cn/tmp/2026/08/1787766923268-fe08734a-bcba-488f-bc79-45270c901199-p9172598-hdr.jpg",
+        "preview": "https://cdn.ai4love.cn/tmp/2026/08/1787766923268-fe08734a-bcba-488f-bc79-45270c901199-p9172598-hdr.jpg",
+        "alt": "P9172598 HDR"
+      },
+      "exif": {
+        "cameraBrand": "OM Digital Solutions",
+        "cameraModel": "OM-1MarkII",
+        "lens": "OM 40-150mm F4.0",
+        "iso": 200,
+        "aperture": "f/4",
+        "shutterSpeed": "1/2500s",
+        "focalLength": "106",
+        "capturedAt": "2024-09-17T10:14:16.000Z"
+      }
+    },
+    {
+      "id": "38befc2c-62ee-42d1-a16a-4a0df1f7a1cf",
+      "title": "P9172591",
+      "topicIds": [
+        "内蒙古2024"
+      ],
+      "takenAt": "2024-09-17T10:12:04.000Z",
+      "asset": {
+        "original": "https://cdn.ai4love.cn/tmp/2026/08/1787678319549-c7623bb4-f8de-4d8e-880b-8acb8b51fd2f-p9172591.jpg",
+        "thumbnail": "https://cdn.ai4love.cn/tmp/2026/08/1787678319549-c7623bb4-f8de-4d8e-880b-8acb8b51fd2f-p9172591.jpg",
+        "preview": "https://cdn.ai4love.cn/tmp/2026/08/1787678319549-c7623bb4-f8de-4d8e-880b-8acb8b51fd2f-p9172591.jpg",
+        "alt": "P9172591"
+      },
+      "exif": {
+        "cameraBrand": "OM Digital Solutions",
+        "cameraModel": "OM-1MarkII",
+        "lens": "OM 40-150mm F4.0",
+        "iso": 200,
+        "aperture": "f/7.1",
+        "shutterSpeed": "1/100s",
+        "focalLength": "111",
+        "capturedAt": "2024-09-17T10:12:04.000Z"
+      }
+    },
+    {
       "id": "58c66d7e-7e76-4efb-9257-5b869e0e6d93",
       "title": "P1120511",
       "topicIds": [],
@@ -1295,6 +2027,28 @@
     }
   ],
   "brands": [
+    {
+      "id": "dji",
+      "name": "DJI",
+      "aliases": [],
+      "logoUrls": [],
+      "logos": []
+    },
+    {
+      "id": "dk",
+      "name": "dk",
+      "title": "dk",
+      "aliases": [],
+      "logoUrls": [
+        "https://cdn.ai4love.cn/tmp/2026/08/1787767426804-ef4b63e7-3acb-4478-b262-c1b168167589-a-1.png"
+      ],
+      "logos": [
+        {
+          "url": "https://cdn.ai4love.cn/tmp/2026/08/1787767426804-ef4b63e7-3acb-4478-b262-c1b168167589-a-1.png",
+          "alt": "æ°´å°1.png"
+        }
+      ]
+    },
     {
       "id": "olympus-corporation",
       "name": "OLYMPUS CORPORATION",
