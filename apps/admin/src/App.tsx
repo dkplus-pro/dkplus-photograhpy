@@ -8,6 +8,7 @@ import {
   Input,
   Menu,
   Modal,
+  Progress,
   Select,
   Space,
   Spin,
@@ -46,6 +47,12 @@ import type {
   ToastMessage,
   UploadPreview,
 } from "./types";
+import { WatermarkExportDrawer } from "./features/watermark-export/watermark-export-drawer";
+import {
+  runWatermarkExport,
+  summarizeFailures,
+} from "./features/watermark-export/export-zip";
+import type { ExportSettings } from "./features/watermark-export/types";
 
 const api = createApiClient();
 const TextArea = Input.TextArea;
@@ -348,6 +355,14 @@ function App() {
   const [isUploadOpen, setIsUploadOpen] = useState(false);
   const [isTopicEditorOpen, setIsTopicEditorOpen] = useState(false);
   const [isBrandEditorOpen, setIsBrandEditorOpen] = useState(false);
+  const [isWatermarkExportOpen, setIsWatermarkExportOpen] = useState(false);
+  const [isWatermarkExporting, setIsWatermarkExporting] = useState(false);
+  const [watermarkExportProgress, setWatermarkExportProgress] = useState<{
+    completed: number;
+    total: number;
+    currentFileName?: string;
+  } | null>(null);
+  const watermarkCancelRef = useRef(false);
   const [photoPageSize, setPhotoPageSize] = useState(10);
   const [topicPageSize, setTopicPageSize] = useState(10);
   const [brandPageSize, setBrandPageSize] = useState(10);
@@ -849,6 +864,64 @@ function App() {
     } finally {
       setIsExporting(false);
     }
+  };
+
+  const selectedPhotosForExport = useMemo(
+    () => photos.filter((photo) => selectedIds.has(photo.id)),
+    [photos, selectedIds],
+  );
+
+  const requestWatermarkExport = (settings: ExportSettings) => {
+    if (!selectedPhotosForExport.length) {
+      pushMessage("error", "请先在列表中勾选要导出的图片。");
+      return;
+    }
+    watermarkCancelRef.current = false;
+    setIsWatermarkExporting(true);
+    setWatermarkExportProgress({ completed: 0, total: selectedPhotosForExport.length });
+
+    void runWatermarkExport(selectedPhotosForExport, settings, {
+      onProgress: (completed, total, currentFileName) =>
+        setWatermarkExportProgress({ completed, total, currentFileName }),
+      isCancelled: () => watermarkCancelRef.current,
+    })
+      .then(({ outcome, zipFileName }) => {
+        if (outcome.cancelled) {
+          pushMessage("info", "已取消导出水印图。");
+          return;
+        }
+        if (zipFileName) {
+          const failureNote = outcome.failures.length
+            ? `，${outcome.failures.length} 张失败（${summarizeFailures(outcome.failures)}）`
+            : "";
+          pushMessage(
+            outcome.failures.length ? "info" : "success",
+            `已导出 ${outcome.results.length} 张水印图（${zipFileName}，并发 ${outcome.concurrency}）${failureNote}。`,
+          );
+        } else if (outcome.failures.length) {
+          pushMessage(
+            "error",
+            `导出失败：${summarizeFailures(outcome.failures)}`,
+          );
+        } else {
+          pushMessage("error", "没有可导出的图片，请确认所选图片包含有效地址。");
+        }
+      })
+      .catch((error: unknown) => {
+        pushMessage(
+          "error",
+          error instanceof Error ? error.message : "导出水印图失败",
+        );
+      })
+      .finally(() => {
+        setIsWatermarkExporting(false);
+        setWatermarkExportProgress(null);
+        watermarkCancelRef.current = false;
+      });
+  };
+
+  const cancelWatermarkExport = () => {
+    watermarkCancelRef.current = true;
   };
 
   const requestDeletePhoto = (photo: PhotoRecord) => {
@@ -1567,6 +1640,13 @@ function App() {
                         onClick={requestBatchDelete}
                       >
                         删除所选
+                      </Button>
+                      <Button
+                        type="primary"
+                        disabled={selectedCount === 0}
+                        onClick={() => setIsWatermarkExportOpen(true)}
+                      >
+                        导出水印图（{selectedCount}）
                       </Button>
                       <Button
                         type="outline"
@@ -2301,6 +2381,62 @@ function App() {
             >
               <p>{confirmAction?.body}</p>
             </Modal>
+
+            <Modal
+              title="正在导出水印图"
+              visible={isWatermarkExporting || Boolean(watermarkExportProgress)}
+              onCancel={() => {
+                cancelWatermarkExport();
+              }}
+              footer={
+                watermarkCancelRef.current ? (
+                  <span style={{ color: "var(--muted, #86909c)" }}>
+                    正在取消，已完成的图片将被丢弃…
+                  </span>
+                ) : (
+                  <Button status="danger" onClick={cancelWatermarkExport}>
+                    取消导出
+                  </Button>
+                )
+              }
+              closable={false}
+            >
+              <div className="watermark-export-progress" aria-live="polite">
+                <Progress
+                  percent={
+                    watermarkExportProgress?.total
+                      ? Math.round(
+                          ((watermarkExportProgress.completed ?? 0) /
+                            watermarkExportProgress.total) *
+                            100,
+                        )
+                      : 0
+                  }
+                  showText
+                />
+                <div className="watermark-export-progress__meta">
+                  <span>
+                    {watermarkExportProgress?.completed ?? 0} /{" "}
+                    {watermarkExportProgress?.total ?? 0}
+                  </span>
+                  <span className="line-clamp">
+                    {watermarkExportProgress?.currentFileName || "正在准备…"}
+                  </span>
+                </div>
+              </div>
+            </Modal>
+
+            <WatermarkExportDrawer
+              visible={isWatermarkExportOpen}
+              photos={selectedPhotosForExport}
+              brands={brands}
+              isExporting={isWatermarkExporting}
+              onCancel={() => setIsWatermarkExportOpen(false)}
+              onExport={(settings) => {
+                setIsWatermarkExportOpen(false);
+                requestWatermarkExport(settings);
+              }}
+            />
           </section>
         </div>
       </main>

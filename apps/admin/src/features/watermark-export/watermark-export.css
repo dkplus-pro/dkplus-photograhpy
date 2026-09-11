@@ -1,0 +1,184 @@
+.wm-drawer {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* ---------- 预览区（自适应，横竖图都装得下） ---------- */
+.wm-preview {
+  height: clamp(160px, 28vh, 240px);
+  background: var(--wash, #ebe7df);
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 10px;
+  overflow: hidden;
+}
+
+.wm-preview__stage {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.wm-preview__stage canvas {
+  max-width: 100%;
+  max-height: 100%;
+  width: auto;
+  height: auto;
+  object-fit: contain;
+  border-radius: 6px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+}
+
+.wm-preview__stage canvas.is-loading {
+  opacity: 0.4;
+}
+
+.wm-preview__empty {
+  color: var(--muted, #66645f);
+  font-size: 13px;
+}
+
+/* ---------- 字段行 ---------- */
+.wm-field {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.wm-field__label {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ink, #141414);
+}
+
+.wm-field__hint {
+  font-size: 12px;
+  color: var(--muted, #66645f);
+}
+
+/* ---------- 样式区（两列 Slider / Select） ---------- */
+.wm-slider {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.wm-slider__label {
+  font-size: 13px;
+  color: var(--ink, #141414);
+}
+
+.wm-slider__label b {
+  font-weight: 600;
+}
+
+/* ---------- Logo 下拉选项（文字 + 缩略图预览） ---------- */
+.wm-logo-option {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  max-width: 100%;
+}
+
+.wm-logo-option img {
+  width: 44px;
+  height: 22px;
+  object-fit: contain;
+  flex-shrink: 0;
+  /* 棋盘格底色，方便查看透明 logo */
+  background:
+    linear-gradient(45deg, #eee 25%, transparent 25%, transparent 75%, #eee 75%),
+    linear-gradient(45deg, #eee 25%, transparent 25%, transparent 75%, #eee 75%);
+  background-size: 8px 8px;
+  background-position:
+    0 0,
+    4px 4px;
+  background-color: #fff;
+  border-radius: 3px;
+}
+
+.wm-logo-option__name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* ---------- 下拉底部上传入口 ---------- */
+.wm-select-upload {
+  padding: 4px 8px 8px;
+  border-top: 1px solid var(--line, rgba(20, 20, 20, 0.14));
+}
+
+.wm-hidden-input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* ---------- 位置选项 3×3 小圆点 ---------- */
+.wm-pos-glyph {
+  display: inline-grid;
+  grid-template-columns: repeat(3, 4px);
+  grid-template-rows: repeat(3, 4px);
+  gap: 2px;
+  margin-right: 8px;
+  vertical-align: middle;
+}
+
+.wm-pos-glyph i {
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: rgba(20, 20, 20, 0.18);
+}
+
+.wm-pos-glyph i.is-on {
+  background: var(--ink, #141414);
+}
+
+/* ---------- 底部汇总 + 操作 ---------- */
+.wm-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.wm-footer__summary {
+  font-size: 13px;
+  color: var(--muted, #66645f);
+}
+
+.wm-footer__actions {
+  display: flex;
+  gap: 8px;
+}
+
+/* ---------- 进度弹层 ---------- */
+.watermark-export-progress {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-width: 320px;
+}
+
+.watermark-export-progress__meta {
+  display: flex;
+  justify-content: space-between;
+  color: var(--muted, #66645f);
+  font-size: 13px;
+}
+
+@media (max-width: 640px) {
+  .wm-preview {
+    height: clamp(140px, 24vh, 200px);
+  }
+}

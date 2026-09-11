@@ -1,4 +1,5 @@
 @import url("https://fonts.googleapis.com/css2?family=Fira+Code:wght@500;600;700&family=Noto+Sans+SC:wght@400;500;600;700&display=swap");
+@import "./features/watermark-export/watermark-export.css";
 
 :root {
   --ink: #141414;
@@ -1413,3 +1414,4 @@ textarea {
     grid-template-columns: 1fr;
   }
 }
+
