@@ -53,6 +53,12 @@ import {
   summarizeFailures,
 } from "./features/watermark-export/export-zip";
 import type { ExportSettings } from "./features/watermark-export/types";
+import { FrameExportDrawer } from "./features/frame-export/frame-export-drawer";
+import {
+  runFrameExport,
+  summarizeFrameFailures,
+} from "./features/frame-export/export-frames";
+import type { FrameSettings } from "./features/frame-export/types";
 
 const api = createApiClient();
 const TextArea = Input.TextArea;
@@ -363,6 +369,14 @@ function App() {
     currentFileName?: string;
   } | null>(null);
   const watermarkCancelRef = useRef(false);
+  const [isFrameExportOpen, setIsFrameExportOpen] = useState(false);
+  const [isFrameExporting, setIsFrameExporting] = useState(false);
+  const [frameExportProgress, setFrameExportProgress] = useState<{
+    completed: number;
+    total: number;
+    currentFileName?: string;
+  } | null>(null);
+  const frameCancelRef = useRef(false);
   const [photoPageSize, setPhotoPageSize] = useState(10);
   const [topicPageSize, setTopicPageSize] = useState(10);
   const [brandPageSize, setBrandPageSize] = useState(10);
@@ -922,6 +936,62 @@ function App() {
 
   const cancelWatermarkExport = () => {
     watermarkCancelRef.current = true;
+  };
+
+  const requestFrameExport = (settings: FrameSettings) => {
+    if (!selectedPhotosForExport.length) {
+      pushMessage("error", "请先在列表中勾选要导出的图片。");
+      return;
+    }
+    frameCancelRef.current = false;
+    setIsFrameExporting(true);
+    setFrameExportProgress({
+      completed: 0,
+      total: selectedPhotosForExport.length,
+    });
+
+    void runFrameExport(selectedPhotosForExport, settings, {
+      onProgress: (completed, total, currentFileName) =>
+        setFrameExportProgress({ completed, total, currentFileName }),
+      isCancelled: () => frameCancelRef.current,
+    })
+      .then(({ outcome, zipFileName }) => {
+        if (outcome.cancelled) {
+          pushMessage("info", "已取消导出画框。");
+          return;
+        }
+        if (zipFileName) {
+          const failureNote = outcome.failures.length
+            ? `，${outcome.failures.length} 张失败（${summarizeFrameFailures(outcome.failures)}）`
+            : "";
+          pushMessage(
+            outcome.failures.length ? "info" : "success",
+            `已导出 ${outcome.results.length} 张画框图（${zipFileName}，并发 ${outcome.concurrency}）${failureNote}。`,
+          );
+        } else if (outcome.failures.length) {
+          pushMessage(
+            "error",
+            `导出失败：${summarizeFrameFailures(outcome.failures)}`,
+          );
+        } else {
+          pushMessage("error", "没有可导出的图片，请确认所选图片包含有效地址。");
+        }
+      })
+      .catch((error: unknown) => {
+        pushMessage(
+          "error",
+          error instanceof Error ? error.message : "导出画框失败",
+        );
+      })
+      .finally(() => {
+        setIsFrameExporting(false);
+        setFrameExportProgress(null);
+        frameCancelRef.current = false;
+      });
+  };
+
+  const cancelFrameExport = () => {
+    frameCancelRef.current = true;
   };
 
   const requestDeletePhoto = (photo: PhotoRecord) => {
@@ -1647,6 +1717,13 @@ function App() {
                         onClick={() => setIsWatermarkExportOpen(true)}
                       >
                         导出水印图（{selectedCount}）
+                      </Button>
+                      <Button
+                        type="primary"
+                        disabled={selectedCount === 0}
+                        onClick={() => setIsFrameExportOpen(true)}
+                      >
+                        导出画框（{selectedCount}）
                       </Button>
                       <Button
                         type="outline"
@@ -2435,6 +2512,62 @@ function App() {
               onExport={(settings) => {
                 setIsWatermarkExportOpen(false);
                 requestWatermarkExport(settings);
+              }}
+            />
+
+            <Modal
+              title="正在导出画框"
+              visible={isFrameExporting || Boolean(frameExportProgress)}
+              onCancel={() => {
+                cancelFrameExport();
+              }}
+              footer={
+                frameCancelRef.current ? (
+                  <span style={{ color: "var(--muted, #86909c)" }}>
+                    正在取消，已完成的图片将被丢弃…
+                  </span>
+                ) : (
+                  <Button status="danger" onClick={cancelFrameExport}>
+                    取消导出
+                  </Button>
+                )
+              }
+              closable={false}
+            >
+              <div className="watermark-export-progress" aria-live="polite">
+                <Progress
+                  percent={
+                    frameExportProgress?.total
+                      ? Math.round(
+                          ((frameExportProgress.completed ?? 0) /
+                            frameExportProgress.total) *
+                            100,
+                        )
+                      : 0
+                  }
+                  showText
+                />
+                <div className="watermark-export-progress__meta">
+                  <span>
+                    {frameExportProgress?.completed ?? 0} /{" "}
+                    {frameExportProgress?.total ?? 0}
+                  </span>
+                  <span className="line-clamp">
+                    {frameExportProgress?.currentFileName || "正在准备…"}
+                  </span>
+                </div>
+              </div>
+            </Modal>
+
+            <FrameExportDrawer
+              visible={isFrameExportOpen}
+              photos={selectedPhotosForExport}
+              brands={brands}
+              isExporting={isFrameExporting}
+              onCancel={() => setIsFrameExportOpen(false)}
+              onExport={(settings) => {
+                setIsFrameExportOpen(false);
+                requestFrameExport(settings);
               }}
             />
           </section>
