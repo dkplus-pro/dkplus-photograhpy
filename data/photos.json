@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-09-12T09:41:20.684Z",
+  "generatedAt": "2026-09-12T12:58:18.424Z",
   "topics": [
     {
       "id": "city-night",
@@ -2973,6 +2973,29 @@
       }
     },
     {
+      "id": "4df2555c-ac8f-4e69-bdfa-821b1d6fcfb5",
+      "title": "P1052779",
+      "topicIds": [
+        "新疆2025"
+      ],
+      "takenAt": "2025-07-15T09:22:41.000Z",
+      "asset": {
+        "original": "https://cdn.ai4love.cn/tmp/2026/09/1789213422047-38c78f49-9ffc-4c7d-aab1-b0d5eede7c7a-p1052779.jpg",
+        "thumbnail": "https://cdn.ai4love.cn/tmp/2026/09/1789213422047-38c78f49-9ffc-4c7d-aab1-b0d5eede7c7a-p1052779.jpg",
+        "preview": "https://cdn.ai4love.cn/tmp/2026/09/1789213422047-38c78f49-9ffc-4c7d-aab1-b0d5eede7c7a-p1052779.jpg",
+        "alt": "P1052779"
+      },
+      "exif": {
+        "cameraBrand": "Panasonic",
+        "cameraModel": "DC-G9M2",
+        "iso": 100,
+        "aperture": "f/4",
+        "shutterSpeed": "1/320s",
+        "focalLength": "45",
+        "capturedAt": "2025-07-15T09:22:41.000Z"
+      }
+    },
+    {
       "id": "726f5cfe-8d3c-439c-a4eb-bc9d8a7b96ac",
       "title": "P1052662",
       "topicIds": [
@@ -3018,6 +3041,75 @@
         "shutterSpeed": "1/2500s",
         "focalLength": "85",
         "capturedAt": "2025-07-13T10:29:41.000Z"
+      }
+    },
+    {
+      "id": "fddf8ad7-7835-4529-b944-350d8dcdcbdb",
+      "title": "P7135351",
+      "topicIds": [
+        "新疆2025"
+      ],
+      "takenAt": "2025-07-13T06:43:54.000Z",
+      "asset": {
+        "original": "https://cdn.ai4love.cn/tmp/2026/09/1789217789003-9793fa3e-fd00-4f15-887b-efe9e74350ff-p7135351.jpg",
+        "thumbnail": "https://cdn.ai4love.cn/tmp/2026/09/1789217789003-9793fa3e-fd00-4f15-887b-efe9e74350ff-p7135351.jpg",
+        "preview": "https://cdn.ai4love.cn/tmp/2026/09/1789217789003-9793fa3e-fd00-4f15-887b-efe9e74350ff-p7135351.jpg",
+        "alt": "P7135351"
+      },
+      "exif": {
+        "cameraBrand": "OM Digital Solutions",
+        "cameraModel": "OM-5MarkII",
+        "iso": 200,
+        "aperture": "f/4",
+        "shutterSpeed": "1/2000s",
+        "focalLength": "150",
+        "capturedAt": "2025-07-13T06:43:54.000Z"
+      }
+    },
+    {
+      "id": "f4a6bc55-9db5-4675-ab14-d988917d31fc",
+      "title": "P7135327",
+      "topicIds": [
+        "新疆2025"
+      ],
+      "takenAt": "2025-07-13T06:39:04.000Z",
+      "asset": {
+        "original": "https://cdn.ai4love.cn/tmp/2026/09/1789217807917-c678dad6-94cf-49f8-b389-5b1ac4f656b4-p7135327.jpg",
+        "thumbnail": "https://cdn.ai4love.cn/tmp/2026/09/1789217807917-c678dad6-94cf-49f8-b389-5b1ac4f656b4-p7135327.jpg",
+        "preview": "https://cdn.ai4love.cn/tmp/2026/09/1789217807917-c678dad6-94cf-49f8-b389-5b1ac4f656b4-p7135327.jpg",
+        "alt": "P7135327"
+      },
+      "exif": {
+        "cameraBrand": "OM Digital Solutions",
+        "cameraModel": "OM-5MarkII",
+        "iso": 200,
+        "aperture": "f/4",
+        "shutterSpeed": "1/2000s",
+        "focalLength": "150",
+        "capturedAt": "2025-07-13T06:39:04.000Z"
+      }
+    },
+    {
+      "id": "9479648c-c700-4fd7-8ab8-52677900dbf2",
+      "title": "P7135323",
+      "topicIds": [
+        "新疆2025"
+      ],
+      "takenAt": "2025-07-13T06:38:49.000Z",
+      "asset": {
+        "original": "https://cdn.ai4love.cn/tmp/2026/09/1789217801036-5995340c-5bb1-473b-825c-37adef7d4cfa-p7135323.jpg",
+        "thumbnail": "https://cdn.ai4love.cn/tmp/2026/09/1789217801036-5995340c-5bb1-473b-825c-37adef7d4cfa-p7135323.jpg",
+        "preview": "https://cdn.ai4love.cn/tmp/2026/09/1789217801036-5995340c-5bb1-473b-825c-37adef7d4cfa-p7135323.jpg",
+        "alt": "P7135323"
+      },
+      "exif": {
+        "cameraBrand": "OM Digital Solutions",
+        "cameraModel": "OM-5MarkII",
+        "iso": 200,
+        "aperture": "f/4",
+        "shutterSpeed": "1/2000s",
+        "focalLength": "150",
+        "capturedAt": "2025-07-13T06:38:49.000Z"
       }
     },
     {
@@ -3510,6 +3602,29 @@
       }
     },
     {
+      "id": "7dbfeff5-ef2f-472f-a4ab-9b2adf0f9ba4",
+      "title": "P1042174",
+      "topicIds": [
+        "新疆2025"
+      ],
+      "takenAt": "2025-07-10T06:45:49.000Z",
+      "asset": {
+        "original": "https://cdn.ai4love.cn/tmp/2026/09/1789213433920-adfcf30c-5281-41d8-ba49-9ace72d8f84f-p1042174.jpg",
+        "thumbnail": "https://cdn.ai4love.cn/tmp/2026/09/1789213433920-adfcf30c-5281-41d8-ba49-9ace72d8f84f-p1042174.jpg",
+        "preview": "https://cdn.ai4love.cn/tmp/2026/09/1789213433920-adfcf30c-5281-41d8-ba49-9ace72d8f84f-p1042174.jpg",
+        "alt": "P1042174"
+      },
+      "exif": {
+        "cameraBrand": "Panasonic",
+        "cameraModel": "DC-G9M2",
+        "iso": 100,
+        "aperture": "f/6.3",
+        "shutterSpeed": "1/320s",
+        "focalLength": "45",
+        "capturedAt": "2025-07-10T06:45:49.000Z"
+      }
+    },
+    {
       "id": "f77f10ec-e8f8-4a21-9e51-c360d921869d",
       "title": "P7093772",
       "topicIds": [
@@ -3531,6 +3646,98 @@
         "shutterSpeed": "1/800s",
         "focalLength": "25",
         "capturedAt": "2025-07-09T11:02:19.000Z"
+      }
+    },
+    {
+      "id": "da38eae4-fddf-4979-a242-fc08c477727d",
+      "title": "P1042119",
+      "topicIds": [
+        "新疆2025"
+      ],
+      "takenAt": "2025-07-09T10:35:05.000Z",
+      "asset": {
+        "original": "https://cdn.ai4love.cn/tmp/2026/09/1789213448086-a64d8d1b-8c1f-4aea-a4a6-edffc0bb1aa6-p1042119.jpg",
+        "thumbnail": "https://cdn.ai4love.cn/tmp/2026/09/1789213448086-a64d8d1b-8c1f-4aea-a4a6-edffc0bb1aa6-p1042119.jpg",
+        "preview": "https://cdn.ai4love.cn/tmp/2026/09/1789213448086-a64d8d1b-8c1f-4aea-a4a6-edffc0bb1aa6-p1042119.jpg",
+        "alt": "P1042119"
+      },
+      "exif": {
+        "cameraBrand": "Panasonic",
+        "cameraModel": "DC-G9M2",
+        "iso": 100,
+        "aperture": "f/4",
+        "shutterSpeed": "1/400s",
+        "focalLength": "25",
+        "capturedAt": "2025-07-09T10:35:05.000Z"
+      }
+    },
+    {
+      "id": "370829a6-1bf2-49b4-85a4-2b0c2cf9afca",
+      "title": "P1042060",
+      "topicIds": [
+        "新疆2025"
+      ],
+      "takenAt": "2025-07-09T08:34:31.000Z",
+      "asset": {
+        "original": "https://cdn.ai4love.cn/tmp/2026/09/1789213471431-1591bf89-d2cf-4e99-bbc9-1b2cbfc5b982-p1042060.jpg",
+        "thumbnail": "https://cdn.ai4love.cn/tmp/2026/09/1789213471431-1591bf89-d2cf-4e99-bbc9-1b2cbfc5b982-p1042060.jpg",
+        "preview": "https://cdn.ai4love.cn/tmp/2026/09/1789213471431-1591bf89-d2cf-4e99-bbc9-1b2cbfc5b982-p1042060.jpg",
+        "alt": "P1042060"
+      },
+      "exif": {
+        "cameraBrand": "Panasonic",
+        "cameraModel": "DC-G9M2",
+        "iso": 100,
+        "aperture": "f/4",
+        "shutterSpeed": "1/1000s",
+        "focalLength": "33",
+        "capturedAt": "2025-07-09T08:34:31.000Z"
+      }
+    },
+    {
+      "id": "15b5e741-376f-4b4f-97df-5ef2d79db820",
+      "title": "P1042056",
+      "topicIds": [
+        "新疆2025"
+      ],
+      "takenAt": "2025-07-09T08:34:06.000Z",
+      "asset": {
+        "original": "https://cdn.ai4love.cn/tmp/2026/09/1789213485510-a6d4c529-d512-4474-97f6-bcc9943b28a7-p1042056.jpg",
+        "thumbnail": "https://cdn.ai4love.cn/tmp/2026/09/1789213485510-a6d4c529-d512-4474-97f6-bcc9943b28a7-p1042056.jpg",
+        "preview": "https://cdn.ai4love.cn/tmp/2026/09/1789213485510-a6d4c529-d512-4474-97f6-bcc9943b28a7-p1042056.jpg",
+        "alt": "P1042056"
+      },
+      "exif": {
+        "cameraBrand": "Panasonic",
+        "cameraModel": "DC-G9M2",
+        "iso": 100,
+        "aperture": "f/4",
+        "shutterSpeed": "1/1000s",
+        "focalLength": "12",
+        "capturedAt": "2025-07-09T08:34:06.000Z"
+      }
+    },
+    {
+      "id": "84e5e6a3-7463-4fc3-b824-1ea0e12472bd",
+      "title": "P1042049",
+      "topicIds": [
+        "新疆2025"
+      ],
+      "takenAt": "2025-07-09T08:32:36.000Z",
+      "asset": {
+        "original": "https://cdn.ai4love.cn/tmp/2026/09/1789213503240-737f2092-323e-4fef-b4f6-bac496b80038-p1042049.jpg",
+        "thumbnail": "https://cdn.ai4love.cn/tmp/2026/09/1789213503240-737f2092-323e-4fef-b4f6-bac496b80038-p1042049.jpg",
+        "preview": "https://cdn.ai4love.cn/tmp/2026/09/1789213503240-737f2092-323e-4fef-b4f6-bac496b80038-p1042049.jpg",
+        "alt": "P1042049"
+      },
+      "exif": {
+        "cameraBrand": "Panasonic",
+        "cameraModel": "DC-G9M2",
+        "iso": 100,
+        "aperture": "f/4",
+        "shutterSpeed": "1/800s",
+        "focalLength": "25",
+        "capturedAt": "2025-07-09T08:32:36.000Z"
       }
     },
     {
@@ -3558,6 +3765,29 @@
       }
     },
     {
+      "id": "d1052f8a-88c5-4f95-9bc5-a6b79112c260",
+      "title": "P7093493",
+      "topicIds": [
+        "新疆2025"
+      ],
+      "takenAt": "2025-07-09T08:17:07.000Z",
+      "asset": {
+        "original": "https://cdn.ai4love.cn/tmp/2026/09/1789217818528-1c1400b0-388d-472c-8208-d70d388ea71f-p7093493.jpg",
+        "thumbnail": "https://cdn.ai4love.cn/tmp/2026/09/1789217818528-1c1400b0-388d-472c-8208-d70d388ea71f-p7093493.jpg",
+        "preview": "https://cdn.ai4love.cn/tmp/2026/09/1789217818528-1c1400b0-388d-472c-8208-d70d388ea71f-p7093493.jpg",
+        "alt": "P7093493"
+      },
+      "exif": {
+        "cameraBrand": "OM Digital Solutions",
+        "cameraModel": "OM-5MarkII",
+        "iso": 200,
+        "aperture": "f/4",
+        "shutterSpeed": "1/1250s",
+        "focalLength": "54",
+        "capturedAt": "2025-07-09T08:17:07.000Z"
+      }
+    },
+    {
       "id": "9db66670-acf5-44ce-ba9a-d71f61650618",
       "title": "P7093425",
       "topicIds": [
@@ -3582,6 +3812,190 @@
       }
     },
     {
+      "id": "1fa82aa9-5750-4add-9f05-0a9f207e7de0",
+      "title": "P1041945",
+      "topicIds": [
+        "新疆2025"
+      ],
+      "takenAt": "2025-07-09T06:30:07.000Z",
+      "asset": {
+        "original": "https://cdn.ai4love.cn/tmp/2026/09/1789213520738-e2cd6768-c9b0-4899-a0ff-aeb8c1c16ff3-p1041945.jpg",
+        "thumbnail": "https://cdn.ai4love.cn/tmp/2026/09/1789213520738-e2cd6768-c9b0-4899-a0ff-aeb8c1c16ff3-p1041945.jpg",
+        "preview": "https://cdn.ai4love.cn/tmp/2026/09/1789213520738-e2cd6768-c9b0-4899-a0ff-aeb8c1c16ff3-p1041945.jpg",
+        "alt": "P1041945"
+      },
+      "exif": {
+        "cameraBrand": "Panasonic",
+        "cameraModel": "DC-G9M2",
+        "iso": 100,
+        "aperture": "f/4",
+        "shutterSpeed": "1/640s",
+        "focalLength": "45",
+        "capturedAt": "2025-07-09T06:30:07.000Z"
+      }
+    },
+    {
+      "id": "86551009-460c-4c8d-ba10-1b520b184a1c",
+      "title": "P1041942",
+      "topicIds": [
+        "新疆2025"
+      ],
+      "takenAt": "2025-07-09T06:29:59.000Z",
+      "asset": {
+        "original": "https://cdn.ai4love.cn/tmp/2026/09/1789213539568-474de9cd-0e69-4607-9f7c-f0d11a895a0a-p1041942.jpg",
+        "thumbnail": "https://cdn.ai4love.cn/tmp/2026/09/1789213539568-474de9cd-0e69-4607-9f7c-f0d11a895a0a-p1041942.jpg",
+        "preview": "https://cdn.ai4love.cn/tmp/2026/09/1789213539568-474de9cd-0e69-4607-9f7c-f0d11a895a0a-p1041942.jpg",
+        "alt": "P1041942"
+      },
+      "exif": {
+        "cameraBrand": "Panasonic",
+        "cameraModel": "DC-G9M2",
+        "iso": 100,
+        "aperture": "f/4",
+        "shutterSpeed": "1/1000s",
+        "focalLength": "44",
+        "capturedAt": "2025-07-09T06:29:59.000Z"
+      }
+    },
+    {
+      "id": "e1c7d167-9543-41fa-9d7e-f5f04338841b",
+      "title": "P1041941",
+      "topicIds": [
+        "新疆2025"
+      ],
+      "takenAt": "2025-07-09T06:29:54.000Z",
+      "asset": {
+        "original": "https://cdn.ai4love.cn/tmp/2026/09/1789213557907-0fbdd91d-6cad-466d-8841-e05f0bb1b194-p1041941.jpg",
+        "thumbnail": "https://cdn.ai4love.cn/tmp/2026/09/1789213557907-0fbdd91d-6cad-466d-8841-e05f0bb1b194-p1041941.jpg",
+        "preview": "https://cdn.ai4love.cn/tmp/2026/09/1789213557907-0fbdd91d-6cad-466d-8841-e05f0bb1b194-p1041941.jpg",
+        "alt": "P1041941"
+      },
+      "exif": {
+        "cameraBrand": "Panasonic",
+        "cameraModel": "DC-G9M2",
+        "iso": 100,
+        "aperture": "f/4",
+        "shutterSpeed": "1/800s",
+        "focalLength": "75",
+        "capturedAt": "2025-07-09T06:29:54.000Z"
+      }
+    },
+    {
+      "id": "dbb1d632-7693-49fb-b98e-58add573bc4d",
+      "title": "P1041933",
+      "topicIds": [
+        "新疆2025"
+      ],
+      "takenAt": "2025-07-09T06:28:12.000Z",
+      "asset": {
+        "original": "https://cdn.ai4love.cn/tmp/2026/09/1789213571924-cb6403b9-1ab1-4ced-a4ac-4789ee1bbbf4-p1041933.jpg",
+        "thumbnail": "https://cdn.ai4love.cn/tmp/2026/09/1789213571924-cb6403b9-1ab1-4ced-a4ac-4789ee1bbbf4-p1041933.jpg",
+        "preview": "https://cdn.ai4love.cn/tmp/2026/09/1789213571924-cb6403b9-1ab1-4ced-a4ac-4789ee1bbbf4-p1041933.jpg",
+        "alt": "P1041933"
+      },
+      "exif": {
+        "cameraBrand": "Panasonic",
+        "cameraModel": "DC-G9M2",
+        "iso": 100,
+        "aperture": "f/4",
+        "shutterSpeed": "1/1600s",
+        "focalLength": "150",
+        "capturedAt": "2025-07-09T06:28:12.000Z"
+      }
+    },
+    {
+      "id": "f168c554-7893-4a67-ba55-08cc054edd5d",
+      "title": "P7093300",
+      "topicIds": [
+        "新疆2025"
+      ],
+      "takenAt": "2025-07-09T06:15:04.000Z",
+      "asset": {
+        "original": "https://cdn.ai4love.cn/tmp/2026/09/1789217838776-dd0645ea-4e46-4b4c-8bc6-58ddeb228b38-p7093300.jpg",
+        "thumbnail": "https://cdn.ai4love.cn/tmp/2026/09/1789217838776-dd0645ea-4e46-4b4c-8bc6-58ddeb228b38-p7093300.jpg",
+        "preview": "https://cdn.ai4love.cn/tmp/2026/09/1789217838776-dd0645ea-4e46-4b4c-8bc6-58ddeb228b38-p7093300.jpg",
+        "alt": "P7093300"
+      },
+      "exif": {
+        "cameraBrand": "OM Digital Solutions",
+        "cameraModel": "OM-5MarkII",
+        "iso": 200,
+        "aperture": "f/4.5",
+        "shutterSpeed": "1/640s",
+        "focalLength": "8",
+        "capturedAt": "2025-07-09T06:15:04.000Z"
+      }
+    },
+    {
+      "id": "4871b3a7-c635-4992-bdee-6c0c3fa9f14d",
+      "title": "P1041896",
+      "topicIds": [
+        "新疆2025"
+      ],
+      "takenAt": "2025-07-09T06:10:22.000Z",
+      "asset": {
+        "original": "https://cdn.ai4love.cn/tmp/2026/09/1789213589451-43788815-f16a-42dd-94e6-33ae68a12932-p1041896.jpg",
+        "thumbnail": "https://cdn.ai4love.cn/tmp/2026/09/1789213589451-43788815-f16a-42dd-94e6-33ae68a12932-p1041896.jpg",
+        "preview": "https://cdn.ai4love.cn/tmp/2026/09/1789213589451-43788815-f16a-42dd-94e6-33ae68a12932-p1041896.jpg",
+        "alt": "P1041896"
+      },
+      "exif": {
+        "cameraBrand": "Panasonic",
+        "cameraModel": "DC-G9M2",
+        "iso": 100,
+        "aperture": "f/4",
+        "shutterSpeed": "1/1000s",
+        "focalLength": "150",
+        "capturedAt": "2025-07-09T06:10:22.000Z"
+      }
+    },
+    {
+      "id": "70cd61ef-d2d8-4586-bda6-06d5e814cce7",
+      "title": "P7093295",
+      "topicIds": [
+        "新疆2025"
+      ],
+      "takenAt": "2025-07-09T06:03:05.000Z",
+      "asset": {
+        "original": "https://cdn.ai4love.cn/tmp/2026/09/1789217855788-8f1b48f4-7636-4683-a0d1-f82871942316-p7093295.jpg",
+        "thumbnail": "https://cdn.ai4love.cn/tmp/2026/09/1789217855788-8f1b48f4-7636-4683-a0d1-f82871942316-p7093295.jpg",
+        "preview": "https://cdn.ai4love.cn/tmp/2026/09/1789217855788-8f1b48f4-7636-4683-a0d1-f82871942316-p7093295.jpg",
+        "alt": "P7093295"
+      },
+      "exif": {
+        "cameraBrand": "OM Digital Solutions",
+        "cameraModel": "OM-5MarkII",
+        "iso": 200,
+        "aperture": "f/16",
+        "shutterSpeed": "1/4s",
+        "focalLength": "40",
+        "capturedAt": "2025-07-09T06:03:05.000Z"
+      }
+    },
+    {
+      "id": "a94c735d-e98d-4470-b767-ba9cd2dbdc38",
+      "title": "P7093286",
+      "topicIds": [
+        "新疆2025"
+      ],
+      "takenAt": "2025-07-09T06:00:52.000Z",
+      "asset": {
+        "original": "https://cdn.ai4love.cn/tmp/2026/09/1789217867537-5a8b086a-500e-428e-b01c-bf59bb24bf50-p7093286.jpg",
+        "thumbnail": "https://cdn.ai4love.cn/tmp/2026/09/1789217867537-5a8b086a-500e-428e-b01c-bf59bb24bf50-p7093286.jpg",
+        "preview": "https://cdn.ai4love.cn/tmp/2026/09/1789217867537-5a8b086a-500e-428e-b01c-bf59bb24bf50-p7093286.jpg",
+        "alt": "P7093286"
+      },
+      "exif": {
+        "cameraBrand": "OM Digital Solutions",
+        "cameraModel": "OM-5MarkII",
+        "iso": 200,
+        "aperture": "f/22",
+        "shutterSpeed": "1/4s",
+        "focalLength": "40",
+        "capturedAt": "2025-07-09T06:00:52.000Z"
+      }
+    },
+    {
       "id": "f22d768c-5d4f-4e2e-be05-ee0673ea7ca9",
       "title": "P7093207",
       "topicIds": [
@@ -3602,6 +4016,52 @@
         "shutterSpeed": "1/125s",
         "focalLength": "40",
         "capturedAt": "2025-07-09T02:49:38.000Z"
+      }
+    },
+    {
+      "id": "dbbffe92-e8b3-42f2-9c75-27e41b975216",
+      "title": "P7083116",
+      "topicIds": [
+        "新疆2025"
+      ],
+      "takenAt": "2025-07-08T11:58:14.000Z",
+      "asset": {
+        "original": "https://cdn.ai4love.cn/tmp/2026/09/1789217882983-b04fa4d4-5f7b-4c5b-9905-d7bf22f093b8-p7083116.jpg",
+        "thumbnail": "https://cdn.ai4love.cn/tmp/2026/09/1789217882983-b04fa4d4-5f7b-4c5b-9905-d7bf22f093b8-p7083116.jpg",
+        "preview": "https://cdn.ai4love.cn/tmp/2026/09/1789217882983-b04fa4d4-5f7b-4c5b-9905-d7bf22f093b8-p7083116.jpg",
+        "alt": "P7083116"
+      },
+      "exif": {
+        "cameraBrand": "OM Digital Solutions",
+        "cameraModel": "OM-5MarkII",
+        "iso": 200,
+        "aperture": "f/4",
+        "shutterSpeed": "1/400s",
+        "focalLength": "44",
+        "capturedAt": "2025-07-08T11:58:14.000Z"
+      }
+    },
+    {
+      "id": "b9700dd7-bbf2-432c-912a-ca8f3dedd7c5",
+      "title": "P7083086",
+      "topicIds": [
+        "新疆2025"
+      ],
+      "takenAt": "2025-07-08T11:31:55.000Z",
+      "asset": {
+        "original": "https://cdn.ai4love.cn/tmp/2026/09/1789217773797-e9cd43e0-e129-4b60-b650-763b60bfcb0c-p7083086.jpg",
+        "thumbnail": "https://cdn.ai4love.cn/tmp/2026/09/1789217773797-e9cd43e0-e129-4b60-b650-763b60bfcb0c-p7083086.jpg",
+        "preview": "https://cdn.ai4love.cn/tmp/2026/09/1789217773797-e9cd43e0-e129-4b60-b650-763b60bfcb0c-p7083086.jpg",
+        "alt": "P7083086"
+      },
+      "exif": {
+        "cameraBrand": "OM Digital Solutions",
+        "cameraModel": "OM-5MarkII",
+        "iso": 200,
+        "aperture": "f/8",
+        "shutterSpeed": "1/60s",
+        "focalLength": "8",
+        "capturedAt": "2025-07-08T11:31:55.000Z"
       }
     },
     {
