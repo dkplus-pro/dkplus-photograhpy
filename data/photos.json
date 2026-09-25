@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-09-23T14:25:56.960Z",
+  "generatedAt": "2026-09-25T08:22:09.919Z",
   "topics": [
     {
       "id": "city-night",
@@ -5796,6 +5796,30 @@
       }
     },
     {
+      "id": "b1a4a5d0-2ec2-4028-96ec-3a1091a81c46",
+      "title": "P9172603",
+      "topicIds": [
+        "内蒙古2024"
+      ],
+      "takenAt": "2024-09-17T10:15:06.000Z",
+      "asset": {
+        "original": "https://cdn.ai4love.cn/tmp/2026/09/1790324524668-e5586cc8-abcb-4851-b360-8ce2998285cd-p9172603.jpg",
+        "thumbnail": "https://cdn.ai4love.cn/tmp/2026/09/1790324524668-e5586cc8-abcb-4851-b360-8ce2998285cd-p9172603.jpg",
+        "preview": "https://cdn.ai4love.cn/tmp/2026/09/1790324524668-e5586cc8-abcb-4851-b360-8ce2998285cd-p9172603.jpg",
+        "alt": "P9172603"
+      },
+      "exif": {
+        "cameraBrand": "OM Digital Solutions",
+        "cameraModel": "OM-1MarkII",
+        "lens": "OM 40-150mm F4.0",
+        "iso": 200,
+        "aperture": "f/4",
+        "shutterSpeed": "1/200s",
+        "focalLength": "150",
+        "capturedAt": "2024-09-17T10:15:06.000Z"
+      }
+    },
+    {
       "id": "f5878b0b-0d6b-4794-9e71-1a462592c74e",
       "title": "P9172598 HDR",
       "topicIds": [
@@ -5817,6 +5841,30 @@
         "shutterSpeed": "1/2500s",
         "focalLength": "106",
         "capturedAt": "2024-09-17T10:14:16.000Z"
+      }
+    },
+    {
+      "id": "59a75ac2-8b82-4e36-891a-a7f95db2ae30",
+      "title": "P9172595",
+      "topicIds": [
+        "内蒙古2024"
+      ],
+      "takenAt": "2024-09-17T10:13:57.000Z",
+      "asset": {
+        "original": "https://cdn.ai4love.cn/tmp/2026/09/1790324521911-6bb0e298-dbd8-4c7e-a36e-5b8f3e8e7f27-p9172595.jpg",
+        "thumbnail": "https://cdn.ai4love.cn/tmp/2026/09/1790324521911-6bb0e298-dbd8-4c7e-a36e-5b8f3e8e7f27-p9172595.jpg",
+        "preview": "https://cdn.ai4love.cn/tmp/2026/09/1790324521911-6bb0e298-dbd8-4c7e-a36e-5b8f3e8e7f27-p9172595.jpg",
+        "alt": "P9172595"
+      },
+      "exif": {
+        "cameraBrand": "OM Digital Solutions",
+        "cameraModel": "OM-1MarkII",
+        "lens": "OM 40-150mm F4.0",
+        "iso": 200,
+        "aperture": "f/4",
+        "shutterSpeed": "1/320s",
+        "focalLength": "106",
+        "capturedAt": "2024-09-17T10:13:57.000Z"
       }
     },
     {
@@ -5844,6 +5892,54 @@
       }
     },
     {
+      "id": "e8856c99-5313-422b-9cd1-3c50053e1a05",
+      "title": "P9172591",
+      "topicIds": [
+        "内蒙古2024"
+      ],
+      "takenAt": "2024-09-17T10:12:04.000Z",
+      "asset": {
+        "original": "https://cdn.ai4love.cn/tmp/2026/09/1790324515573-fea04720-11f6-427e-8614-5a6a9fcceab3-p9172591.jpg",
+        "thumbnail": "https://cdn.ai4love.cn/tmp/2026/09/1790324515573-fea04720-11f6-427e-8614-5a6a9fcceab3-p9172591.jpg",
+        "preview": "https://cdn.ai4love.cn/tmp/2026/09/1790324515573-fea04720-11f6-427e-8614-5a6a9fcceab3-p9172591.jpg",
+        "alt": "P9172591"
+      },
+      "exif": {
+        "cameraBrand": "OM Digital Solutions",
+        "cameraModel": "OM-1MarkII",
+        "lens": "OM 40-150mm F4.0",
+        "iso": 200,
+        "aperture": "f/7.1",
+        "shutterSpeed": "1/100s",
+        "focalLength": "111",
+        "capturedAt": "2024-09-17T10:12:04.000Z"
+      }
+    },
+    {
+      "id": "2293f57e-abb1-4921-915c-8a20a30c9dfe",
+      "title": "P9172590",
+      "topicIds": [
+        "内蒙古2024"
+      ],
+      "takenAt": "2024-09-17T10:12:01.000Z",
+      "asset": {
+        "original": "https://cdn.ai4love.cn/tmp/2026/09/1790324519240-c0844526-2e6d-4906-a0c9-9bc4ea66b4cf-p9172590.jpg",
+        "thumbnail": "https://cdn.ai4love.cn/tmp/2026/09/1790324519240-c0844526-2e6d-4906-a0c9-9bc4ea66b4cf-p9172590.jpg",
+        "preview": "https://cdn.ai4love.cn/tmp/2026/09/1790324519240-c0844526-2e6d-4906-a0c9-9bc4ea66b4cf-p9172590.jpg",
+        "alt": "P9172590"
+      },
+      "exif": {
+        "cameraBrand": "OM Digital Solutions",
+        "cameraModel": "OM-1MarkII",
+        "lens": "OM 40-150mm F4.0",
+        "iso": 200,
+        "aperture": "f/7.1",
+        "shutterSpeed": "1/60s",
+        "focalLength": "150",
+        "capturedAt": "2024-09-17T10:12:01.000Z"
+      }
+    },
+    {
       "id": "5584a394-c7c9-4cd4-80aa-a89d62becb51",
       "title": "P9172588",
       "topicIds": [
@@ -5865,6 +5961,54 @@
         "shutterSpeed": "1/20s",
         "focalLength": "150",
         "capturedAt": "2024-09-17T10:10:53.000Z"
+      }
+    },
+    {
+      "id": "c760b63a-4f36-4857-b124-93e92026f0f3",
+      "title": "P9172587",
+      "topicIds": [
+        "内蒙古2024"
+      ],
+      "takenAt": "2024-09-17T10:10:41.000Z",
+      "asset": {
+        "original": "https://cdn.ai4love.cn/tmp/2026/09/1790324505763-b493057b-49d6-4c4b-a626-7f3515dcfafd-p9172587.jpg",
+        "thumbnail": "https://cdn.ai4love.cn/tmp/2026/09/1790324505763-b493057b-49d6-4c4b-a626-7f3515dcfafd-p9172587.jpg",
+        "preview": "https://cdn.ai4love.cn/tmp/2026/09/1790324505763-b493057b-49d6-4c4b-a626-7f3515dcfafd-p9172587.jpg",
+        "alt": "P9172587"
+      },
+      "exif": {
+        "cameraBrand": "OM Digital Solutions",
+        "cameraModel": "OM-1MarkII",
+        "lens": "OM 40-150mm F4.0",
+        "iso": 200,
+        "aperture": "f/6.3",
+        "shutterSpeed": "1/50s",
+        "focalLength": "150",
+        "capturedAt": "2024-09-17T10:10:41.000Z"
+      }
+    },
+    {
+      "id": "0fa9137d-a08f-4e20-9d82-92ee7418ab42",
+      "title": "P9172581",
+      "topicIds": [
+        "内蒙古2024"
+      ],
+      "takenAt": "2024-09-17T10:09:23.000Z",
+      "asset": {
+        "original": "https://cdn.ai4love.cn/tmp/2026/09/1790324526909-5016cd9c-f700-4d24-aaeb-e9f4b1e6b939-p9172581.jpg",
+        "thumbnail": "https://cdn.ai4love.cn/tmp/2026/09/1790324526909-5016cd9c-f700-4d24-aaeb-e9f4b1e6b939-p9172581.jpg",
+        "preview": "https://cdn.ai4love.cn/tmp/2026/09/1790324526909-5016cd9c-f700-4d24-aaeb-e9f4b1e6b939-p9172581.jpg",
+        "alt": "P9172581"
+      },
+      "exif": {
+        "cameraBrand": "OM Digital Solutions",
+        "cameraModel": "OM-1MarkII",
+        "lens": "OM 40-150mm F4.0",
+        "iso": 200,
+        "aperture": "f/4",
+        "shutterSpeed": "1/80s",
+        "focalLength": "150",
+        "capturedAt": "2024-09-17T10:09:23.000Z"
       }
     },
     {
