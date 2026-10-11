@@ -260,12 +260,39 @@ const VirtualPhotoGrid = ({
   photos,
   style,
   onOpen,
+  scrollToPhotoId,
+  onScrollToPhotoDone,
 }: {
   photos: ResolvedPhoto[];
   style: GridStyle;
   onOpen: (photo: ResolvedPhoto) => void;
+  scrollToPhotoId?: string | null | undefined;
+  onScrollToPhotoDone?: (() => void) | undefined;
 }) => {
-  const { columns, containerRef, rows, totalHeight } = useVirtualRows(photos);
+  const { columns, containerRef, rowStride, rows, totalHeight } =
+    useVirtualRows(photos);
+
+  // 关闭大图后，把网格滚动到刚浏览的那张照片所在行。
+  useEffect(() => {
+    if (!scrollToPhotoId) return;
+    const index = photos.findIndex((photo) => photo.id === scrollToPhotoId);
+    const container = containerRef.current;
+    if (index < 0 || !container) return;
+    const top =
+      container.getBoundingClientRect().top +
+      window.scrollY +
+      Math.floor(index / columns) * rowStride;
+    window.scrollTo({ top: Math.max(0, top - 96), behavior: "auto" });
+    onScrollToPhotoDone?.();
+  }, [
+    columns,
+    containerRef,
+    onScrollToPhotoDone,
+    photos,
+    rowStride,
+    scrollToPhotoId,
+  ]);
+
   return (
     <div
       ref={containerRef}
@@ -342,11 +369,15 @@ const TopicDetail = ({
   photos,
   onBack,
   onOpen,
+  scrollToPhotoId,
+  onScrollToPhotoDone,
 }: {
   topic: GalleryPayload["topics"][number];
   photos: ResolvedPhoto[];
   onBack: () => void;
   onOpen: (photo: ResolvedPhoto) => void;
+  scrollToPhotoId?: string | null | undefined;
+  onScrollToPhotoDone?: (() => void) | undefined;
 }) => (
   <section className="topic-detail" aria-labelledby="topic-detail-title">
     <header className="topic-detail__header">
@@ -362,16 +393,26 @@ const TopicDetail = ({
         </button>
       </div>
     </header>
-    <VirtualPhotoGrid photos={photos} style="square" onOpen={onOpen} />
+    <VirtualPhotoGrid
+      photos={photos}
+      style="square"
+      onOpen={onOpen}
+      scrollToPhotoId={scrollToPhotoId}
+      onScrollToPhotoDone={onScrollToPhotoDone}
+    />
   </section>
 );
 
 const Timeline = ({
   photos,
   onOpen,
+  scrollToPhotoId,
+  onScrollToPhotoDone,
 }: {
   photos: ResolvedPhoto[];
   onOpen: (photo: ResolvedPhoto) => void;
+  scrollToPhotoId?: string | null | undefined;
+  onScrollToPhotoDone?: (() => void) | undefined;
 }) => {
   const groups = useMemo(() => groupByMonth(photos), [photos]);
   return (
@@ -386,6 +427,8 @@ const Timeline = ({
             photos={group.photos}
             style="square"
             onOpen={onOpen}
+            scrollToPhotoId={scrollToPhotoId}
+            onScrollToPhotoDone={onScrollToPhotoDone}
           />
         </section>
       ))}
@@ -624,6 +667,7 @@ const App = () => {
   );
   const stickySentinelRef = useRef<HTMLDivElement | null>(null);
   const [controlsStuck, setControlsStuck] = useState(false);
+  const [scrollToPhotoId, setScrollToPhotoId] = useState<string | null>(null);
   const topicSummaries = useMemo(
     () => (data ? buildTopicSummaries(data.topics, data.photos) : []),
     [data],
@@ -706,8 +750,11 @@ const App = () => {
     navigateToRoute({ tab: "topics", topicKey: topicRouteKey(topic) });
   const openPhotoRoute = (photo: ResolvedPhoto) =>
     navigateToRoute({ ...galleryRouteWithoutPhoto(route), photoId: photo.id });
-  const closePhotoRoute = () =>
+  const clearScrollToPhoto = () => setScrollToPhotoId(null);
+  const closePhotoRoute = () => {
+    if (route.photoId) setScrollToPhotoId(route.photoId);
     navigateToRoute(galleryRouteWithoutPhoto(route));
+  };
 
   if (error) {
     return (
@@ -798,6 +845,8 @@ const App = () => {
             photos={data.photos}
             style="square"
             onOpen={openPhotoRoute}
+            scrollToPhotoId={scrollToPhotoId}
+            onScrollToPhotoDone={clearScrollToPhoto}
           />
         )}
         {deferredRoute.tab === "topics" &&
@@ -807,12 +856,19 @@ const App = () => {
               photos={topicPhotos}
               onBack={() => navigateToRoute({ tab: "topics" })}
               onOpen={openPhotoRoute}
+              scrollToPhotoId={scrollToPhotoId}
+              onScrollToPhotoDone={clearScrollToPhoto}
             />
           ) : (
             <TopicGrid summaries={topicSummaries} onSelectTopic={selectTopic} />
           ))}
         {deferredRoute.tab === "timeline" && (
-          <Timeline photos={data.photos} onOpen={openPhotoRoute} />
+          <Timeline
+            photos={data.photos}
+            onOpen={openPhotoRoute}
+            scrollToPhotoId={scrollToPhotoId}
+            onScrollToPhotoDone={clearScrollToPhoto}
+          />
         )}
       </main>
 

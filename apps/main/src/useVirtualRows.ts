@@ -142,15 +142,16 @@ export const useVirtualRows = <T>(
         overscan,
     );
 
-    return {
-      containerRef,
-      columns,
-      totalHeight,
-      rows: rows.slice(start, end).map((row, offset) => ({
-        index: start + offset,
-        items: row,
-        top: (start + offset) * stride,
-      })) as VirtualRow<T>[],
-    };
+  return {
+    containerRef,
+    columns,
+    totalHeight,
+    rowStride: measuredRowHeight + gap,
+    rows: rows.slice(start, end).map((row, offset) => ({
+      index: start + offset,
+      items: row,
+      top: (start + offset) * stride,
+    })) as VirtualRow<T>[],
+  };
   }, [container, gap, items, overscan, rowHeight, viewport]);
 };

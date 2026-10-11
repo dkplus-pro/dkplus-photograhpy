@@ -200,7 +200,7 @@ test("main photo detail opens as a hash route and images block context-menu save
   );
   assert.match(
     mainSource,
-    /const closePhotoRoute = \(\) =>\s*navigateToRoute\(galleryRouteWithoutPhoto\(route\)\)/,
+    /const closePhotoRoute = \(\) => \{[\s\S]*?navigateToRoute\(galleryRouteWithoutPhoto\(route\)\)[\s\S]*?\};/,
   );
   assert.match(
     mainSource,
@@ -361,6 +361,7 @@ test("main header shows the logo brand and works-only navigation", () => {
     /font-family:\s*Futura, "Futura PT"/,
   );
   assert.match(cssBlock(".brand__name"), /font-size:\s*0\.75rem;/);
+  assert.match(cssBlock(".brand__name"), /text-transform:\s*uppercase;/);
   assert.match(mainSource, /<main id="gallery"/);
   assert.match(mainSource, /#\/works\/\$\{route\.tab\}/);
 
@@ -572,6 +573,30 @@ test("the white logo shows in the sticky bar only while pinned", () => {
   assert.match(cssBlock(".controls__brand"), /drop-shadow\(/);
   assert.match(cssBlock(".controls__brand--visible"), /opacity:\s*1;/);
   assert.doesNotMatch(styles, /\.sticky-brand/);
+});
+
+test("closing the modal scrolls the grid back to the viewed photo", () => {
+  assert.match(
+    mainSource,
+    /const \[scrollToPhotoId, setScrollToPhotoId\] = useState<string \| null>\(null\)/,
+  );
+  assert.match(
+    mainSource,
+    /if \(route\.photoId\) setScrollToPhotoId\(route\.photoId\);/,
+  );
+  assert.match(
+    mainSource,
+    /Math\.floor\(index \/ columns\) \* rowStride/,
+  );
+  assert.match(
+    mainSource,
+    /window\.scrollTo\(\{ top: Math\.max\(0, top - 96\), behavior: "auto" \}\)/,
+  );
+  assert.equal(
+    (mainSource.match(/scrollToPhotoId=\{scrollToPhotoId\}/g) ?? []).length,
+    5,
+  );
+  assert.match(virtualRows, /rowStride: measuredRowHeight \+ gap/);
 });
 
 test("contact floating button reveals a QR popover on hover", () => {
