@@ -24,12 +24,6 @@ import type {
   Topic,
 } from "./types";
 import { useVirtualRows } from "./useVirtualRows";
-import {
-  renderWatermarkExport,
-  type WatermarkLogoInput,
-  type WatermarkRenderInput,
-  type WatermarkRenderResult,
-} from "./watermark";
 import "./styles.css";
 
 const staticDataUrl = `${import.meta.env.BASE_URL}data/gallery.json`;
@@ -40,76 +34,31 @@ const apiBaseUrl = (import.meta.env.VITE_API_BASE_URL ?? "/api").replace(
 const galleryDataUrl = import.meta.env.DEV
   ? `${apiBaseUrl}/gallery`
   : staticDataUrl;
-
-type MainPageKey = "works" | "watermark-export";
-
-type WatermarkRouteFields = {
-  brand?: string | undefined;
-  model?: string | undefined;
-  lens?: string | undefined;
-  focalLength?: string | undefined;
-  exposure?: string | undefined;
-};
+const brandLogoUrl = `${import.meta.env.BASE_URL}img/logo-black.png`;
+const brandLogoWhiteUrl = `${import.meta.env.BASE_URL}img/logo-white.png`;
+const contactQrUrl = `${import.meta.env.BASE_URL}img/contact-me.JPG`;
+const modalMaxBoxHeight = "min(820px, calc(100dvh - clamp(24px, 6vw, 72px)))";
 
 type AppRoute = {
-  page: MainPageKey;
   tab: TabKey;
   topicKey?: string | undefined;
   photoId?: string | undefined;
-  watermarkFields?: WatermarkRouteFields | undefined;
 };
 
-const mainPageLabels = {
-  works: "作品",
-  "watermark-export": "水印导出",
-} as const;
-
 const routeTabs = new Set<TabKey>(["latest", "topics", "timeline"]);
-const watermarkRouteFieldKeys = [
-  "brand",
-  "model",
-  "lens",
-  "focalLength",
-  "exposure",
-] as const;
 
-const defaultWorksRoute = (): AppRoute => ({ page: "works", tab: "latest" });
+const defaultWorksRoute = (): AppRoute => ({ tab: "latest" });
 
 const parseRouteHash = (hash: string): AppRoute => {
   const rawPath = hash.replace(/^#\/?/, "").replace(/^\/+/, "");
   const queryStart = rawPath.indexOf("?");
   const path = queryStart >= 0 ? rawPath.slice(0, queryStart) : rawPath;
-  const queryString = queryStart >= 0 ? rawPath.slice(queryStart + 1) : "";
   const [firstSegment, secondSegment, thirdSegment, fourthSegment] =
     path.split("/");
-  if (
-    firstSegment === "watermark-export" ||
-    firstSegment === "watermark" ||
-    firstSegment === "export"
-  ) {
-    const searchParams = new URLSearchParams(queryString);
-    const photoId =
-      searchParams.get("photo") ?? searchParams.get("photoId") ?? undefined;
-    const watermarkFields =
-      watermarkRouteFieldKeys.reduce<WatermarkRouteFields>((fields, key) => {
-        const value = searchParams.get(key);
-        if (value) fields[key] = value;
-        return fields;
-      }, {});
-    return {
-      page: "watermark-export",
-      tab: "latest",
-      photoId: photoId || undefined,
-      watermarkFields: Object.keys(watermarkFields).length
-        ? watermarkFields
-        : undefined,
-    };
-  }
   if (firstSegment === "works" || firstSegment === "work") {
     if (!secondSegment) return defaultWorksRoute();
     if (secondSegment === "photo" && thirdSegment) {
       return {
-        page: "works",
         tab: "latest",
         photoId: safeDecodeRouteSegment(thirdSegment),
       };
@@ -117,14 +66,12 @@ const parseRouteHash = (hash: string): AppRoute => {
     if (secondSegment === "topics") {
       if (thirdSegment === "photo" && fourthSegment) {
         return {
-          page: "works",
           tab: "topics",
           photoId: safeDecodeRouteSegment(fourthSegment),
         };
       }
       return thirdSegment
         ? {
-            page: "works",
             tab: "topics",
             topicKey: safeDecodeRouteSegment(thirdSegment),
             photoId:
@@ -134,11 +81,10 @@ const parseRouteHash = (hash: string): AppRoute => {
                   ? safeDecodeRouteSegment(fourthSegment)
                   : undefined,
           }
-        : { page: "works", tab: "topics" };
+        : { tab: "topics" };
     }
     if (routeTabs.has(secondSegment as TabKey)) {
       return {
-        page: "works",
         tab: secondSegment as TabKey,
         photoId:
           thirdSegment === "photo" && fourthSegment
@@ -151,7 +97,6 @@ const parseRouteHash = (hash: string): AppRoute => {
   const [tabSegment, detailSegment] = [firstSegment, secondSegment];
   if (tabSegment === "photo" && detailSegment) {
     return {
-      page: "works",
       tab: "latest",
       photoId: safeDecodeRouteSegment(detailSegment),
     };
@@ -159,14 +104,13 @@ const parseRouteHash = (hash: string): AppRoute => {
   if (tabSegment === "topics") {
     return detailSegment
       ? {
-          page: "works",
           tab: "topics",
           topicKey: safeDecodeRouteSegment(detailSegment),
         }
-      : { page: "works", tab: "topics" };
+      : { tab: "topics" };
   }
   if (routeTabs.has(tabSegment as TabKey)) {
-    return { page: "works", tab: tabSegment as TabKey };
+    return { tab: tabSegment as TabKey };
   }
   return defaultWorksRoute();
 };
@@ -180,16 +124,6 @@ const safeDecodeRouteSegment = (value: string): string => {
 };
 
 const routeToHash = (route: AppRoute): string => {
-  if (route.page === "watermark-export") {
-    const params = new URLSearchParams();
-    if (route.photoId) params.set("photo", route.photoId);
-    for (const key of watermarkRouteFieldKeys) {
-      const value = route.watermarkFields?.[key];
-      if (value) params.set(key, value);
-    }
-    const query = params.toString();
-    return `#/watermark-export${query ? `?${query}` : ""}`;
-  }
   if (route.photoId) {
     const photoSegment = `photo/${encodeURIComponent(route.photoId)}`;
     if (route.tab === "topics" && route.topicKey) {
@@ -211,9 +145,9 @@ const preventImageSave = (event: React.MouseEvent<HTMLImageElement>) => {
 };
 
 const galleryRouteWithoutPhoto = (route: AppRoute): AppRoute =>
-  route.page === "works" && route.tab === "topics" && route.topicKey
-    ? { page: "works", tab: "topics", topicKey: route.topicKey }
-    : { page: "works", tab: route.page === "works" ? route.tab : "latest" };
+  route.tab === "topics" && route.topicKey
+    ? { tab: "topics", topicKey: route.topicKey }
+    : { tab: route.tab };
 
 const dataSaverStorageKey = "dkplus:data-saver";
 
@@ -258,17 +192,39 @@ const useGallery = () => {
   return { data, error };
 };
 
-const formatDate = (value: string) =>
-  new Intl.DateTimeFormat("zh-CN", {
-    dateStyle: "medium",
-    timeZone: "UTC",
-  }).format(new Date(value));
-
 const formatAperture = (value?: number | string) => {
   if (!value) return undefined;
   return typeof value === "string" && value.startsWith("f/")
     ? value
     : `f/${value}`;
+};
+
+const watermarkMetadataSpacer = "  ";
+const watermarkSecondarySpacer = "     ";
+
+const formatExposure = (photo?: ResolvedPhoto): string => {
+  if (!photo) return "";
+  return [
+    formatAperture(photo.exif?.aperture),
+    photo.exif?.shutterSpeed ?? photo.exif?.shutter,
+    photo.exif?.iso ? `ISO ${photo.exif.iso}` : undefined,
+  ]
+    .filter(Boolean)
+    .join(watermarkMetadataSpacer);
+};
+
+const formatCameraModel = (photo?: ResolvedPhoto): string =>
+  photo?.exif?.cameraModel?.trim() ?? "";
+
+const formatLensModel = (photo?: ResolvedPhoto): string =>
+  (photo?.exif?.lensModel ?? photo?.exif?.lens)?.trim() ?? "";
+
+const formatFocalLength = (photo?: ResolvedPhoto): string => {
+  const raw = photo?.exif?.focalLengthMm ?? photo?.exif?.focalLength;
+  if (raw === undefined || raw === null) return "";
+  const normalized = String(raw).trim();
+  if (!normalized) return "";
+  return /mm$/i.test(normalized) ? normalized : `${normalized}mm`;
 };
 
 const PhotoCard = ({
@@ -348,7 +304,9 @@ const TopicGrid = ({
   onSelectTopic: (topic: Topic) => void;
 }) => (
   <div className="topic-grid" aria-label="专题列表">
-    {summaries.map(({ topic, cover, count }) => {
+    {summaries
+      .filter((summary) => summary.count > 0)
+      .map(({ topic, cover, count }) => {
       return (
         <button
           className="topic-card"
@@ -440,20 +398,24 @@ const PhotoModal = ({
   active,
   dataSaverEnabled,
   onClose,
-  onExportWatermark,
   onSelect,
 }: {
   photos: ResolvedPhoto[];
   active: ResolvedPhoto | null;
   dataSaverEnabled: boolean;
   onClose: () => void;
-  onExportWatermark: (photo: ResolvedPhoto) => void;
   onSelect: (photo: ResolvedPhoto) => void;
 }) => {
+  const [displayed, setDisplayed] = useState<{
+    photo: ResolvedPhoto;
+    url: string;
+  } | null>(null);
   const [loadedPreview, setLoadedPreview] = useState<{
     photoId: string;
     url: string;
   } | null>(null);
+  const previewImageRef = useRef<HTMLImageElement | null>(null);
+  const [previewRatio, setPreviewRatio] = useState<number | null>(null);
   const index = active
     ? photos.findIndex((photo) => photo.id === active.id)
     : -1;
@@ -488,36 +450,89 @@ const PhotoModal = ({
     ? withThumbnailDisplayQuery(active.urls.thumbnail)
     : "";
   const previewIsLoaded =
-    loadedPreview?.photoId === active?.id && loadedPreview?.url === previewUrl;
+    !!displayed &&
+    loadedPreview?.photoId === displayed.photo.id &&
+    loadedPreview?.url === displayed.url;
   const placeholderBackgroundImage = placeholderUrl
     ? `url(${JSON.stringify(placeholderUrl)})`
     : undefined;
 
+  // Keep showing the current photo until the next preview has been
+  // preloaded, then swap photo and panel ratio in a single commit so
+  // switching never flashes an empty frame.
   useEffect(() => {
-    setLoadedPreview(null);
-  }, [active?.id, previewUrl]);
+    if (!active) {
+      setDisplayed(null);
+      setPreviewRatio(null);
+      return;
+    }
+    let cancelled = false;
+    const image = new Image();
+    const swap = () => {
+      if (cancelled) return;
+      if (image.naturalWidth && image.naturalHeight) {
+        setPreviewRatio(image.naturalWidth / image.naturalHeight);
+      }
+      setDisplayed({ photo: active, url: previewUrl });
+    };
+    image.onload = swap;
+    image.onerror = swap;
+    image.src = previewUrl;
+    return () => {
+      cancelled = true;
+    };
+  }, [active, previewUrl]);
+
+  // First open: size the panel from the grid-cached thumbnail while the
+  // preview is still loading.
+  useEffect(() => {
+    if (!active || displayed || !placeholderUrl) return;
+    let cancelled = false;
+    const image = new Image();
+    image.onload = () => {
+      if (!cancelled && image.naturalWidth && image.naturalHeight) {
+        setPreviewRatio(image.naturalWidth / image.naturalHeight);
+      }
+    };
+    image.src = placeholderUrl;
+    return () => {
+      cancelled = true;
+    };
+  }, [active, displayed, placeholderUrl]);
+
+  // Cached previews can finish decoding before the img mounts, so flip the
+  // fade-in from this effect as well as onLoad.
+  useEffect(() => {
+    if (!displayed) return;
+    const image = previewImageRef.current;
+    if (image?.complete && image.naturalWidth && image.naturalHeight) {
+      setLoadedPreview({ photoId: displayed.photo.id, url: displayed.url });
+    }
+  }, [displayed]);
 
   if (!active) return null;
-  const exifRows = [
-    [
-      "相机",
-      [active.exif?.cameraBrand, active.exif?.cameraModel]
-        .filter(Boolean)
-        .join(" "),
-    ],
-    ["镜头", active.exif?.lensModel ?? active.exif?.lens],
-    ["ISO", active.exif?.iso],
-    ["光圈", formatAperture(active.exif?.aperture)],
-    ["快门", active.exif?.shutterSpeed ?? active.exif?.shutter],
-    [
-      "焦距",
-      active.exif?.focalLengthMm
-        ? `${active.exif.focalLengthMm}mm`
-        : active.exif?.focalLength,
-    ],
-    ["地点", active.location],
-    ["日期", formatDate(active.takenAt)],
-  ].filter(([, value]) => value);
+  const watermarkPhoto = displayed?.photo ?? active;
+  const watermarkPrimary = [
+    formatFocalLength(watermarkPhoto),
+    formatExposure(watermarkPhoto),
+  ]
+    .filter(Boolean)
+    .join(watermarkMetadataSpacer);
+  const watermarkSecondary = [
+    formatCameraModel(watermarkPhoto),
+    formatLensModel(watermarkPhoto),
+  ]
+    .filter(Boolean)
+    .join(watermarkSecondarySpacer);
+  const panelStyle = (
+    previewRatio
+      ? {
+          "--photo-ratio": `${previewRatio}`,
+          "--photo-width": `min(100%, calc(${modalMaxBoxHeight} * ${previewRatio}))`,
+          "--photo-height": "auto",
+        }
+      : {}
+  ) as React.CSSProperties;
 
   return (
     <div
@@ -531,21 +546,52 @@ const PhotoModal = ({
         onClick={onClose}
         aria-label="关闭图片详情"
       />
-      <article className="modal__panel">
+      <article className="modal__panel" style={panelStyle}>
         <div
           className="modal__image-wrap"
           data-preview-loaded={previewIsLoaded}
           style={{ backgroundImage: placeholderBackgroundImage }}
         >
-          <img
-            src={previewUrl}
-            alt={active.asset.alt ?? active.title}
-            draggable={false}
-            onContextMenu={preventImageSave}
-            onLoad={() =>
-              setLoadedPreview({ photoId: active.id, url: previewUrl })
-            }
-          />
+          <button className="modal__close" onClick={onClose} aria-label="关闭">
+            ×
+          </button>
+          {displayed && (
+            <img
+              key={`${displayed.photo.id}:${displayed.url}`}
+              ref={previewImageRef}
+              className="modal__preview"
+              src={displayed.url}
+              alt={displayed.photo.asset.alt ?? displayed.photo.title}
+              draggable={false}
+              onContextMenu={preventImageSave}
+              onLoad={() =>
+                setLoadedPreview({
+                  photoId: displayed.photo.id,
+                  url: displayed.url,
+                })
+              }
+            />
+          )}
+          {watermarkPrimary || watermarkSecondary ? (
+            <div className="modal__watermark" aria-hidden="true">
+              <span className="modal__watermark-logo">
+                <img src={brandLogoWhiteUrl} alt="" />
+              </span>
+              <span className="modal__watermark-divider" />
+              <span className="modal__watermark-meta">
+                {watermarkPrimary && (
+                  <span className="modal__watermark-row modal__watermark-row--primary">
+                    {watermarkPrimary}
+                  </span>
+                )}
+                {watermarkSecondary && (
+                  <span className="modal__watermark-row modal__watermark-row--secondary">
+                    {watermarkSecondary}
+                  </span>
+                )}
+              </span>
+            </div>
+          ) : null}
           <button
             className="modal__nav modal__nav--prev"
             onClick={() => selectOffset(-1)}
@@ -561,677 +607,8 @@ const PhotoModal = ({
             ›
           </button>
         </div>
-        <aside className="modal__info">
-          <button className="modal__close" onClick={onClose} aria-label="关闭">
-            ×
-          </button>
-          <p className="eyebrow">
-            {index + 1} / {photos.length}
-          </p>
-          <h2>{active.title}</h2>
-          <p>{active.description}</p>
-          <dl>
-            {exifRows.map(([label, value]) => (
-              <div key={String(label)}>
-                <dt>{label}</dt>
-                <dd>{value}</dd>
-              </div>
-            ))}
-          </dl>
-          <button
-            type="button"
-            className="watermark-download"
-            onClick={() => onExportWatermark(active)}
-          >
-            导出水印
-          </button>
-        </aside>
       </article>
     </div>
-  );
-};
-
-type WatermarkFieldState = {
-  brand: string;
-  model: string;
-  lens: string;
-  focalLength: string;
-  exposure: string;
-  includeModel: boolean;
-  includeExposure: boolean;
-};
-
-type WatermarkLogoOption = WatermarkLogoInput & {
-  id: string;
-  source: "none" | "built-in" | "admin" | "camera" | "custom";
-};
-
-type RawBrandLogo = {
-  id?: string;
-  name?: string;
-  title?: string;
-  mark?: string;
-  url?: string;
-  logoUrl?: string;
-  imageUrl?: string;
-  dataUrl?: string;
-};
-
-type RawBrand = {
-  id?: string;
-  name?: string;
-  title?: string;
-  cameraBrand?: string;
-  mark?: string;
-  url?: string;
-  logoUrl?: string;
-  logoUrls?: string[];
-  imageUrl?: string;
-  dataUrl?: string;
-  logos?: RawBrandLogo[];
-};
-
-const noLogoWatermarkOption: WatermarkLogoOption = {
-  id: "none",
-  name: "不使用 Logo",
-  mark: "",
-  source: "none",
-};
-
-const builtInWatermarkLogos: WatermarkLogoOption[] = [
-  {
-    id: "dkplus",
-    name: "dk+ photography",
-    mark: "dk+",
-    source: "built-in",
-  },
-];
-
-const watermarkFieldSpacer = "  ";
-
-const formatExposure = (photo?: ResolvedPhoto): string => {
-  if (!photo) return "";
-  return [
-    formatAperture(photo.exif?.aperture),
-    photo.exif?.shutterSpeed ?? photo.exif?.shutter,
-    photo.exif?.iso ? `ISO ${photo.exif.iso}` : undefined,
-  ]
-    .filter(Boolean)
-    .join(watermarkFieldSpacer);
-};
-
-const formatCameraBrand = (photo?: ResolvedPhoto): string =>
-  (photo?.exif?.cameraBrand ?? photo?.exif?.cameraMake)?.trim() ?? "";
-
-const formatCameraModel = (photo?: ResolvedPhoto): string =>
-  photo?.exif?.cameraModel?.trim() ?? "";
-
-const formatLensModel = (photo?: ResolvedPhoto): string =>
-  (photo?.exif?.lensModel ?? photo?.exif?.lens)?.trim() ?? "";
-
-const formatFocalLength = (photo?: ResolvedPhoto): string => {
-  const raw = photo?.exif?.focalLengthMm ?? photo?.exif?.focalLength;
-  if (raw === undefined || raw === null) return "";
-  const normalized = String(raw).trim();
-  if (!normalized) return "";
-  return /mm$/i.test(normalized) ? normalized : `${normalized}mm`;
-};
-
-const watermarkFieldsFromPhoto = (
-  photo?: ResolvedPhoto,
-): WatermarkFieldState => ({
-  brand: formatCameraBrand(photo),
-  model: formatCameraModel(photo),
-  lens: formatLensModel(photo),
-  focalLength: formatFocalLength(photo),
-  exposure: formatExposure(photo),
-  includeModel: true,
-  includeExposure: true,
-});
-
-const watermarkRouteFieldsFromPhoto = (
-  photo: ResolvedPhoto,
-): WatermarkRouteFields => ({
-  brand: formatCameraBrand(photo),
-  model: formatCameraModel(photo),
-  lens: formatLensModel(photo),
-  focalLength: formatFocalLength(photo),
-  exposure: formatExposure(photo),
-});
-
-const watermarkRouteForPhoto = (photo: ResolvedPhoto): AppRoute => ({
-  page: "watermark-export",
-  tab: "latest",
-  photoId: photo.id,
-  watermarkFields: watermarkRouteFieldsFromPhoto(photo),
-});
-
-const watermarkFieldsFromRoute = (
-  photo?: ResolvedPhoto,
-  routeFields?: WatermarkRouteFields,
-): WatermarkFieldState => {
-  const photoFields = watermarkFieldsFromPhoto(photo);
-  return {
-    brand: routeFields?.brand ?? photoFields.brand,
-    model: routeFields?.model ?? photoFields.model,
-    lens: routeFields?.lens ?? photoFields.lens,
-    focalLength: routeFields?.focalLength ?? photoFields.focalLength,
-    exposure: routeFields?.exposure ?? photoFields.exposure,
-    includeModel: true,
-    includeExposure: true,
-  };
-};
-
-const normalizeLogoMark = (value: string): string => {
-  const normalized = value.trim();
-  if (!normalized) return "dk+";
-  const ascii = normalized.match(/[A-Za-z0-9+]/g)?.join("") ?? "";
-  if (ascii) return ascii.slice(0, 4);
-  return normalized.slice(0, 2);
-};
-
-const normalizeLogoMatchValue = (value?: string): string =>
-  (value ?? "")
-    .trim()
-    .toLocaleLowerCase()
-    .replace(/[^a-z0-9\u4e00-\u9fff]+/gu, "");
-
-const compactLogoOption = (
-  id: string,
-  name: string,
-  source: WatermarkLogoOption["source"],
-  logo?: RawBrandLogo | RawBrand,
-): WatermarkLogoOption => {
-  const url = logo?.url ?? logo?.logoUrl ?? logo?.imageUrl ?? logo?.dataUrl;
-  return {
-    id,
-    name,
-    mark: logo?.mark ?? normalizeLogoMark(name),
-    ...(url ? { url } : {}),
-    source,
-  };
-};
-
-const normalizeAdminBrandLogos = (payload: unknown): WatermarkLogoOption[] => {
-  const rawBrands = Array.isArray(payload)
-    ? payload
-    : payload &&
-        typeof payload === "object" &&
-        Array.isArray((payload as { brands?: unknown }).brands)
-      ? (payload as { brands: unknown[] }).brands
-      : [];
-  const options: WatermarkLogoOption[] = [];
-  rawBrands.forEach((entry, brandIndex) => {
-    if (!entry || typeof entry !== "object") return;
-    const brand = entry as RawBrand;
-    const brandName =
-      brand.name ??
-      brand.title ??
-      brand.cameraBrand ??
-      `品牌 ${brandIndex + 1}`;
-    const brandId = brand.id ?? `admin-${brandIndex}`;
-    if (Array.isArray(brand.logos) && brand.logos.length) {
-      brand.logos.forEach((logo, logoIndex) => {
-        options.push(
-          compactLogoOption(
-            `${brandId}:${logo.id ?? logoIndex}`,
-            logo.name ?? logo.title ?? brandName,
-            "admin",
-            { ...brand, ...logo },
-          ),
-        );
-      });
-      return;
-    }
-    if (Array.isArray(brand.logoUrls) && brand.logoUrls.length) {
-      brand.logoUrls.forEach((url, logoIndex) => {
-        options.push(
-          compactLogoOption(`${brandId}:url:${logoIndex}`, brandName, "admin", {
-            ...brand,
-            url,
-          }),
-        );
-      });
-      return;
-    }
-    if (brand.logoUrl || brand.imageUrl || brand.dataUrl || brand.mark) {
-      options.push(compactLogoOption(brandId, brandName, "admin", brand));
-    }
-  });
-  return options;
-};
-
-const useAdminBrandLogos = (staticBrands: GalleryPayload["brands"]) => {
-  const staticLogos = useMemo(
-    () => normalizeAdminBrandLogos({ brands: staticBrands }),
-    [staticBrands],
-  );
-  const [logos, setLogos] = useState<WatermarkLogoOption[]>(staticLogos);
-
-  useEffect(() => {
-    setLogos(staticLogos);
-  }, [staticLogos]);
-
-  useEffect(() => {
-    if (!import.meta.env.DEV) return undefined;
-    let active = true;
-    fetch(`${apiBaseUrl}/brands`)
-      .then((response) => (response.ok ? response.json() : null))
-      .then((payload: unknown) => {
-        if (active && payload) {
-          setLogos(normalizeAdminBrandLogos(payload));
-        }
-      })
-      .catch(() => {
-        // The static gallery JSON also carries the brand kit for GitHub Pages.
-        // In local dev, the API can refresh it when the admin server is running.
-      });
-    return () => {
-      active = false;
-    };
-  }, [staticLogos]);
-
-  return logos;
-};
-
-const deriveCameraBrandLogos = (
-  photos: ResolvedPhoto[],
-): WatermarkLogoOption[] => {
-  const seen = new Set<string>();
-  const options: WatermarkLogoOption[] = [];
-  for (const photo of photos) {
-    const name = photo.exif?.cameraBrand ?? photo.exif?.cameraMake;
-    if (!name || seen.has(name)) continue;
-    seen.add(name);
-    options.push({
-      id: `camera:${name}`,
-      name,
-      mark: normalizeLogoMark(name),
-      source: "camera",
-    });
-  }
-  return options;
-};
-
-const findMatchingWatermarkLogoId = (
-  logoOptions: WatermarkLogoOption[],
-  selectedPhoto?: ResolvedPhoto,
-  fields?: WatermarkFieldState,
-): string => {
-  const brandValues = [
-    fields?.brand,
-    formatCameraBrand(selectedPhoto),
-    selectedPhoto?.exif?.cameraMake,
-  ]
-    .map(normalizeLogoMatchValue)
-    .filter(Boolean);
-  if (!brandValues.length) return noLogoWatermarkOption.id;
-
-  const matched = logoOptions.find((option) => {
-    if (option.source === "none" || option.source === "custom") return false;
-    const optionValues = [option.name, option.id]
-      .map(normalizeLogoMatchValue)
-      .filter(Boolean);
-    return optionValues.some((optionValue) =>
-      brandValues.some(
-        (brandValue) =>
-          optionValue === brandValue ||
-          optionValue.includes(brandValue) ||
-          brandValue.includes(optionValue),
-      ),
-    );
-  });
-
-  return matched?.id ?? noLogoWatermarkOption.id;
-};
-
-const WatermarkExportPage = ({
-  photos,
-  brands,
-  route,
-}: {
-  photos: ResolvedPhoto[];
-  brands: GalleryPayload["brands"];
-  route: AppRoute;
-}) => {
-  const adminBrandLogos = useAdminBrandLogos(brands);
-  const photoById = useMemo(
-    () => new Map(photos.map((photo) => [photo.id, photo])),
-    [photos],
-  );
-  const routePhoto =
-    route.photoId && photoById.has(route.photoId)
-      ? photoById.get(route.photoId)
-      : photos[0];
-  const [selectedPhotoId, setSelectedPhotoId] = useState(
-    () => routePhoto?.id ?? "",
-  );
-  const selectedPhoto = photoById.get(selectedPhotoId) ?? routePhoto;
-  const [fields, setFields] = useState(() =>
-    watermarkFieldsFromRoute(selectedPhoto, route.watermarkFields),
-  );
-  const [customLogo, setCustomLogo] = useState<WatermarkLogoOption | null>(
-    null,
-  );
-  const [selectedLogoId, setSelectedLogoId] = useState("none");
-  const [logoSelectionTouched, setLogoSelectionTouched] = useState(false);
-  const [rendered, setRendered] = useState<WatermarkRenderResult | null>(null);
-  const [renderError, setRenderError] = useState<string | null>(null);
-  const [isRendering, setIsRendering] = useState(false);
-  const renderedUrlRef = useRef<string | null>(null);
-
-  const logoOptions = useMemo(() => {
-    const merged = [
-      noLogoWatermarkOption,
-      ...builtInWatermarkLogos,
-      ...adminBrandLogos,
-      ...deriveCameraBrandLogos(photos),
-      ...(customLogo ? [customLogo] : []),
-    ];
-    const seen = new Set<string>();
-    return merged.filter((option) => {
-      if (seen.has(option.id)) return false;
-      seen.add(option.id);
-      return true;
-    });
-  }, [adminBrandLogos, customLogo, photos]);
-
-  const selectedLogo =
-    logoOptions.find((option) => option.id === selectedLogoId) ??
-    noLogoWatermarkOption;
-  const selectedWatermarkLogo =
-    selectedLogo.source === "none" ? undefined : selectedLogo;
-  const defaultLogoId = useMemo(
-    () => findMatchingWatermarkLogoId(logoOptions, selectedPhoto, fields),
-    [fields, logoOptions, selectedPhoto],
-  );
-
-  useEffect(() => {
-    if (route.page !== "watermark-export") return;
-    const nextPhoto =
-      route.photoId && photoById.has(route.photoId)
-        ? photoById.get(route.photoId)
-        : photos[0];
-    if (!nextPhoto) return;
-    setSelectedPhotoId(nextPhoto.id);
-    setFields(watermarkFieldsFromRoute(nextPhoto, route.watermarkFields));
-    setLogoSelectionTouched(false);
-  }, [photoById, photos, route]);
-
-  useEffect(() => {
-    if (!selectedPhotoId && photos[0]) {
-      setSelectedPhotoId(photos[0].id);
-      setFields(watermarkFieldsFromPhoto(photos[0]));
-      setLogoSelectionTouched(false);
-    }
-  }, [photos, selectedPhotoId]);
-
-  useEffect(() => {
-    const selectedLogoExists = logoOptions.some(
-      (option) => option.id === selectedLogoId,
-    );
-    if (!selectedLogoExists || !logoSelectionTouched) {
-      setSelectedLogoId(defaultLogoId);
-    }
-  }, [defaultLogoId, logoOptions, logoSelectionTouched, selectedLogoId]);
-
-  const renderInput = useMemo<WatermarkRenderInput | null>(() => {
-    if (!selectedPhoto) return null;
-    const input: WatermarkRenderInput = {
-      imageUrl: selectedPhoto.urls.preview,
-    };
-    if (selectedWatermarkLogo) input.logo = selectedWatermarkLogo;
-    if (selectedPhoto.asset.width) input.imageWidth = selectedPhoto.asset.width;
-    if (selectedPhoto.asset.height)
-      input.imageHeight = selectedPhoto.asset.height;
-    if (fields.includeModel) {
-      if (fields.brand) input.brand = fields.brand;
-      if (fields.model) input.model = fields.model;
-      if (fields.lens) input.lens = fields.lens;
-    }
-    if (fields.includeExposure) {
-      if (fields.focalLength) input.focalLength = fields.focalLength;
-      if (fields.exposure) input.exposure = fields.exposure;
-    }
-    return input;
-  }, [fields, selectedPhoto, selectedWatermarkLogo]);
-
-  useEffect(() => {
-    if (!renderInput) return;
-    let active = true;
-    setIsRendering(true);
-    setRenderError(null);
-    renderWatermarkExport(renderInput)
-      .then((result) => {
-        if (!active) {
-          URL.revokeObjectURL(result.url);
-          return;
-        }
-        if (renderedUrlRef.current) {
-          URL.revokeObjectURL(renderedUrlRef.current);
-        }
-        renderedUrlRef.current = result.url;
-        setRendered(result);
-      })
-      .catch((reason: unknown) => {
-        if (!active) return;
-        setRenderError(
-          reason instanceof Error ? reason.message : "水印渲染失败",
-        );
-      })
-      .finally(() => {
-        if (active) setIsRendering(false);
-      });
-    return () => {
-      active = false;
-    };
-  }, [renderInput]);
-
-  useEffect(
-    () => () => {
-      if (renderedUrlRef.current) URL.revokeObjectURL(renderedUrlRef.current);
-    },
-    [],
-  );
-
-  const updateField =
-    (key: keyof WatermarkFieldState) =>
-    (event: React.ChangeEvent<HTMLInputElement>) => {
-      const value =
-        event.currentTarget.type === "checkbox"
-          ? event.currentTarget.checked
-          : event.currentTarget.value;
-      setFields((current) => ({ ...current, [key]: value }));
-    };
-
-  const selectPhoto = (event: React.ChangeEvent<HTMLSelectElement>) => {
-    const nextPhoto = photoById.get(event.currentTarget.value);
-    setSelectedPhotoId(event.currentTarget.value);
-    setFields(watermarkFieldsFromPhoto(nextPhoto));
-    setLogoSelectionTouched(false);
-  };
-
-  const uploadCustomLogo = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.currentTarget.files?.[0];
-    if (!file) return;
-    const reader = new FileReader();
-    reader.onload = () => {
-      const url = String(reader.result ?? "");
-      const option: WatermarkLogoOption = {
-        id: "custom",
-        name: file.name.replace(/\.[^.]+$/, "") || "自定义 Logo",
-        mark: normalizeLogoMark(file.name),
-        url,
-        source: "custom",
-      };
-      setCustomLogo(option);
-      setLogoSelectionTouched(true);
-      setSelectedLogoId(option.id);
-    };
-    reader.readAsDataURL(file);
-  };
-
-  if (!selectedPhoto) {
-    return (
-      <section className="watermark-page" aria-labelledby="watermark-title">
-        <h1 id="watermark-title">水印导出</h1>
-        <p>暂无可用于示例的作品，请先在后台导出客户端图库。</p>
-      </section>
-    );
-  }
-
-  const statusText = renderError
-    ? `渲染失败：${renderError}`
-    : isRendering
-      ? "正在渲染 Canvas 水印…"
-      : rendered
-        ? `渲染完成 · ${rendered.width}×${rendered.height} · ${rendered.renderer === "worker" ? "Worker 离线渲染" : "主线程回退"}`
-        : "等待渲染";
-
-  return (
-    <section className="watermark-page" aria-labelledby="watermark-title">
-      <div className="watermark-page__intro">
-        <p className="eyebrow">Canvas watermark export</p>
-        <h1 id="watermark-title">水印导出</h1>
-        <p>
-          载入一张示例作品，按测试参考图的底部渐变水印输出；固定白字黑底，
-          可不选择 Logo，仅保留品牌、机型、镜头、焦段与曝光参数。
-        </p>
-      </div>
-
-      <div className="watermark-workbench">
-        <figure className="watermark-preview" data-tone="black">
-          {rendered ? (
-            <img src={rendered.url} alt={`${selectedPhoto.title} 水印预览`} />
-          ) : (
-            <div className="watermark-preview__empty">正在生成预览</div>
-          )}
-          <figcaption className="watermark-status" aria-live="polite">
-            {statusText}
-          </figcaption>
-        </figure>
-
-        <form className="watermark-controls" aria-label="水印导出设置">
-          <label>
-            <span>示例作品</span>
-            <select
-              aria-label="选择示例照片"
-              value={selectedPhoto.id}
-              onChange={selectPhoto}
-            >
-              {photos.map((photo) => (
-                <option key={photo.id} value={photo.id}>
-                  {photo.title}
-                </option>
-              ))}
-            </select>
-          </label>
-
-          <label>
-            <span>Logo（可选）</span>
-            <select
-              aria-label="选择 Logo（可选）"
-              value={selectedLogo.id}
-              onChange={(event) => {
-                setLogoSelectionTouched(true);
-                setSelectedLogoId(event.currentTarget.value);
-              }}
-            >
-              {logoOptions.map((option) => (
-                <option key={option.id} value={option.id}>
-                  {option.name}
-                  {option.source === "admin" ? " · 品牌管理" : ""}
-                  {option.source === "camera" ? " · 相机品牌" : ""}
-                  {option.source === "custom" ? " · 自定义" : ""}
-                  {option.source === "none" ? " · 隐藏" : ""}
-                </option>
-              ))}
-            </select>
-          </label>
-
-          <label>
-            <span>上传自定义 Logo</span>
-            <input
-              aria-label="上传自定义 Logo"
-              type="file"
-              accept="image/svg+xml,image/png,image/jpeg,image/webp"
-              onChange={uploadCustomLogo}
-            />
-          </label>
-
-          <div className="watermark-field-grid">
-            <label>
-              <span>相机品牌</span>
-              <input
-                aria-label="水印相机品牌"
-                value={fields.brand}
-                onChange={updateField("brand")}
-              />
-            </label>
-            <label>
-              <span>机型</span>
-              <input
-                aria-label="水印机型"
-                value={fields.model}
-                onChange={updateField("model")}
-              />
-            </label>
-            <label>
-              <span>镜头</span>
-              <input
-                aria-label="水印镜头"
-                value={fields.lens}
-                onChange={updateField("lens")}
-              />
-            </label>
-            <label className="watermark-check">
-              <input
-                type="checkbox"
-                checked={fields.includeModel}
-                onChange={updateField("includeModel")}
-              />
-              显示设备行
-            </label>
-            <label>
-              <span>焦段</span>
-              <input
-                aria-label="水印焦段"
-                value={fields.focalLength}
-                onChange={updateField("focalLength")}
-              />
-            </label>
-            <label>
-              <span>曝光</span>
-              <input
-                aria-label="水印曝光"
-                value={fields.exposure}
-                onChange={updateField("exposure")}
-              />
-            </label>
-            <label className="watermark-check">
-              <input
-                type="checkbox"
-                checked={fields.includeExposure}
-                onChange={updateField("includeExposure")}
-              />
-              显示曝光行
-            </label>
-          </div>
-
-          <a
-            className="watermark-download"
-            href={rendered?.url ?? "#"}
-            download={`${selectedPhoto.id}-dkplus-watermark.png`}
-            aria-disabled={!rendered || Boolean(renderError)}
-            onClick={(event) => {
-              if (!rendered || renderError) event.preventDefault();
-            }}
-          >
-            下载带水印图片
-          </a>
-        </form>
-      </div>
-    </section>
   );
 };
 
@@ -1245,6 +622,8 @@ const App = () => {
   const [dataSaverEnabled, setDataSaverEnabled] = useState(() =>
     readStoredDataSaverEnabled(),
   );
+  const stickySentinelRef = useRef<HTMLDivElement | null>(null);
+  const [controlsStuck, setControlsStuck] = useState(false);
   const topicSummaries = useMemo(
     () => (data ? buildTopicSummaries(data.topics, data.photos) : []),
     [data],
@@ -1274,13 +653,12 @@ const App = () => {
     [data],
   );
   const modalPhotos =
-    data && route.page === "works" && route.tab === "topics" && selectedTopic
+    data && route.tab === "topics" && selectedTopic
       ? topicPhotos
       : (data?.photos ?? []);
-  const activePhoto =
-    route.page === "works" && route.photoId
-      ? (photoById.get(route.photoId) ?? null)
-      : null;
+  const activePhoto = route.photoId
+    ? (photoById.get(route.photoId) ?? null)
+    : null;
 
   useEffect(() => {
     const syncRoute = () => {
@@ -1299,6 +677,19 @@ const App = () => {
     writeStoredDataSaverEnabled(dataSaverEnabled);
   }, [dataSaverEnabled]);
 
+  // The controls bar is pinned once the sentinel above it leaves the
+  // viewport; the bar logo shows only for that pinned duration.
+  useEffect(() => {
+    const sentinel = stickySentinelRef.current;
+    if (!sentinel || typeof IntersectionObserver === "undefined") return;
+    const observer = new IntersectionObserver((entries) => {
+      const entry = entries[entries.length - 1];
+      setControlsStuck(entry ? !entry.isIntersecting : false);
+    });
+    observer.observe(sentinel);
+    return () => observer.disconnect();
+  }, [data]);
+
   const navigateToRoute = (nextRoute: AppRoute) => {
     const hash = routeToHash(nextRoute);
     startRouteTransition(() => setRoute(nextRoute));
@@ -1309,22 +700,14 @@ const App = () => {
       `${window.location.pathname}${window.location.search}${hash}`,
     );
   };
-  const selectMainPage = (page: MainPageKey) =>
-    navigateToRoute({ page, tab: "latest" });
   const selectTab = (key: TabKey) =>
-    navigateToRoute({ page: "works", tab: key });
+    navigateToRoute({ tab: key });
   const selectTopic = (topic: Topic) =>
-    navigateToRoute({
-      page: "works",
-      tab: "topics",
-      topicKey: topicRouteKey(topic),
-    });
+    navigateToRoute({ tab: "topics", topicKey: topicRouteKey(topic) });
   const openPhotoRoute = (photo: ResolvedPhoto) =>
     navigateToRoute({ ...galleryRouteWithoutPhoto(route), photoId: photo.id });
   const closePhotoRoute = () =>
     navigateToRoute(galleryRouteWithoutPhoto(route));
-  const exportWatermarkRoute = (photo: ResolvedPhoto) =>
-    navigateToRoute(watermarkRouteForPhoto(photo));
 
   if (error) {
     return (
@@ -1350,27 +733,17 @@ const App = () => {
     <>
       <header className="hero">
         <nav className="topbar" aria-label="站点导航">
-          <a href="#/works/latest" className="brand">
-            dk+ photography
+          <a href="#/works/latest" className="brand" aria-label="dkplus photography">
+            <img
+              src={brandLogoUrl}
+              alt=""
+              width={1668}
+              height={1668}
+              draggable={false}
+              onContextMenu={preventImageSave}
+            />
+            <span className="brand__name">dkplus photography</span>
           </a>
-          <div className="main-menu" role="list" aria-label="主菜单">
-            {(Object.keys(mainPageLabels) as MainPageKey[]).map((page) => (
-              <a
-                key={page}
-                className={`main-menu__link ${
-                  route.page === page ? "active" : ""
-                }`}
-                href={routeToHash({ page, tab: "latest" })}
-                aria-current={route.page === page ? "page" : undefined}
-                onClick={(event) => {
-                  event.preventDefault();
-                  selectMainPage(page);
-                }}
-              >
-                {mainPageLabels[page]}
-              </a>
-            ))}
-          </div>
           <div className="topbar__actions">
             <span className="topbar__count">
               {data.photos.length} Photos · {data.topics.length} Topics
@@ -1388,73 +761,58 @@ const App = () => {
               />
               <span className="data-saver__copy">
                 <span>省流模式</span>
-                <small>{dataSaverEnabled ? "大图低流量" : "原图预览"}</small>
               </span>
             </label>
           </div>
         </nav>
       </header>
 
-      <main
-        id={deferredRoute.page === "works" ? "gallery" : "watermark-export"}
-        className="shell"
-        aria-busy={isRoutePending}
-      >
-        {deferredRoute.page === "works" ? (
-          <>
-            <section className="controls" aria-label="图库筛选">
-              <div className="tabs" role="tablist" aria-label="图库标签">
-                {(Object.keys(tabLabels) as TabKey[]).map((key) => (
-                  <button
-                    key={key}
-                    role="tab"
-                    aria-selected={route.page === "works" && route.tab === key}
-                    className={
-                      route.page === "works" && route.tab === key
-                        ? "active"
-                        : ""
-                    }
-                    onClick={() => selectTab(key)}
-                  >
-                    {tabLabels[key]}
-                  </button>
-                ))}
-              </div>
-            </section>
-
-            {deferredRoute.tab === "latest" && (
-              <VirtualPhotoGrid
-                photos={data.photos}
-                style="square"
-                onOpen={openPhotoRoute}
-              />
-            )}
-            {deferredRoute.tab === "topics" &&
-              (selectedTopic ? (
-                <TopicDetail
-                  topic={selectedTopic}
-                  photos={topicPhotos}
-                  onBack={() =>
-                    navigateToRoute({ page: "works", tab: "topics" })
-                  }
-                  onOpen={openPhotoRoute}
-                />
-              ) : (
-                <TopicGrid
-                  summaries={topicSummaries}
-                  onSelectTopic={selectTopic}
-                />
-              ))}
-            {deferredRoute.tab === "timeline" && (
-              <Timeline photos={data.photos} onOpen={openPhotoRoute} />
-            )}
-          </>
-        ) : (
-          <WatermarkExportPage
-            photos={data.photos}
-            brands={data.brands}
-            route={deferredRoute}
+      <main id="gallery" className="shell" aria-busy={isRoutePending}>
+        <div ref={stickySentinelRef} className="sticky-sentinel" aria-hidden="true" />
+        <section className="controls" aria-label="图库筛选">
+          <div className="tabs" role="tablist" aria-label="图库标签">
+            {(Object.keys(tabLabels) as TabKey[]).map((key) => (
+              <button
+                key={key}
+                role="tab"
+                aria-selected={route.tab === key}
+                className={route.tab === key ? "active" : ""}
+                onClick={() => selectTab(key)}
+              >
+                {tabLabels[key]}
+              </button>
+            ))}
+          </div>
+          <img
+            className={`controls__brand ${controlsStuck ? "controls__brand--visible" : ""}`}
+            src={brandLogoWhiteUrl}
+            alt=""
+            aria-hidden="true"
+            draggable={false}
+            onContextMenu={preventImageSave}
           />
+        </section>
+
+        {deferredRoute.tab === "latest" && (
+          <VirtualPhotoGrid
+            photos={data.photos}
+            style="square"
+            onOpen={openPhotoRoute}
+          />
+        )}
+        {deferredRoute.tab === "topics" &&
+          (selectedTopic ? (
+            <TopicDetail
+              topic={selectedTopic}
+              photos={topicPhotos}
+              onBack={() => navigateToRoute({ tab: "topics" })}
+              onOpen={openPhotoRoute}
+            />
+          ) : (
+            <TopicGrid summaries={topicSummaries} onSelectTopic={selectTopic} />
+          ))}
+        {deferredRoute.tab === "timeline" && (
+          <Timeline photos={data.photos} onOpen={openPhotoRoute} />
         )}
       </main>
 
@@ -1463,9 +821,41 @@ const App = () => {
         active={activePhoto}
         dataSaverEnabled={dataSaverEnabled}
         onClose={closePhotoRoute}
-        onExportWatermark={exportWatermarkRoute}
         onSelect={openPhotoRoute}
       />
+
+      <div className="contact-fab">
+        <div className="contact-fab__popover" role="tooltip">
+          <img
+            src={contactQrUrl}
+            alt="联系二维码"
+            width={987}
+            height={1347}
+            draggable={false}
+            onContextMenu={preventImageSave}
+          />
+        </div>
+        <button
+          type="button"
+          className="contact-fab__trigger"
+          aria-label="显示联系二维码"
+        >
+          <svg
+            viewBox="0 0 24 24"
+            width="22"
+            height="22"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            aria-hidden="true"
+            focusable="false"
+          >
+            <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z" />
+          </svg>
+        </button>
+      </div>
     </>
   );
 };

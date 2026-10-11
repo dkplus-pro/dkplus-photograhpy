@@ -11,10 +11,6 @@ const gallerySource = readFileSync(
   "utf8",
 );
 const mainSource = readFileSync(path.join(dirname, "../src/main.tsx"), "utf8");
-const watermarkSource = readFileSync(
-  path.join(dirname, "../src/watermark.ts"),
-  "utf8",
-);
 const virtualRows = readFileSync(
   path.join(dirname, "../src/useVirtualRows.ts"),
   "utf8",
@@ -89,6 +85,9 @@ test("main data-saver switch persists and controls modal preview quality only", 
   );
   assert.match(mainSource, /className="topbar__actions"/);
   assert.match(mainSource, /className="data-saver"/);
+  assert.match(mainSource, /<span className="data-saver__copy">/);
+  assert.doesNotMatch(mainSource, /大图低流量|原图预览/);
+  assert.doesNotMatch(styles, /data-saver__copy small/);
   assert.match(mainSource, /role="switch"/);
   assert.match(mainSource, /aria-label="省流模式"/);
   assert.match(mainSource, /aria-checked=\{dataSaverEnabled\}/);
@@ -107,7 +106,7 @@ test("main data-saver switch persists and controls modal preview quality only", 
     mainSource,
     /const previewUrl = active[\s\S]*?dataSaverEnabled[\s\S]*?withPreviewQualityDisplayQuery\(active\.urls\.preview\)[\s\S]*?: active\.urls\.preview[\s\S]*?: "";/,
   );
-  assert.match(mainSource, /src=\{previewUrl\}/);
+  assert.match(mainSource, /src=\{displayed\.url\}/);
   assert.doesNotMatch(
     mainSource,
     /withThumbnailDisplayQuery\(active\.urls\.preview\)/,
@@ -129,7 +128,7 @@ test("main photo detail paints the existing thumbnail until the preview image lo
   );
   assert.match(
     mainSource,
-    /const previewIsLoaded =[\s\S]*?loadedPreview\?\.photoId === active\?\.id[\s\S]*?loadedPreview\?\.url === previewUrl/,
+    /const previewIsLoaded =[\s\S]*?loadedPreview\?\.photoId === displayed\.photo\.id[\s\S]*?loadedPreview\?\.url === displayed\.url/,
   );
   assert.match(
     mainSource,
@@ -141,12 +140,12 @@ test("main photo detail paints the existing thumbnail until the preview image lo
   );
   assert.match(
     mainSource,
-    /onLoad=\{\(\) =>\s*setLoadedPreview\(\{ photoId: active\.id, url: previewUrl \}\)\s*\}/,
+    /onLoad=\{\(\) =>[\s\S]*?setLoadedPreview\(\{[\s\S]*?photoId: displayed\.photo\.id,[\s\S]*?url: displayed\.url,[\s\S]*?\}\)\}/,
   );
   assert.match(cssBlock(".modal__image-wrap"), /background-size:\s*contain;/);
-  assert.match(cssBlock(".modal__image-wrap img"), /opacity:\s*0;/);
+  assert.match(cssBlock(".modal__preview"), /opacity:\s*0;/);
   assert.match(
-    cssBlock('.modal__image-wrap[data-preview-loaded="true"] img'),
+    cssBlock('.modal__image-wrap[data-preview-loaded="true"] .modal__preview'),
     /opacity:\s*1;/,
   );
 });
@@ -167,7 +166,7 @@ test("main list thumbnails use display-only Tencent thumbnail query", () => {
     mainSource,
     /src=\{withThumbnailDisplayQuery\(cover\.urls\.thumbnail\)\}/,
   );
-  assert.match(mainSource, /src=\{previewUrl\}/);
+  assert.match(mainSource, /src=\{displayed\.url\}/);
   assert.match(
     mainSource,
     /const previewUrl = active[\s\S]*?dataSaverEnabled[\s\S]*?withPreviewQualityDisplayQuery\(active\.urls\.preview\)[\s\S]*?: active\.urls\.preview[\s\S]*?: "";/,
@@ -205,14 +204,14 @@ test("main photo detail opens as a hash route and images block context-menu save
   );
   assert.match(
     mainSource,
-    /activePhoto =\s*route\.page === "works" && route\.photoId/,
+    /activePhoto = route\.photoId\s*\?\s*\(photoById\.get\(route\.photoId\) \?\? null\)\s*: null/,
   );
   assert.match(mainSource, /onClose=\{closePhotoRoute\}/);
   assert.match(mainSource, /onSelect=\{openPhotoRoute\}/);
-  assert.equal(mainSource.match(/draggable=\{false\}/g)?.length, 3);
+  assert.equal(mainSource.match(/draggable=\{false\}/g)?.length, 6);
   assert.equal(
     mainSource.match(/onContextMenu=\{preventImageSave\}/g)?.length,
-    3,
+    6,
   );
   assert.match(cssBlock("img"), /user-select:\s*none;/);
   assert.match(cssBlock("img"), /-webkit-user-drag:\s*none;/);
@@ -277,19 +276,24 @@ test("tab and topic changes are scheduled as non-urgent route transitions", () =
   );
   assert.match(
     mainSource,
-    /const selectTab = \(key: TabKey\) =>\s*navigateToRoute\(\{ page: "works", tab: key \}\)/,
+    /const selectTab = \(key: TabKey\) =>\s*navigateToRoute\(\{ tab: key \}\)/,
   );
   assert.match(mainSource, /const selectTopic = \(topic: Topic\) =>/);
   assert.match(
     mainSource,
-    /onBack=\{\(\) =>\s*navigateToRoute\(\{ page: "works", tab: "topics" \}\)\s*\}/,
+    /onBack=\{\(\) =>\s*navigateToRoute\(\{ tab: "topics" \}\)\s*\}/,
   );
 });
 
 test("topics tab opens a secondary virtual topic detail page", () => {
   assert.match(mainSource, /buildTopicSummaries/);
   assert.match(mainSource, /selectedTopicSummary/);
+  assert.match(mainSource, /const TopicGrid =/);
   assert.match(mainSource, /const TopicDetail =/);
+  assert.match(
+    mainSource,
+    /summaries\s*\.filter\(\(summary\) => summary\.count > 0\)/,
+  );
   assert.match(mainSource, /onSelectTopic\(topic\)/);
   assert.match(mainSource, /onSelectTopic=\{selectTopic\}/);
   assert.doesNotMatch(
@@ -305,7 +309,7 @@ test("topics tab opens a secondary virtual topic detail page", () => {
   assert.match(mainSource, /<TopicDetail[\s\S]*?photos=\{topicPhotos\}/);
   assert.match(
     mainSource,
-    /data && route\.page === "works" && route\.tab === "topics" && selectedTopic[\s\S]*?\? topicPhotos[\s\S]*?: \(data\?\.photos \?\? \[\]\)/,
+    /data && route\.tab === "topics" && selectedTopic[\s\S]*?\? topicPhotos[\s\S]*?: \(data\?\.photos \?\? \[\]\)/,
   );
   assert.match(
     cssBlock(".topic-detail__header"),
@@ -341,80 +345,35 @@ test("main tabs and topic detail are backed by GitHub Pages-safe hash routes", (
   assert.match(mainSource, /useDeferredValue/);
 });
 
-test("main top menu exposes works and canvas watermark export contracts", () => {
-  assert.match(mainSource, /className="main-menu"/);
-  assert.match(mainSource, /aria-label="主菜单"/);
-  assert.match(mainSource, /href=\{routeToHash\(\{ page, tab: "latest" \}\)\}/);
-  assert.match(mainSource, /selectMainPage\(page\)/);
+test("main header shows the logo brand and works-only navigation", () => {
+  assert.match(mainSource, /className="brand"/);
   assert.match(
     mainSource,
-    /id=\{deferredRoute\.page === "works" \? "gallery" : "watermark-export"\}/,
+    /const brandLogoUrl = `\$\{import\.meta\.env\.BASE_URL\}img\/logo-black\.png`/,
   );
+  assert.match(mainSource, /<img\s*src=\{brandLogoUrl\}/);
+  assert.match(mainSource, /className="brand__name">dkplus photography<\/span>/);
+  assert.match(cssBlock(".brand img"), /height:\s*35px;/);
+  assert.match(mainSource, /href="#\/works\/latest"/);
+  assert.match(cssBlock(".brand"), /gap:\s*0;/);
   assert.match(
-    mainSource,
-    /<WatermarkExportPage[\s\S]*?photos=\{data\.photos\}[\s\S]*?brands=\{data\.brands\}[\s\S]*?route=\{deferredRoute\}/,
+    cssBlock(".brand__name"),
+    /font-family:\s*Futura, "Futura PT"/,
   );
-  assert.match(mainSource, /type WatermarkRouteFields =/);
-  assert.match(mainSource, /const watermarkRouteFieldKeys = \[/);
-  assert.match(mainSource, /new URLSearchParams\(queryString\)/);
-  assert.match(mainSource, /searchParams\.get\("photo"\)/);
-  assert.match(mainSource, /params\.set\("photo", route\.photoId\)/);
-  assert.match(
-    mainSource,
-    /const watermarkRouteForPhoto = \(photo: ResolvedPhoto\): AppRoute =>/,
-  );
-  assert.match(
-    mainSource,
-    /watermarkFields: watermarkRouteFieldsFromPhoto\(photo\)/,
-  );
-  assert.match(mainSource, /onExportWatermark=\{exportWatermarkRoute\}/);
-  assert.match(mainSource, />\s*导出水印\s*<\/button>/);
-  assert.match(
-    mainSource,
-    /const useAdminBrandLogos = \(staticBrands: GalleryPayload\["brands"\]\) =>/,
-  );
-  assert.match(
-    mainSource,
-    /normalizeAdminBrandLogos\(\{ brands: staticBrands \}\)/,
-  );
-  assert.match(mainSource, /if \(!import\.meta\.env\.DEV\) return undefined/);
-  assert.match(mainSource, /fetch\(`\$\{apiBaseUrl\}\/brands`\)/);
-  assert.match(mainSource, /logoUrls/);
-  assert.match(mainSource, /deriveCameraBrandLogos/);
-  assert.match(mainSource, /const findMatchingWatermarkLogoId =/);
-  assert.match(mainSource, /const normalizeLogoMatchValue =/);
-  assert.match(mainSource, /fields\?\.brand/);
-  assert.match(mainSource, /selectedPhoto\?\.exif\?\.cameraMake/);
-  assert.match(
-    mainSource,
-    /option\.source === "none" \|\| option\.source === "custom"/,
-  );
-  assert.match(mainSource, /optionValue\.includes\(brandValue\)/);
-  assert.match(mainSource, /brandValue\.includes\(optionValue\)/);
-  assert.match(mainSource, /setLogoSelectionTouched\(false\)/);
-  assert.match(mainSource, /setSelectedLogoId\(defaultLogoId\)/);
-  assert.match(mainSource, /const noLogoWatermarkOption/);
-  assert.match(mainSource, /id: "none"/);
-  assert.match(mainSource, /不使用 Logo/);
-  assert.match(mainSource, /Logo（可选）/);
-  assert.match(mainSource, /上传自定义 Logo/);
-  assert.match(mainSource, /固定白字黑底/);
-  assert.match(mainSource, /data-tone="black"/);
-  assert.doesNotMatch(
-    mainSource,
-    /name="watermark-tone"|className="watermark-tone"|setTone|tone: "black"|黑字白底/,
-  );
-  assert.doesNotMatch(mainSource, /aria-label="水印日期"|显示日期/);
-  assert.match(mainSource, /显示设备行/);
-  assert.match(mainSource, /显示曝光行/);
-  assert.match(mainSource, /水印相机品牌/);
-  assert.match(mainSource, /水印镜头/);
-  assert.match(mainSource, /水印焦段/);
-  assert.match(mainSource, /const watermarkFieldSpacer = "  "/);
-  assert.match(
-    mainSource,
-    /const formatCameraBrand = \(photo\?: ResolvedPhoto\): string =>/,
-  );
+  assert.match(cssBlock(".brand__name"), /font-size:\s*0\.75rem;/);
+  assert.match(mainSource, /<main id="gallery"/);
+  assert.match(mainSource, /#\/works\/\$\{route\.tab\}/);
+
+  assert.doesNotMatch(mainSource, /水印导出|watermark-export|WatermarkExport/);
+  assert.doesNotMatch(mainSource, /className="main-menu"/);
+  assert.doesNotMatch(mainSource, /导出水印|watermark-download|onExportWatermark/);
+  assert.doesNotMatch(styles, /\.main-menu|\.watermark-page|\.watermark-download/);
+  assert.doesNotMatch(styles, /\.watermark-preview|\.watermark-controls/);
+});
+
+test("photo modal renders watermark-style metadata strip with div and css", () => {
+  assert.match(mainSource, /const watermarkMetadataSpacer = "  "/);
+  assert.match(mainSource, /const watermarkSecondarySpacer = "     "/);
   assert.match(
     mainSource,
     /const formatCameraModel = \(photo\?: ResolvedPhoto\): string =>\s*photo\?\.exif\?\.cameraModel\?\.trim\(\) \?\? "";/,
@@ -427,172 +386,54 @@ test("main top menu exposes works and canvas watermark export contracts", () => 
     mainSource,
     /const formatFocalLength = \(photo\?: ResolvedPhoto\): string =>/,
   );
-  assert.doesNotMatch(mainSource, /水印标题|fields\.title|input\.title/);
   assert.match(
     mainSource,
-    /if \(selectedWatermarkLogo\) input\.logo = selectedWatermarkLogo/,
+    /const formatExposure = \(photo\?: ResolvedPhoto\): string =>/,
   );
-  assert.match(styles, /\.main-menu__link\.active/);
+  assert.match(
+    mainSource,
+    /const watermarkPrimary = \[\s*formatFocalLength\(watermarkPhoto\),\s*formatExposure\(watermarkPhoto\),\s*\]\s*\.filter\(Boolean\)\s*\.join\(watermarkMetadataSpacer\)/,
+  );
+  assert.match(
+    mainSource,
+    /const watermarkSecondary = \[\s*formatCameraModel\(watermarkPhoto\),\s*formatLensModel\(watermarkPhoto\),\s*\]\s*\.filter\(Boolean\)\s*\.join\(watermarkSecondarySpacer\)/,
+  );
+  assert.match(mainSource, /className="modal__watermark"/);
+  assert.match(mainSource, /modal__watermark-logo/);
+  assert.match(mainSource, /modal__watermark-divider/);
+  assert.match(mainSource, /modal__watermark-row--primary/);
+  assert.match(mainSource, /modal__watermark-row--secondary/);
+  assert.match(mainSource, /<img src=\{brandLogoWhiteUrl\} alt="" \/>/);
+  assert.match(mainSource, /className="modal__close"/);
+  assert.doesNotMatch(mainSource, /renderWatermarkExport|canvas/i);
+  assert.doesNotMatch(mainSource, /watermarkRouteFields|WatermarkFieldState/);
+  assert.doesNotMatch(mainSource, /modal__info|exifRows|formatDate/);
+  assert.doesNotMatch(styles, /\.modal__info|\.modal h2|\.modal p|^dl \{|^dt \{|^dd \{/m);
+
+  assert.match(cssBlock(".modal__watermark"), /position:\s*absolute;/);
+  assert.match(cssBlock(".modal__watermark"), /inset:\s*auto 0 0;/);
+  assert.match(cssBlock(".modal__watermark"), /linear-gradient/);
+  assert.match(cssBlock(".modal__watermark"), /pointer-events:\s*none;/);
+  assert.doesNotMatch(cssBlock(".modal__watermark"), /opacity:\s*0;/);
   assert.doesNotMatch(
     styles,
-    /\.watermark-preview\[data-tone=|\.watermark-tone/,
+    /data-preview-loaded="true"\] \.modal__watermark/,
   );
-  assert.match(cssBlock(".watermark-preview"), /#18181b/);
-
-  assert.match(watermarkSource, /export const renderWatermarkExport =/);
-  assert.match(watermarkSource, /OffscreenCanvas/);
-  assert.match(watermarkSource, /workerTimeoutMs/);
-  assert.match(watermarkSource, /renderWatermarkOnMainThread/);
-  assert.match(watermarkSource, /renderer: "worker"/);
-  assert.match(watermarkSource, /renderer: "main-thread"/);
+  assert.doesNotMatch(cssBlock(".modal__watermark-logo"), /background:/);
+  assert.doesNotMatch(cssBlock(".modal__watermark-logo"), /padding:/);
+  assert.match(cssBlock(".modal__watermark-divider"), /rgba\(250, 250, 250, 0\.55\)/);
+  assert.match(cssBlock(".modal__watermark-row"), /white-space:\s*pre;/);
   assert.match(
-    watermarkSource,
-    /const stripHeight = clamp\(canvasHeight \* 0\.2, 132, 340\)/,
-  );
-  assert.match(watermarkSource, /const hasLogo = Boolean\(input\.logo\)/);
-  assert.match(watermarkSource, /if \(hasLogo && input\.logo\)/);
-  assert.match(
-    watermarkSource,
-    /const logoMaxHeight = clamp\(stripHeight \* 0\.45, 48, 132\)/,
-  );
-  assert.match(watermarkSource, /const logoWidth = logoImage/);
-  assert.match(
-    watermarkSource,
-    /createLinearGradient\(\s*0,\s*canvasHeight,\s*0,\s*stripY,?\s*\)/,
-  );
-  assert.match(watermarkSource, /createLinearGradient\(0, height, 0, stripY\)/);
-  assert.doesNotMatch(
-    watermarkSource,
-    /input\.title|input\.date|titleSize|brandLabel|const logoSize|separatorX|palette\.separator|watermarkSignature/,
-  );
-  assert.match(watermarkSource, /const watermarkMetadataSpacer = "  "/);
-  assert.match(watermarkSource, /const watermarkSecondarySpacer = "     "/);
-  assert.match(
-    watermarkSource,
-    /const watermarkPrimaryFontFamily =[\s\S]*?Futura,[\s\S]*?"Futura PT"/,
+    cssBlock(".modal__watermark-row--primary"),
+    /font-family:\s*Futura, "Futura PT"/,
   );
   assert.match(
-    watermarkSource,
-    /const watermarkFontFamily =[\s\S]*?"Fira Code", "Fira Sans", ui-sans-serif, system-ui, sans-serif/,
+    cssBlock(".modal__watermark-row--secondary"),
+    /rgba\(250, 250, 250, 0\.78\)/,
   );
-  assert.match(
-    watermarkSource,
-    /const firstRow = \[input\.focalLength, input\.exposure\][\s\S]*?\.join\(watermarkMetadataSpacer\)/,
-  );
-  assert.match(
-    watermarkSource,
-    /const secondRow = \[input\.model, input\.lens\][\s\S]*?\.join\(watermarkSecondarySpacer\)/,
-  );
-  assert.match(watermarkSource, /const watermarkPalette: Palette =/);
-  assert.doesNotMatch(
-    watermarkSource,
-    /WatermarkTone|paletteForTone|rgba\(250, 250, 250, 0\.92\)/,
-  );
-  assert.match(
-    watermarkSource,
-    /const metadataSize = clamp\(canvasWidth \* 0\.018, 20, 42\)/,
-  );
-  assert.match(
-    watermarkSource,
-    /const metadataSize = clamp\(width \* 0\.018, 20, 42\)/,
-  );
-  assert.match(
-    watermarkSource,
-    /watermarkFont\(metadataSize, 400, watermarkPrimaryFontFamily\)/,
-  );
-  assert.match(watermarkSource, /watermarkFont\(metadataSize, 300\)/);
-  assert.match(watermarkSource, /secondRow \? 0\.48 : 0\.56/);
-  assert.match(watermarkSource, /stripHeight \* 0\.7/);
-});
-
-test("watermark export renders metadata-only output with optional logo and fade overlay", () => {
-  assert.match(
-    mainSource,
-    /const formatCameraModel = \(photo\?: ResolvedPhoto\): string =>\s*photo\?\.exif\?\.cameraModel\?\.trim\(\) \?\? "";/,
-  );
-
-  assert.doesNotMatch(
-    mainSource,
-    /水印标题|aria-label="水印标题"|aria-label="水印日期"|显示日期/,
-  );
-  assert.doesNotMatch(
-    watermarkSource,
-    /input\.title|input\.date|DKPLUS PHOTOGRAPHY|watermarkSignature|separatorX|palette\.separator|·/,
-  );
-  assert.match(
-    mainSource,
-    /const \[selectedLogoId, setSelectedLogoId\] = useState\("none"\)/,
-  );
-  assert.match(mainSource, /const noLogoWatermarkOption[\s\S]*?id: "none"/);
-  assert.match(watermarkSource, /logo\?: WatermarkLogoInput \| undefined;/);
-  assert.match(watermarkSource, /const hasLogo = Boolean\(input\.logo\)/);
-  assert.match(
-    watermarkSource,
-    /if \(hasLogo && input\.logo\) \{[\s\S]*?drawLogoMark/,
-  );
-  assert.match(
-    watermarkSource,
-    /const dividerGap = clamp\(paddingX \* 0\.54, 28, 56\)[\s\S]*?const dividerX = logoX \+ logoWidth \+ dividerGap/,
-  );
-  assert.match(
-    watermarkSource,
-    /context\.moveTo\(dividerX, stripY \+ stripHeight \* 0\.4\)/,
-  );
-  assert.match(watermarkSource, /const watermarkMetadataSpacer = "  "/);
-  assert.match(
-    watermarkSource,
-    /const firstRow = \[input\.focalLength, input\.exposure\][\s\S]*?\.join\(watermarkMetadataSpacer\)/,
-  );
-  assert.match(
-    watermarkSource,
-    /const secondRow = \[input\.model, input\.lens\][\s\S]*?\.join\(watermarkSecondarySpacer\)/,
-  );
-  assert.equal(
-    (
-      watermarkSource.match(
-        /const metadataSize = clamp\((?:canvasWidth|width) \* 0\.018, 20, 42\)/g,
-      ) ?? []
-    ).length,
-    2,
-  );
-  assert.equal(
-    (
-      watermarkSource.match(
-        /watermarkFont\(metadataSize, 400, watermarkPrimaryFontFamily\)/g,
-      ) ?? []
-    ).length,
-    2,
-  );
-  assert.equal(
-    (watermarkSource.match(/watermarkFont\(metadataSize, 300\)/g) ?? []).length,
-    2,
-  );
-  assert.equal(
-    (watermarkSource.match(/secondRow \? 0\.48 : 0\.56/g) ?? []).length,
-    2,
-  );
-  assert.equal(
-    (
-      watermarkSource.match(
-        /context\.fillText\(\s*fitText\(context, secondRow, textWidth\),\s*textX,\s*stripY \+ stripHeight \* 0\.7,?\s*\)/g,
-      ) ?? []
-    ).length,
-    2,
-  );
-
-  const gradientCalls =
-    watermarkSource.match(
-      /createLinearGradient\(\s*0,\s*(?:canvasHeight|height),\s*0,\s*stripY,?\s*\)/g,
-    ) ?? [];
-  assert.equal(gradientCalls.length, 2);
-  assert.match(
-    watermarkSource,
-    /overlayGradient\.addColorStop\(0, palette\.strip\)/,
-  );
-  assert.match(
-    watermarkSource,
-    /overlayGradient\.addColorStop\(1, palette\.stripFade\)/,
-  );
+  assert.match(cssBlock(".modal__panel"), /overflow:\s*hidden;/);
+  assert.doesNotMatch(cssBlock(".modal__panel"), /grid-template-columns/);
+  assert.match(cssBlock(".modal__close"), /position:\s*absolute;/);
 });
 
 test("topic and timeline derived data are precomputed without repeated render scans", () => {
@@ -632,7 +473,7 @@ test("display-only thumbnail reduction does not affect modal preview quality", (
     mainSource,
     /src=\{withThumbnailDisplayQuery\(photo\.urls\.thumbnail\)\}/,
   );
-  assert.match(mainSource, /src=\{previewUrl\}/);
+  assert.match(mainSource, /src=\{displayed\.url\}/);
   assert.match(
     mainSource,
     /const previewUrl = active[\s\S]*?dataSaverEnabled[\s\S]*?withPreviewQualityDisplayQuery\(active\.urls\.preview\)[\s\S]*?: active\.urls\.preview[\s\S]*?: "";/,
@@ -646,14 +487,9 @@ test("display-only thumbnail reduction does not affect modal preview quality", (
 test("modal navigation is vertically centered in the image pane", () => {
   assert.match(
     cssBlock(".modal__panel"),
-    /height:\s*min\(820px,\s*calc\(100dvh - clamp\(24px, 6vw, 72px\)\)\);/,
+    /height:\s*var\(--photo-height, min\(820px,\s*calc\(100dvh - clamp\(24px, 6vw, 72px\)\)\)\);/,
   );
-  assert.match(cssBlock(".modal__image-wrap"), /place-items:\s*center;/);
   assert.match(cssBlock(".modal__image-wrap"), /overflow:\s*hidden;/);
-  assert.match(
-    cssBlock(".modal__image-wrap"),
-    /min-height:\s*min\(420px, 100%\);/,
-  );
   assert.match(cssBlock(".modal__image-wrap"), /height:\s*100%;/);
   assert.match(
     styles,
@@ -661,57 +497,101 @@ test("modal navigation is vertically centered in the image pane", () => {
   );
 });
 
-test("modal image uses max-bounded containment for all aspect ratios", () => {
-  const imageBlock = cssBlock(".modal__image-wrap img");
-
-  assert.match(imageBlock, /width:\s*auto;/);
-  assert.match(imageBlock, /height:\s*auto;/);
-  assert.match(imageBlock, /max-width:\s*100%;/);
+test("modal panel hugs the photo with no letterbox or rounded corners", () => {
+  assert.match(mainSource, /style=\{panelStyle\}/);
+  assert.match(mainSource, /const \[previewRatio, setPreviewRatio\] = useState<number \| null>\(null\)/);
   assert.match(
-    imageBlock,
-    /max-height:\s*min\(820px,\s*calc\(100dvh - clamp\(24px, 6vw, 72px\)\)\);/,
+    mainSource,
+    /const \[displayed, setDisplayed\] = useState<\{\s*photo: ResolvedPhoto;\s*url: string;\s*\} \| null>\(null\)/,
   );
-  assert.match(imageBlock, /object-fit:\s*contain;/);
-  assert.match(imageBlock, /object-position:\s*center;/);
-  assert.doesNotMatch(imageBlock, /^\s*width:\s*100%;/m);
-  assert.doesNotMatch(imageBlock, /^\s*height:\s*100%;/m);
-  assert.doesNotMatch(imageBlock, /object-fit:\s*cover;/);
+  assert.match(mainSource, /"--photo-ratio": `\$\{previewRatio\}`/);
+  assert.match(
+    mainSource,
+    /"--photo-width": `min\(100%, calc\(\$\{modalMaxBoxHeight\} \* \$\{previewRatio\}\)\)`/,
+  );
+  assert.match(mainSource, /const modalMaxBoxHeight = "min\(820px/);
+  assert.match(
+    mainSource,
+    /image\.src = placeholderUrl;/,
+  );
+  assert.match(
+    mainSource,
+    /setPreviewRatio\(image\.naturalWidth \/ image\.naturalHeight\)/,
+  );
+  // 切换图片：先预加载再单次提交交换，避免空帧闪烁
+  assert.match(mainSource, /image\.src = previewUrl;/);
+  assert.match(mainSource, /key=\{`\$\{displayed\.photo\.id\}:\$\{displayed\.url\}`\}/);
+  assert.match(
+    mainSource,
+    /const watermarkPhoto = displayed\?\.photo \?\? active;/,
+  );
+  assert.match(cssBlock(".modal__panel"), /width:\s*var\(--photo-width,/);
+  assert.match(cssBlock(".modal__panel"), /aspect-ratio:\s*var\(--photo-ratio, auto\);/);
+  assert.match(cssBlock(".modal__panel"), /border-radius:\s*0;/);
+  assert.match(cssBlock(".modal__panel"), /background:\s*transparent;/);
+  assert.match(cssBlock(".modal__panel"), /transition:\s*width\s/);
+  assert.doesNotMatch(cssBlock(".modal__panel"), /grid-template-columns/);
+  assert.match(
+    cssBlock(".modal__image-wrap"),
+    /background-color:\s*transparent;/,
+  );
+
+  const previewBlock = cssBlock(".modal__preview");
+  assert.match(previewBlock, /position:\s*absolute;/);
+  assert.match(previewBlock, /inset:\s*0;/);
+  assert.match(previewBlock, /width:\s*100%;/);
+  assert.match(previewBlock, /height:\s*100%;/);
+  assert.match(previewBlock, /object-fit:\s*contain;/);
+  assert.match(previewBlock, /object-position:\s*center;/);
+  assert.doesNotMatch(previewBlock, /object-fit:\s*cover;/);
+  assert.doesNotMatch(mainSource, /modal__image-frame/);
+  assert.doesNotMatch(styles, /\.modal__image-frame/);
 });
 
-test("main top menu exposes Works and watermark-export routes", () => {
-  assert.match(mainSource, /作品/);
-  assert.match(mainSource, /水印导出/);
-  assert.match(mainSource, /\bworks\b/);
-  assert.match(mainSource, /\bwatermark\b/);
-  assert.match(mainSource, /#\/works/);
-  assert.match(mainSource, /#\/watermark/);
-  assert.match(mainSource, /top-menu|primary-nav|main-nav|main-menu|topbar/);
+test("the white logo shows in the sticky bar only while pinned", () => {
+  assert.match(
+    mainSource,
+    /const brandLogoWhiteUrl = `\$\{import\.meta\.env\.BASE_URL\}img\/logo-white\.png`/,
+  );
+  assert.match(
+    mainSource,
+    /className=\{`controls__brand \$\{controlsStuck \? "controls__brand--visible" : ""\}`\}/,
+  );
+  assert.match(mainSource, /stickySentinelRef = useRef/);
+  assert.match(mainSource, /new IntersectionObserver\(\(entries\) =>/);
+  assert.match(mainSource, /className="sticky-sentinel"/);
+  assert.match(
+    mainSource,
+    /<img\s*className=\{`controls__brand \$\{controlsStuck \? "controls__brand--visible" : ""\}`\}\s*src=\{brandLogoWhiteUrl\}/,
+  );
+
+  assert.match(cssBlock(".controls"), /position:\s*sticky;/);
+  assert.match(cssBlock(".controls"), /justify-content:\s*space-between;/);
+  assert.match(cssBlock(".sticky-sentinel"), /height:\s*1px;/);
+  assert.match(cssBlock(".controls__brand"), /opacity:\s*0;/);
+  assert.match(cssBlock(".controls__brand"), /drop-shadow\(/);
+  assert.match(cssBlock(".controls__brand--visible"), /opacity:\s*1;/);
+  assert.doesNotMatch(styles, /\.sticky-brand/);
+});
+
+test("contact floating button reveals a QR popover on hover", () => {
+  assert.match(
+    mainSource,
+    /const contactQrUrl = `\$\{import\.meta\.env\.BASE_URL\}img\/contact-me\.JPG`/,
+  );
+  assert.match(mainSource, /className="contact-fab"/);
+  assert.match(mainSource, /className="contact-fab__popover" role="tooltip"/);
+  assert.match(mainSource, /className="contact-fab__trigger"/);
+  assert.match(mainSource, /aria-label="显示联系二维码"/);
+  assert.match(mainSource, /alt="联系二维码"/);
+
+  assert.match(cssBlock(".contact-fab"), /position:\s*fixed;/);
+  assert.match(cssBlock(".contact-fab"), /bottom:\s*clamp\(/);
+  assert.match(cssBlock(".contact-fab__popover"), /opacity:\s*0;/);
+  assert.match(cssBlock(".contact-fab__popover"), /pointer-events:\s*none;/);
   assert.match(
     styles,
-    /\.top-menu|\.primary-nav|\.main-nav|\.main-menu|\.topbar/,
+    /\.contact-fab:hover \.contact-fab__popover,[\s\S]*?\.contact-fab:focus-within \.contact-fab__popover\s*\{[\s\S]*?opacity:\s*1;/,
   );
-
-  assert.match(mainSource, /VirtualPhotoGrid/);
-  assert.match(mainSource, /route\.(section|page|view|tab)\s*===\s*"works"/);
-});
-
-test("watermark export page captures required canvas and metadata controls", () => {
-  assert.match(mainSource, /WatermarkExport/);
-  assert.match(watermarkSource, /createElement\("canvas"\)|OffscreenCanvas/);
-  assert.match(mainSource, /黑色|black/i);
-  assert.match(mainSource, /白字黑底|white/i);
-  assert.doesNotMatch(mainSource, /黑字白底/);
-  assert.doesNotMatch(mainSource, /aria-label="水印日期"|显示日期/);
-  assert.match(mainSource, /机型|型号|model/i);
-  assert.match(mainSource, /曝光|快门|光圈|exposure/i);
-  assert.match(mainSource, /自定义\s*Logo|custom\s*logo/i);
-  assert.match(mainSource, /Logo（可选）|不使用 Logo|optional\s*logo/i);
-  assert.match(mainSource, /示例|example/i);
-  assert.match(mainSource, /download|toBlob|toDataURL|导出/i);
-
-  const watermarkStyles = styles.match(
-    /\.(watermark-export|watermark-page|watermark-canvas)[\s\S]*/i,
-  )?.[0];
-  assert.ok(watermarkStyles, "Expected watermark export CSS selectors");
-  assert.match(watermarkStyles, /bottom|flex-end|end/i);
+  assert.match(cssBlock(".contact-fab__popover img"), /width:\s*100%;/);
 });
