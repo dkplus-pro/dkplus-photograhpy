@@ -26,8 +26,8 @@ This note records the code-review and documentation slice for the DKPlus gallery
 
 - The admin interface copy must be Chinese-first.
 - Do not use a large hero/banner panel in the admin workspace. Use a compact page header and action toolbar instead.
-- Migrate form controls, actions, upload controls, table/list, pagination, dialogs, and notifications to `@arco-design/web-react` so interaction states and accessibility behavior are consistent.
-- Add/edit photo metadata through an Arco `Modal`; avoid a permanently expanded editor form in the main workspace.
+- Migrate form controls, actions, upload controls, table/list, pagination, dialogs, and notifications to `@douyinfe/semi-ui` so interaction states and accessibility behavior are consistent.
+- Add/edit photo metadata through a Semi `Modal`; avoid a permanently expanded editor form in the main workspace.
 - Image management should be a compact paginated table/list with focused operational columns:
   - thumbnail, title, and topic
   - explicit filters for title, camera brand, camera model, and topic
@@ -75,8 +75,8 @@ Use this checklist during integration review:
 - [ ] Homepage oversized hero/title copy is removed; the gallery content is visible without a banner dominating the page.
 - [ ] Admin visible copy is Chinese-first.
 - [ ] Admin no longer renders a large hero/banner panel.
-- [ ] Admin controls use `@arco-design/web-react` components rather than bespoke buttons/inputs/selects/dialogs.
-- [ ] Add/edit flows open in an Arco modal and reset state after save/cancel.
+- [ ] Admin controls use `@douyinfe/semi-ui` components rather than bespoke buttons/inputs/selects/dialogs.
+- [ ] Add/edit flows open in a Semi modal and reset state after save/cancel.
 - [ ] Image management is a compact paginated table/list with thumbnail/title/topic, split `型号` and `镜头` columns, and no `文件信息` column.
 - [ ] Admin filters include title, camera brand, camera model, and topic.
 - [ ] Admin table omits MIME, file size, `imageSummary`, aperture, shutter, and ISO copy.

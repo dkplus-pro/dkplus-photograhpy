@@ -11,55 +11,7 @@
   --panel: rgba(255, 255, 255, 0.94);
   --panel-solid: #fffdf8;
   --wash: #ebe7df;
-  --hover-wash: #e8e1d4;
   --focus: #332f29;
-  --focus-ring: rgba(20, 20, 20, 0.32);
-  --danger: #a32121;
-  --arco-theme-primary: #141414;
-  --arco-theme-primary-hover: #000000;
-  --arco-theme-primary-soft: #e8e1d4;
-  --arcoblue-1: 247, 243, 234;
-  --arcoblue-2: 238, 232, 220;
-  --arcoblue-3: 217, 209, 194;
-  --arcoblue-4: 140, 131, 118;
-  --arcoblue-5: 52, 52, 52;
-  --arcoblue-6: 20, 20, 20;
-  --arcoblue-7: 5, 5, 5;
-  --arcoblue-8: 0, 0, 0;
-  --arcoblue-9: 0, 0, 0;
-  --arcoblue-10: 0, 0, 0;
-  --primary-1: var(--arcoblue-1);
-  --primary-2: var(--arcoblue-2);
-  --primary-3: var(--arcoblue-3);
-  --primary-4: var(--arcoblue-4);
-  --primary-5: var(--arcoblue-5);
-  --primary-6: var(--arcoblue-6);
-  --primary-7: var(--arcoblue-7);
-  --primary-8: var(--arcoblue-8);
-  --primary-9: var(--arcoblue-9);
-  --primary-10: var(--arcoblue-10);
-  --link-1: var(--arcoblue-1);
-  --link-2: var(--arcoblue-2);
-  --link-3: var(--arcoblue-3);
-  --link-4: var(--arcoblue-4);
-  --link-5: var(--arcoblue-5);
-  --link-6: var(--arcoblue-6);
-  --link-7: var(--arcoblue-7);
-  --link-8: var(--arcoblue-8);
-  --link-9: var(--arcoblue-9);
-  --link-10: var(--arcoblue-10);
-  --color-primary-1: #f7f3ea;
-  --color-primary-2: #eee8dc;
-  --color-primary-3: #d9d1c2;
-  --color-primary-4: #8c8376;
-  --color-primary-5: var(--ink-soft);
-  --color-primary-6: var(--ink);
-  --color-primary-7: #050505;
-  --color-primary-light-1: rgba(20, 20, 20, 0.08);
-  --color-primary-light-2: rgba(20, 20, 20, 0.16);
-  --color-primary-light-3: rgba(20, 20, 20, 0.28);
-  --color-primary-light-4: rgba(20, 20, 20, 0.42);
-  --color-link-6: var(--ink);
   color: var(--ink);
   background: var(--paper);
   font-family:
@@ -155,68 +107,18 @@ textarea {
   min-width: 0;
 }
 
+/* 侧边栏里的 Semi Nav：只做布局适配（占满侧栏、去默认内边距与背景），不改组件皮肤 */
 .admin-menu {
+  width: 100%;
   border: 0;
+  padding-left: 0;
+  padding-right: 0;
   background: transparent;
 }
 
-.admin-menu .arco-menu-inner {
+.admin-menu .semi-navigation-list {
   display: grid;
   gap: 8px;
-  padding: 0;
-}
-
-.admin-menu .arco-menu-item {
-  min-height: 44px;
-  height: auto;
-  margin: 0;
-  border: 1px solid var(--line);
-  border-radius: 0;
-  padding: 10px 12px;
-  background: var(--panel-solid);
-  color: var(--ink-soft);
-  font-weight: 700;
-}
-
-.admin-menu .arco-menu-item:hover,
-.admin-menu .arco-menu-selected,
-.admin-menu .arco-menu-item-selected {
-  border-color: var(--ink);
-  background: var(--ink);
-  color: #fffdf8;
-}
-
-.toast-stack {
-  position: fixed;
-  z-index: 50;
-  top: 18px;
-  right: 18px;
-  display: grid;
-  gap: 8px;
-  width: min(360px, calc(100vw - 36px));
-}
-
-.toast-message {
-  border: 1px solid var(--line-strong);
-  border-left: 5px solid var(--ink);
-  padding: 12px 14px;
-  background: rgba(255, 253, 248, 0.98);
-  color: var(--ink);
-  box-shadow: 0 18px 42px rgba(20, 20, 20, 0.16);
-  font-size: 0.92rem;
-  line-height: 1.5;
-}
-
-.toast-message--success {
-  border-left-color: #16723b;
-}
-
-.toast-message--error {
-  border-left-color: var(--danger);
-}
-
-.toast-message--info {
-  border-left-color: var(--ink-soft);
 }
 
 .admin-header {
@@ -256,35 +158,21 @@ textarea {
   margin-bottom: 12px;
 }
 
-.toolbar-card,
-.table-card,
-.stats-grid .arco-card {
-  border: 1px solid var(--line);
-  border-radius: 0;
-  background: var(--panel);
-  box-shadow: 0 22px 58px rgba(20, 20, 20, 0.08);
-  backdrop-filter: blur(14px);
+.admin-statistic {
+  display: grid;
+  gap: 4px;
 }
 
-.stats-grid .arco-card {
-  border-top: 3px solid var(--ink);
+.admin-statistic__title {
+  color: var(--muted);
+  font-size: 0.8rem;
 }
 
-.stats-grid .arco-statistic-title,
-.stats-grid .arco-statistic-value {
+.admin-statistic__value {
   color: var(--ink);
-}
-
-.stats-grid .arco-statistic-title {
-  font-family: "Fira Code", "Noto Sans SC", monospace;
-  font-size: 0.74rem;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-}
-
-.stats-grid .arco-statistic-value {
-  font-family: Georgia, "Noto Sans SC", serif;
-  font-size: clamp(1.5rem, 3vw, 2rem);
+  font-size: 1.5rem;
+  font-weight: 600;
+  line-height: 1.2;
 }
 
 .toolbar {
@@ -296,45 +184,21 @@ textarea {
   align-items: center;
 }
 
-.toolbar-card:focus-within,
-.table-card:focus-within {
-  border-color: rgba(20, 20, 20, 0.5);
-  box-shadow: 0 18px 48px rgba(20, 20, 20, 0.14);
+/* 筛选 Select 外层的语义分组：撑满网格并让内部 Select 占满宽度 */
+.toolbar [role="group"] {
+  display: flex;
+  min-width: 0;
+}
+
+.toolbar [role="group"] .semi-select {
+  flex: 1;
+  min-width: 0;
 }
 
 .table-card {
   position: relative;
   overflow: hidden;
   margin-top: 12px;
-}
-
-.table-card::before {
-  position: absolute;
-  z-index: 1;
-  top: 0;
-  right: 0;
-  left: 0;
-  height: 4px;
-  background: repeating-linear-gradient(
-    90deg,
-    var(--ink) 0 28px,
-    transparent 28px 38px
-  );
-  content: "";
-}
-
-.table-card .arco-card-header {
-  min-height: 48px;
-  border-bottom-color: var(--line);
-  background: linear-gradient(180deg, #fffdf8, #f5f2eb);
-}
-
-.table-card .arco-card-header-title {
-  color: var(--ink);
-  font-family: "Fira Code", "Noto Sans SC", monospace;
-  font-size: 0.86rem;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
 }
 
 .photo-cell {
@@ -406,14 +270,10 @@ textarea {
   white-space: nowrap;
 }
 
-.photo-cell .arco-typography,
-.line-clamp {
-  color: var(--muted);
-}
-
 .line-clamp {
   display: -webkit-box;
   overflow: hidden;
+  color: var(--muted);
   -webkit-box-orient: vertical;
   -webkit-line-clamp: 2;
 }
@@ -437,7 +297,7 @@ textarea {
   white-space: nowrap;
 }
 
-.editor-modal .arco-modal {
+.editor-modal .semi-modal {
   width: min(860px, calc(100vw - 32px));
 }
 
@@ -492,7 +352,6 @@ textarea {
   display: grid;
   gap: 12px;
   border: 1px solid var(--line);
-  border-radius: 0;
   padding: 14px;
   background: rgba(255, 253, 248, 0.96);
   box-shadow: 0 18px 42px rgba(20, 20, 20, 0.08);
@@ -560,7 +419,6 @@ textarea {
   overflow: hidden;
   place-items: center;
   border: 1px dashed rgba(20, 20, 20, 0.42);
-  border-radius: 0;
   background:
     linear-gradient(
       45deg,
@@ -602,16 +460,6 @@ textarea {
   text-transform: uppercase;
 }
 
-.topic-create-row {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(0, 0.95fr) auto;
-  gap: 8px;
-  align-items: center;
-  border: 1px solid var(--line);
-  padding: 10px;
-  background: var(--wash);
-}
-
 .hidden-file-input {
   position: absolute;
   width: 1px;
@@ -650,10 +498,6 @@ textarea {
   background: #111;
 }
 
-.topic-management-card .arco-alert {
-  margin-bottom: 12px;
-}
-
 .topic-title-cell {
   display: grid;
   gap: 3px;
@@ -667,194 +511,20 @@ textarea {
   font-weight: 700;
   text-overflow: ellipsis;
   white-space: nowrap;
-}
-
-.topic-title-cell .arco-typography {
-  overflow: hidden;
-  color: var(--muted);
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.topic-table .arco-tag {
-  max-width: 100%;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.topic-editor-modal .arco-modal {
-  width: min(720px, calc(100vw - 32px));
-}
-
-.topic-form {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 14px;
-}
-
-.topic-form label {
-  display: grid;
-  gap: 7px;
-  color: var(--ink-soft);
-  font-weight: 600;
-}
-
-.topic-form label span {
-  font-size: 0.84rem;
-}
-
-.topic-form label small {
-  color: var(--muted);
-  font-size: 0.82rem;
-  font-weight: 400;
-  line-height: 1.55;
-}
-
-.topic-form__hero {
-  position: relative;
-  display: grid;
-  grid-column: 1 / -1;
-  gap: 8px;
-  border: 1px solid var(--line);
-  border-left: 6px solid var(--ink);
-  padding: 16px 18px;
-  overflow: hidden;
-  background:
-    linear-gradient(90deg, rgba(20, 20, 20, 0.05) 1px, transparent 1px),
-    linear-gradient(180deg, #fffdf8, #f2eee5);
-  background-size:
-    28px 28px,
-    auto;
-}
-
-.topic-form__hero::after {
-  position: absolute;
-  right: 18px;
-  bottom: -18px;
-  color: rgba(20, 20, 20, 0.06);
-  font-family: Georgia, "Noto Sans SC", serif;
-  font-size: 6rem;
-  line-height: 1;
-  content: "TOP";
-  pointer-events: none;
-}
-
-.topic-form__hero h2 {
-  position: relative;
-  z-index: 1;
-  margin: 0;
-  color: var(--ink);
-  font-family: Georgia, "Noto Sans SC", serif;
-  font-size: clamp(1.35rem, 3vw, 2.05rem);
-  font-weight: 600;
-  line-height: 1;
-  letter-spacing: -0.055em;
-}
-
-.topic-form__hero p {
-  position: relative;
-  z-index: 1;
-  margin: 0;
-  color: var(--ink-soft);
-  line-height: 1.7;
-}
-
-.photos-table .arco-table-container,
-.photos-table .arco-table-content,
-.photos-table .arco-table-body,
-.photos-table .arco-table-border .arco-table-container::before,
-.photos-table .arco-table-border .arco-table-container::after {
-  border-color: var(--line);
-}
-
-.photos-table .arco-table-th {
-  border-color: rgba(255, 255, 255, 0.18);
-  background: #141414;
-  color: #fffdf8;
-  font-family: "Fira Code", "Noto Sans SC", monospace;
-  font-size: 0.72rem;
-  font-weight: 700;
-  letter-spacing: 0.08em;
-}
-
-.photos-table .arco-table-th,
-.photos-table .arco-table-td {
-  padding-top: 6px;
-  padding-bottom: 6px;
-  text-align: center;
-  vertical-align: middle;
-}
-
-.photos-table .arco-table-td {
-  border-color: var(--line);
-  background: rgba(255, 253, 248, 0.96);
-  color: var(--ink-soft);
-}
-
-.photos-table .arco-table-tr:nth-child(even) .arco-table-td {
-  background: rgba(245, 242, 235, 0.86);
-}
-
-.photos-table .arco-table-tr:hover .arco-table-td {
-  background: var(--hover-wash);
-}
-
-.photos-table .arco-table-cell {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.photos-table .arco-table-cell-with-sorter {
-  gap: 4px;
-}
-
-.photos-table .arco-table-checkbox .arco-checkbox-mask,
-.photos-table .arco-checkbox-mask {
-  border-color: var(--line-strong);
-}
-
-.photos-table .arco-empty {
-  padding: 28px 0;
-}
-
-.table-empty-state {
-  display: grid;
-  justify-items: center;
-  gap: 8px;
-}
-
-.topic-table-card {
-  display: grid;
-  gap: 12px;
-}
-
-.topic-title-cell {
-  display: grid;
-  gap: 3px;
-  min-width: 0;
-  text-align: left;
-}
-
-.topic-title-cell strong {
-  overflow: hidden;
-  color: var(--ink);
-  font-weight: 700;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.topic-title-cell .arco-typography,
-.topic-description-cell {
-  color: var(--muted);
 }
 
 .topic-description-cell {
   display: -webkit-box;
   overflow: hidden;
+  color: var(--muted);
   text-align: left;
   -webkit-box-orient: vertical;
   -webkit-line-clamp: 2;
+}
+
+.topic-table-card {
+  display: grid;
+  gap: 12px;
 }
 
 .topic-delete-policy {
@@ -863,6 +533,7 @@ textarea {
 
 .topic-form {
   display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 16px;
 }
 
@@ -877,7 +548,7 @@ textarea {
   font-size: 0.84rem;
 }
 
-.image-preview-modal .arco-modal {
+.image-preview-modal .semi-modal {
   max-width: min(920px, calc(100vw - 32px));
 }
 
@@ -891,153 +562,17 @@ textarea {
   max-height: min(70vh, 680px);
   object-fit: contain;
   border: 1px solid rgba(255, 255, 255, 0.18);
-  border-radius: 0;
   background: #111;
 }
 
-.photos-table .arco-table-td {
-  vertical-align: middle;
-}
-
-.photos-table .arco-table-empty-row .arco-table-td {
-  padding: 32px 16px;
-}
-
-.toolbar :where(.arco-input-inner-wrapper, .arco-select-view) {
-  border-color: var(--line);
-  border-radius: 0;
-  background: rgba(255, 253, 248, 0.88);
-}
-
-.toolbar :where(.arco-input-inner-wrapper, .arco-select-view):hover {
-  border-color: var(--line-strong);
-}
-
-.toolbar :where(.arco-input-inner-wrapper, .arco-select-view):focus-within,
-:where(
-  .arco-btn,
-  .arco-checkbox,
-  .arco-select-view,
-  .arco-input-inner-wrapper
-):focus-visible {
-  outline: 3px solid var(--focus-ring);
-  outline-offset: 2px;
+.table-empty-state {
+  display: grid;
+  justify-items: center;
+  gap: 8px;
 }
 
 .toolbar-actions {
   justify-content: flex-end;
-}
-
-.arco-btn {
-  border-radius: 0;
-  font-weight: 600;
-}
-
-.arco-btn-primary:not(.arco-btn-disabled) {
-  border-color: var(--ink);
-  background: var(--ink);
-}
-
-.arco-btn-primary:not(.arco-btn-disabled):hover {
-  border-color: #000;
-  background: #000;
-}
-
-.arco-btn-outline:not(.arco-btn-disabled) {
-  border-color: var(--line-strong);
-  color: var(--ink);
-}
-
-.admin-shell
-  :where(
-    .arco-btn:not(.arco-btn-disabled):not(.arco-btn-primary):hover,
-    .arco-btn:not(.arco-btn-disabled):not(.arco-btn-primary):focus-visible,
-    .arco-btn-outline:not(.arco-btn-disabled):hover,
-    .arco-btn-outline:not(.arco-btn-disabled):focus-visible
-  ) {
-  border-color: var(--ink);
-  background: var(--wash);
-  color: var(--ink);
-}
-
-.admin-shell :where(.arco-btn-status-danger:not(.arco-btn-disabled):hover) {
-  border-color: #7f1717;
-  background: #7f1717;
-  color: #fffdf8;
-}
-
-.admin-shell :where(.arco-checkbox-checked .arco-checkbox-mask) {
-  border-color: var(--ink);
-  background: var(--ink);
-}
-
-.admin-shell
-  :where(
-    .arco-input-inner-wrapper-focus,
-    .arco-input-inner-wrapper:focus-within,
-    .arco-select-view-focused,
-    .arco-select-view:focus-within,
-    .arco-textarea:focus
-  ) {
-  border-color: var(--ink);
-  box-shadow: 0 0 0 2px var(--focus-ring);
-}
-
-.admin-shell :where(.arco-alert-info) {
-  border-color: var(--line);
-  background: var(--panel-solid);
-  color: var(--ink-soft);
-}
-
-.admin-shell :where(.arco-alert-info .arco-alert-icon) {
-  color: var(--ink-soft);
-}
-
-.admin-shell :where(.arco-spin-icon, .arco-icon-hover:hover) {
-  color: var(--ink);
-}
-
-.table-card .arco-tag {
-  border-color: var(--ink);
-  background: var(--ink);
-  color: #fffdf8;
-}
-
-:where(.arco-select-popup) .arco-select-option:hover,
-:where(.arco-select-popup) .arco-select-option-hover,
-:where(.arco-select-popup) .arco-select-option-active {
-  background: var(--hover-wash);
-  color: var(--ink);
-}
-
-:where(.arco-select-popup) .arco-select-option-selected {
-  background: var(--ink);
-  color: #fffdf8;
-}
-
-:where(.arco-pagination-item):hover,
-:where(.arco-pagination-item-active) {
-  border-color: var(--ink);
-  background: var(--ink);
-  color: #fffdf8;
-}
-
-.arco-tag {
-  border-radius: 999px;
-  font-family: "Fira Code", "Noto Sans SC", monospace;
-  font-weight: 700;
-}
-
-.arco-modal,
-.arco-modal-header,
-.arco-modal-footer,
-.arco-modal-content {
-  border-radius: 0;
-}
-
-.arco-modal-header,
-.arco-modal-footer {
-  border-color: var(--line);
 }
 
 @media (max-width: 1100px) {
@@ -1075,7 +610,7 @@ textarea {
     padding-bottom: 0;
   }
 
-  .admin-menu .arco-menu-inner {
+  .admin-menu .semi-navigation-list {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
@@ -1112,11 +647,11 @@ textarea {
     padding-bottom: 12px;
   }
 
-  .admin-menu .arco-menu-inner {
+  .admin-menu .semi-navigation-list {
     grid-template-columns: 1fr 1fr;
   }
 
-  .admin-menu .arco-menu-item {
+  .admin-menu .semi-navigation-item {
     justify-content: center;
     text-align: center;
   }
@@ -1130,10 +665,6 @@ textarea {
   .editor-upload-card__header {
     align-items: stretch;
     flex-direction: column;
-  }
-
-  .topic-create-row {
-    grid-template-columns: 1fr;
   }
 
   .photo-cell {
@@ -1189,13 +720,6 @@ textarea {
   white-space: nowrap;
 }
 
-.brand-title-cell .arco-typography {
-  overflow: hidden;
-  color: var(--muted);
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
 .brand-logo-strip {
   display: flex;
   align-items: center;
@@ -1235,26 +759,26 @@ textarea {
   margin-top: 12px;
 }
 
-.brand-editor-modal .arco-modal {
+.brand-editor-modal .semi-modal {
   width: min(920px, calc(100vw - 32px));
   max-height: calc(100vh - 40px);
   margin: 20px auto;
   overflow: hidden;
 }
 
-.brand-editor-modal .arco-modal-content {
+.brand-editor-modal .semi-modal-content {
   display: flex;
   max-height: calc(100vh - 40px);
   flex-direction: column;
   overflow: hidden;
 }
 
-.brand-editor-modal .arco-modal-body {
+.brand-editor-modal .semi-modal-body {
   overflow-y: auto;
   overscroll-behavior: contain;
 }
 
-.brand-editor-modal .arco-modal-footer {
+.brand-editor-modal .semi-modal-footer {
   flex-shrink: 0;
 }
 
@@ -1370,7 +894,7 @@ textarea {
   background: var(--wash);
 }
 
-.brand-logo-row .arco-input-inner-wrapper {
+.brand-logo-row .semi-input-wrapper {
   min-width: 0;
 }
 
@@ -1400,7 +924,7 @@ textarea {
     grid-template-columns: 1fr;
   }
 
-  .admin-menu .arco-menu-inner {
+  .admin-menu .semi-navigation-list {
     grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 }
@@ -1410,8 +934,7 @@ textarea {
     grid-template-columns: 1fr;
   }
 
-  .admin-menu .arco-menu-inner {
+  .admin-menu .semi-navigation-list {
     grid-template-columns: 1fr;
   }
 }
-

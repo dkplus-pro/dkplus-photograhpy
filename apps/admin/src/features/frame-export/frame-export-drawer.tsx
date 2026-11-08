@@ -1,15 +1,13 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
   Button,
-  Drawer,
-  Grid,
-  Message,
+  Col,
+  Row,
   Select,
+  SideSheet,
   Spin,
-} from "@arco-design/web-react";
-
-const { Row, Col } = Grid;
-const { Option, OptGroup } = Select;
+  Toast,
+} from "@douyinfe/semi-ui";
 
 import type { BrandRecord, PhotoRecord } from "../../types";
 import {
@@ -34,6 +32,8 @@ interface LogoOption {
   source: string;
   mark: string;
 }
+
+const { Option, OptGroup } = Select;
 
 const qualityOptions: { value: ExportQuality; full: string }[] = [
   { value: "high", full: "高 — 原像素 · JPEG 92%" },
@@ -160,7 +160,7 @@ export function FrameExportDrawer({
           try {
             logoBitmap = await loadImageElement(logo.source);
           } catch {
-            Message.warning("Logo 加载失败，将以文字兜底。");
+            Toast.warning("Logo 加载失败，将以文字兜底。");
           }
         }
         if (cancelled) return;
@@ -175,7 +175,7 @@ export function FrameExportDrawer({
         setPreviewReady(true);
       } catch {
         if (!cancelled)
-          Message.error("预览图加载失败，请检查图片地址或 CDN 跨域配置。");
+          Toast.error("预览图加载失败，请检查图片地址或 CDN 跨域配置。");
       }
     })();
     return () => {
@@ -213,7 +213,7 @@ export function FrameExportDrawer({
   ].join(" · ");
 
   return (
-    <Drawer
+    <SideSheet
       width={720}
       title={`导出画框（已选 ${photos.length} 张）`}
       visible={visible}
@@ -226,7 +226,7 @@ export function FrameExportDrawer({
               取消
             </Button>
             <Button
-              type="primary"
+              theme="solid"
               loading={isExporting}
               onClick={() =>
                 onExport({
@@ -244,7 +244,6 @@ export function FrameExportDrawer({
           </div>
         </div>
       }
-      unmountOnExit
     >
       <div className="wm-drawer">
         <section className="wm-preview">
@@ -285,33 +284,30 @@ export function FrameExportDrawer({
             <Col span={24}>
               <Select
                 value={logo?.source ?? "none"}
-                onChange={selectLogo}
-                dropdownRender={(menu) => (
-                  <>
-                    {menu}
-                    <div className="wm-select-upload">
-                      <input
-                        ref={uploadInputRef}
-                        type="file"
-                        accept="image/*"
-                        className="wm-hidden-input"
-                        onChange={(event) => {
-                          const file = event.currentTarget.files?.[0];
-                          if (file) handleCustomUpload(file);
-                          event.currentTarget.value = "";
-                        }}
-                      />
-                      <Button
-                        type="text"
-                        size="mini"
-                        icon={<span>＋</span>}
-                        onClick={() => uploadInputRef.current?.click()}
-                      >
-                        上传自定义 Logo（仅本次使用）
-                      </Button>
-                    </div>
-                  </>
-                )}
+                onChange={(value) => selectLogo(value as string)}
+                outerBottomSlot={
+                  <div className="wm-select-upload">
+                    <input
+                      ref={uploadInputRef}
+                      type="file"
+                      accept="image/*"
+                      className="wm-hidden-input"
+                      onChange={(event) => {
+                        const file = event.currentTarget.files?.[0];
+                        if (file) handleCustomUpload(file);
+                        event.currentTarget.value = "";
+                      }}
+                    />
+                    <Button
+                      theme="borderless"
+                      size="small"
+                      icon={<span>＋</span>}
+                      onClick={() => uploadInputRef.current?.click()}
+                    >
+                      上传自定义 Logo（仅本次使用）
+                    </Button>
+                  </div>
+                }
               >
                 <Option value="none">不显示 Logo（仅信息文字）</Option>
                 {customLogos.length > 0 && (
@@ -363,6 +359,6 @@ export function FrameExportDrawer({
           </div>
         </section>
       </div>
-    </Drawer>
+    </SideSheet>
   );
 }

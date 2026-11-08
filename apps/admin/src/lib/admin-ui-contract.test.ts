@@ -52,7 +52,8 @@ describe("admin gallery list contract", () => {
     expect(appSource).toContain("const adminPageSizeOptions = [10, 20, 50]");
     expect(appSource).toContain("pageSize: photoPageSize");
     expect(appSource).toContain("pageSize: topicPageSize");
-    expect(appSource).toContain("sizeOptions: adminPageSizeOptions");
+    expect(appSource).toContain("pageSizeOpts: adminPageSizeOptions");
+    expect(appSource).toContain("showSizeChanger: true");
     expect(appSource).toContain(
       "onPageSizeChange: (size) => setPhotoPageSize(size)",
     );
@@ -75,7 +76,7 @@ describe("admin gallery list contract", () => {
     expect(appSource).toContain("可同时关联多个专题");
     expect(appSource).not.toContain("新增记录必须选择本地图片");
     expect(appSource).not.toContain("先选择文件并在本地读取 EXIF");
-    expect(styles).toContain(".editor-modal .arco-modal");
+    expect(styles).toContain(".editor-modal .semi-modal");
     expect(styles).not.toContain(".editor-hero");
     expect(styles).not.toContain(".upload-hint");
     expect(styles).toContain(".editor-exif-status");
@@ -90,45 +91,26 @@ describe("admin gallery list contract", () => {
 
   it("lets relevant modals close by Escape and mask click", () => {
     const modalProps = appSource.match(/maskClosable/g) ?? [];
-    const escapeProps = appSource.match(/escToExit/g) ?? [];
+    const escapeProps = appSource.match(/closeOnEsc/g) ?? [];
 
     expect(modalProps.length).toBeGreaterThanOrEqual(5);
     expect(escapeProps.length).toBeGreaterThanOrEqual(5);
     expect(appSource).not.toContain("maskClosable={false}");
   });
 
-  it("centers dense table content and keeps unified neutral hover and focus tones", () => {
-    expect(styles).toMatch(
-      /\.photos-table \.arco-table-th,[\s\S]*?text-align:\s*center;/,
-    );
-    expect(styles).toMatch(
-      /\.photos-table \.arco-table-th,[\s\S]*?vertical-align:\s*middle;/,
-    );
-    expect(styles).toContain("--hover-wash: #e8e1d4;");
-    expect(styles).toContain("--focus: #332f29;");
-    expect(styles).toContain("--focus-ring: rgba(20, 20, 20, 0.32);");
-    expect(appSource).toContain("const arcoTheme");
-    expect(appSource).toContain('primaryColor: "#141414"');
-    expect(appSource).toContain("theme={arcoTheme}");
-    expect(styles).toContain("--arcoblue-6: 20, 20, 20;");
-    expect(styles).toContain("--color-primary-6: var(--ink);");
-    expect(styles).toContain(".photos-table .arco-empty");
-    expect(styles).toContain(
-      ".toolbar :where(.arco-input-inner-wrapper, .arco-select-view):focus-within",
-    );
-    expect(styles).toContain("outline: 3px solid var(--focus-ring);");
+  it("keeps table centering and layout-only styling without component reskinning", () => {
+    expect(appSource).toContain('tableLayout="fixed"');
+    expect(appSource).toContain('align: "center"');
+    expect(appSource).toContain("locale={zh_CN}");
+    expect(styles).toContain(".admin-sidebar");
+    expect(styles).toContain(".admin-menu");
     expect(styles).toContain(".photo-cell__thumb:hover img");
-    expect(styles).toMatch(
-      /\.photos-table \.arco-table-tr:hover \.arco-table-td\s*\{[\s\S]*?background:\s*var\(--hover-wash\);/,
-    );
-    expect(styles).toContain(".admin-shell :where(.arco-alert-info)");
-    expect(styles).toContain(
-      ":where(.arco-select-popup) .arco-select-option:hover",
-    );
-    expect(styles).not.toContain("#1b63ff");
-    expect(styles).not.toMatch(/rgba?\(\s*27,\s*99,\s*255/);
-    expect(styles).not.toMatch(/linear-gradient\(135deg,\s*rgba\(22, 93, 255/);
-    expect(styles).not.toMatch(/radial-gradient\([\s\S]*rgba\(20, 201, 201/);
+    expect(styles).toContain(".photo-cell__thumb:focus-visible");
+    expect(styles).toContain("@media (max-width: 920px)");
+    expect(styles).not.toContain("--hover-wash");
+    expect(styles).not.toContain("--focus-ring");
+    expect(styles).not.toContain("border-radius: 0");
+    expect(styles).not.toContain(".editor-hero");
   });
 
   it("uses display-only image transforms for admin thumbnails and previews", () => {
@@ -150,7 +132,7 @@ describe("admin gallery list contract", () => {
     expect(appSource).toContain('placeholder="选择一个或多个专题（可选）"');
     expect(appSource).toContain("请先选择至少一个专题，再按当前专题选择图片。");
     expect(appSource).not.toContain("topicDraft");
-    expect(appSource).toContain('mode="multiple"');
+    expect(appSource).toContain("multiple");
     expect(appSource).not.toContain('aria-label="新增专题"');
     expect(appSource).not.toContain('placeholder="专题名称，如：编辑精选"');
     expect(appSource).not.toContain('placeholder="专题 ID（可选，自动生成）"');
@@ -161,8 +143,12 @@ describe("admin gallery list contract", () => {
   it("adds a left sidebar and persisted topic management CRUD page", () => {
     expect(appSource).toContain('className="admin-sidebar"');
     expect(appSource).toContain('aria-label="后台导航"');
-    expect(appSource).toContain('<MenuItem key="photos">图片管理</MenuItem>');
-    expect(appSource).toContain('<MenuItem key="topics">专题管理</MenuItem>');
+    expect(appSource).toContain(
+      '<Nav.Item itemKey="photos" text="图片管理" />',
+    );
+    expect(appSource).toContain(
+      '<Nav.Item itemKey="topics" text="专题管理" />',
+    );
     expect(appSource).toContain('title="专题列表"');
     expect(appSource).toContain("isTopicEditorOpen");
     expect(appSource).toContain("api.listTopics");
@@ -177,49 +163,49 @@ describe("admin gallery list contract", () => {
     expect(appSource).toContain(
       'window.addEventListener("hashchange", syncSectionFromRoute)',
     );
-    expect(appSource).toContain(
-      "onClickMenuItem={(key) => navigateToSection(key as AdminSection)}",
+    expect(appSource).toMatch(
+      /onSelect=\{\(\{ itemKey \}\) =>\s*navigateToSection\(itemKey as AdminSection\)\s*\}/,
     );
     expect(styles).toContain(".admin-layout");
     expect(styles).toContain(".admin-sidebar");
-    expect(styles).toContain(".admin-menu .arco-menu-inner");
+    expect(styles).toContain(".admin-menu .semi-navigation-list");
     expect(styles).toContain(
       "grid-template-columns: repeat(2, minmax(0, 1fr));",
     );
-    expect(styles).toContain("min-height: 44px;");
     expect(styles).toContain(".topic-form");
   });
 
   it("adds brand management navigation and editable multiple logos", () => {
-    expect(appSource).toContain('<MenuItem key="brands">品牌管理</MenuItem>');
+    expect(appSource).toContain(
+      '<Nav.Item itemKey="brands" text="品牌管理" />',
+    );
     expect(appSource).toContain('brands: "#/brands"');
     expect(appSource).toContain('title="品牌列表"');
     expect(appSource).toContain('className="brand-toolbar"');
     expect(appSource).toContain('className="brand-logo-strip"');
     expect(appSource).toContain('className="brand-editor-modal"');
     expect(appSource).toContain('aria-label="品牌资料表单"');
-    expect(appSource).toContain('品牌与 Logo 配置');
-    expect(appSource).toContain('多个 Logo');
-    expect(appSource).toContain('添加 Logo');
-    expect(appSource).toContain('上传 Logo 文件');
-    expect(appSource).toContain('removeBrandLogo');
-    expect(appSource).toContain('api.listBrands');
-    expect(appSource).toContain('api.createBrand');
-    expect(appSource).toContain('api.updateBrand');
-    expect(apiSource).toContain('uploadBrandLogos');
+    expect(appSource).toContain("品牌与 Logo 配置");
+    expect(appSource).toContain("多个 Logo");
+    expect(appSource).toContain("添加 Logo");
+    expect(appSource).toContain("上传 Logo 文件");
+    expect(appSource).toContain("removeBrandLogo");
+    expect(appSource).toContain("api.listBrands");
+    expect(appSource).toContain("api.createBrand");
+    expect(appSource).toContain("api.updateBrand");
+    expect(apiSource).toContain("uploadBrandLogos");
     expect(apiSource).toContain('baseUrl, "/uploads"');
     expect(apiSource).toContain('body.append("mode", "asset")');
     expect(apiSource).not.toMatch(/brands\/\$\{encodeURIComponent\(id\)\}\/logos/);
-    expect(apiSource).toContain('logoUrls');
-    expect(appSource).toContain('api.deleteBrand');
-    expect(appSource).toContain('deriveBrandsFromPhotos');
-    expect(appSource).toContain('刷新并同步照片品牌');
-    expect(appSource).toContain('EXIF 自动同步');
+    expect(apiSource).toContain("logoUrls");
+    expect(appSource).toContain("api.deleteBrand");
+    expect(appSource).toContain("deriveBrandsFromPhotos");
+    expect(appSource).toContain("刷新并同步照片品牌");
+    expect(appSource).toContain("EXIF 自动同步");
     expect(apiSource).toContain('baseUrl, "/brands"');
-    expect(styles).toContain('.brand-toolbar');
-    expect(styles).toContain('.brand-logo-row');
-    expect(styles).toContain('.brand-form__hero');
-    expect(styles).toContain('.brand-editor-modal .arco-modal');
+    expect(styles).toContain(".brand-toolbar");
+    expect(styles).toContain(".brand-logo-row");
+    expect(styles).toContain(".brand-form__hero");
+    expect(styles).toContain(".brand-editor-modal .semi-modal");
   });
-
 });

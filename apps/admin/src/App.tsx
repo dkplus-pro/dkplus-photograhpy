@@ -1,27 +1,26 @@
+import type { ReactNode } from "react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
-  Alert,
+  Banner,
   Button,
   Card,
   ConfigProvider,
   Empty,
   Input,
-  Menu,
   Modal,
+  Nav,
   Progress,
   Select,
   Space,
   Spin,
-  Statistic,
   Table,
   Tag,
+  TextArea,
+  Toast,
   Typography,
-} from "@arco-design/web-react";
-import type {
-  ConfigProviderProps,
-  TableColumnProps,
-} from "@arco-design/web-react";
-import zhCN from "@arco-design/web-react/es/locale/zh-CN";
+} from "@douyinfe/semi-ui";
+import type { ColumnProps } from "@douyinfe/semi-ui/lib/es/table/interface";
+import zh_CN from "@douyinfe/semi-ui/lib/es/locale/source/zh_CN";
 
 import { createApiClient } from "./lib/api";
 import { extractExif } from "./lib/exif";
@@ -44,7 +43,6 @@ import type {
   PhotoRecord,
   TopicPayload,
   TopicRecord,
-  ToastMessage,
   UploadPreview,
 } from "./types";
 import { WatermarkExportDrawer } from "./features/watermark-export/watermark-export-drawer";
@@ -61,15 +59,26 @@ import {
 import type { FrameSettings } from "./features/frame-export/types";
 
 const api = createApiClient();
-const TextArea = Input.TextArea;
 const { Text } = Typography;
-const MenuItem = Menu.Item;
 
-const arcoTheme: ConfigProviderProps["theme"] = {
-  primaryColor: "#141414",
-  infoColor: "#343434",
-  dangerColor: "#a32121",
-};
+/**
+ * Semi Design 没有导出 Statistic 组件，这里用同样
+ * “标题 + 数值”结构的本地组件承载统计卡片内容。
+ */
+function AdminStatistic({
+  title,
+  value,
+}: {
+  title: string;
+  value: ReactNode;
+}) {
+  return (
+    <div className="admin-statistic">
+      <div className="admin-statistic__title">{title}</div>
+      <div className="admin-statistic__value">{value}</div>
+    </div>
+  );
+}
 
 const demoPhotos: PhotoRecord[] = [
   {
@@ -257,7 +266,7 @@ const brandIdForName = (name: string): string => {
     .replace(/^-+|-+$/g, "");
   if (ascii) return ascii;
   return `brand-${Array.from(name)
-    .map((char) => char.charCodeAt(0).toString(36))
+    .map((char) => (char.codePointAt(0) ?? 0).toString(36))
     .join("-")}`;
 };
 
@@ -381,22 +390,11 @@ function App() {
   const [topicPageSize, setTopicPageSize] = useState(10);
   const [brandPageSize, setBrandPageSize] = useState(10);
   const [brandSearch, setBrandSearch] = useState("");
-  const [messages, setMessages] = useState<ToastMessage[]>([]);
   const [confirmAction, setConfirmAction] = useState<{
     title: string;
     body: string;
     onConfirm: () => Promise<void>;
   } | null>(null);
-
-  const pushMessage = (tone: "success" | "error" | "info", text: string) => {
-    const message: ToastMessage = { id: randomId(), tone, text };
-    setMessages((current) => [message, ...current].slice(0, 3));
-    window.setTimeout(() => {
-      setMessages((current) =>
-        current.filter((item) => item.id !== message.id),
-      );
-    }, 5000);
-  };
 
   const refresh = async () => {
     setIsLoading(true);
@@ -418,8 +416,7 @@ function App() {
       setPhotos(demoPhotos);
       setTopics(demoTopics);
       setBrands(mergeBrandsWithPhotoBrands(demoBrands, demoPhotos));
-      pushMessage(
-        "info",
+      Toast.info(
         `API 暂不可用，正在显示演示数据。${
           error instanceof Error ? error.message : ""
         }`.trim(),
@@ -705,7 +702,7 @@ function App() {
       };
 
       if (!editingId && !editorPreview) {
-        pushMessage("error", "请选择一张本地图片后再创建记录。");
+        Toast.error("请选择一张本地图片后再创建记录。");
         return;
       }
 
@@ -731,7 +728,7 @@ function App() {
             photo.id === editingId ? updatedWithTopic : photo,
           ),
         );
-        pushMessage("success", "图片记录已更新");
+        Toast.success("图片记录已更新");
       } else if (editorPreview) {
         const result = await api.uploadPhoto({
           ...editorPreview,
@@ -743,12 +740,11 @@ function App() {
         const created = result.photo;
         if (!created) throw new Error("上传后没有返回图片记录。");
         setPhotos((current) => [withSelectedTopics(created), ...current]);
-        pushMessage("success", "图片记录已创建");
+        Toast.success("图片记录已创建");
       }
       resetEditor();
     } catch (error) {
-      pushMessage(
-        "error",
+      Toast.error(
         error instanceof Error ? error.message : "保存图片记录失败",
       );
     } finally {
@@ -776,7 +772,7 @@ function App() {
       exif: await extractExif(file),
     };
     replaceEditorPreview(preview);
-    pushMessage("info", "已选择本地图片并读取 EXIF 预览");
+    Toast.info("已选择本地图片并读取 EXIF 预览");
   };
 
   const stageFiles = async (
@@ -789,7 +785,7 @@ function App() {
       payload.topicId,
     ]);
     if (mode === "topic" && selectedTopicIds.length === 0) {
-      pushMessage("error", "请先选择至少一个专题，再按当前专题选择图片。");
+      Toast.error("请先选择至少一个专题，再按当前专题选择图片。");
       return;
     }
     const staged = await Promise.all(
@@ -806,7 +802,7 @@ function App() {
     );
     setPreviews((current) => [...current, ...staged]);
     setIsUploadOpen(true);
-    pushMessage("info", `已暂存 ${staged.length} 个文件并读取 EXIF 预览`);
+    Toast.info(`已暂存 ${staged.length} 个文件并读取 EXIF 预览`);
   };
 
   const clearPreviews = () => {
@@ -842,21 +838,24 @@ function App() {
         });
         previewsRef.current = remainingPreviews;
         setPreviews(remainingPreviews);
-        pushMessage(
-          uploaded.length ? "info" : "error",
-          uploaded.length
-            ? `已上传 ${uploaded.length} 个文件，${result.failed.length} 个失败，可调整后重试。`
-            : `上传失败：${result.failed[0]?.message || "请检查文件后重试"}`,
-        );
+        if (uploaded.length) {
+          Toast.info(
+            `已上传 ${uploaded.length} 个文件，${result.failed.length} 个失败，可调整后重试。`,
+          );
+        } else {
+          Toast.error(
+            `上传失败：${result.failed[0]?.message || "请检查文件后重试"}`,
+          );
+        }
         if (!remainingPreviews.length) setIsUploadOpen(false);
         return;
       }
 
-      pushMessage("success", `已上传 ${uploaded.length} 个文件`);
+      Toast.success(`已上传 ${uploaded.length} 个文件`);
       clearPreviews();
       setIsUploadOpen(false);
     } catch (error) {
-      pushMessage("error", error instanceof Error ? error.message : "上传失败");
+      Toast.error(error instanceof Error ? error.message : "上传失败");
     } finally {
       setIsSaving(false);
     }
@@ -866,13 +865,11 @@ function App() {
     setIsExporting(true);
     try {
       const result = await api.exportGallery();
-      pushMessage(
-        "success",
+      Toast.success(
         `已导出到客户端：${result.photoCount} 张图片、${result.topicCount} 个专题。`,
       );
     } catch (error) {
-      pushMessage(
-        "error",
+      Toast.error(
         error instanceof Error ? error.message : "导出到客户端失败",
       );
     } finally {
@@ -887,7 +884,7 @@ function App() {
 
   const requestWatermarkExport = (settings: ExportSettings) => {
     if (!selectedPhotosForExport.length) {
-      pushMessage("error", "请先在列表中勾选要导出的图片。");
+      Toast.error("请先在列表中勾选要导出的图片。");
       return;
     }
     watermarkCancelRef.current = false;
@@ -901,29 +898,32 @@ function App() {
     })
       .then(({ outcome, zipFileName }) => {
         if (outcome.cancelled) {
-          pushMessage("info", "已取消导出水印图。");
+          Toast.info("已取消导出水印图。");
           return;
         }
         if (zipFileName) {
           const failureNote = outcome.failures.length
             ? `，${outcome.failures.length} 张失败（${summarizeFailures(outcome.failures)}）`
             : "";
-          pushMessage(
-            outcome.failures.length ? "info" : "success",
-            `已导出 ${outcome.results.length} 张水印图（${zipFileName}，并发 ${outcome.concurrency}）${failureNote}。`,
-          );
+          if (outcome.failures.length) {
+            Toast.info(
+              `已导出 ${outcome.results.length} 张水印图（${zipFileName}，并发 ${outcome.concurrency}）${failureNote}。`,
+            );
+          } else {
+            Toast.success(
+              `已导出 ${outcome.results.length} 张水印图（${zipFileName}，并发 ${outcome.concurrency}）${failureNote}。`,
+            );
+          }
         } else if (outcome.failures.length) {
-          pushMessage(
-            "error",
+          Toast.error(
             `导出失败：${summarizeFailures(outcome.failures)}`,
           );
         } else {
-          pushMessage("error", "没有可导出的图片，请确认所选图片包含有效地址。");
+          Toast.error("没有可导出的图片，请确认所选图片包含有效地址。");
         }
       })
       .catch((error: unknown) => {
-        pushMessage(
-          "error",
+        Toast.error(
           error instanceof Error ? error.message : "导出水印图失败",
         );
       })
@@ -940,7 +940,7 @@ function App() {
 
   const requestFrameExport = (settings: FrameSettings) => {
     if (!selectedPhotosForExport.length) {
-      pushMessage("error", "请先在列表中勾选要导出的图片。");
+      Toast.error("请先在列表中勾选要导出的图片。");
       return;
     }
     frameCancelRef.current = false;
@@ -957,29 +957,32 @@ function App() {
     })
       .then(({ outcome, zipFileName }) => {
         if (outcome.cancelled) {
-          pushMessage("info", "已取消导出画框。");
+          Toast.info("已取消导出画框。");
           return;
         }
         if (zipFileName) {
           const failureNote = outcome.failures.length
             ? `，${outcome.failures.length} 张失败（${summarizeFrameFailures(outcome.failures)}）`
             : "";
-          pushMessage(
-            outcome.failures.length ? "info" : "success",
-            `已导出 ${outcome.results.length} 张画框图（${zipFileName}，并发 ${outcome.concurrency}）${failureNote}。`,
-          );
+          if (outcome.failures.length) {
+            Toast.info(
+              `已导出 ${outcome.results.length} 张画框图（${zipFileName}，并发 ${outcome.concurrency}）${failureNote}。`,
+            );
+          } else {
+            Toast.success(
+              `已导出 ${outcome.results.length} 张画框图（${zipFileName}，并发 ${outcome.concurrency}）${failureNote}。`,
+            );
+          }
         } else if (outcome.failures.length) {
-          pushMessage(
-            "error",
+          Toast.error(
             `导出失败：${summarizeFrameFailures(outcome.failures)}`,
           );
         } else {
-          pushMessage("error", "没有可导出的图片，请确认所选图片包含有效地址。");
+          Toast.error("没有可导出的图片，请确认所选图片包含有效地址。");
         }
       })
       .catch((error: unknown) => {
-        pushMessage(
-          "error",
+        Toast.error(
           error instanceof Error ? error.message : "导出画框失败",
         );
       })
@@ -1008,7 +1011,7 @@ function App() {
           next.delete(photo.id);
           return next;
         });
-        pushMessage("success", "图片已删除");
+        Toast.success("图片已删除");
       },
     });
   };
@@ -1024,7 +1027,7 @@ function App() {
           current.filter((photo) => !ids.includes(photo.id)),
         );
         setSelectedIds(new Set());
-        pushMessage("success", "已删除所选记录");
+        Toast.success("已删除所选记录");
       },
     });
   };
@@ -1035,7 +1038,7 @@ function App() {
     try {
       await confirmAction.onConfirm();
     } catch (error) {
-      pushMessage("error", error instanceof Error ? error.message : "操作失败");
+      Toast.error(error instanceof Error ? error.message : "操作失败");
     } finally {
       setIsSaving(false);
       setConfirmAction(null);
@@ -1067,7 +1070,7 @@ function App() {
   const saveTopic = async () => {
     const title = topicPayload.title.trim();
     if (!title) {
-      pushMessage("error", "请填写专题标题。");
+      Toast.error("请填写专题标题。");
       return;
     }
 
@@ -1088,14 +1091,12 @@ function App() {
           a.title.localeCompare(b.title, "zh-CN"),
         );
       });
-      pushMessage(
-        "success",
+      Toast.success(
         editingTopicId ? "专题已更新" : `专题“${saved.title}”已创建`,
       );
       resetTopicEditor();
     } catch (error) {
-      pushMessage(
-        "error",
+      Toast.error(
         error instanceof Error ? error.message : "保存专题失败",
       );
     } finally {
@@ -1189,7 +1190,7 @@ function App() {
   const saveBrand = async () => {
     const name = brandPayload.name.trim();
     if (!name) {
-      pushMessage("error", "请填写品牌名称。");
+      Toast.error("请填写品牌名称。");
       return;
     }
 
@@ -1217,16 +1218,14 @@ function App() {
           ? await api.updateBrand(editingBrandId, cleanPayload)
           : await api.createBrand(cleanPayload);
       applySavedBrand(saved);
-      pushMessage(
-        "success",
+      Toast.success(
         editingBrandId
           ? "品牌已更新"
           : `品牌“${saved.title || saved.name}”已创建`,
       );
       resetBrandEditor();
     } catch (error) {
-      pushMessage(
-        "error",
+      Toast.error(
         error instanceof Error ? error.message : "保存品牌失败",
       );
     } finally {
@@ -1251,13 +1250,11 @@ function App() {
           logoUrls: logos.map((logo) => logo.url),
         };
       });
-      pushMessage(
-        "success",
+      Toast.success(
         `已上传 ${uploadedLogos.length} 个 Logo 文件，请保存品牌以完成持久化`,
       );
     } catch (error) {
-      pushMessage(
-        "error",
+      Toast.error(
         error instanceof Error ? error.message : "上传品牌 Logo 失败",
       );
     } finally {
@@ -1282,7 +1279,7 @@ function App() {
         setBrands((current) =>
           current.filter((record) => record.id !== brand.id),
         );
-        pushMessage("success", "品牌已删除");
+        Toast.success("品牌已删除");
       },
     });
   };
@@ -1290,7 +1287,7 @@ function App() {
   const requestDeleteTopic = (topic: TopicRecord) => {
     const usageCount = topicUsageById.get(topic.id) ?? 0;
     if (usageCount > 0) {
-      pushMessage("error", "该专题仍有关联图片，请先移除图片专题后再删除。");
+      Toast.error("该专题仍有关联图片，请先移除图片专题后再删除。");
       return;
     }
     setConfirmAction({
@@ -1324,20 +1321,20 @@ function App() {
             };
           });
         }
-        pushMessage("success", "专题已删除");
+        Toast.success("专题已删除");
       },
     });
   };
 
-  const takenAtValue = (photo: PhotoRecord): string =>
-    photo.takenAt ?? photo.exif?.capturedAt ?? photo.createdAt ?? "";
+  const takenAtValue = (photo: PhotoRecord | null | undefined): string =>
+    photo?.takenAt ?? photo?.exif?.capturedAt ?? photo?.createdAt ?? "";
 
-  const takenAtTime = (photo: PhotoRecord): number => {
+  const takenAtTime = (photo: PhotoRecord | null | undefined): number => {
     const timestamp = Date.parse(takenAtValue(photo));
     return Number.isFinite(timestamp) ? timestamp : 0;
   };
 
-  const columns: TableColumnProps<PhotoRecord>[] = [
+  const columns: ColumnProps<PhotoRecord>[] = [
     {
       title: "图片",
       dataIndex: "title",
@@ -1380,7 +1377,7 @@ function App() {
       render: (_value, photo) => {
         const topicIds = topicIdsForPhoto(photo);
         return topicIds.length ? (
-          <Space size="mini" wrap className="topic-tags">
+          <Space spacing={4} wrap className="topic-tags">
             {topicIds.map((topicId) => (
               <Tag key={topicId}>{titleForTopicId(topicId)}</Tag>
             ))}
@@ -1421,14 +1418,14 @@ function App() {
       width: 150,
       align: "center",
       render: (_value, photo) => (
-        <Space size="mini">
-          <Button size="mini" type="outline" onClick={() => editPhoto(photo)}>
+        <Space spacing={4}>
+          <Button size="small" theme="light" onClick={() => editPhoto(photo)}>
             编辑
           </Button>
           <Button
-            size="mini"
-            status="danger"
-            type="outline"
+            size="small"
+            type="danger"
+            theme="light"
             onClick={() => requestDeletePhoto(photo)}
           >
             删除
@@ -1438,7 +1435,7 @@ function App() {
     },
   ];
 
-  const topicColumns: TableColumnProps<TopicRecord>[] = [
+  const topicColumns: ColumnProps<TopicRecord>[] = [
     {
       title: "专题",
       dataIndex: "title",
@@ -1474,14 +1471,14 @@ function App() {
       render: (_value, topic) => {
         const usageCount = topicUsageById.get(topic.id) ?? 0;
         return (
-          <Space size="mini">
-            <Button size="mini" type="outline" onClick={() => editTopic(topic)}>
+          <Space spacing={4}>
+            <Button size="small" theme="light" onClick={() => editTopic(topic)}>
               编辑
             </Button>
             <Button
-              size="mini"
-              status="danger"
-              type="outline"
+              size="small"
+              type="danger"
+              theme="light"
               disabled={usageCount > 0}
               title={
                 usageCount > 0 ? "先移除该专题下的图片关联后再删除" : undefined
@@ -1496,7 +1493,7 @@ function App() {
     },
   ];
 
-  const brandColumns: TableColumnProps<BrandRecord>[] = [
+  const brandColumns: ColumnProps<BrandRecord>[] = [
     {
       title: "品牌",
       dataIndex: "title",
@@ -1563,14 +1560,14 @@ function App() {
       width: 170,
       align: "center",
       render: (_value, brand) => (
-        <Space size="mini">
-          <Button size="mini" type="outline" onClick={() => editBrand(brand)}>
+        <Space spacing={4}>
+          <Button size="small" theme="light" onClick={() => editBrand(brand)}>
             编辑
           </Button>
           <Button
-            size="mini"
-            status="danger"
-            type="outline"
+            size="small"
+            type="danger"
+            theme="light"
             onClick={() => requestDeleteBrand(brand)}
           >
             删除
@@ -1581,35 +1578,25 @@ function App() {
   ];
 
   return (
-    <ConfigProvider locale={zhCN} theme={arcoTheme}>
+    <ConfigProvider locale={zh_CN}>
       <main className="admin-shell">
-        {messages.length > 0 && (
-          <div className="toast-stack" role="status" aria-live="polite">
-            {messages.map((message) => (
-              <div
-                className={`toast-message toast-message--${message.tone}`}
-                key={message.id}
-              >
-                {message.text}
-              </div>
-            ))}
-          </div>
-        )}
         <div className="admin-layout">
           <aside className="admin-sidebar" aria-label="后台导航">
             <div className="admin-sidebar__brand">
               <span>DKPlus Admin</span>
               <strong>图库后台</strong>
             </div>
-            <Menu
+            <Nav
               className="admin-menu"
               selectedKeys={[activeSection]}
-              onClickMenuItem={(key) => navigateToSection(key as AdminSection)}
+              onSelect={({ itemKey }) =>
+                navigateToSection(itemKey as AdminSection)
+              }
             >
-              <MenuItem key="photos">图片管理</MenuItem>
-              <MenuItem key="topics">专题管理</MenuItem>
-              <MenuItem key="brands">品牌管理</MenuItem>
-            </Menu>
+              <Nav.Item itemKey="photos" text="图片管理" />
+              <Nav.Item itemKey="topics" text="专题管理" />
+              <Nav.Item itemKey="brands" text="品牌管理" />
+            </Nav>
           </aside>
 
           <section className="admin-content">
@@ -1624,14 +1611,14 @@ function App() {
                     <Button onClick={() => void refresh()} loading={isLoading}>
                       刷新 API
                     </Button>
-                    <Button type="primary" onClick={openCreateEditor}>
+                    <Button theme="solid" onClick={openCreateEditor}>
                       新增图片
                     </Button>
                     <Button onClick={() => setIsUploadOpen(true)}>
                       上传图片
                     </Button>
                     <Button
-                      type="outline"
+                      theme="light"
                       loading={isExporting}
                       onClick={() => void exportToClient()}
                     >
@@ -1642,91 +1629,95 @@ function App() {
 
                 <section className="stats-grid" aria-label="图片统计">
                   <Card bordered={false}>
-                    <Statistic title="图片记录" value={photos.length} />
+                    <AdminStatistic title="图片记录" value={photos.length} />
                   </Card>
                   <Card bordered={false}>
-                    <Statistic title="筛选结果" value={visibleCount} />
+                    <AdminStatistic title="筛选结果" value={visibleCount} />
                   </Card>
                   <Card bordered={false}>
-                    <Statistic title="专题数量" value={topicCount} />
+                    <AdminStatistic title="专题数量" value={topicCount} />
                   </Card>
                   <Card bordered={false}>
-                    <Statistic title="已选择" value={selectedCount} />
+                    <AdminStatistic title="已选择" value={selectedCount} />
                   </Card>
                 </section>
 
                 <Card className="toolbar-card" bordered={false}>
                   <div className="toolbar">
                     <Input
-                      allowClear
+                      showClear
                       aria-label="按标题筛选"
                       value={titleFilter}
                       onChange={setTitleFilter}
                       placeholder="按标题筛选"
                     />
-                    <Select
-                      aria-label="按品牌筛选"
-                      value={brandFilter}
-                      onChange={(value) => setBrandFilter(String(value))}
-                      options={[
-                        { label: "全部品牌", value: "all" },
-                        ...cameraBrands.map((brand) => ({
-                          label: brand,
-                          value: brand,
-                        })),
-                      ]}
-                    />
-                    <Select
-                      aria-label="按机型筛选"
-                      value={modelFilter}
-                      onChange={(value) => setModelFilter(String(value))}
-                      options={[
-                        { label: "全部机型", value: "all" },
-                        ...cameraModels.map((model) => ({
-                          label: model,
-                          value: model,
-                        })),
-                      ]}
-                    />
-                    <Select
-                      aria-label="按专题筛选"
-                      value={topicFilter}
-                      onChange={(value) => setTopicFilter(String(value))}
-                      options={[
-                        { label: "全部专题", value: allFilterValue },
-                        ...topicOptions.map(([id, title]) => ({
-                          label: title,
-                          value: id,
-                        })),
-                      ]}
-                    />
+                    {/* Semi Select 会在触发节点上覆盖 aria-label，这里用带标签的分组暴露筛选项语义 */}
+                    <div role="group" aria-label="按品牌筛选">
+                      <Select
+                        value={brandFilter}
+                        onChange={(value) => setBrandFilter(String(value))}
+                        optionList={[
+                          { label: "全部品牌", value: "all" },
+                          ...cameraBrands.map((brand) => ({
+                            label: brand,
+                            value: brand,
+                          })),
+                        ]}
+                      />
+                    </div>
+                    <div role="group" aria-label="按机型筛选">
+                      <Select
+                        value={modelFilter}
+                        onChange={(value) => setModelFilter(String(value))}
+                        optionList={[
+                          { label: "全部机型", value: "all" },
+                          ...cameraModels.map((model) => ({
+                            label: model,
+                            value: model,
+                          })),
+                        ]}
+                      />
+                    </div>
+                    <div role="group" aria-label="按专题筛选">
+                      <Select
+                        value={topicFilter}
+                        onChange={(value) => setTopicFilter(String(value))}
+                        optionList={[
+                          { label: "全部专题", value: allFilterValue },
+                          ...topicOptions.map(([id, title]) => ({
+                            label: title,
+                            value: id,
+                          })),
+                        ]}
+                      />
+                    </div>
                     <Space wrap className="toolbar-actions">
-                      <Button type="primary" onClick={openCreateEditor}>
+                      <Button theme="solid" onClick={openCreateEditor}>
                         新增图片
                       </Button>
                       <Button
-                        status="danger"
+                        type="danger"
                         disabled={selectedCount === 0}
                         onClick={requestBatchDelete}
                       >
                         删除所选
                       </Button>
                       <Button
-                        type="primary"
+                        theme="solid"
                         disabled={selectedCount === 0}
                         onClick={() => setIsWatermarkExportOpen(true)}
                       >
                         导出水印图（{selectedCount}）
                       </Button>
                       <Button
-                        type="primary"
+                        theme="solid"
                         disabled={selectedCount === 0}
                         onClick={() => setIsFrameExportOpen(true)}
                       >
                         导出画框（{selectedCount}）
                       </Button>
                       <Button
-                        type="outline"
+                        theme="light"
                         loading={isExporting}
                         onClick={() => void exportToClient()}
                       >
@@ -1740,23 +1731,21 @@ function App() {
                   className="table-card"
                   bordered={false}
                   title="图片列表"
-                  extra={<Tag>{filteredPhotos.length} 条结果</Tag>}
+                  headerExtraContent={<Tag>{filteredPhotos.length} 条结果</Tag>}
                 >
-                  <Spin loading={isLoading} style={{ width: "100%" }}>
+                  <Spin spinning={isLoading} style={{ width: "100%" }}>
                     <Table<PhotoRecord>
                       className="photos-table"
                       rowKey="id"
-                      size="mini"
-                      border={{ wrapper: true, cell: true }}
-                      tableLayoutFixed
-                      stripe
+                      size="small"
+                      tableLayout="fixed"
                       columns={columns}
-                      data={filteredPhotos}
-                      noDataElement={
+                      dataSource={filteredPhotos}
+                      empty={
                         <div className="table-empty-state">
                           <Empty description="暂无匹配图片，可调整标题、品牌、机型或专题筛选" />
                           <Button
-                            size="mini"
+                            size="small"
                             onClick={() => {
                               setTitleFilter("");
                               setBrandFilter(allFilterValue);
@@ -1770,23 +1759,20 @@ function App() {
                       }
                       scroll={{ x: 1260 }}
                       rowSelection={{
-                        type: "checkbox",
-                        checkAll: true,
-                        preserveSelectedRowKeys: true,
                         selectedRowKeys: [...selectedIds],
                         onChange: (keys) =>
                           setSelectedIds(
-                            new Set(keys.map((key) => String(key))),
+                            new Set((keys ?? []).map((key) => String(key))),
                           ),
                       }}
                       pagination={{
                         pageSize: photoPageSize,
-                        size: "small",
-                        sizeCanChange: true,
-                        sizeOptions: adminPageSizeOptions,
+                        showSizeChanger: true,
+                        pageSizeOpts: adminPageSizeOptions,
                         onPageSizeChange: (size) => setPhotoPageSize(size),
-                        showTotal: (total, range) =>
-                          `显示 ${range[0]}-${range[1]}，共 ${total} 条`,
+                        showTotal: true,
+                        formatPageText: (pageInfo) =>
+                          `显示 ${pageInfo?.currentStart ?? 0}-${pageInfo?.currentEnd ?? 0}，共 ${pageInfo?.total ?? 0} 条`,
                       }}
                     />
                   </Spin>
@@ -1803,11 +1789,11 @@ function App() {
                     <Button onClick={() => void refresh()} loading={isLoading}>
                       刷新 API
                     </Button>
-                    <Button type="primary" onClick={openCreateTopicEditor}>
+                    <Button theme="solid" onClick={openCreateTopicEditor}>
                       新增专题
                     </Button>
                     <Button
-                      type="outline"
+                      theme="light"
                       loading={isExporting}
                       onClick={() => void exportToClient()}
                     >
@@ -1821,16 +1807,19 @@ function App() {
                   aria-label="专题统计"
                 >
                   <Card bordered={false}>
-                    <Statistic title="专题记录" value={topics.length} />
+                    <AdminStatistic title="专题记录" value={topics.length} />
                   </Card>
                   <Card bordered={false}>
-                    <Statistic title="已关联图片" value={topicUsageById.size} />
+                    <AdminStatistic
+                      title="已关联图片"
+                      value={topicUsageById.size}
+                    />
                   </Card>
                   <Card bordered={false}>
-                    <Statistic title="图片记录" value={photos.length} />
+                    <AdminStatistic title="图片记录" value={photos.length} />
                   </Card>
                   <Card bordered={false}>
-                    <Statistic
+                    <AdminStatistic
                       title="未关联专题"
                       value={
                         photos.filter(
@@ -1845,22 +1834,20 @@ function App() {
                   className="table-card topic-table-card"
                   bordered={false}
                   title="专题列表"
-                  extra={<Tag>{topics.length} 条专题</Tag>}
+                  headerExtraContent={<Tag>{topics.length} 条专题</Tag>}
                 >
-                  <Spin loading={isLoading} style={{ width: "100%" }}>
+                  <Spin spinning={isLoading} style={{ width: "100%" }}>
                     <Table<TopicRecord>
                       className="photos-table topics-table"
                       rowKey="id"
-                      size="mini"
-                      border={{ wrapper: true, cell: true }}
-                      tableLayoutFixed
-                      stripe
+                      size="small"
+                      tableLayout="fixed"
                       columns={topicColumns}
-                      data={topics}
-                      noDataElement={
+                      dataSource={topics}
+                      empty={
                         <div className="table-empty-state">
                           <Empty description="暂无专题，可创建标题与描述后用于图片分组" />
-                          <Button size="mini" onClick={openCreateTopicEditor}>
+                          <Button size="small" onClick={openCreateTopicEditor}>
                             新增专题
                           </Button>
                         </div>
@@ -1868,19 +1855,20 @@ function App() {
                       scroll={{ x: 760 }}
                       pagination={{
                         pageSize: topicPageSize,
-                        size: "small",
-                        sizeCanChange: true,
-                        sizeOptions: adminPageSizeOptions,
+                        showSizeChanger: true,
+                        pageSizeOpts: adminPageSizeOptions,
                         onPageSizeChange: (size) => setTopicPageSize(size),
-                        showTotal: (total, range) =>
-                          `显示 ${range[0]}-${range[1]}，共 ${total} 条`,
+                        showTotal: true,
+                        formatPageText: (pageInfo) =>
+                          `显示 ${pageInfo?.currentStart ?? 0}-${pageInfo?.currentEnd ?? 0}，共 ${pageInfo?.total ?? 0} 条`,
                       }}
                     />
                   </Spin>
-                  <Alert
+                  <Banner
                     className="topic-delete-policy"
                     type="info"
-                    content="删除专题前需先移除相关图片的专题关联；专题 CRUD 仅持久化到 SQLite，客户端 JSON 仍通过导出流程生成。"
+                    closeIcon={null}
+                    description="删除专题前需先移除相关图片的专题关联；专题 CRUD 仅持久化到 SQLite，客户端 JSON 仍通过导出流程生成。"
                   />
                 </Card>
               </>
@@ -1895,11 +1883,11 @@ function App() {
                     <Button onClick={() => void refresh()} loading={isLoading}>
                       刷新 API
                     </Button>
-                    <Button type="primary" onClick={openCreateBrandEditor}>
+                    <Button theme="solid" onClick={openCreateBrandEditor}>
                       新增品牌
                     </Button>
                     <Button
-                      type="outline"
+                      theme="light"
                       loading={isExporting}
                       onClick={() => void exportToClient()}
                     >
@@ -1913,16 +1901,16 @@ function App() {
                   aria-label="品牌统计"
                 >
                   <Card bordered={false}>
-                    <Statistic title="品牌记录" value={brands.length} />
+                    <AdminStatistic title="品牌记录" value={brands.length} />
                   </Card>
                   <Card bordered={false}>
-                    <Statistic title="照片同步品牌" value={syncedBrandCount} />
+                    <AdminStatistic title="照片同步品牌" value={syncedBrandCount} />
                   </Card>
                   <Card bordered={false}>
-                    <Statistic title="Logo 数量" value={brandLogoCount} />
+                    <AdminStatistic title="Logo 数量" value={brandLogoCount} />
                   </Card>
                   <Card bordered={false}>
-                    <Statistic
+                    <AdminStatistic
                       title="未配置 Logo"
                       value={
                         brands.filter(
@@ -1940,14 +1928,14 @@ function App() {
                 >
                   <div className="brand-toolbar">
                     <Input
-                      allowClear
+                      showClear
                       aria-label="按品牌筛选"
                       value={brandSearch}
                       onChange={setBrandSearch}
                       placeholder="按品牌、别名或 Logo 地址筛选"
                     />
                     <Space wrap className="toolbar-actions">
-                      <Button type="primary" onClick={openCreateBrandEditor}>
+                      <Button theme="solid" onClick={openCreateBrandEditor}>
                         新增品牌
                       </Button>
                       <Button
@@ -1964,22 +1952,20 @@ function App() {
                   className="table-card brand-table-card"
                   bordered={false}
                   title="品牌列表"
-                  extra={<Tag>{filteredBrands.length} 条品牌</Tag>}
+                  headerExtraContent={<Tag>{filteredBrands.length} 条品牌</Tag>}
                 >
-                  <Spin loading={isLoading} style={{ width: "100%" }}>
+                  <Spin spinning={isLoading} style={{ width: "100%" }}>
                     <Table<BrandRecord>
                       className="photos-table brands-table"
                       rowKey="id"
-                      size="mini"
-                      border={{ wrapper: true, cell: true }}
-                      tableLayoutFixed
-                      stripe
+                      size="small"
+                      tableLayout="fixed"
                       columns={brandColumns}
-                      data={filteredBrands}
-                      noDataElement={
+                      dataSource={filteredBrands}
+                      empty={
                         <div className="table-empty-state">
                           <Empty description="暂无品牌，可从照片 EXIF 自动同步或手动新增品牌 Logo" />
-                          <Button size="mini" onClick={openCreateBrandEditor}>
+                          <Button size="small" onClick={openCreateBrandEditor}>
                             新增品牌
                           </Button>
                         </div>
@@ -1987,19 +1973,20 @@ function App() {
                       scroll={{ x: 910 }}
                       pagination={{
                         pageSize: brandPageSize,
-                        size: "small",
-                        sizeCanChange: true,
-                        sizeOptions: adminPageSizeOptions,
+                        showSizeChanger: true,
+                        pageSizeOpts: adminPageSizeOptions,
                         onPageSizeChange: (size) => setBrandPageSize(size),
-                        showTotal: (total, range) =>
-                          `显示 ${range[0]}-${range[1]}，共 ${total} 条`,
+                        showTotal: true,
+                        formatPageText: (pageInfo) =>
+                          `显示 ${pageInfo?.currentStart ?? 0}-${pageInfo?.currentEnd ?? 0}，共 ${pageInfo?.total ?? 0} 条`,
                       }}
                     />
                   </Spin>
-                  <Alert
+                  <Banner
                     className="brand-sync-policy"
                     type="info"
-                    content="刷新时会读取服务端品牌记录，并把照片 EXIF 中出现但尚未配置的相机品牌补入列表，便于继续补充多个 Logo。"
+                    closeIcon={null}
+                    description="刷新时会读取服务端品牌记录，并把照片 EXIF 中出现但尚未配置的相机品牌补入列表，便于继续补充多个 Logo。"
                   />
                 </Card>
               </>
@@ -2014,9 +2001,10 @@ function App() {
               confirmLoading={isSaving}
               okText="保存"
               cancelText="取消"
+              okButtonProps={{ "aria-label": "保存" }}
+              cancelButtonProps={{ "aria-label": "取消" }}
               maskClosable
-              escToExit
-              unmountOnExit
+              closeOnEsc
             >
               <div className="editor-shell" aria-label="图片编辑器">
                 <div
@@ -2042,8 +2030,8 @@ function App() {
                       </div>
                       <Space wrap>
                         <Button
-                          type={
-                            editorPreview || editingId ? "outline" : "primary"
+                          theme={
+                            editorPreview || editingId ? "light" : "solid"
                           }
                           onClick={() => editorFileInputRef.current?.click()}
                         >
@@ -2117,15 +2105,15 @@ function App() {
                     <label>
                       <span>专题（可多选）</span>
                       <Select
-                        allowClear
-                        mode="multiple"
-                        showSearch
+                        showClear
+                        multiple
+                        filter
                         value={payload.topicIds ?? []}
                         placeholder="选择一个或多个专题（可选）"
                         onChange={(value) =>
                           selectTopics(selectValuesToTopicIds(value))
                         }
-                        options={topicOptions.map(([id, title]) => ({
+                        optionList={topicOptions.map(([id, title]) => ({
                           label: `${title} (${id})`,
                           value: id,
                         }))}
@@ -2143,7 +2131,7 @@ function App() {
                           setPayload({ ...payload, description: value })
                         }
                         placeholder="简短说明这张图片的内容"
-                        autoSize={{ minRows: 4, maxRows: 6 }}
+                        autosize={{ minRows: 4, maxRows: 6 }}
                       />
                       <small>
                         建议记录场景、项目或发布备注，便于后续编辑。
@@ -2162,23 +2150,24 @@ function App() {
               confirmLoading={isSaving}
               okText="上传暂存文件"
               cancelText="关闭"
-              okButtonProps={{ disabled: previews.length === 0 }}
+              okButtonProps={{ disabled: previews.length === 0, "aria-label": "上传暂存文件" }}
+              cancelButtonProps={{ "aria-label": "关闭" }}
               maskClosable
-              escToExit
+              closeOnEsc
             >
               <div className="upload-panel">
                 <label className="upload-topic-select">
                   <span>当前专题（可多选）</span>
                   <Select
-                    allowClear
-                    mode="multiple"
-                    showSearch
+                    showClear
+                    multiple
+                    filter
                     value={payload.topicIds ?? []}
                     placeholder="选择一个或多个专题（可选）"
                     onChange={(value) =>
                       selectTopics(selectValuesToTopicIds(value))
                     }
-                    options={topicOptions.map(([id, title]) => ({
+                    optionList={topicOptions.map(([id, title]) => ({
                       label: `${title} (${id})`,
                       value: id,
                     }))}
@@ -2189,7 +2178,7 @@ function App() {
                     快速选择
                   </Button>
                   <Button
-                    type="primary"
+                    theme="solid"
                     onClick={() => topicFileInputRef.current?.click()}
                   >
                     按当前专题选择
@@ -2247,8 +2236,7 @@ function App() {
               footer={null}
               className="image-preview-modal"
               maskClosable
-              escToExit
-              unmountOnExit
+              closeOnEsc
             >
               {previewPhoto && (
                 <div className="image-preview-modal__body">
@@ -2277,9 +2265,10 @@ function App() {
               confirmLoading={isSaving}
               okText="保存"
               cancelText="取消"
+              okButtonProps={{ "aria-label": "保存" }}
+              cancelButtonProps={{ "aria-label": "取消" }}
               maskClosable
-              escToExit
-              unmountOnExit
+              closeOnEsc
             >
               <div className="topic-form" aria-label="专题资料表单">
                 <label>
@@ -2306,7 +2295,7 @@ function App() {
                       }))
                     }
                     placeholder="用一两句话描述专题内容"
-                    autoSize={{ minRows: 4, maxRows: 7 }}
+                    autosize={{ minRows: 4, maxRows: 7 }}
                   />
                 </label>
               </div>
@@ -2320,10 +2309,11 @@ function App() {
               confirmLoading={isSaving}
               okText="保存"
               cancelText="取消"
+              okButtonProps={{ "aria-label": "保存" }}
+              cancelButtonProps={{ "aria-label": "取消" }}
               className="brand-editor-modal"
               maskClosable
-              escToExit
-              unmountOnExit
+              closeOnEsc
             >
               <div className="brand-form" aria-label="品牌资料表单">
                 <section className="brand-form__hero">
@@ -2372,11 +2362,10 @@ function App() {
                       <strong>多个 Logo</strong>
                     </div>
                     <Space wrap>
-                      <Button type="outline" onClick={addBrandLogo}>
+                      <Button theme="light" onClick={addBrandLogo}>
                         添加 Logo
                       </Button>
                       <Button
-                        type="secondary"
                         loading={isBrandLogoUploading}
                         onClick={() => brandLogoFileInputRef.current?.click()}
                       >
@@ -2429,8 +2418,8 @@ function App() {
                           placeholder="Logo URL，可为 /uploads/... 或 https://..."
                         />
                         <Button
-                          status="danger"
-                          type="outline"
+                          type="danger"
+                          theme="light"
                           onClick={() => removeBrandLogo(index)}
                         >
                           移除
@@ -2452,9 +2441,10 @@ function App() {
               confirmLoading={isSaving}
               okText="确认删除"
               cancelText="取消"
-              okButtonProps={{ status: "danger" }}
+              okButtonProps={{ type: "danger", "aria-label": "确认删除" }}
+              cancelButtonProps={{ "aria-label": "取消" }}
               maskClosable
-              escToExit
+              closeOnEsc
             >
               <p>{confirmAction?.body}</p>
             </Modal>
@@ -2471,7 +2461,7 @@ function App() {
                     正在取消，已完成的图片将被丢弃…
                   </span>
                 ) : (
-                  <Button status="danger" onClick={cancelWatermarkExport}>
+                  <Button type="danger" onClick={cancelWatermarkExport}>
                     取消导出
                   </Button>
                 )
@@ -2489,7 +2479,7 @@ function App() {
                         )
                       : 0
                   }
-                  showText
+                  showInfo
                 />
                 <div className="watermark-export-progress__meta">
                   <span>
@@ -2527,7 +2517,7 @@ function App() {
                     正在取消，已完成的图片将被丢弃…
                   </span>
                 ) : (
-                  <Button status="danger" onClick={cancelFrameExport}>
+                  <Button type="danger" onClick={cancelFrameExport}>
                     取消导出
                   </Button>
                 )
@@ -2545,7 +2535,7 @@ function App() {
                         )
                       : 0
                   }
-                  showText
+                  showInfo
                 />
                 <div className="watermark-export-progress__meta">
                   <span>

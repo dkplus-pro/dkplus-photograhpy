@@ -366,8 +366,9 @@ test("Admin list exposes optimized metadata columns and gallery interactions", a
   const table = page.locator(".photos-table");
   await expect(table.getByRole("columnheader", { name: /型号/ })).toBeVisible();
   await expect(table.getByRole("columnheader", { name: /镜头/ })).toBeVisible();
+  // Semi 为可排序列头注入自有排序 aria-label，改按表头文本定位
   await expect(
-    table.getByRole("columnheader", { name: /拍摄日期/ }),
+    table.getByRole("columnheader").filter({ hasText: /拍摄日期/ }),
   ).toBeVisible();
   await expect(
     table.getByRole("columnheader", { name: /文件信息/ }),
@@ -379,9 +380,9 @@ test("Admin list exposes optimized metadata columns and gallery interactions", a
   await expect(
     page.getByText(`显示 1-10，共 ${seedPhotoCount} 条`),
   ).toBeVisible();
-  await page.locator(".arco-pagination-item").filter({ hasText: "2" }).click();
+  await page.locator(".semi-page-item").filter({ hasText: "2" }).click();
   await expect(table.getByText("后台导出样片 13")).toBeVisible();
-  await page.locator(".arco-pagination-item").filter({ hasText: "1" }).click();
+  await page.locator(".semi-page-item").filter({ hasText: "1" }).click();
 
   await page.getByPlaceholder("按标题筛选").fill("后台导出样片");
   await expect(
@@ -393,10 +394,10 @@ test("Admin list exposes optimized metadata columns and gallery interactions", a
     table.getByText(/image\/jpeg|未知格式|未知大小|\bISO\b|f\/4|1\/250s/),
   ).toHaveCount(0);
 
-  await table.getByRole("columnheader", { name: /拍摄日期/ }).click();
+  await table.getByRole("columnheader").filter({ hasText: /拍摄日期/ }).click();
 
   const firstCellAlign = await table
-    .locator(".arco-table-td")
+    .locator(".semi-table-row-cell")
     .first()
     .evaluate((element) => getComputedStyle(element).textAlign);
   expect(firstCellAlign).toBe("center");

@@ -46,18 +46,21 @@ describe("admin list UI contract", () => {
     expect(appSource).not.toContain("更新：");
     expect(appSource).not.toContain("y: 560");
     expect(appSource).toContain("scroll={{ x: 1260 }}");
+    expect(appSource).toContain('tableLayout="fixed"');
     expect(appSource).toContain("pagination={{");
+    expect(appSource).toContain("empty={");
     expect(appSource).toContain("const adminPageSizeOptions = [10, 20, 50]");
     expect(appSource).toContain("pageSize: photoPageSize");
     expect(appSource).toContain("pageSize: topicPageSize");
-    expect(appSource).toContain("sizeCanChange: true");
-    expect(appSource).toContain("sizeOptions: adminPageSizeOptions");
+    expect(appSource).toContain("showSizeChanger: true");
+    expect(appSource).toContain("pageSizeOpts: adminPageSizeOptions");
     expect(appSource).toContain(
       "onPageSizeChange: (size) => setPhotoPageSize(size)",
     );
     expect(appSource).toContain(
       "onPageSizeChange: (size) => setTopicPageSize(size)",
     );
+    expect(appSource).toContain("formatPageText");
   });
 
   it("preserves preview, add/edit/upload modals, and empty feedback", () => {
@@ -76,6 +79,21 @@ describe("admin list UI contract", () => {
     expect(apiSource).toContain('baseUrl, "/uploads/bulk"');
   });
 
+  it("reports feedback through Semi Toast instead of a custom stack", () => {
+    expect(appSource).toContain('Toast.error("请先在列表中勾选要导出的图片。")');
+    expect(appSource).toContain(
+      'Toast.error("请先选择至少一个专题，再按当前专题选择图片。")',
+    );
+    expect(appSource).toContain("Toast.success(");
+    expect(appSource).toContain("Toast.info(");
+    expect(appSource).toContain('Toast.error("请填写专题标题。")');
+    expect(appSource).toContain('Toast.error("请填写品牌名称。")');
+    expect(appSource).not.toContain("pushMessage");
+    expect(appSource).not.toContain("toast-stack");
+    expect(styles).not.toContain("toast-stack");
+    expect(appSource).toContain("Toast.error(");
+  });
+
   it("uses a compact stacked image editor with EXIF status", () => {
     expect(appSource).toContain('className="editor-modal"');
     expect(appSource).toContain('className="editor-shell"');
@@ -88,7 +106,7 @@ describe("admin list UI contract", () => {
     expect(appSource).not.toContain("新增记录必须选择本地图片");
     expect(appSource).not.toContain("先选择文件并在本地读取 EXIF");
     expect(appSource).toContain("可同时关联多个专题");
-    expect(styles).toContain(".editor-modal .arco-modal");
+    expect(styles).toContain(".editor-modal .semi-modal");
     expect(styles).not.toContain(".editor-hero");
     expect(styles).not.toContain(".upload-hint");
     expect(styles).toContain("min-height: 220px;");
@@ -104,42 +122,31 @@ describe("admin list UI contract", () => {
 
   it("lets relevant modals close by Escape and mask click", () => {
     const modalProps = appSource.match(/maskClosable/g) ?? [];
-    const escapeProps = appSource.match(/escToExit/g) ?? [];
+    const escapeProps = appSource.match(/closeOnEsc/g) ?? [];
 
     expect(modalProps.length).toBeGreaterThanOrEqual(5);
     expect(escapeProps.length).toBeGreaterThanOrEqual(5);
     expect(appSource).not.toContain("maskClosable={false}");
   });
 
-  it("keeps dense accessible gallery styling with unified neutral hover and focus tones", () => {
-    expect(styles).toMatch(
-      /\.photos-table \.arco-table-th,[\s\S]*?\.photos-table \.arco-table-td\s*\{[\s\S]*?padding-top:\s*6px;[\s\S]*?text-align:\s*center;[\s\S]*?vertical-align:\s*middle;/,
-    );
-    expect(styles).toContain("--hover-wash: #e8e1d4;");
-    expect(styles).toContain("--focus: #332f29;");
-    expect(styles).toContain("--focus-ring: rgba(20, 20, 20, 0.32);");
-    expect(appSource).toContain("const arcoTheme");
-    expect(appSource).toContain('primaryColor: "#141414"');
-    expect(appSource).toContain("theme={arcoTheme}");
-    expect(styles).toContain("--arcoblue-6: 20, 20, 20;");
-    expect(styles).toContain("--color-primary-6: var(--ink);");
-    expect(styles).toContain(
-      ".toolbar :where(.arco-input-inner-wrapper, .arco-select-view):focus-within",
-    );
-    expect(styles).toContain("outline: 3px solid var(--focus-ring);");
+  it("keeps layout-only styling and relies on the default component skin", () => {
+    expect(appSource).toContain("locale={zh_CN}");
+    expect(appSource).not.toContain("primaryColor");
+    expect(appSource).not.toContain("ToastMessage");
+    expect(styles).toContain(".admin-shell");
+    expect(styles).toContain(".admin-layout");
+    expect(styles).toContain(".admin-sidebar");
     expect(styles).toContain(".photo-cell__thumb:hover img");
-    expect(styles).toMatch(
-      /\.photos-table \.arco-table-tr:hover \.arco-table-td\s*\{[\s\S]*?background:\s*var\(--hover-wash\);/,
-    );
-    expect(styles).toContain(".admin-shell :where(.arco-alert-info)");
-    expect(styles).toContain(
-      ":where(.arco-select-popup) .arco-select-option:hover",
-    );
+    expect(styles).toContain(".photo-cell__thumb:focus-visible");
+    expect(styles).toContain("@media (max-width: 1100px)");
     expect(styles).toContain("@media (max-width: 920px)");
-    expect(styles).not.toContain("#1b63ff");
-    expect(styles).not.toMatch(/rgba?\(\s*27,\s*99,\s*255/);
-    expect(styles).not.toMatch(/linear-gradient\(135deg,\s*rgba\(22, 93, 255/);
-    expect(styles).not.toMatch(/radial-gradient\([\s\S]*rgba\(20, 201, 201/);
+    expect(styles).toContain("@media (max-width: 560px)");
+    expect(styles).toContain("@media (prefers-reduced-motion: reduce)");
+    expect(styles).not.toContain("--hover-wash");
+    expect(styles).not.toContain("--focus-ring");
+    expect(styles).not.toContain("border-radius: 0");
+    expect(styles).not.toContain(".editor-hero");
+    expect(styles).not.toContain(".upload-hint");
   });
 
   it("uses display-only image transforms for admin thumbnails and previews", () => {
@@ -161,7 +168,7 @@ describe("admin list UI contract", () => {
     expect(appSource).toContain('placeholder="选择一个或多个专题（可选）"');
     expect(appSource).toContain("请先选择至少一个专题，再按当前专题选择图片。");
     expect(appSource).not.toContain("topicDraft");
-    expect(appSource).toContain('mode="multiple"');
+    expect(appSource).toContain("multiple");
     expect(appSource).not.toContain('aria-label="新增专题"');
     expect(appSource).not.toContain('placeholder="专题名称，如：编辑精选"');
     expect(appSource).not.toContain('placeholder="专题 ID（可选，自动生成）"');
@@ -172,8 +179,12 @@ describe("admin list UI contract", () => {
   it("adds a left sidebar and persisted topic management CRUD page", () => {
     expect(appSource).toContain('className="admin-sidebar"');
     expect(appSource).toContain('aria-label="后台导航"');
-    expect(appSource).toContain('<MenuItem key="photos">图片管理</MenuItem>');
-    expect(appSource).toContain('<MenuItem key="topics">专题管理</MenuItem>');
+    expect(appSource).toContain(
+      '<Nav.Item itemKey="photos" text="图片管理" />',
+    );
+    expect(appSource).toContain(
+      '<Nav.Item itemKey="topics" text="专题管理" />',
+    );
     expect(appSource).toContain('title="专题列表"');
     expect(appSource).toContain("isTopicEditorOpen");
     expect(appSource).toContain("api.listTopics");
@@ -188,21 +199,24 @@ describe("admin list UI contract", () => {
     expect(appSource).toContain(
       'window.addEventListener("hashchange", syncSectionFromRoute)',
     );
-    expect(appSource).toContain(
-      "onClickMenuItem={(key) => navigateToSection(key as AdminSection)}",
+    expect(appSource).toContain("selectedKeys={[activeSection]}");
+    expect(appSource).toMatch(
+      /onSelect=\{\(\{ itemKey \}\) =>\s*navigateToSection\(itemKey as AdminSection\)\s*\}/,
     );
     expect(styles).toContain(".admin-layout");
     expect(styles).toContain(".admin-sidebar");
-    expect(styles).toContain(".admin-menu .arco-menu-inner");
+    expect(styles).toContain(".admin-menu");
+    expect(styles).toContain(".admin-menu .semi-navigation-list");
     expect(styles).toContain(
       "grid-template-columns: repeat(2, minmax(0, 1fr));",
     );
-    expect(styles).toContain("min-height: 44px;");
     expect(styles).toContain(".topic-form");
   });
 
   it("adds brand management navigation, CRUD UI, and multiple-logo editing", () => {
-    expect(appSource).toContain('<MenuItem key="brands">品牌管理</MenuItem>');
+    expect(appSource).toContain(
+      '<Nav.Item itemKey="brands" text="品牌管理" />',
+    );
     expect(appSource).toContain('brands: "#/brands"');
     expect(appSource).toContain('title="品牌列表"');
     expect(appSource).toContain("isBrandEditorOpen");
@@ -228,6 +242,8 @@ describe("admin list UI contract", () => {
     expect(apiSource).not.toContain("appendBrandLogosViaPatch");
     expect(apiSource).not.toContain("/brands/${encodeURIComponent(id)}/logos");
     expect(styles).toContain(".brand-form");
+    expect(styles).toContain(".brand-logo-row");
+    expect(styles).toContain(".brand-form__hero");
     expect(styles).toMatch(/\.brand-logo|\.brand-card|\.brand-list/);
   });
 });

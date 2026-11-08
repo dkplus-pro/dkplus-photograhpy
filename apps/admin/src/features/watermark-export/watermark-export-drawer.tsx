@@ -1,15 +1,14 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
   Button,
-  Drawer,
-  Grid,
-  Message,
+  Col,
+  Row,
   Select,
+  SideSheet,
   Slider,
   Spin,
-} from "@arco-design/web-react";
-
-const { Row, Col } = Grid;
+  Toast,
+} from "@douyinfe/semi-ui";
 
 import type { BrandRecord, PhotoRecord } from "../../types";
 import { drawLogoWatermark } from "./draw-logo-watermark";
@@ -216,13 +215,13 @@ export function WatermarkExportDrawer({
               logo,
             );
           } catch {
-            Message.warning("水印 Logo 加载失败，请换一个 Logo 或检查地址。");
+            Toast.warning("水印 Logo 加载失败，请换一个 Logo 或检查地址。");
           }
         }
         setPreviewReady(true);
       } catch {
         if (!cancelled)
-          Message.error("预览图加载失败，请检查图片地址或 CDN 跨域配置。");
+          Toast.error("预览图加载失败，请检查图片地址或 CDN 跨域配置。");
       }
     })();
 
@@ -264,35 +263,32 @@ export function WatermarkExportDrawer({
       : "无水印",
   ].join(" · ");
 
-  const logoUploadMenu = (menu: React.ReactNode) => (
-    <>
-      {menu}
-      <div className="wm-select-upload">
-        <input
-          ref={uploadInputRef}
-          type="file"
-          accept="image/*"
-          className="wm-hidden-input"
-          onChange={(event) => {
-            const file = event.currentTarget.files?.[0];
-            if (file) handleCustomUpload(file);
-            event.currentTarget.value = "";
-          }}
-        />
-        <Button
-          type="text"
-          size="mini"
-          icon={<span>＋</span>}
-          onClick={() => uploadInputRef.current?.click()}
-        >
-          上传自定义 Logo（仅本次使用）
-        </Button>
-      </div>
-    </>
+  const logoUploadSlot = (
+    <div className="wm-select-upload">
+      <input
+        ref={uploadInputRef}
+        type="file"
+        accept="image/*"
+        className="wm-hidden-input"
+        onChange={(event) => {
+          const file = event.currentTarget.files?.[0];
+          if (file) handleCustomUpload(file);
+          event.currentTarget.value = "";
+        }}
+      />
+      <Button
+        theme="borderless"
+        size="small"
+        icon={<span>＋</span>}
+        onClick={() => uploadInputRef.current?.click()}
+      >
+        上传自定义 Logo（仅本次使用）
+      </Button>
+    </div>
   );
 
   return (
-    <Drawer
+    <SideSheet
       width={720}
       title={`导出水印图（已选 ${photos.length} 张）`}
       visible={visible}
@@ -305,7 +301,7 @@ export function WatermarkExportDrawer({
               取消
             </Button>
             <Button
-              type="primary"
+              theme="solid"
               loading={isExporting}
               onClick={() => onExport(settings)}
             >
@@ -314,7 +310,6 @@ export function WatermarkExportDrawer({
           </div>
         </div>
       }
-      unmountOnExit
     >
       <div className="wm-drawer">
         <section className="wm-preview">
@@ -355,9 +350,10 @@ export function WatermarkExportDrawer({
           <label className="wm-field__label">水印来源</label>
           <Select
             value={selectedLogoSource ?? "none"}
-            onChange={selectLogo}
-            dropdownRender={logoUploadMenu}
-            renderFormat={(_option, value) => {
+            onChange={(value) => selectLogo(value as string)}
+            outerBottomSlot={logoUploadSlot}
+            renderSelectedItem={(optionNode: Record<string, unknown>) => {
+              const value = optionNode.value as string;
               if (value === "none") return "不加水印";
               const match = [...customLogos, ...brandLogoOptions].find(
                 (entry) => entry.source === value,
@@ -459,8 +455,9 @@ export function WatermarkExportDrawer({
                 <Select
                   value={settings.watermark.position}
                   disabled={!selectedLogoSource}
-                  renderFormat={(_option, value) =>
-                    positionLabels[value as WatermarkPosition] ?? "位置"
+                  renderSelectedItem={(optionNode: Record<string, unknown>) =>
+                    positionLabels[optionNode.value as WatermarkPosition] ??
+                    "位置"
                   }
                   onChange={(value) =>
                     updateWatermark({ position: value as WatermarkPosition })
@@ -478,7 +475,7 @@ export function WatermarkExportDrawer({
           </Row>
         </section>
       </div>
-    </Drawer>
+    </SideSheet>
   );
 }
 
