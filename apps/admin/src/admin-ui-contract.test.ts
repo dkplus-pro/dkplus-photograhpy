@@ -205,8 +205,8 @@ describe("admin list UI contract", () => {
     );
     expect(styles).toContain(".admin-layout");
     expect(styles).toContain(".admin-sidebar");
-    expect(styles).toContain(".admin-menu");
-    expect(styles).toContain(".admin-menu .semi-navigation-list");
+    expect(styles).toContain(".admin-sidebar .semi-navigation");
+    expect(styles).not.toContain(".admin-menu");
     expect(styles).toContain(
       "grid-template-columns: repeat(2, minmax(0, 1fr));",
     );
@@ -245,5 +245,19 @@ describe("admin list UI contract", () => {
     expect(styles).toContain(".brand-logo-row");
     expect(styles).toContain(".brand-form__hero");
     expect(styles).toMatch(/\.brand-logo|\.brand-card|\.brand-list/);
+  });
+
+  it("replaces per-section headers with a shared breadcrumb and pins section table keys", () => {
+    expect(appSource).toContain('<Breadcrumb className="admin-breadcrumb"');
+    expect(appSource).toContain("{sectionTitles[activeSection]}");
+    expect(appSource).toContain('className="toolbar-card topic-toolbar-card"');
+    // 回归钉:三个分区表格位于三元分支同一位置,缺 key 时 React 复用
+    // 同一 Semi Table 实例,会以缓存的旧行数据调用新列 render 导致崩溃。
+    expect(appSource).toContain('key="photos-table"');
+    expect(appSource).toContain('key="topics-table"');
+    expect(appSource).toContain('key="brands-table"');
+    expect(appSource).not.toContain("admin-header");
+    expect(appSource).not.toContain("eyebrow");
+    expect(appSource).not.toContain("page-title");
   });
 });

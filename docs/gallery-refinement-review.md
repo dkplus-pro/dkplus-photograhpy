@@ -25,7 +25,7 @@ This note records the code-review and documentation slice for the DKPlus gallery
 ### Admin UI (`apps/admin`)
 
 - The admin interface copy must be Chinese-first.
-- Do not use a large hero/banner panel in the admin workspace. Use a compact page header and action toolbar instead.
+- Do not use a large hero/banner panel in the admin workspace. Use breadcrumb navigation (`.admin-breadcrumb`) and an action toolbar instead.
 - Migrate form controls, actions, upload controls, table/list, pagination, dialogs, and notifications to `@douyinfe/semi-ui` so interaction states and accessibility behavior are consistent.
 - Add/edit photo metadata through a Semi `Modal`; avoid a permanently expanded editor form in the main workspace.
 - Image management should be a compact paginated table/list with focused operational columns:
@@ -40,10 +40,10 @@ This note records the code-review and documentation slice for the DKPlus gallery
   only when appropriate.
 - The list should not impose a fixed vertical scroll height. Remove update-date
   copy from the table, center table content, keep density compact, and provide
-  clear empty, focus, loading, success, and error feedback. Use a restrained
-  black/white gallery-like visual system with accessible contrast, clear
-  focus/hover states, and responsive behavior rather than decorative color
-  gradients.
+  clear empty, focus, loading, success, and error feedback. Use Semi Design's
+  default visual system (light gray page background, default-style sidebar Nav,
+  white content cards) with accessible contrast, clear focus/hover states, and
+  responsive behavior rather than decorative color gradients.
 
 ### Admin API and uploads (`apps/server`)
 
@@ -81,7 +81,7 @@ Use this checklist during integration review:
 - [ ] Admin filters include title, camera brand, camera model, and topic.
 - [ ] Admin table omits MIME, file size, `imageSummary`, aperture, shutter, and ISO copy.
 - [ ] Admin table has no fixed vertical height, no update-date row, centered cells, pagination, and a sortable shooting-date column.
-- [ ] Admin styling uses a restrained black/white gallery-like system with accessible focus/hover states and responsive density.
+- [ ] Admin styling uses Semi Design default visuals (gray page background, default-style sidebar Nav, white content cards) with accessible focus/hover states and responsive density.
 - [ ] `POST /api/uploads` reaches Koa in local development via proxy or explicit `VITE_API_BASE_URL`.
 - [ ] Local/COS upload URLs are usable by the admin UI after upload.
 - [ ] Brand Logo uploads use `/api/uploads/assets`, do not create gallery photo records, and are merged into brand `logos`/`logoUrls` via brand PATCH while preserving multiple Logo rows.

@@ -315,7 +315,10 @@ test("Admin authenticated export action writes the Main JSON artifact", async ({
   page,
 }) => {
   await page.goto(adminBaseUrl);
-  await expect(page.getByRole("heading", { name: "图片管理" })).toBeVisible();
+  // 分区标题已从 h1 换成 admin-content 内共享的 Semi Breadcrumb
+  await expect(
+    page.locator(".admin-breadcrumb").getByText("图片管理"),
+  ).toBeVisible();
 
   const [response] = await Promise.all([
     page.waitForResponse(

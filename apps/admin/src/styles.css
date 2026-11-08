@@ -7,13 +7,10 @@
   --muted: #66645f;
   --line: rgba(20, 20, 20, 0.14);
   --line-strong: rgba(20, 20, 20, 0.28);
-  --paper: #f5f2eb;
-  --panel: rgba(255, 255, 255, 0.94);
   --panel-solid: #fffdf8;
   --wash: #ebe7df;
   --focus: #332f29;
   color: var(--ink);
-  background: var(--paper);
   font-family:
     "Noto Sans SC",
     system-ui,
@@ -33,16 +30,7 @@ body {
   margin: 0;
   min-width: 320px;
   min-height: 100vh;
-  background:
-    linear-gradient(90deg, rgba(20, 20, 20, 0.05) 1px, transparent 1px),
-    linear-gradient(180deg, rgba(20, 20, 20, 0.04) 1px, transparent 1px),
-    radial-gradient(circle at 12% 8%, rgba(20, 20, 20, 0.11), transparent 28%),
-    linear-gradient(135deg, #fbfaf6 0%, var(--paper) 42%, #e7e2d8 100%);
-  background-size:
-    52px 52px,
-    52px 52px,
-    auto,
-    auto;
+  background: var(--semi-color-fill-0);
 }
 
 button,
@@ -69,86 +57,41 @@ textarea {
   position: sticky;
   top: 24px;
   display: grid;
-  gap: 16px;
+  gap: 8px;
   min-width: 0;
-  border: 1px solid var(--line);
-  border-top: 4px solid var(--ink);
-  padding: 16px;
-  background: rgba(255, 253, 248, 0.94);
-  box-shadow: 0 22px 58px rgba(20, 20, 20, 0.08);
-  backdrop-filter: blur(14px);
 }
 
 .admin-sidebar__brand {
   display: grid;
-  gap: 4px;
-  border-bottom: 1px solid var(--line);
-  padding-bottom: 14px;
+  gap: 2px;
+  padding: 10px 12px 0;
 }
 
 .admin-sidebar__brand span {
   color: var(--muted);
-  font-family: "Fira Code", "Noto Sans SC", monospace;
-  font-size: 0.72rem;
-  font-weight: 700;
-  letter-spacing: 0.13em;
-  text-transform: uppercase;
+  font-size: 0.78rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
 }
 
 .admin-sidebar__brand strong {
   color: var(--ink);
-  font-family: Georgia, "Noto Sans SC", serif;
-  font-size: 1.4rem;
+  font-size: 1.2rem;
   font-weight: 600;
-  letter-spacing: -0.04em;
+  letter-spacing: -0.01em;
 }
 
 .admin-content {
   min-width: 0;
 }
 
-/* 侧边栏里的 Semi Nav：只做布局适配（占满侧栏、去默认内边距与背景），不改组件皮肤 */
-.admin-menu {
+/* 侧边栏里的 Semi Nav：仅做宽度布局适配，外观保持 Semi 默认皮肤 */
+.admin-sidebar .semi-navigation {
   width: 100%;
-  border: 0;
-  padding-left: 0;
-  padding-right: 0;
-  background: transparent;
 }
 
-.admin-menu .semi-navigation-list {
-  display: grid;
-  gap: 8px;
-}
-
-.admin-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 18px;
-  margin-bottom: 16px;
-  border-bottom: 1px solid var(--line-strong);
-  padding: 8px 0 18px;
-}
-
-.admin-header h1 {
-  margin: 0;
-  color: var(--ink);
-  font-family: Georgia, "Noto Sans SC", serif;
-  font-size: clamp(1.8rem, 4vw, 3.15rem);
-  font-weight: 600;
-  line-height: 0.96;
-  letter-spacing: -0.075em;
-}
-
-.eyebrow {
-  margin: 0 0 8px;
-  color: var(--muted);
-  font-family: "Fira Code", "Noto Sans SC", monospace;
-  font-size: 0.76rem;
-  font-weight: 700;
-  letter-spacing: 0.16em;
-  text-transform: uppercase;
+.admin-breadcrumb {
+  margin-bottom: 4px;
 }
 
 .stats-grid {
@@ -598,23 +541,8 @@ textarea {
 
   .admin-sidebar {
     position: static;
-    grid-template-columns: minmax(180px, 0.7fr) minmax(260px, 1fr);
-    gap: 14px;
-    align-items: center;
   }
 
-  .admin-sidebar__brand {
-    border-right: 1px solid var(--line);
-    border-bottom: 0;
-    padding-right: 16px;
-    padding-bottom: 0;
-  }
-
-  .admin-menu .semi-navigation-list {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-
-  .admin-header,
   .toolbar {
     display: grid;
     grid-template-columns: 1fr;
@@ -633,27 +561,6 @@ textarea {
   .admin-shell {
     width: min(100% - 20px, 1440px);
     padding-top: 16px;
-  }
-
-  .admin-sidebar {
-    grid-template-columns: 1fr;
-    padding: 14px;
-  }
-
-  .admin-sidebar__brand {
-    border-right: 0;
-    border-bottom: 1px solid var(--line);
-    padding-right: 0;
-    padding-bottom: 12px;
-  }
-
-  .admin-menu .semi-navigation-list {
-    grid-template-columns: 1fr 1fr;
-  }
-
-  .admin-menu .semi-navigation-item {
-    justify-content: center;
-    text-align: center;
   }
 
   .stats-grid,
@@ -923,18 +830,10 @@ textarea {
   .brand-logo-row {
     grid-template-columns: 1fr;
   }
-
-  .admin-menu .semi-navigation-list {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-  }
 }
 
 @media (max-width: 560px) {
   .brand-form {
-    grid-template-columns: 1fr;
-  }
-
-  .admin-menu .semi-navigation-list {
     grid-template-columns: 1fr;
   }
 }

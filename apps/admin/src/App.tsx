@@ -2,6 +2,7 @@ import type { ReactNode } from "react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
   Banner,
+  Breadcrumb,
   Button,
   Card,
   ConfigProvider,
@@ -1600,33 +1601,12 @@ function App() {
           </aside>
 
           <section className="admin-content">
+            <Breadcrumb className="admin-breadcrumb" compact={false}>
+              <Breadcrumb.Item>DKPlus 图库后台</Breadcrumb.Item>
+              <Breadcrumb.Item>{sectionTitles[activeSection]}</Breadcrumb.Item>
+            </Breadcrumb>
             {activeSection === "photos" ? (
               <>
-                <header className="admin-header" aria-labelledby="page-title">
-                  <div>
-                    <p className="eyebrow">DKPlus 图库后台</p>
-                    <h1 id="page-title">图片管理</h1>
-                  </div>
-                  <Space wrap>
-                    <Button onClick={() => void refresh()} loading={isLoading}>
-                      刷新 API
-                    </Button>
-                    <Button theme="solid" onClick={openCreateEditor}>
-                      新增图片
-                    </Button>
-                    <Button onClick={() => setIsUploadOpen(true)}>
-                      上传图片
-                    </Button>
-                    <Button
-                      theme="light"
-                      loading={isExporting}
-                      onClick={() => void exportToClient()}
-                    >
-                      导出到客户端
-                    </Button>
-                  </Space>
-                </header>
-
                 <section className="stats-grid" aria-label="图片统计">
                   <Card bordered={false}>
                     <AdminStatistic title="图片记录" value={photos.length} />
@@ -1692,6 +1672,19 @@ function App() {
                       />
                     </div>
                     <Space wrap className="toolbar-actions">
+                      <Button onClick={() => void refresh()} loading={isLoading}>
+                        刷新 API
+                      </Button>
+                      <Button onClick={() => setIsUploadOpen(true)}>
+                        上传图片
+                      </Button>
+                      <Button
+                        theme="light"
+                        loading={isExporting}
+                        onClick={() => void exportToClient()}
+                      >
+                        导出到客户端
+                      </Button>
                       <Button theme="solid" onClick={openCreateEditor}>
                         新增图片
                       </Button>
@@ -1716,13 +1709,6 @@ function App() {
                       >
                         导出画框（{selectedCount}）
                       </Button>
-                      <Button
-                        theme="light"
-                        loading={isExporting}
-                        onClick={() => void exportToClient()}
-                      >
-                        导出到客户端
-                      </Button>
                     </Space>
                   </div>
                 </Card>
@@ -1734,7 +1720,9 @@ function App() {
                   headerExtraContent={<Tag>{filteredPhotos.length} 条结果</Tag>}
                 >
                   <Spin spinning={isLoading} style={{ width: "100%" }}>
-                    <Table<PhotoRecord>
+                    {/* key 缺失时 React 会在分区切换时复用同一 Table 实例，
+                        Semi Table 会以缓存的旧行数据调用新列的 render 导致崩溃 */}
+                    <Table<PhotoRecord> key="photos-table"
                       className="photos-table"
                       rowKey="id"
                       size="small"
@@ -1780,28 +1768,6 @@ function App() {
               </>
             ) : activeSection === "topics" ? (
               <>
-                <header className="admin-header" aria-labelledby="page-title">
-                  <div>
-                    <p className="eyebrow">DKPlus 图库后台</p>
-                    <h1 id="page-title">专题管理</h1>
-                  </div>
-                  <Space wrap>
-                    <Button onClick={() => void refresh()} loading={isLoading}>
-                      刷新 API
-                    </Button>
-                    <Button theme="solid" onClick={openCreateTopicEditor}>
-                      新增专题
-                    </Button>
-                    <Button
-                      theme="light"
-                      loading={isExporting}
-                      onClick={() => void exportToClient()}
-                    >
-                      导出到客户端
-                    </Button>
-                  </Space>
-                </header>
-
                 <section
                   className="stats-grid topic-stats"
                   aria-label="专题统计"
@@ -1831,13 +1797,36 @@ function App() {
                 </section>
 
                 <Card
+                  className="toolbar-card topic-toolbar-card"
+                  bordered={false}
+                >
+                  <div className="toolbar">
+                    <Space wrap className="toolbar-actions">
+                      <Button onClick={() => void refresh()} loading={isLoading}>
+                        刷新 API
+                      </Button>
+                      <Button
+                        theme="light"
+                        loading={isExporting}
+                        onClick={() => void exportToClient()}
+                      >
+                        导出到客户端
+                      </Button>
+                      <Button theme="solid" onClick={openCreateTopicEditor}>
+                        新增专题
+                      </Button>
+                    </Space>
+                  </div>
+                </Card>
+
+                <Card
                   className="table-card topic-table-card"
                   bordered={false}
                   title="专题列表"
                   headerExtraContent={<Tag>{topics.length} 条专题</Tag>}
                 >
                   <Spin spinning={isLoading} style={{ width: "100%" }}>
-                    <Table<TopicRecord>
+                    <Table<TopicRecord> key="topics-table"
                       className="photos-table topics-table"
                       rowKey="id"
                       size="small"
@@ -1874,28 +1863,6 @@ function App() {
               </>
             ) : (
               <>
-                <header className="admin-header" aria-labelledby="page-title">
-                  <div>
-                    <p className="eyebrow">DKPlus 图库后台</p>
-                    <h1 id="page-title">品牌管理</h1>
-                  </div>
-                  <Space wrap>
-                    <Button onClick={() => void refresh()} loading={isLoading}>
-                      刷新 API
-                    </Button>
-                    <Button theme="solid" onClick={openCreateBrandEditor}>
-                      新增品牌
-                    </Button>
-                    <Button
-                      theme="light"
-                      loading={isExporting}
-                      onClick={() => void exportToClient()}
-                    >
-                      导出到客户端
-                    </Button>
-                  </Space>
-                </header>
-
                 <section
                   className="stats-grid brand-stats"
                   aria-label="品牌统计"
@@ -1935,14 +1902,24 @@ function App() {
                       placeholder="按品牌、别名或 Logo 地址筛选"
                     />
                     <Space wrap className="toolbar-actions">
-                      <Button theme="solid" onClick={openCreateBrandEditor}>
-                        新增品牌
+                      <Button onClick={() => void refresh()} loading={isLoading}>
+                        刷新 API
                       </Button>
                       <Button
                         onClick={() => void refresh()}
                         loading={isLoading}
                       >
                         刷新并同步照片品牌
+                      </Button>
+                      <Button
+                        theme="light"
+                        loading={isExporting}
+                        onClick={() => void exportToClient()}
+                      >
+                        导出到客户端
+                      </Button>
+                      <Button theme="solid" onClick={openCreateBrandEditor}>
+                        新增品牌
                       </Button>
                     </Space>
                   </div>
@@ -1955,7 +1932,7 @@ function App() {
                   headerExtraContent={<Tag>{filteredBrands.length} 条品牌</Tag>}
                 >
                   <Spin spinning={isLoading} style={{ width: "100%" }}>
-                    <Table<BrandRecord>
+                    <Table<BrandRecord> key="brands-table"
                       className="photos-table brands-table"
                       rowKey="id"
                       size="small"
