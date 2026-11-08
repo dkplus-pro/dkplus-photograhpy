@@ -1418,6 +1418,7 @@ function App() {
       key: "actions",
       width: 150,
       align: "center",
+      fixed: "right",
       render: (_value, photo) => (
         <Space spacing={4}>
           <Button size="small" theme="light" onClick={() => editPhoto(photo)}>
@@ -1469,6 +1470,7 @@ function App() {
       key: "actions",
       width: 170,
       align: "center",
+      fixed: "right",
       render: (_value, topic) => {
         const usageCount = topicUsageById.get(topic.id) ?? 0;
         return (
@@ -1560,6 +1562,7 @@ function App() {
       key: "actions",
       width: 170,
       align: "center",
+      fixed: "right",
       render: (_value, brand) => (
         <Space spacing={4}>
           <Button size="small" theme="light" onClick={() => editBrand(brand)}>
@@ -1581,12 +1584,19 @@ function App() {
   return (
     <ConfigProvider locale={zh_CN}>
       <main className="admin-shell">
+        <header className="admin-topbar">
+          <div className="admin-topbar__brand">
+            <img
+              className="admin-topbar__logo"
+              src="/img/logo-black.png"
+              alt="DKPlus logo"
+            />
+            <strong className="admin-topbar__title">DKPlus Admin</strong>
+            <span className="admin-topbar__subtitle">图库后台</span>
+          </div>
+        </header>
         <div className="admin-layout">
           <aside className="admin-sidebar" aria-label="后台导航">
-            <div className="admin-sidebar__brand">
-              <span>DKPlus Admin</span>
-              <strong>图库后台</strong>
-            </div>
             <Nav
               className="admin-menu"
               selectedKeys={[activeSection]}
@@ -1675,8 +1685,12 @@ function App() {
                       <Button onClick={() => void refresh()} loading={isLoading}>
                         刷新 API
                       </Button>
-                      <Button onClick={() => setIsUploadOpen(true)}>
-                        上传图片
+                      <Button
+                        type="danger"
+                        disabled={selectedCount === 0}
+                        onClick={requestBatchDelete}
+                      >
+                        删除所选
                       </Button>
                       <Button
                         theme="light"
@@ -1684,16 +1698,6 @@ function App() {
                         onClick={() => void exportToClient()}
                       >
                         导出到客户端
-                      </Button>
-                      <Button theme="solid" onClick={openCreateEditor}>
-                        新增图片
-                      </Button>
-                      <Button
-                        type="danger"
-                        disabled={selectedCount === 0}
-                        onClick={requestBatchDelete}
-                      >
-                        删除所选
                       </Button>
                       <Button
                         theme="solid"
@@ -1708,6 +1712,12 @@ function App() {
                         onClick={() => setIsFrameExportOpen(true)}
                       >
                         导出画框（{selectedCount}）
+                      </Button>
+                      <Button onClick={() => setIsUploadOpen(true)}>
+                        上传图片
+                      </Button>
+                      <Button theme="solid" onClick={openCreateEditor}>
+                        新增图片
                       </Button>
                     </Space>
                   </div>

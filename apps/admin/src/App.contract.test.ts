@@ -239,4 +239,15 @@ describe("admin gallery list contract", () => {
     expect(appSource).not.toContain("eyebrow");
     expect(appSource).not.toContain("page-title");
   });
+
+  it("moves the brand into a top bar and pins row action columns right", () => {
+    expect(appSource).toContain('className="admin-topbar"');
+    expect(appSource).toContain('className="admin-topbar__brand"');
+    expect(appSource).toContain('className="admin-topbar__logo"');
+    expect(appSource).toContain('className="admin-topbar__title"');
+    expect(appSource).toContain('src="/img/logo-black.png"');
+    const fixedRightCount = (appSource.match(/fixed: "right"/g) ?? []).length;
+    expect(fixedRightCount).toBeGreaterThanOrEqual(3);
+    expect(appSource).not.toContain("admin-sidebar__brand");
+  });
 });
