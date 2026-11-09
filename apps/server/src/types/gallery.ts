@@ -1,5 +1,6 @@
 export type ExifMetadata = {
   cameraBrand?: string;
+  cameraMake?: string;
   cameraModel?: string;
   lens?: string;
   iso?: number;
@@ -40,6 +41,7 @@ export type BrandRecord = {
   logoUrls: string[];
   createdAt: string;
   updatedAt: string;
+  photoCount?: number;
 };
 
 export type PhotoAsset = {
@@ -76,6 +78,7 @@ export type TopicRecord = {
   sortOrder?: number;
   createdAt?: string;
   updatedAt?: string;
+  photoCount?: number;
 };
 
 export type TopicInput = {

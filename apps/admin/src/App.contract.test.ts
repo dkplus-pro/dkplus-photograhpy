@@ -58,9 +58,7 @@ describe("admin gallery list contract", () => {
     expect(appSource).toContain("pageSize: topicPageSize");
     expect(appSource).toContain("showSizeChanger: true");
     expect(appSource).toContain("pageSizeOpts: adminPageSizeOptions");
-    expect(appSource).toContain(
-      "onPageSizeChange: (size) => setPhotoPageSize(size)",
-    );
+    expect(appSource).toContain("onPageSizeChange: changePhotoPageSize");
     expect(appSource).toContain(
       "onPageSizeChange: (size) => setTopicPageSize(size)",
     );
@@ -224,6 +222,29 @@ describe("admin gallery list contract", () => {
     expect(styles).toContain("max-height: calc(100vh - 40px);");
     expect(styles).toContain(".brand-editor-modal .semi-modal-body");
     expect(styles).toContain("overflow-y: auto;");
+  });
+
+  it("loads photos page by page from the server and clears selection on paging", () => {
+    expect(appSource).toContain("api.listPhotos(query)");
+    expect(appSource).toContain("currentPage: photoPage");
+    expect(appSource).toContain("total: photoTotal");
+    expect(appSource).toContain("onPageChange: changePhotoPage");
+    expect(appSource).toContain("onPageSizeChange: changePhotoPageSize");
+    expect(appSource).toContain("sortOrder: photoSortOrder");
+    expect(appSource).toContain("photoAllTotal");
+    expect(appSource).toContain("setPhotoFacets(result.facets)");
+    expect(appSource).toMatch(
+      /const changePhotoPage = \(page: number\) => \{\s*setSelectedIds\(new Set\(\)\);\s*setPhotoPage\(page\);/,
+    );
+    expect(appSource).toMatch(
+      /const changePhotoPageSize = \(size: number\) => \{\s*setSelectedIds\(new Set\(\)\);/,
+    );
+    expect(appSource).not.toContain("刷新 API");
+    expect(appSource).toContain("刷新并同步照片品牌");
+    expect(apiSource).toContain("buildPhotoListSearch");
+    expect(apiSource).toContain('params.set("page"');
+    expect(apiSource).toContain('params.set("pageSize"');
+    expect(apiSource).toContain('params.set("sortOrder"');
   });
 
   it("replaces per-section headers with a shared breadcrumb and pins section table keys", () => {

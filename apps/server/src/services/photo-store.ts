@@ -46,6 +46,30 @@ export type GalleryExportResult = {
   brandCount: number;
 };
 
+export type PhotoPageQuery = {
+  page: number;
+  pageSize: number;
+  title?: string;
+  brand?: string;
+  model?: string;
+  topic?: string;
+  sortOrder: "ascend" | "descend";
+};
+
+export type PhotoPageFacets = {
+  cameraBrands: string[];
+  cameraModels: string[];
+};
+
+export type PhotoPageResult = {
+  photos: PhotoRecord[];
+  total: number;
+  allTotal: number;
+  page: number;
+  pageSize: number;
+  facets: PhotoPageFacets;
+};
+
 type ClientGalleryPayload = {
   generatedAt: string;
   topics: Record<string, unknown>[];
@@ -190,6 +214,19 @@ function normalizeSlug(value: string): string {
 
 function normalizeTopicId(value: string): string {
   return normalizeSlug(value);
+}
+
+/** EXIF 自动同步品牌的 id 规则，与 admin 前端 brandIdForName 保持一致 */
+function brandIdForName(name: string): string {
+  const ascii = name
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+  if (ascii) return ascii;
+  return `brand-${Array.from(name)
+    .map((char) => (char.codePointAt(0) ?? 0).toString(36))
+    .join("-")}`;
 }
 
 function normalizeBrandId(value: string): string {
@@ -424,6 +461,49 @@ function sortTime(photo: PhotoRecord): string {
     : photo.createdAt;
 }
 
+const FACET_LOCALE = "zh-CN";
+
+function exifFacetValue(
+  photo: PhotoRecord,
+  keys: string[],
+): string | undefined {
+  const exif = photo.exif;
+  if (!exif) return undefined;
+  for (const key of keys) {
+    const value = (exif as Record<string, unknown>)[key];
+    if (typeof value === "string" && value.trim()) {
+      return value.trim();
+    }
+  }
+  return undefined;
+}
+
+function collectFacetValues(photos: PhotoRecord[], keys: string[]): string[] {
+  const values = new Set<string>();
+  for (const photo of photos) {
+    const value = exifFacetValue(photo, keys);
+    if (value) values.add(value);
+  }
+  return [...values].sort((a, b) => a.localeCompare(b, FACET_LOCALE));
+}
+
+function pageSortKey(photo: PhotoRecord): string {
+  // Same derivation as the persisted sort_time column (see sortTime): records
+  // written through mergePhoto/normalizePhotoRecord already fold
+  // exif.capturedAt into takenAt, so this matches store.list() ordering.
+  const raw = photo.takenAt ?? photo.exif?.capturedAt ?? photo.createdAt;
+  const timestamp = raw ? Date.parse(raw) : Number.NaN;
+  return Number.isFinite(timestamp)
+    ? new Date(timestamp).toISOString()
+    : photo.createdAt;
+}
+
+function compareStrings(a: string, b: string): number {
+  if (a < b) return -1;
+  if (a > b) return 1;
+  return 0;
+}
+
 function parsePhotoRow(row: PhotoRow | undefined, id: string): PhotoRecord {
   if (!row) {
     throw new AppError(404, "PHOTO_NOT_FOUND", `Photo ${id} was not found`);
@@ -603,6 +683,11 @@ export class PhotoStore {
   }
 
   async list(): Promise<PhotoRecord[]> {
+    return this.listAll();
+  }
+
+  /** 同步取全量照片，供同步方法（专题/品牌统计）复用 */
+  listAll(): PhotoRecord[] {
     return this.db
       .prepare<[], PhotoRow>(
         `SELECT id, data
@@ -611,6 +696,65 @@ export class PhotoStore {
       )
       .all()
       .map((row) => parsePhotoRow(row, row.id));
+  }
+
+  async pagePhotos(query: PhotoPageQuery): Promise<PhotoPageResult> {
+    const all = await this.list();
+    const allTotal = all.length;
+    const facets: PhotoPageFacets = {
+      cameraBrands: collectFacetValues(all, ["cameraBrand", "cameraMake"]),
+      cameraModels: collectFacetValues(all, ["cameraModel"]),
+    };
+
+    const title = query.title?.toLowerCase();
+    const { brand, model, topic, sortOrder } = query;
+
+    const filtered = all.filter((photo) => {
+      if (
+        title !== undefined &&
+        !photo.title.toLowerCase().includes(title) &&
+        !(photo.description ?? "").toLowerCase().includes(title)
+      ) {
+        return false;
+      }
+      if (
+        brand !== undefined &&
+        exifFacetValue(photo, ["cameraBrand", "cameraMake"]) !== brand
+      ) {
+        return false;
+      }
+      if (
+        model !== undefined &&
+        exifFacetValue(photo, ["cameraModel"]) !== model
+      ) {
+        return false;
+      }
+      if (
+        topic !== undefined &&
+        photo.topicId !== topic &&
+        !(photo.topicIds ?? []).includes(topic)
+      ) {
+        return false;
+      }
+      return true;
+    });
+
+    const direction = sortOrder === "ascend" ? 1 : -1;
+    filtered.sort(
+      (a, b) =>
+        compareStrings(pageSortKey(a), pageSortKey(b)) * direction ||
+        compareStrings(a.id, b.id),
+    );
+
+    const start = (query.page - 1) * query.pageSize;
+    return {
+      photos: filtered.slice(start, start + query.pageSize),
+      total: filtered.length,
+      allTotal,
+      page: query.page,
+      pageSize: query.pageSize,
+      facets,
+    };
   }
 
   async get(id: string): Promise<PhotoRecord> {
@@ -623,7 +767,7 @@ export class PhotoStore {
   }
 
   listTopics(): TopicRecord[] {
-    return this.db
+    const topics = this.db
       .prepare<[], TopicRow>(
         `SELECT id, data
          FROM topics
@@ -631,6 +775,24 @@ export class PhotoStore {
       )
       .all()
       .map((row) => normalizeTopicRecord(JSON.parse(row.data)));
+
+    // 附加关联照片数：前端图片列表走服务端分页，无法再靠全量照片推导
+    const usage = new Map<string, number>();
+    for (const photo of this.listAll()) {
+      const topicIds = new Set(
+        [photo.topicId, ...(photo.topicIds ?? [])].filter(
+          (topicId): topicId is string => Boolean(topicId),
+        ),
+      );
+      for (const topicId of topicIds) {
+        usage.set(topicId, (usage.get(topicId) ?? 0) + 1);
+      }
+    }
+
+    return topics.map((topic) => ({
+      ...topic,
+      photoCount: usage.get(topic.id) ?? 0,
+    }));
   }
 
   async getTopic(id: string): Promise<TopicRecord> {
@@ -642,7 +804,8 @@ export class PhotoStore {
     );
   }
 
-  listBrands(): BrandRecord[] {
+  /** 只读取已落库的品牌 */
+  private listStoredBrands(): BrandRecord[] {
     return this.db
       .prepare<[], BrandRow>(
         `SELECT id, data
@@ -651,6 +814,57 @@ export class PhotoStore {
       )
       .all()
       .map((row) => normalizeBrandRecord(JSON.parse(row.data)));
+  }
+
+  listBrands(): BrandRecord[] {
+    const stored = this.listStoredBrands();
+
+    // 照片 EXIF 自动同步：图片列表走服务端分页后前端拿不到全量照片，
+    // 未配置的相机品牌需要在这里补进品牌列表
+    const usage = new Map<string, { name: string; count: number }>();
+    for (const photo of this.listAll()) {
+      const name = (
+        photo.exif?.cameraBrand ??
+        photo.exif?.cameraMake ??
+        ""
+      ).trim();
+      if (!name) continue;
+      const key = name.toLowerCase();
+      const current = usage.get(key) ?? { name, count: 0 };
+      usage.set(key, { name, count: current.count + 1 });
+    }
+
+    const byName = new Map<string, BrandRecord>();
+    for (const brand of stored) {
+      const name = brand.name || brand.title || brand.id;
+      const key = name.trim().toLowerCase();
+      if (!key) continue;
+      byName.set(key, {
+        ...brand,
+        name,
+        title: brand.title || name,
+        photoCount: usage.get(key)?.count ?? brand.photoCount ?? 0,
+      });
+    }
+
+    for (const [key, metric] of usage) {
+      if (byName.has(key)) continue;
+      byName.set(key, {
+        id: `auto-${brandIdForName(metric.name)}`,
+        name: metric.name,
+        title: metric.name,
+        aliases: [],
+        logos: [],
+        logoUrls: [],
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+        photoCount: metric.count,
+      });
+    }
+
+    return [...byName.values()].sort((left, right) =>
+      (left.title || left.name).localeCompare(right.title || right.name, "zh-CN"),
+    );
   }
 
   async getBrand(id: string): Promise<BrandRecord> {
@@ -1018,7 +1232,9 @@ export class PhotoStore {
   private findBrandByName(name: string): BrandRecord | undefined {
     const normalizedName = name.trim().toLocaleLowerCase();
     if (!normalizedName) return undefined;
-    return this.listBrands().find(
+    // 只查已落库的品牌：listBrands 会补齐照片 EXIF 派生品牌，
+    // 若用它判断会导致 syncBrandFromExif 误以为品牌已存在而永远不落库
+    return this.listStoredBrands().find(
       (brand) =>
         brand.name.toLocaleLowerCase() === normalizedName ||
         brand.aliases?.some(

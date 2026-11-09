@@ -3,6 +3,9 @@ import type {
   BrandPayload,
   BrandRecord,
   PhotoExif,
+  PhotoListFacets,
+  PhotoListQuery,
+  PhotoListResult,
   PhotoPayload,
   PhotoRecord,
   TopicPayload,
@@ -37,7 +40,7 @@ export interface UploadBulkResult {
 }
 
 export interface ApiClient {
-  listPhotos: () => Promise<PhotoRecord[]>;
+  listPhotos: (query?: PhotoListQuery) => Promise<PhotoListResult>;
   listTopics: () => Promise<TopicRecord[]>;
   listBrands: () => Promise<BrandRecord[]>;
   createBrand: (payload: BrandPayload) => Promise<BrandRecord>;
@@ -455,6 +458,57 @@ const unwrapPhotos = (
   return (value.photos ?? value.data ?? []).map(normalizePhotoForAdmin);
 };
 
+const buildPhotoListSearch = (query?: PhotoListQuery): string => {
+  const params = new URLSearchParams();
+  if (query?.page !== undefined) params.set("page", String(query.page));
+  if (query?.pageSize !== undefined) {
+    params.set("pageSize", String(query.pageSize));
+  }
+  if (query?.title) params.set("title", query.title);
+  if (query?.brand && query.brand !== "all") {
+    params.set("brand", query.brand);
+  }
+  if (query?.model && query.model !== "all") {
+    params.set("model", query.model);
+  }
+  if (query?.topic && query.topic !== "all") {
+    params.set("topic", query.topic);
+  }
+  if (query?.sortOrder) params.set("sortOrder", query.sortOrder);
+  return params.toString();
+};
+
+const unwrapPhotoList = (
+  value:
+    | ServerPhoto[]
+    | {
+        photos?: ServerPhoto[];
+        data?: ServerPhoto[];
+        total?: number;
+        allTotal?: number;
+        page?: number;
+        pageSize?: number;
+        facets?: Partial<PhotoListFacets>;
+      },
+): PhotoListResult => {
+  const envelope = Array.isArray(value)
+    ? { photos: value }
+    : value;
+  const photos = unwrapPhotos(envelope.photos ?? envelope.data ?? []);
+  const facets: PhotoListFacets = {
+    cameraBrands: envelope.facets?.cameraBrands ?? [],
+    cameraModels: envelope.facets?.cameraModels ?? [],
+  };
+  return {
+    photos,
+    total: envelope.total ?? photos.length,
+    allTotal: envelope.allTotal ?? photos.length,
+    page: envelope.page ?? 1,
+    pageSize: envelope.pageSize ?? photos.length,
+    facets,
+  };
+};
+
 const unwrapTopics = (
   value:
     | ServerTopicEnvelope[]
@@ -481,11 +535,21 @@ const unwrapUploadAssets = (
 export const createApiClient = (
   baseUrl = import.meta.env.VITE_API_BASE_URL ?? "/api",
 ): ApiClient => ({
-  async listPhotos() {
-    return unwrapPhotos(
+  async listPhotos(query?: PhotoListQuery) {
+    const search = buildPhotoListSearch(query);
+    return unwrapPhotoList(
       await requestJson<
-        PhotoRecord[] | { photos?: PhotoRecord[]; data?: PhotoRecord[] }
-      >(baseUrl, "/photos"),
+        | ServerPhoto[]
+        | {
+            photos?: ServerPhoto[];
+            data?: ServerPhoto[];
+            total?: number;
+            allTotal?: number;
+            page?: number;
+            pageSize?: number;
+            facets?: Partial<PhotoListFacets>;
+          }
+      >(baseUrl, search ? `/photos?${search}` : "/photos"),
     );
   },
   async listTopics() {

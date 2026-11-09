@@ -166,6 +166,44 @@ function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
 }
 
+const ALLOWED_PAGE_SIZES = new Set([10, 20, 50]);
+
+function firstQueryValue(value: unknown): string | undefined {
+  if (Array.isArray(value)) value = value[0];
+  return typeof value === "string" ? value : undefined;
+}
+
+function parsePageNumber(value: unknown): number {
+  const raw = firstQueryValue(value);
+  const parsed = raw === undefined ? Number.NaN : Number(raw);
+  return Number.isInteger(parsed) && parsed >= 1 ? parsed : 1;
+}
+
+function parsePageSizeNumber(value: unknown): number {
+  const parsed = Number(firstQueryValue(value));
+  return ALLOWED_PAGE_SIZES.has(parsed) ? parsed : 10;
+}
+
+function parseSortOrder(value: unknown): "ascend" | "descend" {
+  return firstQueryValue(value) === "ascend" ? "ascend" : "descend";
+}
+
+function parseTitleFilter(value: unknown): string | undefined {
+  const trimmed = firstQueryValue(value)?.trim();
+  return trimmed ? trimmed : undefined;
+}
+
+function parseBrandModelFilter(value: unknown): string | undefined {
+  const trimmed = firstQueryValue(value)?.trim();
+  // Empty and the sentinel "all" both mean "do not filter".
+  return trimmed && trimmed.toLowerCase() !== "all" ? trimmed : undefined;
+}
+
+function parseTopicFilter(value: unknown): string | undefined {
+  const trimmed = firstQueryValue(value)?.trim();
+  return trimmed ? trimmed : undefined;
+}
+
 function exifString(value: unknown): string | undefined {
   if (typeof value === "string" && value.trim()) {
     return value.trim();
@@ -401,7 +439,21 @@ export function createPhotosRouter(
   const router = new Router({ prefix: "/api" });
 
   router.get("/photos", async (ctx) => {
-    ctx.body = { photos: await store.list() };
+    // Without `page` keep the legacy shape `{ photos: [...] }` (full list) for
+    // existing callers; with `page` return the paginated admin payload.
+    if (ctx.query.page === undefined) {
+      ctx.body = { photos: await store.list() };
+      return;
+    }
+    ctx.body = await store.pagePhotos({
+      page: parsePageNumber(ctx.query.page),
+      pageSize: parsePageSizeNumber(ctx.query.pageSize),
+      title: parseTitleFilter(ctx.query.title),
+      brand: parseBrandModelFilter(ctx.query.brand),
+      model: parseBrandModelFilter(ctx.query.model),
+      topic: parseTopicFilter(ctx.query.topic),
+      sortOrder: parseSortOrder(ctx.query.sortOrder),
+    });
   });
 
   router.get("/gallery", async (ctx) => {

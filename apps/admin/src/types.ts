@@ -131,6 +131,7 @@ export interface TopicRecord {
   sortOrder?: number;
   createdAt?: string;
   updatedAt?: string;
+  photoCount?: number;
 }
 
 export interface TopicPayload {
@@ -155,4 +156,30 @@ export interface ToastMessage {
   id: string;
   tone: "success" | "error" | "info";
   text: string;
+}
+
+export type PhotoSortOrder = "ascend" | "descend";
+
+export interface PhotoListQuery {
+  page?: number;
+  pageSize?: number;
+  title?: string;
+  brand?: string;
+  model?: string;
+  topic?: string;
+  sortOrder?: PhotoSortOrder;
+}
+
+export interface PhotoListFacets {
+  cameraBrands: string[];
+  cameraModels: string[];
+}
+
+export interface PhotoListResult {
+  photos: PhotoRecord[];
+  total: number;
+  allTotal: number;
+  page: number;
+  pageSize: number;
+  facets: PhotoListFacets;
 }

@@ -40,8 +40,12 @@ import type {
   BrandLogoRecord,
   BrandPayload,
   BrandRecord,
+  PhotoListFacets,
+  PhotoListQuery,
+  PhotoListResult,
   PhotoPayload,
   PhotoRecord,
+  PhotoSortOrder,
   TopicPayload,
   TopicRecord,
   UploadPreview,
@@ -249,6 +253,68 @@ const normalizeTopicIds = (values: Array<string | undefined>): string[] => [
   ),
 ];
 
+const photoSortTimestamp = (photo: PhotoRecord): number => {
+  const raw =
+    photo.takenAt ?? photo.exif?.capturedAt ?? photo.createdAt ?? "";
+  const timestamp = Date.parse(raw);
+  return Number.isFinite(timestamp) ? timestamp : 0;
+};
+
+/** 演示数据兜底：在前端复刻服务端分页/筛选/排序语义 */
+const queryDemoPhotos = (query: PhotoListQuery): PhotoListResult => {
+  const page = Math.max(1, query.page ?? 1);
+  const pageSize = query.pageSize ?? 10;
+  const title = query.title?.trim().toLowerCase() ?? "";
+  const brand = query.brand && query.brand !== allFilterValue ? query.brand : "";
+  const model = query.model && query.model !== allFilterValue ? query.model : "";
+  const topic = query.topic && query.topic !== allFilterValue ? query.topic : "";
+
+  const facets: PhotoListFacets = {
+    cameraBrands: uniqueSorted(demoPhotos.map((photo) => photo.exif?.cameraMake)),
+    cameraModels: uniqueSorted(demoPhotos.map((photo) => photo.exif?.cameraModel)),
+  };
+
+  const matched = demoPhotos.filter((photo) => {
+    if (title) {
+      const inTitle = photoTitle(photo).toLowerCase().includes(title);
+      const inDescription = (photo.description ?? "").toLowerCase().includes(title);
+      if (!inTitle && !inDescription) return false;
+    }
+    if (brand && (photo.exif?.cameraMake?.trim() || "") !== brand) {
+      return false;
+    }
+    if (model && (photo.exif?.cameraModel?.trim() || "") !== model) {
+      return false;
+    }
+    if (topic) {
+      const topicIds = normalizeTopicIds([
+        photo.topicId,
+        ...(photo.topicIds ?? []),
+      ]);
+      if (!topicIds.includes(topic)) return false;
+    }
+    return true;
+  });
+
+  const sorted = [...matched].sort((left, right) => {
+    const delta = photoSortTimestamp(left) - photoSortTimestamp(right);
+    if (delta !== 0) {
+      return query.sortOrder === "ascend" ? delta : -delta;
+    }
+    return left.id.localeCompare(right.id);
+  });
+
+  const start = (page - 1) * pageSize;
+  return {
+    photos: sorted.slice(start, start + pageSize),
+    total: sorted.length,
+    allTotal: demoPhotos.length,
+    page,
+    pageSize,
+    facets,
+  };
+};
+
 const selectValuesToTopicIds = (value: unknown): string[] => {
   if (Array.isArray(value)) {
     return normalizeTopicIds(value.map((entry) => String(entry)));
@@ -388,6 +454,16 @@ function App() {
   } | null>(null);
   const frameCancelRef = useRef(false);
   const [photoPageSize, setPhotoPageSize] = useState(10);
+  const [photoPage, setPhotoPage] = useState(1);
+  const [photoSortOrder, setPhotoSortOrder] = useState<PhotoSortOrder>(
+    "descend",
+  );
+  const [photoTotal, setPhotoTotal] = useState(0);
+  const [photoAllTotal, setPhotoAllTotal] = useState(0);
+  const [photoFacets, setPhotoFacets] = useState<PhotoListFacets>({
+    cameraBrands: [],
+    cameraModels: [],
+  });
   const [topicPageSize, setTopicPageSize] = useState(10);
   const [brandPageSize, setBrandPageSize] = useState(10);
   const [brandSearch, setBrandSearch] = useState("");
@@ -397,31 +473,101 @@ function App() {
     onConfirm: () => Promise<void>;
   } | null>(null);
 
+  const demoNoticeShownRef = useRef(false);
+
+  /** 翻页/改变页容量/筛选/排序后重置选择，避免选中态指向已不在结果集中的图片 */
+  const resetPhotoSelection = () => {
+    setSelectedIds(new Set());
+    setPhotoPage(1);
+  };
+
+  const changeTitleFilter = (value: string) => {
+    resetPhotoSelection();
+    setTitleFilter(value);
+  };
+
+  const changeBrandFilter = (value: string) => {
+    resetPhotoSelection();
+    setBrandFilter(value);
+  };
+
+  const changeModelFilter = (value: string) => {
+    resetPhotoSelection();
+    setModelFilter(value);
+  };
+
+  const changeTopicFilter = (value: string) => {
+    resetPhotoSelection();
+    setTopicFilter(value);
+  };
+
+  const changePhotoPage = (page: number) => {
+    setSelectedIds(new Set());
+    setPhotoPage(page);
+  };
+
+  const changePhotoPageSize = (size: number) => {
+    setSelectedIds(new Set());
+    setPhotoPageSize(size);
+    setPhotoPage(1);
+  };
+
+  const notifyDemoFallback = (error: unknown) => {
+    if (demoNoticeShownRef.current) return;
+    demoNoticeShownRef.current = true;
+    Toast.info(
+      `API 暂不可用，正在显示演示数据。${
+        error instanceof Error ? error.message : ""
+      }`.trim(),
+    );
+  };
+
+  /** 图片列表走服务端分页：按当前页码/页容量/筛选/排序拉取 */
+  const loadPhotos = async () => {
+    setIsLoading(true);
+    const query: PhotoListQuery = {
+      page: photoPage,
+      pageSize: photoPageSize,
+      title: titleFilter.trim() || undefined,
+      brand: brandFilter === allFilterValue ? undefined : brandFilter,
+      model: modelFilter === allFilterValue ? undefined : modelFilter,
+      topic: topicFilter === allFilterValue ? undefined : topicFilter,
+      sortOrder: photoSortOrder,
+    };
+    try {
+      const result = await api.listPhotos(query);
+      setPhotos(result.photos);
+      setPhotoTotal(result.total);
+      setPhotoAllTotal(result.allTotal);
+      setPhotoFacets(result.facets);
+    } catch (error) {
+      const fallback = queryDemoPhotos(query);
+      setPhotos(fallback.photos);
+      setPhotoTotal(fallback.total);
+      setPhotoAllTotal(fallback.allTotal);
+      setPhotoFacets(fallback.facets);
+      notifyDemoFallback(error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   const refresh = async () => {
     setIsLoading(true);
     try {
-      const [records, topicRecords] = await Promise.all([
-        api.listPhotos(),
-        api.listTopics(),
-      ]);
+      const topicRecords = await api.listTopics();
       let brandRecords: BrandRecord[];
       try {
         brandRecords = await api.listBrands();
       } catch {
-        brandRecords = deriveBrandsFromPhotos(records);
+        brandRecords = [];
       }
-      setPhotos(records);
       setTopics(topicRecords);
-      setBrands(mergeBrandsWithPhotoBrands(brandRecords, records));
+      setBrands(mergeBrandsWithPhotoBrands(brandRecords, []));
     } catch (error) {
-      setPhotos(demoPhotos);
       setTopics(demoTopics);
-      setBrands(mergeBrandsWithPhotoBrands(demoBrands, demoPhotos));
-      Toast.info(
-        `API 暂不可用，正在显示演示数据。${
-          error instanceof Error ? error.message : ""
-        }`.trim(),
-      );
+      setBrands(mergeBrandsWithPhotoBrands(demoBrands, []));
+      notifyDemoFallback(error);
     } finally {
       setIsLoading(false);
     }
@@ -430,6 +576,18 @@ function App() {
   useEffect(() => {
     void refresh();
   }, []);
+
+  useEffect(() => {
+    void loadPhotos();
+  }, [
+    photoPage,
+    photoPageSize,
+    titleFilter,
+    brandFilter,
+    modelFilter,
+    topicFilter,
+    photoSortOrder,
+  ]);
 
   useEffect(() => {
     const syncSectionFromRoute = () => {
@@ -500,65 +658,22 @@ function App() {
     return [...map.entries()].sort((a, b) => a[1].localeCompare(b[1], "zh-CN"));
   }, [photos, topics]);
 
-  const cameraBrands = useMemo(
-    () => uniqueSorted(photos.map((photo) => photo.exif?.cameraMake)),
-    [photos],
-  );
+  const cameraBrands = photoFacets.cameraBrands;
 
-  const cameraModels = useMemo(
-    () => uniqueSorted(photos.map((photo) => photo.exif?.cameraModel)),
-    [photos],
-  );
-
-  const filteredPhotos = useMemo(() => {
-    const normalizedTitle = titleFilter.trim().toLowerCase();
-    return photos.filter((photo) => {
-      const topicIds = normalizeTopicIds([
-        photo.topicId,
-        ...(photo.topicIds ?? []),
-      ]);
-      const brand = photo.exif?.cameraMake?.trim() || "";
-      const model = photo.exif?.cameraModel?.trim() || "";
-      const matchesTopic =
-        topicFilter === "all" || topicIds.includes(topicFilter);
-      const matchesBrand = brandFilter === "all" || brand === brandFilter;
-      const matchesModel = modelFilter === "all" || model === modelFilter;
-      const searchableTitle = [photoTitle(photo), photo.description]
-        .filter(Boolean)
-        .join(" ")
-        .toLowerCase();
-      const matchesTitle =
-        !normalizedTitle || searchableTitle.includes(normalizedTitle);
-      return matchesTopic && matchesBrand && matchesModel && matchesTitle;
-    });
-  }, [brandFilter, modelFilter, photos, titleFilter, topicFilter]);
+  const cameraModels = photoFacets.cameraModels;
 
   const selectedCount = selectedIds.size;
   const stagedSummary = useMemo(() => summarizeUpload(previews), [previews]);
-  const visibleCount = filteredPhotos.length;
+  const visibleCount = photoTotal;
   const topicCount = topics.length;
   const topicUsageById = useMemo(() => {
     const usage = new Map<string, number>();
-    for (const photo of photos) {
-      const ids = new Set(
-        normalizeTopicIds([photo.topicId, ...(photo.topicIds ?? [])]),
-      );
-      for (const id of ids) {
-        usage.set(id, (usage.get(id) ?? 0) + 1);
-      }
+    for (const topic of topics) {
+      usage.set(topic.id, topic.photoCount ?? 0);
     }
     return usage;
-  }, [photos]);
-  const brandUsageByName = useMemo(() => {
-    const usage = new Map<string, number>();
-    for (const photo of photos) {
-      const key = brandKey(photoBrandName(photo));
-      if (key) usage.set(key, (usage.get(key) ?? 0) + 1);
-    }
-    return usage;
-  }, [photos]);
-  const brandPhotoCount = (brand: BrandRecord): number =>
-    brandUsageByName.get(brandKey(brand.name)) ?? brand.photoCount ?? 0;
+  }, [topics]);
+  const brandPhotoCount = (brand: BrandRecord): number => brand.photoCount ?? 0;
   const filteredBrands = useMemo(() => {
     const keyword = brandSearch.trim().toLowerCase();
     if (!keyword) return brands;
@@ -644,12 +759,6 @@ function App() {
     };
   };
 
-  const withSelectedTopics = (photo: PhotoRecord): PhotoRecord =>
-    withTopicTitles(
-      photo,
-      normalizeTopicIds([...(payload.topicIds ?? []), payload.topicId]),
-    );
-
   const topicLabelForIds = (topicIds: string[]): string =>
     normalizeTopicIds(topicIds).map(titleForTopicId).join("、") || "未指定专题";
 
@@ -723,13 +832,8 @@ function App() {
             ).photo
           : await api.updatePhoto(editingId, cleanPayload);
         if (!updated) throw new Error("图片更新后没有返回记录。");
-        const updatedWithTopic = withSelectedTopics(updated);
-        setPhotos((current) =>
-          current.map((photo) =>
-            photo.id === editingId ? updatedWithTopic : photo,
-          ),
-        );
         Toast.success("图片记录已更新");
+        void loadPhotos();
       } else if (editorPreview) {
         const result = await api.uploadPhoto({
           ...editorPreview,
@@ -740,8 +844,8 @@ function App() {
         });
         const created = result.photo;
         if (!created) throw new Error("上传后没有返回图片记录。");
-        setPhotos((current) => [withSelectedTopics(created), ...current]);
         Toast.success("图片记录已创建");
+        void loadPhotos();
       }
       resetEditor();
     } catch (error) {
@@ -830,7 +934,7 @@ function App() {
         return withTopicTitles(photo, preview?.topicIds ?? []);
       });
 
-      if (uploaded.length) setPhotos((current) => [...uploaded, ...current]);
+      if (uploaded.length) void loadPhotos();
       if (result.failed.length) {
         const remainingPreviews = previews.filter((preview, index) => {
           const shouldKeep = failedIndices.has(index);
@@ -1004,15 +1108,13 @@ function App() {
       body: `确认删除“${photoTitle(photo)}”？此操作会移除后台记录，且无法撤销。`,
       async onConfirm() {
         await api.deletePhoto(photo.id);
-        setPhotos((current) =>
-          current.filter((record) => record.id !== photo.id),
-        );
         setSelectedIds((current) => {
           const next = new Set(current);
           next.delete(photo.id);
           return next;
         });
         Toast.success("图片已删除");
+        void loadPhotos();
       },
     });
   };
@@ -1024,11 +1126,9 @@ function App() {
       body: `确认删除已选择的 ${ids.length} 条记录？此操作无法撤销。`,
       async onConfirm() {
         await api.batchDelete(ids);
-        setPhotos((current) =>
-          current.filter((photo) => !ids.includes(photo.id)),
-        );
         setSelectedIds(new Set());
         Toast.success("已删除所选记录");
+        void loadPhotos();
       },
     });
   };
@@ -1410,6 +1510,7 @@ function App() {
       width: 150,
       align: "center",
       sorter: (left, right) => takenAtTime(left) - takenAtTime(right),
+      sortOrder: photoSortOrder,
       defaultSortOrder: "descend",
       render: (_value, photo) => formatDate(takenAtValue(photo)),
     },
@@ -1619,7 +1720,7 @@ function App() {
               <>
                 <section className="stats-grid" aria-label="图片统计">
                   <Card bordered={false}>
-                    <AdminStatistic title="图片记录" value={photos.length} />
+                    <AdminStatistic title="图片记录" value={photoAllTotal} />
                   </Card>
                   <Card bordered={false}>
                     <AdminStatistic title="筛选结果" value={visibleCount} />
@@ -1638,14 +1739,14 @@ function App() {
                       showClear
                       aria-label="按标题筛选"
                       value={titleFilter}
-                      onChange={setTitleFilter}
+                      onChange={changeTitleFilter}
                       placeholder="按标题筛选"
                     />
                     {/* Semi Select 会在触发节点上覆盖 aria-label，这里用带标签的分组暴露筛选项语义 */}
                     <div role="group" aria-label="按品牌筛选">
                       <Select
                         value={brandFilter}
-                        onChange={(value) => setBrandFilter(String(value))}
+                        onChange={(value) => changeBrandFilter(String(value))}
                         optionList={[
                           { label: "全部品牌", value: "all" },
                           ...cameraBrands.map((brand) => ({
@@ -1658,7 +1759,7 @@ function App() {
                     <div role="group" aria-label="按机型筛选">
                       <Select
                         value={modelFilter}
-                        onChange={(value) => setModelFilter(String(value))}
+                        onChange={(value) => changeModelFilter(String(value))}
                         optionList={[
                           { label: "全部机型", value: "all" },
                           ...cameraModels.map((model) => ({
@@ -1671,7 +1772,7 @@ function App() {
                     <div role="group" aria-label="按专题筛选">
                       <Select
                         value={topicFilter}
-                        onChange={(value) => setTopicFilter(String(value))}
+                        onChange={(value) => changeTopicFilter(String(value))}
                         optionList={[
                           { label: "全部专题", value: allFilterValue },
                           ...topicOptions.map(([id, title]) => ({
@@ -1682,9 +1783,6 @@ function App() {
                       />
                     </div>
                     <Space wrap className="toolbar-actions">
-                      <Button onClick={() => void refresh()} loading={isLoading}>
-                        刷新 API
-                      </Button>
                       <Button
                         type="danger"
                         disabled={selectedCount === 0}
@@ -1727,7 +1825,7 @@ function App() {
                   className="table-card"
                   bordered={false}
                   title="图片列表"
-                  headerExtraContent={<Tag>{filteredPhotos.length} 条结果</Tag>}
+                  headerExtraContent={<Tag>{photoTotal} 条结果</Tag>}
                 >
                   <Spin spinning={isLoading} style={{ width: "100%" }}>
                     {/* key 缺失时 React 会在分区切换时复用同一 Table 实例，
@@ -1738,17 +1836,27 @@ function App() {
                       size="small"
                       tableLayout="fixed"
                       columns={columns}
-                      dataSource={filteredPhotos}
+                      dataSource={photos}
+                      onChange={(changeInfo) => {
+                        // Semi 排序为三态循环（升序→降序→取消），受控模式下它算出的
+                        // 下一个值恒为“取消”，因此由前端在升序/降序之间切换
+                        if (changeInfo.extra?.changeType !== "sorter") return;
+                        setSelectedIds(new Set());
+                        setPhotoPage(1);
+                        setPhotoSortOrder(
+                          photoSortOrder === "descend" ? "ascend" : "descend",
+                        );
+                      }}
                       empty={
                         <div className="table-empty-state">
                           <Empty description="暂无匹配图片，可调整标题、品牌、机型或专题筛选" />
                           <Button
                             size="small"
                             onClick={() => {
-                              setTitleFilter("");
-                              setBrandFilter(allFilterValue);
-                              setModelFilter(allFilterValue);
-                              setTopicFilter(allFilterValue);
+                              changeTitleFilter("");
+                              changeBrandFilter(allFilterValue);
+                              changeModelFilter(allFilterValue);
+                              changeTopicFilter(allFilterValue);
                             }}
                           >
                             清除筛选
@@ -1764,10 +1872,13 @@ function App() {
                           ),
                       }}
                       pagination={{
+                        currentPage: photoPage,
+                        total: photoTotal,
                         pageSize: photoPageSize,
                         showSizeChanger: true,
                         pageSizeOpts: adminPageSizeOptions,
-                        onPageSizeChange: (size) => setPhotoPageSize(size),
+                        onPageChange: changePhotoPage,
+                        onPageSizeChange: changePhotoPageSize,
                         showTotal: true,
                         formatPageText: (pageInfo) =>
                           `显示 ${pageInfo?.currentStart ?? 0}-${pageInfo?.currentEnd ?? 0}，共 ${pageInfo?.total ?? 0} 条`,
@@ -1812,9 +1923,6 @@ function App() {
                 >
                   <div className="toolbar">
                     <Space wrap className="toolbar-actions">
-                      <Button onClick={() => void refresh()} loading={isLoading}>
-                        刷新 API
-                      </Button>
                       <Button
                         theme="light"
                         loading={isExporting}
@@ -1912,9 +2020,6 @@ function App() {
                       placeholder="按品牌、别名或 Logo 地址筛选"
                     />
                     <Space wrap className="toolbar-actions">
-                      <Button onClick={() => void refresh()} loading={isLoading}>
-                        刷新 API
-                      </Button>
                       <Button
                         onClick={() => void refresh()}
                         loading={isLoading}

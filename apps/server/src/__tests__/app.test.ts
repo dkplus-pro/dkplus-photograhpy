@@ -1025,3 +1025,389 @@ test("brand CRUD stores multiple logos and photo camera brands auto-sync", async
     await rm(root, { recursive: true, force: true });
   }
 });
+
+type PhotoSeed = {
+  id: string;
+  title: string;
+  description?: string;
+  topicIds?: string[];
+  takenAt?: string;
+  exif?: { cameraBrand?: string; cameraModel?: string };
+};
+
+type PhotoListResponse = {
+  photos: Array<{ id: string; title: string }>;
+  total?: number;
+  allTotal?: number;
+  page?: number;
+  pageSize?: number;
+  facets?: { cameraBrands: string[]; cameraModels: string[] };
+};
+
+async function seedPhoto(
+  app: ReturnType<typeof createApp>,
+  seed: PhotoSeed,
+): Promise<void> {
+  await authed(request(app.callback()).post("/api/photos"))
+    .send({
+      id: seed.id,
+      title: seed.title,
+      description: seed.description,
+      topicIds: seed.topicIds,
+      takenAt: seed.takenAt,
+      exif: seed.exif,
+      image: { url: `https://cdn.example/${seed.id}.jpg`, storage: "remote" },
+    })
+    .expect(201);
+}
+
+async function seedPhotos(
+  app: ReturnType<typeof createApp>,
+  seeds: PhotoSeed[],
+): Promise<void> {
+  for (const seed of seeds) {
+    await seedPhoto(app, seed);
+  }
+}
+
+async function fetchPhotos(
+  app: ReturnType<typeof createApp>,
+  query = "",
+): Promise<PhotoListResponse> {
+  const response = await authed(
+    request(app.callback()).get(`/api/photos${query}`),
+  ).expect(200);
+  return response.body as PhotoListResponse;
+}
+
+function photoIds(payload: PhotoListResponse): string[] {
+  return payload.photos.map((photo) => photo.id);
+}
+
+const filterSeeds: PhotoSeed[] = [
+  {
+    id: "filter-alps",
+    title: "Sunset Over Alps",
+    description: "Mountain trip",
+    topicIds: ["street", "editorial"],
+    takenAt: "2026-05-01T00:00:00.000Z",
+    exif: { cameraBrand: "Canon", cameraModel: "R5" },
+  },
+  {
+    id: "filter-alpine",
+    title: "Alpine Morning",
+    description: "Sunrise hike",
+    topicIds: ["portrait"],
+    takenAt: "2026-05-02T00:00:00.000Z",
+    exif: { cameraBrand: "Sony", cameraModel: "A7R V" },
+  },
+  {
+    id: "filter-city",
+    title: "City Night",
+    description: "urban walk",
+    topicIds: ["street"],
+    takenAt: "2026-05-03T00:00:00.000Z",
+  },
+];
+
+test("GET /api/photos without page keeps legacy full-list shape", async () => {
+  const { config, root } = await makeConfig();
+  try {
+    const app = createApp(config);
+    await seedPhotos(app, [
+      { id: "legacy-b", title: "Legacy older", takenAt: "2026-01-01T00:00:00.000Z" },
+      { id: "legacy-a", title: "Legacy newer", takenAt: "2026-02-01T00:00:00.000Z" },
+    ]);
+
+    const payload = await fetchPhotos(app);
+    assert.deepEqual(Object.keys(payload).sort(), ["photos"]);
+    assert.equal(payload.photos.length, 2);
+    assert.deepEqual(photoIds(payload), ["legacy-a", "legacy-b"]);
+  } finally {
+    await rm(root, { recursive: true, force: true });
+  }
+});
+
+test("GET /api/photos with page returns paginated payload with totals and facets", async () => {
+  const { config, root } = await makeConfig();
+  try {
+    const app = createApp(config);
+    await seedPhotos(
+      app,
+      Array.from({ length: 25 }, (_, index) => ({
+        id: `page-photo-${String(index + 1).padStart(2, "0")}`,
+        title: `Page frame ${index + 1}`,
+        takenAt: new Date(Date.UTC(2026, 0, 1, 0, index)).toISOString(),
+      })),
+    );
+
+    const page1 = await fetchPhotos(app, "?page=1&pageSize=10");
+    assert.deepEqual(Object.keys(page1).sort(), [
+      "allTotal",
+      "facets",
+      "page",
+      "pageSize",
+      "photos",
+      "total",
+    ]);
+    assert.equal(page1.page, 1);
+    assert.equal(page1.pageSize, 10);
+    assert.equal(page1.total, 25);
+    assert.equal(page1.allTotal, 25);
+    assert.equal(page1.photos.length, 10);
+    assert.deepEqual(photoIds(page1), [
+      "page-photo-25",
+      "page-photo-24",
+      "page-photo-23",
+      "page-photo-22",
+      "page-photo-21",
+      "page-photo-20",
+      "page-photo-19",
+      "page-photo-18",
+      "page-photo-17",
+      "page-photo-16",
+    ]);
+    assert.deepEqual(page1.facets, { cameraBrands: [], cameraModels: [] });
+
+    const page2 = await fetchPhotos(app, "?page=2&pageSize=20");
+    assert.equal(page2.page, 2);
+    assert.equal(page2.pageSize, 20);
+    assert.equal(page2.total, 25);
+    assert.equal(page2.photos.length, 5);
+    assert.deepEqual(photoIds(page2), [
+      "page-photo-05",
+      "page-photo-04",
+      "page-photo-03",
+      "page-photo-02",
+      "page-photo-01",
+    ]);
+
+    const defaultPageSize = await fetchPhotos(app, "?page=2");
+    assert.equal(defaultPageSize.pageSize, 10);
+    assert.equal(defaultPageSize.photos.length, 10);
+    assert.equal(defaultPageSize.photos[0].id, "page-photo-15");
+    assert.equal(defaultPageSize.photos[9].id, "page-photo-06");
+
+    const beyondLast = await fetchPhotos(app, "?page=4&pageSize=10");
+    assert.deepEqual(beyondLast.photos, []);
+    assert.equal(beyondLast.total, 25);
+    assert.equal(beyondLast.allTotal, 25);
+  } finally {
+    await rm(root, { recursive: true, force: true });
+  }
+});
+
+test("GET /api/photos filters by title case-insensitively across title and description", async () => {
+  const { config, root } = await makeConfig();
+  try {
+    const app = createApp(config);
+    await seedPhotos(app, filterSeeds);
+
+    const byTitle = await fetchPhotos(app, "?page=1&title=sunset");
+    assert.equal(byTitle.total, 1);
+    assert.deepEqual(photoIds(byTitle), ["filter-alps"]);
+
+    const uppercase = await fetchPhotos(app, "?page=1&title=ALPINE");
+    assert.deepEqual(photoIds(uppercase), ["filter-alpine"]);
+
+    const byDescription = await fetchPhotos(app, "?page=1&title=trip");
+    assert.deepEqual(photoIds(byDescription), ["filter-alps"]);
+
+    const byOtherDescription = await fetchPhotos(app, "?page=1&title=walk");
+    assert.deepEqual(photoIds(byOtherDescription), ["filter-city"]);
+
+    const noMatch = await fetchPhotos(app, "?page=1&title=nomatch");
+    assert.equal(noMatch.total, 0);
+    assert.equal(noMatch.allTotal, 3);
+    assert.deepEqual(noMatch.photos, []);
+  } finally {
+    await rm(root, { recursive: true, force: true });
+  }
+});
+
+test("GET /api/photos filters brand, model, and topic exactly with all-tolerance", async () => {
+  const { config, root } = await makeConfig();
+  try {
+    const app = createApp(config);
+    await seedPhotos(app, filterSeeds);
+
+    const brand = await fetchPhotos(app, "?page=1&brand=Canon");
+    assert.equal(brand.total, 1);
+    assert.deepEqual(photoIds(brand), ["filter-alps"]);
+
+    const brandAll = await fetchPhotos(app, "?page=1&brand=all");
+    assert.equal(brandAll.total, 3);
+
+    const brandCaseSensitive = await fetchPhotos(app, "?page=1&brand=canon");
+    assert.equal(brandCaseSensitive.total, 0);
+
+    const model = await fetchPhotos(
+      app,
+      `?page=1&model=${encodeURIComponent("A7R V")}`,
+    );
+    assert.deepEqual(photoIds(model), ["filter-alpine"]);
+
+    const topicViaTopicIds = await fetchPhotos(app, "?page=1&topic=editorial");
+    assert.deepEqual(photoIds(topicViaTopicIds), ["filter-alps"]);
+
+    const topicStreet = await fetchPhotos(app, "?page=1&topic=street");
+    assert.deepEqual(photoIds(topicStreet), ["filter-city", "filter-alps"]);
+
+    const filteredPage = await fetchPhotos(app, "?page=1&topic=portrait");
+    assert.equal(filteredPage.total, 1);
+    assert.equal(filteredPage.allTotal, 3);
+    assert.deepEqual(photoIds(filteredPage), ["filter-alpine"]);
+
+    const combinedMiss = await fetchPhotos(
+      app,
+      "?page=1&brand=Sony&title=sunset",
+    );
+    assert.equal(combinedMiss.total, 0);
+
+    const combinedHit = await fetchPhotos(
+      app,
+      "?page=1&brand=Canon&title=sunset",
+    );
+    assert.equal(combinedHit.total, 1);
+    assert.deepEqual(photoIds(combinedHit), ["filter-alps"]);
+  } finally {
+    await rm(root, { recursive: true, force: true });
+  }
+});
+
+test("GET /api/photos sorts by taken time with id ASC tiebreak in both directions", async () => {
+  const { config, root } = await makeConfig();
+  try {
+    const app = createApp(config);
+    await seedPhotos(app, [
+      { id: "sort-aaa", title: "Tie A", takenAt: "2026-03-01T00:00:00.000Z" },
+      { id: "sort-bbb", title: "Tie B", takenAt: "2026-03-01T00:00:00.000Z" },
+      { id: "sort-new", title: "Newest", takenAt: "2026-03-05T00:00:00.000Z" },
+      { id: "sort-old", title: "Oldest", takenAt: "2025-01-01T00:00:00.000Z" },
+    ]);
+
+    const descend = await fetchPhotos(
+      app,
+      "?page=1&pageSize=10&sortOrder=descend",
+    );
+    assert.deepEqual(photoIds(descend), [
+      "sort-new",
+      "sort-aaa",
+      "sort-bbb",
+      "sort-old",
+    ]);
+
+    const defaultOrder = await fetchPhotos(app, "?page=1&pageSize=10");
+    assert.deepEqual(photoIds(defaultOrder), photoIds(descend));
+
+    const bogusOrder = await fetchPhotos(
+      app,
+      "?page=1&pageSize=10&sortOrder=sideways",
+    );
+    assert.deepEqual(photoIds(bogusOrder), photoIds(descend));
+
+    const ascend = await fetchPhotos(
+      app,
+      "?page=1&pageSize=10&sortOrder=ascend",
+    );
+    assert.deepEqual(photoIds(ascend), [
+      "sort-old",
+      "sort-aaa",
+      "sort-bbb",
+      "sort-new",
+    ]);
+  } finally {
+    await rm(root, { recursive: true, force: true });
+  }
+});
+
+test("GET /api/photos facets dedupe and sort camera metadata with zh-CN collation", async () => {
+  const { config, root } = await makeConfig();
+  try {
+    const app = createApp(config);
+    await seedPhotos(app, [
+      {
+        id: "facet-canon-a",
+        title: "Facet A",
+        takenAt: "2026-06-01T00:00:00.000Z",
+        exif: { cameraBrand: "Canon", cameraModel: "R5" },
+      },
+      {
+        id: "facet-canon-b",
+        title: "Facet B",
+        takenAt: "2026-06-02T00:00:00.000Z",
+        exif: { cameraBrand: "Canon", cameraModel: "R5" },
+      },
+      {
+        id: "facet-sony",
+        title: "Facet C",
+        takenAt: "2026-06-03T00:00:00.000Z",
+        exif: { cameraBrand: "Sony", cameraModel: "A7R V" },
+      },
+      {
+        id: "facet-zh",
+        title: "Facet D",
+        takenAt: "2026-06-04T00:00:00.000Z",
+        exif: { cameraBrand: "佳能", cameraModel: "R6" },
+      },
+      { id: "facet-none", title: "Facet E", takenAt: "2026-06-05T00:00:00.000Z" },
+    ]);
+
+    const payload = await fetchPhotos(app, "?page=1&pageSize=10");
+    assert.deepEqual(payload.facets, {
+      cameraBrands: ["佳能", "Canon", "Sony"],
+      cameraModels: ["A7R V", "R5", "R6"],
+    });
+    assert.equal(payload.allTotal, 5);
+    assert.equal(payload.photos.length, 5);
+
+    const filtered = await fetchPhotos(app, "?page=1&pageSize=10&brand=Sony");
+    assert.deepEqual(filtered.facets, payload.facets);
+    assert.equal(filtered.total, 1);
+    assert.equal(filtered.allTotal, 5);
+  } finally {
+    await rm(root, { recursive: true, force: true });
+  }
+});
+
+test("GET /api/photos falls back to defaults for invalid paging params", async () => {
+  const { config, root } = await makeConfig();
+  try {
+    const app = createApp(config);
+    await seedPhotos(
+      app,
+      Array.from({ length: 12 }, (_, index) => ({
+        id: `invalid-${String(index + 1).padStart(2, "0")}`,
+        title: `Invalid frame ${index + 1}`,
+        takenAt: new Date(Date.UTC(2026, 0, index + 1)).toISOString(),
+      })),
+    );
+
+    const invalid = await fetchPhotos(app, "?page=abc&pageSize=999");
+    assert.equal(invalid.page, 1);
+    assert.equal(invalid.pageSize, 10);
+    assert.equal(invalid.photos.length, 10);
+    assert.equal(invalid.total, 12);
+    assert.equal(invalid.photos[0].id, "invalid-12");
+
+    const zero = await fetchPhotos(app, "?page=0");
+    assert.equal(zero.page, 1);
+    assert.equal(zero.photos.length, 10);
+
+    const negative = await fetchPhotos(app, "?page=-3&pageSize=17");
+    assert.equal(negative.page, 1);
+    assert.equal(negative.pageSize, 10);
+
+    const fractional = await fetchPhotos(app, "?page=1.5&pageSize=abc");
+    assert.equal(fractional.page, 1);
+    assert.equal(fractional.pageSize, 10);
+
+    const stillPaged = await fetchPhotos(app, "?page=2&pageSize=10");
+    assert.equal(stillPaged.page, 2);
+    assert.equal(stillPaged.pageSize, 10);
+    assert.equal(stillPaged.total, 12);
+    assert.deepEqual(photoIds(stillPaged), ["invalid-02", "invalid-01"]);
+  } finally {
+    await rm(root, { recursive: true, force: true });
+  }
+});
